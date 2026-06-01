@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ege9-trainer
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8088}:8088"
+    environment:
+      APP_ENV: "${APP_ENV:-production}"
+      PORT: "8088"
+      HOST: "0.0.0.0"
+      SECRET_KEY: "${SECRET_KEY:-change-me}"
+      ADMIN_LOGIN: "${ADMIN_LOGIN:-admin}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      SEED_DEMO_USERS: "${SEED_DEMO_USERS:-0}"
+    volumes:
+      - ege9_data:/app/data
+    networks:
+      - ege9_net
+
+volumes:
+  ege9_data:
+
+networks:
+  ege9_net:
+    driver: bridge
