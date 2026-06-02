@@ -275,12 +275,6 @@ input[type="number"] {
   background: #fff;
 }
 
-.warning-note {
-  padding: 10px;
-  border-radius: 8px;
-  background: #fff7df;
-}
-
 button {
   min-height: 40px;
   border: 0;

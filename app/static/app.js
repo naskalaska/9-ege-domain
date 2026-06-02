@@ -16,6 +16,8 @@ const state = {
   currentActivity: null,
 };
 
+const fallbackTeacherCode = "T-DDC378";
+
 const activityMeta = {
   ege9: {
     title: "ЕГЭ. Задание 9",
@@ -197,29 +199,28 @@ function renderLogin() {
       </div>
       <label>
         Имя
-        <input name="display_name" autocomplete="name" />
+        <input name="display_name" autocomplete="name" required />
       </label>
       <label>
-        Логин
-        <input name="username" autocomplete="username" />
+        Email
+        <input name="email" type="email" autocomplete="email" required />
       </label>
       <label>
         Пароль
-        <input name="password" type="password" autocomplete="new-password" />
+        <input name="password" type="password" autocomplete="new-password" required />
       </label>
       <label id="teacherCodeLabel">
         Код учителя
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
       </label>
       <button class="secondary-button" type="submit">Создать аккаунт</button>
-      <p class="muted">Ученики регистрируются только по коду учителя.</p>
-      <p class="muted warning-note">Запишите пароль и логин: платформа не собирает ПД, поэтому восстановление пароля будет невозможным в случае утери.</p>
+      <p class="muted">Email используется для входа и восстановления пароля. Код учителя можно пропустить только осознанно.</p>
       <p class="error" id="registerError"></p>
     </form>
   `);
   document.querySelector("#teacherCodeLabel").insertAdjacentHTML("afterend", `
     <label class="consent-check">
-      <input name="consent_accepted" type="checkbox" />
+      <input name="consent_accepted" type="checkbox" required />
       <span>
       <a href="/privacy">Политика обработки персональных данных</a>
       <a href="/consent">Согласие на обработку персональных данных</a>
@@ -276,16 +277,23 @@ function renderLogin() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const error = document.querySelector("#registerError");
+    const role = String(form.get("role") || "student");
+    let teacherCode = String(form.get("teacher_code") || "").trim();
     error.textContent = "";
+    if (role === "student" && !teacherCode) {
+      const ok = confirm("Вы уверены, что вам не нужен код учителя? Ваш педагог не сможет отслеживать прогресс.");
+      if (!ok) return;
+      teacherCode = fallbackTeacherCode;
+    }
     try {
       const data = await api("/api/register", {
         method: "POST",
         body: JSON.stringify({
           display_name: form.get("display_name"),
-          email: form.get("username"),
+          email: form.get("email"),
           password: form.get("password"),
-          role: form.get("role"),
-          teacher_code: form.get("teacher_code"),
+          role,
+          teacher_code: teacherCode,
           consent_accepted: form.get("consent_accepted") === "on",
         }),
       });
@@ -315,7 +323,7 @@ function renderForgotPassword() {
         <h2>Восстановление пароля</h2>
         <label>
           Email
-          <input name="email" autocomplete="email" />
+          <input name="email" type="email" autocomplete="email" required />
         </label>
         <button class="primary-button" type="submit">Отправить ссылку</button>
         <button class="ghost-button" id="backToLogin" type="button">Назад ко входу</button>
@@ -1113,7 +1121,7 @@ function renderTeacherStudentCards(students) {
         <div class="student-card-head">
           <div>
             <b>${student.display_name}</b>
-            <span class="muted">@${student.username}</span>
+            <span class="muted">${student.email || student.username}</span>
           </div>
           <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>точность</span></div>
         </div>
@@ -1336,15 +1344,16 @@ function renderAdminContent(data, closeButton = "") {
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
   const teacherCards = data.teachers.map((teacher) => {
+    const teacherEmail = teacher.email || teacher.username;
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
           <td>${student.display_name}</td>
-          <td>${student.username}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
+          <td>${student.email || student.username}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
           <td>${student.attempts}</td>
           <td>${pct(student.correct, student.attempts)}</td>
           <td>
-            <button class="ghost-button reset-password" data-user-id="${student.user_id}" data-username="${student.username}" type="button">
+            <button class="ghost-button reset-password" data-user-id="${student.user_id}" data-username="${student.email || student.username}" type="button">
               ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
           </td>
@@ -1356,10 +1365,10 @@ function renderAdminContent(data, closeButton = "") {
         <div class="student-card-head">
           <div>
             <b>${teacher.display_name}</b>
-            <span class="muted">@${teacher.username} · код ${teacher.teacher_code || "не задан"}</span>
+            <span class="muted">${teacherEmail} · код ${teacher.teacher_code || "не задан"}</span>
           </div>
           <div class="button-row">
-            <button class="ghost-button reset-password" data-user-id="${teacher.user_id}" data-username="${teacher.username}" type="button">
+            <button class="ghost-button reset-password" data-user-id="${teacher.user_id}" data-username="${teacherEmail}" type="button">
               ${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
           </div>
@@ -1368,7 +1377,7 @@ function renderAdminContent(data, closeButton = "") {
           <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
           <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>точность</span></div>
         </div>
-        <table class="table"><tr><th>Ученик</th><th>Логин</th><th>Ответов</th><th>Точность</th><th>Пароль</th></tr>${students}</table>
+        <table class="table"><tr><th>Ученик</th><th>Email</th><th>Ответов</th><th>Точность</th><th>Пароль</th></tr>${students}</table>
       </article>
     `;
   }).join("");

@@ -48,6 +48,8 @@ CURRENT_PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2026-
 CURRENT_CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2026-06-02").strip()
 CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", "2026-06-02").strip()
 CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
+FALLBACK_TEACHER_CODE = "T-DDC378"
+FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
 
 SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
@@ -254,6 +256,7 @@ def ensure_admin_role_supported(con: sqlite3.Connection) -> None:
 def ensure_app_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as con:
+        con.row_factory = sqlite3.Row
         con.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -348,12 +351,22 @@ def ensure_app_db() -> None:
         )
         ensure_column(con, "users", "teacher_code", "TEXT")
         ensure_column(con, "users", "teacher_id", "TEXT")
+        ensure_column(con, "users", "email", "TEXT")
         ensure_column(con, "users", "password_reset_required", "INTEGER NOT NULL DEFAULT 0")
         ensure_admin_role_supported(con)
+        con.execute("UPDATE users SET email = LOWER(username) WHERE email IS NULL AND instr(username, '@') > 1")
+        con.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email
+                ON users(LOWER(email))
+                WHERE email IS NOT NULL AND email <> ''
+            """
+        )
         ensure_column(con, "attempts", "scope_id", "TEXT")
         ensure_column(con, "attempts", "word_id", "TEXT")
         seed_documents(con)
         ensure_service_admin(con)
+        ensure_fallback_teacher(con)
         if seed_demo_users():
             seed_user(con, "teacher", "teacher123", "teacher", "Учитель")
             seed_user(con, "student", "student123", "student", "Ученик")
@@ -442,8 +455,57 @@ def make_unique_teacher_code(con: sqlite3.Connection) -> str:
     raise RuntimeError("Could not generate a unique teacher code.")
 
 
+def normalize_email(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def validate_email(email: str) -> None:
+    if not email:
+        raise ValueError("Укажите email.")
+    if email.count("@") != 1:
+        raise ValueError("Email должен содержать @.")
+    local, domain = email.rsplit("@", 1)
+    if not local or not domain or "." not in domain.strip("."):
+        raise ValueError("Укажите корректный email с доменной частью.")
+
+
+def ensure_fallback_teacher(con: sqlite3.Connection) -> None:
+    row = con.execute(
+        "SELECT * FROM users WHERE role = 'teacher' AND UPPER(teacher_code) = ?",
+        (FALLBACK_TEACHER_CODE,),
+    ).fetchone()
+    if row:
+        if "email" in row.keys() and not row["email"]:
+            con.execute(
+                "UPDATE users SET email = ? WHERE user_id = ?",
+                (FALLBACK_TEACHER_EMAIL, row["user_id"]),
+            )
+        return
+
+    salt = secrets.token_hex(16)
+    con.execute(
+        """
+        INSERT INTO users
+            (user_id, username, email, display_name, role, password_salt, password_hash,
+             created_at, teacher_code, password_reset_required)
+        VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?, ?, 1)
+        """,
+        (
+            "user_service_teacher",
+            FALLBACK_TEACHER_EMAIL,
+            FALLBACK_TEACHER_EMAIL,
+            "Служебный учитель",
+            salt,
+            password_hash(secrets.token_urlsafe(32), salt),
+            now_iso(),
+            FALLBACK_TEACHER_CODE,
+        ),
+    )
+
+
 def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str = "") -> dict[str, Any]:
-    username = str(payload.get("email") or payload.get("username") or "").strip().lower()
+    email = normalize_email(payload.get("email"))
+    username = email
     password = str(payload.get("password") or "")
     display_name = str(payload.get("display_name") or username).strip()
     role = str(payload.get("role") or "student").strip()
@@ -454,14 +516,14 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
         raise ValueError("Неизвестная роль.")
     if not consent_accepted:
         raise ValueError("Для регистрации необходимо принять Политику обработки персональных данных и дать согласие на обработку персональных данных.")
-    if len(username) < 3:
-        raise ValueError("Логин должен быть не короче 3 символов.")
+    validate_email(email)
     if len(password) < 6:
         raise ValueError("Пароль должен быть не короче 6 символов.")
     if role == "student" and not teacher_code:
-        raise ValueError("Для регистрации ученика нужен код учителя.")
+        teacher_code = FALLBACK_TEACHER_CODE
 
     with db() as con:
+        ensure_fallback_teacher(con)
         teacher_id = None
         own_teacher_code = None
         if role == "student":
@@ -475,10 +537,13 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
         else:
             own_teacher_code = make_unique_teacher_code(con)
 
-        existing = con.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        existing = con.execute(
+            "SELECT * FROM users WHERE LOWER(COALESCE(email, '')) = ? OR LOWER(username) = ?",
+            (email, username),
+        ).fetchone()
         if existing:
             if not int(existing["password_reset_required"] or 0):
-                raise ValueError("Такой логин уже занят.")
+                raise ValueError("Пользователь с таким email уже зарегистрирован")
             if existing["role"] != role:
                 raise ValueError("Для восстановления выберите прежнюю роль.")
             if role == "student" and existing["teacher_id"] != teacher_id:
@@ -488,12 +553,14 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
                 """
                 UPDATE users
                 SET display_name = COALESCE(NULLIF(?, ''), display_name),
+                    username = ?,
+                    email = ?,
                     password_salt = ?,
                     password_hash = ?,
                     password_reset_required = 0
                 WHERE user_id = ?
                 """,
-                (display_name, salt, password_hash(password, salt), existing["user_id"]),
+                (display_name, username, email, salt, password_hash(password, salt), existing["user_id"]),
             )
             row = con.execute("SELECT * FROM users WHERE user_id = ?", (existing["user_id"],)).fetchone()
             insert_user_consent(con, row["user_id"], ip_address, user_agent)
@@ -506,13 +573,14 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
         con.execute(
             """
             INSERT INTO users
-                (user_id, username, display_name, role, password_salt, password_hash,
+                (user_id, username, email, display_name, role, password_salt, password_hash,
                  created_at, teacher_code, teacher_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
                 username,
+                email,
                 display_name,
                 role,
                 salt,
@@ -717,10 +785,11 @@ def record_user_consent(user_id: str, ip_address: str = "", user_agent: str = ""
 
 def public_user(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
     has_consents = user_has_required_consents(row["user_id"])
+    email = row["email"] if "email" in row.keys() else None
     return {
         "user_id": row["user_id"],
         "username": row["username"],
-        "email": row["username"],
+        "email": email,
         "display_name": row["display_name"],
         "role": row["role"],
         "teacher_code": row["teacher_code"] if row["role"] == "teacher" else None,
@@ -1182,7 +1251,7 @@ def error_bank_words(user_id: str) -> list[dict[str, Any]]:
 def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any]:
     students = con.execute(
         """
-        SELECT user_id, display_name, username
+        SELECT user_id, display_name, username, email
         FROM users
         WHERE role = 'student' AND teacher_id = ?
         ORDER BY display_name
@@ -1240,6 +1309,7 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
                 "user_id": user_id,
                 "display_name": student["display_name"],
                 "username": student["username"],
+                "email": student["email"],
                 "total": int(summary["total"] or 0),
                 "correct": int(summary["correct"] or 0),
                 "untouched": max(len(WORDS) - touched, 0),
@@ -1281,7 +1351,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         ).fetchone()
         teachers = con.execute(
             """
-            SELECT t.user_id, t.display_name, t.username, t.teacher_code, t.password_reset_required,
+            SELECT t.user_id, t.display_name, t.username, t.email, t.teacher_code, t.password_reset_required,
                    uc.accepted_at AS consent_accepted_at,
                    COUNT(DISTINCT s.user_id) AS students,
                    COUNT(a.attempt_id) AS attempts,
@@ -1306,7 +1376,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             placeholders = ",".join("?" for _ in teacher_ids)
             student_rows = con.execute(
                 f"""
-                SELECT s.user_id, s.teacher_id, s.display_name, s.username, s.password_reset_required,
+                SELECT s.user_id, s.teacher_id, s.display_name, s.username, s.email, s.password_reset_required,
                        uc.accepted_at AS consent_accepted_at,
                        COUNT(a.attempt_id) AS attempts,
                        COALESCE(SUM(a.is_correct), 0) AS correct
@@ -1728,7 +1798,7 @@ def send_password_reset_email(email: str, link: str) -> None:
 
 
 def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
-    email = str(payload.get("email") or payload.get("username") or "").strip().lower()
+    email = normalize_email(payload.get("email") or payload.get("username"))
     neutral = {
         "ok": True,
         "message": "Если такой email есть в системе, мы отправили ссылку для восстановления пароля.",
@@ -1737,7 +1807,15 @@ def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
         return neutral
 
     with db() as con:
-        row = con.execute("SELECT user_id, username FROM users WHERE username = ?", (email,)).fetchone()
+        row = con.execute(
+            """
+            SELECT user_id, username, COALESCE(email, username) AS email
+            FROM users
+            WHERE LOWER(COALESCE(email, '')) = ?
+               OR (email IS NULL AND LOWER(username) = ? AND instr(username, '@') > 1)
+            """,
+            (email, email),
+        ).fetchone()
         if not row:
             return neutral
         token = secrets.token_urlsafe(32)
@@ -1750,7 +1828,7 @@ def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
             """,
             (secrets.token_hex(12), row["user_id"], reset_token_hash(token), expires_at, now_iso()),
         )
-    send_password_reset_email(email, f"{APP_BASE_URL}/reset-password?token={token}")
+    send_password_reset_email(row["email"], f"{APP_BASE_URL}/reset-password?token={token}")
     return neutral
 
 
@@ -1907,10 +1985,17 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             payload = parse_json_body(self)
             if parsed.path in {"/api/login", "/api/auth/login"}:
-                username = str(payload.get("email") or payload.get("username") or "").strip().lower()
+                username = normalize_email(payload.get("email") or payload.get("username"))
                 password = str(payload.get("password") or "")
                 with db() as con:
-                    row = con.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+                    row = con.execute(
+                        """
+                        SELECT * FROM users
+                        WHERE LOWER(COALESCE(email, '')) = ?
+                           OR (email IS NULL AND LOWER(username) = ?)
+                        """,
+                        (username, username),
+                    ).fetchone()
                     if row and int(row["password_reset_required"] or 0):
                         self.send_json({"error": "Пароль сброшен администратором. Зарегистрируйтесь с тем же логином и кодом учителя, чтобы задать новый пароль."}, HTTPStatus.UNAUTHORIZED)
                         return
