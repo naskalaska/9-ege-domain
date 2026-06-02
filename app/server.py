@@ -1801,6 +1801,12 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def guess_type(self, path: str) -> str:
+        content_type = super().guess_type(path)
+        if content_type in {"text/html", "text/css", "text/javascript", "application/javascript"}:
+            return f"{content_type}; charset=utf-8"
+        return content_type
+
     def send_json(self, data: Any, status: int = 200) -> None:
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
