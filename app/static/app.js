@@ -32,7 +32,7 @@ const activityMeta = {
     mark: "10",
   },
   "demo-mini": {
-    title: "HTML-мини-приложение",
+    title: "HTML-мини-приложения",
     shortTitle: "Мини",
     description: "Обертка для будущих мини-игр и интерактивных карточек.",
     mark: "HTML",
@@ -56,7 +56,7 @@ const modes = {
     eyebrow: "перемешанные орфограммы",
   },
   line: {
-    title: "Строка",
+    title: "Формат ЕГЭ",
     hint: "Ряд с одной и той же буквой",
     eyebrow: "формат задания 9",
   },
@@ -605,7 +605,7 @@ function renderCatalog() {
       <article class="activity-card">
         <div class="activity-mark">${meta.mark || "A"}</div>
         <div>
-          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложение" : "учебный модуль"}</p>
+          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложения" : "учебный модуль"}</p>
           <h2>${activity.title || meta.title}</h2>
           <p>${activity.description || meta.description}</p>
         </div>
@@ -620,7 +620,7 @@ function renderCatalog() {
       <div class="catalog-head">
         <div>
           <p class="eyebrow">каталог активностей</p>
-          <h2>Выберите тренажер</h2>
+          <h2>Выберите тренажёр</h2>
         </div>
         <div class="catalog-user">
           <strong>${state.user.display_name}</strong>
@@ -647,7 +647,7 @@ function renderMiniActivity() {
     <section class="mini-page">
       <div class="panel-head">
         <div>
-          <p class="eyebrow">HTML-мини-приложение</p>
+          <p class="eyebrow">HTML-мини-приложения</p>
           <h2>Демо-активность</h2>
         </div>
         <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
@@ -661,7 +661,7 @@ function renderMiniActivity() {
         </style>
         <main>
           <h1>Мини-приложение подключено</h1>
-          <p>Эта страница запускается внутри общей платформенной обертки и готова для замены на игру, карточки или одностраничный тренажер.</p>
+          <p>Эта страница запускается внутри общей платформенной обертки и готова для замены на игру, карточки или одностраничный тренажёр.</p>
           <button onclick='document.querySelector(&quot;output&quot;).textContent = &quot;Готово&quot;'>Проверить</button>
           <output style='display:block;margin-top:14px'></output>
         </main>
@@ -1228,7 +1228,7 @@ async function showProgress() {
       </div>
       ${state.user.role !== "teacher" ? `
         <div class="progress-grid">
-          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди повторения</span></div>
+          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди на повторение</span></div>
           <div class="stat"><b>${data.error_bank_count}</b><span>слов в копилке ошибок</span></div>
         </div>
       ` : ""}
