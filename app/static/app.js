@@ -13,6 +13,28 @@ const state = {
   errorTrainingMode: "cards",
   currentQuestionIndex: 0,
   liveResults: [],
+  currentActivity: null,
+};
+
+const activityMeta = {
+  ege9: {
+    title: "ЕГЭ. Задание 9",
+    shortTitle: "Задание 9",
+    description: "Орфография: корни, гласные, строки с общей буквой.",
+    mark: "9",
+  },
+  ege10: {
+    title: "ЕГЭ. Задание 10",
+    shortTitle: "Задание 10",
+    description: "Приставки, Ь/Ъ, И/Ы и другие орфограммы.",
+    mark: "10",
+  },
+  "demo-mini": {
+    title: "HTML-мини-приложение",
+    shortTitle: "Мини",
+    description: "Обертка для будущих мини-игр и интерактивных карточек.",
+    mark: "HTML",
+  },
 };
 
 const modes = {
@@ -45,6 +67,30 @@ const modes = {
 
 const view = document.querySelector("#view");
 const topActions = document.querySelector("#topActions");
+
+function activityApi(path) {
+  return state.currentActivity ? `/api/apps/${state.currentActivity}${path}` : path;
+}
+
+function legalLinks(className = "legal-links") {
+  return `
+    <nav class="${className}">
+      <a href="/privacy" data-doc-link="privacy">Политика обработки персональных данных</a>
+      <a href="/consent" data-doc-link="consent">Согласие на обработку персональных данных</a>
+    </nav>
+  `;
+}
+
+function bindDocumentLinks(root = document) {
+  root.querySelectorAll("[data-doc-link]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const type = link.dataset.docLink;
+      history.pushState(null, "", type === "privacy" ? "/privacy" : "/consent");
+      renderDocumentPage(type);
+    });
+  });
+}
 
 function api(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
@@ -106,6 +152,17 @@ function ensureRuleSelection() {
 function renderTopActions() {
   topActions.innerHTML = "";
   if (!state.user) return;
+  if (state.currentActivity) {
+    const catalog = document.createElement("button");
+    catalog.className = "ghost-button";
+    catalog.textContent = "Каталог";
+    catalog.addEventListener("click", () => {
+      state.currentActivity = null;
+      history.pushState(null, "", "/");
+      renderDashboard();
+    });
+    topActions.append(catalog);
+  }
   const role = document.createElement("span");
   role.className = "muted";
   const roleNames = { admin: "администратор", teacher: "учитель", student: "ученик" };
@@ -170,6 +227,25 @@ function renderLogin() {
       <p class="error" id="registerError"></p>
     </form>
   `);
+  document.querySelector("#teacherCodeLabel").insertAdjacentHTML("afterend", `
+    <label class="consent-check">
+      <input name="consent_accepted" type="checkbox" />
+      <span>
+        Я принимаю <a href="/privacy" data-doc-link="privacy">Политику обработки персональных данных</a>
+        и даю <a href="/consent" data-doc-link="consent">согласие на обработку персональных данных</a>.
+      </span>
+    </label>
+  `);
+  view.insertAdjacentHTML("beforeend", legalLinks("legal-links login-legal"));
+  bindDocumentLinks(view);
+  document.querySelector("#loginForm button").insertAdjacentHTML(
+    "afterend",
+    `<button class="ghost-button" id="forgotPasswordLink" type="button">Забыли пароль?</button>`
+  );
+  document.querySelector("#forgotPasswordLink").addEventListener("click", () => {
+    history.pushState(null, "", "/forgot-password");
+    renderForgotPassword();
+  });
   document.querySelector("#loginForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -179,15 +255,22 @@ function renderLogin() {
       const data = await api("/api/login", {
         method: "POST",
         body: JSON.stringify({
-          username: form.get("username"),
+          email: form.get("username"),
           password: form.get("password"),
         }),
       });
       state.token = data.token;
       state.user = data.user;
       localStorage.setItem("ege_token", data.token);
-      await loadBootstrap();
-      renderDashboard();
+      const target = activityFromPath();
+      if (userNeedsConsent()) {
+        await renderConsentGate();
+      } else if (target) {
+        await loadActivity(target, false);
+      } else {
+        await loadBootstrap();
+        renderDashboard();
+      }
     } catch (err) {
       error.textContent = err.message;
     }
@@ -209,16 +292,203 @@ function renderLogin() {
         method: "POST",
         body: JSON.stringify({
           display_name: form.get("display_name"),
-          username: form.get("username"),
+          email: form.get("username"),
           password: form.get("password"),
           role: form.get("role"),
           teacher_code: form.get("teacher_code"),
+          consent_accepted: form.get("consent_accepted") === "on",
         }),
       });
       state.token = data.token;
       state.user = data.user;
       localStorage.setItem("ege_token", data.token);
-      await loadBootstrap();
+      const target = activityFromPath();
+      if (userNeedsConsent()) {
+        await renderConsentGate();
+      } else if (target) {
+        await loadActivity(target, false);
+      } else {
+        await loadBootstrap();
+        renderDashboard();
+      }
+    } catch (err) {
+      error.textContent = err.message;
+    }
+  });
+}
+
+function renderForgotPassword() {
+  renderTopActions();
+  view.innerHTML = `
+    <section class="auth-page">
+      <form class="login-panel auth-panel" id="forgotPasswordForm">
+        <h2>Восстановление пароля</h2>
+        <label>
+          Email
+          <input name="email" autocomplete="email" />
+        </label>
+        <button class="primary-button" type="submit">Отправить ссылку</button>
+        <button class="ghost-button" id="backToLogin" type="button">Назад ко входу</button>
+        <p class="muted" id="forgotPasswordMessage"></p>
+        <p class="error" id="forgotPasswordError"></p>
+      </form>
+    </section>
+  `;
+  view.querySelector("#backToLogin").addEventListener("click", () => {
+    history.pushState(null, "", "/login");
+    renderLogin();
+  });
+  view.querySelector("#forgotPasswordForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const message = view.querySelector("#forgotPasswordMessage");
+    const error = view.querySelector("#forgotPasswordError");
+    message.textContent = "";
+    error.textContent = "";
+    try {
+      const data = await api("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email: form.get("email") }),
+      });
+      message.textContent = data.message;
+    } catch (err) {
+      error.textContent = err.message;
+    }
+  });
+}
+
+function renderResetPassword() {
+  renderTopActions();
+  const token = new URLSearchParams(window.location.search).get("token") || "";
+  view.innerHTML = `
+    <section class="auth-page">
+      <form class="login-panel auth-panel" id="resetPasswordForm">
+        <h2>Новый пароль</h2>
+        <label>
+          Новый пароль
+          <input name="password" type="password" autocomplete="new-password" />
+        </label>
+        <label>
+          Повтор пароля
+          <input name="password_repeat" type="password" autocomplete="new-password" />
+        </label>
+        <button class="primary-button" type="submit">Сохранить пароль</button>
+        <p class="muted" id="resetPasswordMessage"></p>
+        <p class="error" id="resetPasswordError"></p>
+      </form>
+    </section>
+  `;
+  view.querySelector("#resetPasswordForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const password = String(form.get("password") || "");
+    const repeat = String(form.get("password_repeat") || "");
+    const message = view.querySelector("#resetPasswordMessage");
+    const error = view.querySelector("#resetPasswordError");
+    message.textContent = "";
+    error.textContent = "";
+    if (password !== repeat) {
+      error.textContent = "Пароли не совпадают.";
+      return;
+    }
+    try {
+      await api("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, password }),
+      });
+      message.textContent = "Пароль изменен. Теперь можно войти.";
+      setTimeout(() => {
+        history.pushState(null, "", "/login");
+        renderLogin();
+      }, 1200);
+    } catch (err) {
+      error.textContent = err.message;
+    }
+  });
+}
+
+async function renderDocumentPage(type) {
+  renderTopActions();
+  const endpoint = type === "privacy" ? "/api/documents/privacy" : "/api/documents/consent";
+  view.innerHTML = `
+    <section class="document-page">
+      <article class="document-panel">
+        <p class="muted">Загрузка документа...</p>
+      </article>
+    </section>
+  `;
+  const panel = view.querySelector(".document-panel");
+  try {
+    const documentData = await api(endpoint);
+    panel.innerHTML = `
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">версия ${documentData.version}</p>
+          <h2>${documentData.title}</h2>
+        </div>
+        <button class="secondary-button" id="backFromDocument" type="button">Назад</button>
+      </div>
+      <p class="muted">Дата редакции: ${new Date(documentData.updated_at).toLocaleDateString()}</p>
+      <div class="document-content">
+        ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${line}</p>` : "").join("")}
+      </div>
+      <p class="muted">Текст является шаблоном и должен быть заменен на финальный юридически выверенный текст перед запуском регистрации реальных пользователей.</p>
+      ${legalLinks()}
+    `;
+    panel.querySelector("#backFromDocument").addEventListener("click", () => {
+      if (history.length > 1) {
+        history.back();
+      } else if (state.user) {
+        history.pushState(null, "", "/");
+        renderDashboard();
+      } else {
+        history.pushState(null, "", "/login");
+        renderLogin();
+      }
+    });
+    bindDocumentLinks(panel);
+  } catch (err) {
+    panel.innerHTML = `<p class="error">${err.message}</p>`;
+  }
+}
+
+async function renderConsentGate() {
+  renderTopActions();
+  const data = await api("/api/me/consents").catch(() => ({
+    required: [{ document_version: "2026-06-02", privacy_policy_version: "2026-06-02" }],
+  }));
+  const required = data.required?.[0] || {};
+  view.innerHTML = `
+    <section class="auth-page">
+      <form class="login-panel consent-panel" id="requiredConsentForm">
+        <p class="eyebrow">персональные данные</p>
+        <h2>Перед началом работы ознакомьтесь с документами</h2>
+        <p class="muted">Текущая версия согласия: ${required.document_version || ""}. Версия политики: ${required.privacy_policy_version || ""}.</p>
+        ${legalLinks("legal-links consent-doc-links")}
+        <label class="consent-check">
+          <input name="consent_accepted" type="checkbox" />
+          <span>
+            Я ознакомился/ознакомилась с Политикой обработки персональных данных и даю согласие на обработку персональных данных.
+          </span>
+        </label>
+        <button class="primary-button" type="submit">Продолжить</button>
+        <p class="error" id="requiredConsentError"></p>
+      </form>
+    </section>
+  `;
+  bindDocumentLinks(view);
+  view.querySelector("#requiredConsentForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const error = view.querySelector("#requiredConsentError");
+    error.textContent = "";
+    if (form.get("consent_accepted") !== "on") {
+      error.textContent = "Для продолжения необходимо принять документы.";
+      return;
+    }
+    try {
+      const status = await api("/api/me/consents", { method: "POST", body: JSON.stringify({ consent_type: "personal_data_processing" }) });
+      state.user = { ...state.user, has_required_consents: status.has_required_consents };
       renderDashboard();
     } catch (err) {
       error.textContent = err.message;
@@ -226,13 +496,60 @@ function renderLogin() {
   });
 }
 
+function userNeedsConsent() {
+  return state.user && !state.user.has_required_consents;
+}
+
 async function loadBootstrap() {
   state.bootstrap = await api("/api/bootstrap");
 }
 
+async function loadActivity(slug, updateUrl = true) {
+  if (slug === "demo-mini") {
+    state.currentActivity = slug;
+    if (updateUrl) history.pushState(null, "", `/apps/mini/${slug}`);
+    renderMiniActivity();
+    return;
+  }
+  state.currentActivity = slug;
+  state.bootstrap = await api(`/api/apps/${slug}/bootstrap`);
+  state.mode = "rule";
+  state.selectedCategory = null;
+  state.selectedRuleIds = [];
+  state.currentSession = null;
+  state.answers = {};
+  ensureRuleSelection();
+  if (updateUrl) history.pushState(null, "", `/apps/${slug}`);
+  renderDashboard();
+}
+
+function activityFromPath() {
+  const path = window.location.pathname;
+  if (path === "/apps/ege9") return "ege9";
+  if (path === "/apps/ege10") return "ege10";
+  if (path.startsWith("/apps/mini/")) return "demo-mini";
+  return null;
+}
+
 async function restoreSession() {
   await loadBootstrap();
+  if (window.location.pathname === "/privacy") {
+    await renderDocumentPage("privacy");
+    return;
+  }
+  if (window.location.pathname === "/consent") {
+    await renderDocumentPage("consent");
+    return;
+  }
   if (!state.token) {
+    if (window.location.pathname === "/forgot-password") {
+      renderForgotPassword();
+      return;
+    }
+    if (window.location.pathname === "/reset-password") {
+      renderResetPassword();
+      return;
+    }
     renderLogin();
     return;
   }
@@ -244,6 +561,15 @@ async function restoreSession() {
     renderLogin();
     return;
   }
+  if (userNeedsConsent()) {
+    await renderConsentGate();
+    return;
+  }
+  const pathActivity = activityFromPath();
+  if (pathActivity) {
+    await loadActivity(pathActivity, false);
+    return;
+  }
   renderDashboard();
 }
 
@@ -251,6 +577,10 @@ function renderDashboard() {
   renderTopActions();
   if (state.user.role === "admin") {
     renderAdminDashboard();
+    return;
+  }
+  if (!state.currentActivity) {
+    renderCatalog();
     return;
   }
   ensureRuleSelection();
@@ -264,11 +594,93 @@ function renderDashboard() {
   }
 }
 
+function renderCatalog() {
+  renderTopActions();
+  const activities = state.bootstrap.activities || Object.entries(activityMeta).map(([slug, meta]) => ({ slug, ...meta }));
+  const cards = activities.map((activity) => {
+    const meta = activityMeta[activity.slug] || activity;
+    return `
+      <article class="activity-card">
+        <div class="activity-mark">${meta.mark || "A"}</div>
+        <div>
+          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложение" : "учебный модуль"}</p>
+          <h2>${activity.title || meta.title}</h2>
+          <p>${activity.description || meta.description}</p>
+        </div>
+        <button class="primary-button open-activity" data-activity="${activity.slug}" type="button">
+          ${activity.button || "Открыть"}
+        </button>
+      </article>
+    `;
+  }).join("");
+  view.innerHTML = `
+    <section class="catalog-page">
+      <div class="catalog-head">
+        <div>
+          <p class="eyebrow">каталог активностей</p>
+          <h2>Выберите тренажер</h2>
+        </div>
+        <div class="catalog-user">
+          <strong>${state.user.display_name}</strong>
+          <span class="muted">${state.user.role}</span>
+        </div>
+      </div>
+      <div class="activity-grid">${cards}</div>
+      ${state.user.role === "teacher" ? `<div class="catalog-actions"><button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button></div>` : ""}
+    </section>
+  `;
+  view.querySelector(".catalog-page").insertAdjacentHTML("beforeend", legalLinks("legal-links catalog-legal"));
+  bindDocumentLinks(view);
+  view.querySelectorAll(".open-activity").forEach((button) => {
+    button.addEventListener("click", () => loadActivity(button.dataset.activity));
+  });
+  view.querySelector("#teacherCabinet")?.addEventListener("click", async () => {
+    await loadActivity("ege9");
+    showProgress();
+  });
+}
+
+function renderMiniActivity() {
+  renderTopActions();
+  view.innerHTML = `
+    <section class="mini-page">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">HTML-мини-приложение</p>
+          <h2>Демо-активность</h2>
+        </div>
+        <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
+      </div>
+      <iframe class="mini-frame" title="Демо-мини-приложение" srcdoc="
+        <style>
+          body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f7fbff;color:#202124;display:grid;place-items:center;min-height:100vh}
+          main{width:min(720px,calc(100vw - 32px));padding:28px;border:1px solid #d8dee8;border-radius:8px;background:white}
+          h1{margin:0 0 12px;font-size:30px}
+          button{height:42px;border:0;border-radius:7px;background:#2f7d5c;color:white;font-weight:700;padding:0 16px}
+        </style>
+        <main>
+          <h1>Мини-приложение подключено</h1>
+          <p>Эта страница запускается внутри общей платформенной обертки и готова для замены на игру, карточки или одностраничный тренажер.</p>
+          <button onclick='document.querySelector(&quot;output&quot;).textContent = &quot;Готово&quot;'>Проверить</button>
+          <output style='display:block;margin-top:14px'></output>
+        </main>
+      "></iframe>
+    </section>
+  `;
+  view.querySelector("#backToCatalogFromMini").addEventListener("click", () => {
+    state.currentActivity = null;
+    history.pushState(null, "", "/");
+    renderDashboard();
+  });
+}
+
 function renderSidebar() {
+  const activity = activityMeta[state.currentActivity] || activityMeta.ege9;
   const teacherCode = state.user.role === "teacher" && state.user.teacher_code
     ? `<span class="muted">Код для учеников: <b>${state.user.teacher_code}</b></span>`
     : "";
   document.querySelector("#userBlock").innerHTML = `
+    <span class="activity-badge">${activity.shortTitle}</span>
     <strong>${state.user.display_name}</strong>
     <span class="muted">${state.user.role === "admin" ? "Кабинет администратора" : state.user.role === "teacher" ? "Кабинет учителя" : "Кабинет ученика"}</span>
     ${teacherCode}
@@ -431,7 +843,7 @@ async function startPractice() {
   if (["rule", "word_letter"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
   const setup = document.querySelector("#setupView");
   try {
-    const data = await api("/api/practice/start", {
+    const data = await api(activityApi("/practice/start"), {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -494,7 +906,7 @@ function renderLiveQuestion(feedback = null) {
     if (!answer) return;
     check.disabled = true;
     const elapsed = Math.round((Date.now() - state.startedAt) / 1000);
-    const item = await api("/api/practice/check", {
+    const item = await api(activityApi("/practice/check"), {
       method: "POST",
       body: JSON.stringify({
         session_id: state.currentSession.session_id,
@@ -652,7 +1064,7 @@ async function submitPractice() {
     return;
   }
   const elapsed = Math.round((Date.now() - state.startedAt) / 1000);
-  const data = await api("/api/practice/submit", {
+  const data = await api(activityApi("/practice/submit"), {
     method: "POST",
     body: JSON.stringify({
       session_id: state.currentSession.session_id,
@@ -693,6 +1105,7 @@ function renderTeacherStudentCards(students) {
     return `<p class="muted">Пока нет учеников, зарегистрированных по вашему коду.</p>`;
   }
   return students.map((student) => {
+    const teacher = { consent_accepted: student.consent_accepted };
     const topErrors = student.top_errors.length
       ? student.top_errors.map((item) => `<li>${item.rule_name}: ${item.errors}</li>`).join("")
       : "<li>ошибок пока нет</li>";
@@ -712,6 +1125,7 @@ function renderTeacherStudentCards(students) {
           <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>точность</span></div>
         </div>
         <div class="teacher-metrics">
+          <div class="stat"><b>${teacher.consent_accepted ? "да" : "нет"}</b><span>согласие принято</span></div>
           <div class="stat"><b>${student.total}</b><span>заданий решено</span></div>
           <div class="stat"><b>${student.untouched}</b><span>слов не затронуто</span></div>
           <div class="stat"><b>${student.error_bank.length}</b><span>в копилке ошибок</span></div>
@@ -926,12 +1340,15 @@ function showTestComposer() {
 
 function renderAdminContent(data, closeButton = "") {
   const platform = data.platform;
+  const consentLabel = (row) => row.consent_accepted
+    ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
+    : "нет";
   const teacherCards = data.teachers.map((teacher) => {
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
           <td>${student.display_name}</td>
-          <td>${student.username}</td>
+          <td>${student.username}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
           <td>${student.attempts}</td>
           <td>${pct(student.correct, student.attempts)}</td>
           <td>
@@ -1028,5 +1445,31 @@ function bindAdminActions(root) {
     });
   });
 }
+
+window.addEventListener("popstate", async () => {
+  if (window.location.pathname === "/privacy") {
+    await renderDocumentPage("privacy");
+    return;
+  }
+  if (window.location.pathname === "/consent") {
+    await renderDocumentPage("consent");
+    return;
+  }
+  if (!state.user && window.location.pathname === "/forgot-password") {
+    renderForgotPassword();
+    return;
+  }
+  if (!state.user && window.location.pathname === "/reset-password") {
+    renderResetPassword();
+    return;
+  }
+  const slug = activityFromPath();
+  if (slug && state.user) {
+    await loadActivity(slug, false);
+    return;
+  }
+  state.currentActivity = null;
+  if (state.user) renderDashboard();
+});
 
 restoreSession();

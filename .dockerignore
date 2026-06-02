@@ -1,0 +1,20 @@
+.env
+.git
+.gitignore
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.sqlite
+*.sqlite3
+*.db
+data/
+logs/
+*.log
+uploads/
+backups/
+node_modules/
+dist/
+build/
+app Backup1.0/
+Backup streamlit/
