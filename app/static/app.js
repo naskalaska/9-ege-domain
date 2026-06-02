@@ -214,7 +214,7 @@ function renderLogin() {
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
       </label>
       <button class="secondary-button" type="submit">Создать аккаунт</button>
-      <p class="muted">Email используется для входа и восстановления пароля. Код учителя можно пропустить только осознанно.</p>
+      <p class="muted">Email обязателен, т.к. используется для входа и восстановления пароля. Если вы ученик, и регистрируетесь самостоятельно, код учителя можно пропустить.</p>
       <p class="error" id="registerError"></p>
     </form>
   `);
