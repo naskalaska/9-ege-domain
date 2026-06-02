@@ -94,11 +94,13 @@ dimitrieva-av.ru -> 127.0.0.1:8088
 
 - `/privacy`
 - `/consent`
+- `/terms`
 
 Текущие версии задаются переменными окружения:
 
 - `PRIVACY_POLICY_VERSION=2026-06-02`
 - `CONSENT_VERSION=2026-06-02`
+- `TERMS_VERSION=2026-06-02`
 
 Документы хранятся в таблице `documents`, факт принятия - в таблице `user_consents`:
 

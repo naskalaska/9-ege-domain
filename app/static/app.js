@@ -1,4 +1,4 @@
-const state = {
+﻿const state = {
   token: localStorage.getItem("ege_token"),
   user: null,
   bootstrap: null,
@@ -18,50 +18,50 @@ const state = {
 
 const activityMeta = {
   ege9: {
-    title: "ЕГЭ. Задание 9",
-    shortTitle: "Задание 9",
-    description: "Орфография: корни, гласные, строки с общей буквой.",
+    title: "Р•Р“Р­. Р—Р°РґР°РЅРёРµ 9",
+    shortTitle: "Р—Р°РґР°РЅРёРµ 9",
+    description: "РћСЂС„РѕРіСЂР°С„РёСЏ: РєРѕСЂРЅРё, РіР»Р°СЃРЅС‹Рµ, СЃС‚СЂРѕРєРё СЃ РѕР±С‰РµР№ Р±СѓРєРІРѕР№.",
     mark: "9",
   },
   ege10: {
-    title: "ЕГЭ. Задание 10",
-    shortTitle: "Задание 10",
-    description: "Приставки, Ь/Ъ, И/Ы и другие орфограммы.",
+    title: "Р•Р“Р­. Р—Р°РґР°РЅРёРµ 10",
+    shortTitle: "Р—Р°РґР°РЅРёРµ 10",
+    description: "РџСЂРёСЃС‚Р°РІРєРё, Р¬/РЄ, Р/Р« Рё РґСЂСѓРіРёРµ РѕСЂС„РѕРіСЂР°РјРјС‹.",
     mark: "10",
   },
   "demo-mini": {
-    title: "HTML-мини-приложение",
-    shortTitle: "Мини",
-    description: "Обертка для будущих мини-игр и интерактивных карточек.",
+    title: "HTML-РјРёРЅРё-РїСЂРёР»РѕР¶РµРЅРёРµ",
+    shortTitle: "РњРёРЅРё",
+    description: "РћР±РµСЂС‚РєР° РґР»СЏ Р±СѓРґСѓС‰РёС… РјРёРЅРё-РёРіСЂ Рё РёРЅС‚РµСЂР°РєС‚РёРІРЅС‹С… РєР°СЂС‚РѕС‡РµРє.",
     mark: "HTML",
   },
 };
 
 const modes = {
   rule: {
-    title: "Правило",
-    hint: "Большая группа и подвыбор внутри нее",
-    eyebrow: "точечная отработка",
+    title: "РџСЂР°РІРёР»Рѕ",
+    hint: "Р‘РѕР»СЊС€Р°СЏ РіСЂСѓРїРїР° Рё РїРѕРґРІС‹Р±РѕСЂ РІРЅСѓС‚СЂРё РЅРµРµ",
+    eyebrow: "С‚РѕС‡РµС‡РЅР°СЏ РѕС‚СЂР°Р±РѕС‚РєР°",
   },
   word_letter: {
-    title: "Слово - буква",
-    hint: "Одно слово на экране, ввод буквы и мгновенная проверка",
-    eyebrow: "быстрая отработка",
+    title: "РЎР»РѕРІРѕ - Р±СѓРєРІР°",
+    hint: "РћРґРЅРѕ СЃР»РѕРІРѕ РЅР° СЌРєСЂР°РЅРµ, РІРІРѕРґ Р±СѓРєРІС‹ Рё РјРіРЅРѕРІРµРЅРЅР°СЏ РїСЂРѕРІРµСЂРєР°",
+    eyebrow: "Р±С‹СЃС‚СЂР°СЏ РѕС‚СЂР°Р±РѕС‚РєР°",
   },
   mix: {
-    title: "Микс",
-    hint: "Разные правила в формате слово = буква",
-    eyebrow: "перемешанные орфограммы",
+    title: "РњРёРєСЃ",
+    hint: "Р Р°Р·РЅС‹Рµ РїСЂР°РІРёР»Р° РІ С„РѕСЂРјР°С‚Рµ СЃР»РѕРІРѕ = Р±СѓРєРІР°",
+    eyebrow: "РїРµСЂРµРјРµС€Р°РЅРЅС‹Рµ РѕСЂС„РѕРіСЂР°РјРјС‹",
   },
   line: {
-    title: "Строка",
-    hint: "Ряд с одной и той же буквой",
-    eyebrow: "формат задания 9",
+    title: "РЎС‚СЂРѕРєР°",
+    hint: "Р СЏРґ СЃ РѕРґРЅРѕР№ Рё С‚РѕР№ Р¶Рµ Р±СѓРєРІРѕР№",
+    eyebrow: "С„РѕСЂРјР°С‚ Р·Р°РґР°РЅРёСЏ 9",
   },
   errors: {
-    title: "Копилка ошибок",
-    hint: "Слова, где уже были промахи",
-    eyebrow: "личное повторение",
+    title: "РљРѕРїРёР»РєР° РѕС€РёР±РѕРє",
+    hint: "РЎР»РѕРІР°, РіРґРµ СѓР¶Рµ Р±С‹Р»Рё РїСЂРѕРјР°С…Рё",
+    eyebrow: "Р»РёС‡РЅРѕРµ РїРѕРІС‚РѕСЂРµРЅРёРµ",
   },
 };
 
@@ -75,21 +75,11 @@ function activityApi(path) {
 function legalLinks(className = "legal-links") {
   return `
     <nav class="${className}">
-      <a href="/privacy" data-doc-link="privacy">Политика обработки персональных данных</a>
-      <a href="/consent" data-doc-link="consent">Согласие на обработку персональных данных</a>
+      <a href="/privacy">Политика обработки персональных данных</a>
+      <a href="/consent">Согласие на обработку персональных данных</a>
+      <a href="/terms">Пользовательское соглашение</a>
     </nav>
   `;
-}
-
-function bindDocumentLinks(root = document) {
-  root.querySelectorAll("[data-doc-link]").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const type = link.dataset.docLink;
-      history.pushState(null, "", type === "privacy" ? "/privacy" : "/consent");
-      renderDocumentPage(type);
-    });
-  });
 }
 
 function api(path, options = {}) {
@@ -97,7 +87,7 @@ function api(path, options = {}) {
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   return fetch(path, { ...options, headers }).then(async (response) => {
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Ошибка запроса");
+    if (!response.ok) throw new Error(data.error || "РћС€РёР±РєР° Р·Р°РїСЂРѕСЃР°");
     return data;
   });
 }
@@ -108,8 +98,8 @@ async function downloadRequest(path, filename, options = {}) {
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   const response = await fetch(path, { ...options, headers });
   if (!response.ok) {
-    const data = await response.json().catch(() => ({ error: "Ошибка скачивания" }));
-    throw new Error(data.error || "Ошибка скачивания");
+    const data = await response.json().catch(() => ({ error: "РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ" }));
+    throw new Error(data.error || "РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ");
   }
   const blob = await response.blob();
   const link = document.createElement("a");
@@ -155,7 +145,7 @@ function renderTopActions() {
   if (state.currentActivity) {
     const catalog = document.createElement("button");
     catalog.className = "ghost-button";
-    catalog.textContent = "Каталог";
+    catalog.textContent = "РљР°С‚Р°Р»РѕРі";
     catalog.addEventListener("click", () => {
       state.currentActivity = null;
       history.pushState(null, "", "/");
@@ -165,11 +155,11 @@ function renderTopActions() {
   }
   const role = document.createElement("span");
   role.className = "muted";
-  const roleNames = { admin: "администратор", teacher: "учитель", student: "ученик" };
-  role.textContent = `${state.user.display_name} · ${roleNames[state.user.role] || state.user.role}`;
+  const roleNames = { admin: "Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ", teacher: "СѓС‡РёС‚РµР»СЊ", student: "СѓС‡РµРЅРёРє" };
+  role.textContent = `${state.user.display_name} В· ${roleNames[state.user.role] || state.user.role}`;
   const logout = document.createElement("button");
   logout.className = "ghost-button";
-  logout.textContent = "Выйти";
+  logout.textContent = "Р’С‹Р№С‚Рё";
   logout.addEventListener("click", async () => {
     await api("/api/logout", { method: "POST", body: "{}" }).catch(() => null);
     localStorage.removeItem("ege_token");
@@ -181,7 +171,7 @@ function renderTopActions() {
   if (state.user.role === "admin") {
     const admin = document.createElement("button");
     admin.className = "ghost-button";
-    admin.textContent = "Админ";
+    admin.textContent = "РђРґРјРёРЅ";
     admin.addEventListener("click", showAdmin);
     topActions.append(admin);
   }
@@ -194,36 +184,36 @@ function renderLogin() {
   view.replaceChildren(template);
   document.querySelector("#loginForm").insertAdjacentHTML("afterend", `
     <form class="login-panel register-panel" id="registerForm">
-      <h2>Регистрация</h2>
-      <div class="role-choice" aria-label="Роль">
+      <h2>Р РµРіРёСЃС‚СЂР°С†РёСЏ</h2>
+      <div class="role-choice" aria-label="Р РѕР»СЊ">
         <label>
           <input type="radio" name="role" value="student" checked />
-          <span>Ученик</span>
+          <span>РЈС‡РµРЅРёРє</span>
         </label>
         <label>
           <input type="radio" name="role" value="teacher" />
-          <span>Учитель</span>
+          <span>РЈС‡РёС‚РµР»СЊ</span>
         </label>
       </div>
       <label>
-        Имя
+        РРјСЏ
         <input name="display_name" autocomplete="name" />
       </label>
       <label>
-        Логин
+        Р›РѕРіРёРЅ
         <input name="username" autocomplete="username" />
       </label>
       <label>
-        Пароль
+        РџР°СЂРѕР»СЊ
         <input name="password" type="password" autocomplete="new-password" />
       </label>
       <label id="teacherCodeLabel">
-        Код учителя
-        <input name="teacher_code" placeholder="например, TEACHER-2026" />
+        РљРѕРґ СѓС‡РёС‚РµР»СЏ
+        <input name="teacher_code" placeholder="РЅР°РїСЂРёРјРµСЂ, TEACHER-2026" />
       </label>
-      <button class="secondary-button" type="submit">Создать аккаунт</button>
-      <p class="muted">Ученики регистрируются только по коду учителя.</p>
-      <p class="muted warning-note">Запишите пароль и логин: платформа не собирает ПД, поэтому восстановление пароля будет невозможным в случае утери.</p>
+      <button class="secondary-button" type="submit">РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚</button>
+      <p class="muted">РЈС‡РµРЅРёРєРё СЂРµРіРёСЃС‚СЂРёСЂСѓСЋС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕ РєРѕРґСѓ СѓС‡РёС‚РµР»СЏ.</p>
+      <p class="muted warning-note">Р—Р°РїРёС€РёС‚Рµ РїР°СЂРѕР»СЊ Рё Р»РѕРіРёРЅ: РїР»Р°С‚С„РѕСЂРјР° РЅРµ СЃРѕР±РёСЂР°РµС‚ РџР”, РїРѕСЌС‚РѕРјСѓ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РїР°СЂРѕР»СЏ Р±СѓРґРµС‚ РЅРµРІРѕР·РјРѕР¶РЅС‹Рј РІ СЃР»СѓС‡Р°Рµ СѓС‚РµСЂРё.</p>
       <p class="error" id="registerError"></p>
     </form>
   `);
@@ -231,16 +221,16 @@ function renderLogin() {
     <label class="consent-check">
       <input name="consent_accepted" type="checkbox" />
       <span>
-        Я принимаю <a href="/privacy" data-doc-link="privacy">Политику обработки персональных данных</a>
-        и даю <a href="/consent" data-doc-link="consent">согласие на обработку персональных данных</a>.
+      <a href="/privacy">Политика обработки персональных данных</a>
+      <a href="/consent">Согласие на обработку персональных данных</a>
+      <a href="/terms">Пользовательское соглашение</a>
       </span>
     </label>
   `);
   view.insertAdjacentHTML("beforeend", legalLinks("legal-links login-legal"));
-  bindDocumentLinks(view);
   document.querySelector("#loginForm button").insertAdjacentHTML(
     "afterend",
-    `<button class="ghost-button" id="forgotPasswordLink" type="button">Забыли пароль?</button>`
+    `<button class="ghost-button" id="forgotPasswordLink" type="button">Р—Р°Р±С‹Р»Рё РїР°СЂРѕР»СЊ?</button>`
   );
   document.querySelector("#forgotPasswordLink").addEventListener("click", () => {
     history.pushState(null, "", "/forgot-password");
@@ -322,13 +312,13 @@ function renderForgotPassword() {
   view.innerHTML = `
     <section class="auth-page">
       <form class="login-panel auth-panel" id="forgotPasswordForm">
-        <h2>Восстановление пароля</h2>
+        <h2>Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РїР°СЂРѕР»СЏ</h2>
         <label>
           Email
           <input name="email" autocomplete="email" />
         </label>
-        <button class="primary-button" type="submit">Отправить ссылку</button>
-        <button class="ghost-button" id="backToLogin" type="button">Назад ко входу</button>
+        <button class="primary-button" type="submit">РћС‚РїСЂР°РІРёС‚СЊ СЃСЃС‹Р»РєСѓ</button>
+        <button class="ghost-button" id="backToLogin" type="button">РќР°Р·Р°Рґ РєРѕ РІС…РѕРґСѓ</button>
         <p class="muted" id="forgotPasswordMessage"></p>
         <p class="error" id="forgotPasswordError"></p>
       </form>
@@ -363,16 +353,16 @@ function renderResetPassword() {
   view.innerHTML = `
     <section class="auth-page">
       <form class="login-panel auth-panel" id="resetPasswordForm">
-        <h2>Новый пароль</h2>
+        <h2>РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ</h2>
         <label>
-          Новый пароль
+          РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ
           <input name="password" type="password" autocomplete="new-password" />
         </label>
         <label>
-          Повтор пароля
+          РџРѕРІС‚РѕСЂ РїР°СЂРѕР»СЏ
           <input name="password_repeat" type="password" autocomplete="new-password" />
         </label>
-        <button class="primary-button" type="submit">Сохранить пароль</button>
+        <button class="primary-button" type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ РїР°СЂРѕР»СЊ</button>
         <p class="muted" id="resetPasswordMessage"></p>
         <p class="error" id="resetPasswordError"></p>
       </form>
@@ -388,7 +378,7 @@ function renderResetPassword() {
     message.textContent = "";
     error.textContent = "";
     if (password !== repeat) {
-      error.textContent = "Пароли не совпадают.";
+      error.textContent = "РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°РґР°СЋС‚.";
       return;
     }
     try {
@@ -396,7 +386,7 @@ function renderResetPassword() {
         method: "POST",
         body: JSON.stringify({ token, password }),
       });
-      message.textContent = "Пароль изменен. Теперь можно войти.";
+      message.textContent = "РџР°СЂРѕР»СЊ РёР·РјРµРЅРµРЅ. РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РІРѕР№С‚Рё.";
       setTimeout(() => {
         history.pushState(null, "", "/login");
         renderLogin();
@@ -409,11 +399,16 @@ function renderResetPassword() {
 
 async function renderDocumentPage(type) {
   renderTopActions();
-  const endpoint = type === "privacy" ? "/api/documents/privacy" : "/api/documents/consent";
+  const endpoints = {
+    privacy: "/api/documents/privacy",
+    consent: "/api/documents/consent",
+    terms: "/api/documents/terms",
+  };
+  const endpoint = endpoints[type] || endpoints.privacy;
   view.innerHTML = `
     <section class="document-page">
       <article class="document-panel">
-        <p class="muted">Загрузка документа...</p>
+        <p class="muted">Р—Р°РіСЂСѓР·РєР° РґРѕРєСѓРјРµРЅС‚Р°...</p>
       </article>
     </section>
   `;
@@ -423,16 +418,16 @@ async function renderDocumentPage(type) {
     panel.innerHTML = `
       <div class="panel-head">
         <div>
-          <p class="eyebrow">версия ${documentData.version}</p>
+          <p class="eyebrow">РІРµСЂСЃРёСЏ ${documentData.version}</p>
           <h2>${documentData.title}</h2>
         </div>
-        <button class="secondary-button" id="backFromDocument" type="button">Назад</button>
+        <button class="secondary-button" id="backFromDocument" type="button">РќР°Р·Р°Рґ</button>
       </div>
-      <p class="muted">Дата редакции: ${new Date(documentData.updated_at).toLocaleDateString()}</p>
+      <p class="muted">Р”Р°С‚Р° СЂРµРґР°РєС†РёРё: ${new Date(documentData.updated_at).toLocaleDateString()}</p>
       <div class="document-content">
         ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${line}</p>` : "").join("")}
       </div>
-      <p class="muted">Текст является шаблоном и должен быть заменен на финальный юридически выверенный текст перед запуском регистрации реальных пользователей.</p>
+      <p class="muted">РўРµРєСЃС‚ СЏРІР»СЏРµС‚СЃСЏ С€Р°Р±Р»РѕРЅРѕРј Рё РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ Р·Р°РјРµРЅРµРЅ РЅР° С„РёРЅР°Р»СЊРЅС‹Р№ СЋСЂРёРґРёС‡РµСЃРєРё РІС‹РІРµСЂРµРЅРЅС‹Р№ С‚РµРєСЃС‚ РїРµСЂРµРґ Р·Р°РїСѓСЃРєРѕРј СЂРµРіРёСЃС‚СЂР°С†РёРё СЂРµР°Р»СЊРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.</p>
       ${legalLinks()}
     `;
     panel.querySelector("#backFromDocument").addEventListener("click", () => {
@@ -446,7 +441,6 @@ async function renderDocumentPage(type) {
         renderLogin();
       }
     });
-    bindDocumentLinks(panel);
   } catch (err) {
     panel.innerHTML = `<p class="error">${err.message}</p>`;
   }
@@ -461,29 +455,28 @@ async function renderConsentGate() {
   view.innerHTML = `
     <section class="auth-page">
       <form class="login-panel consent-panel" id="requiredConsentForm">
-        <p class="eyebrow">персональные данные</p>
-        <h2>Перед началом работы ознакомьтесь с документами</h2>
-        <p class="muted">Текущая версия согласия: ${required.document_version || ""}. Версия политики: ${required.privacy_policy_version || ""}.</p>
+        <p class="eyebrow">РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ</p>
+        <h2>РџРµСЂРµРґ РЅР°С‡Р°Р»РѕРј СЂР°Р±РѕС‚С‹ РѕР·РЅР°РєРѕРјСЊС‚РµСЃСЊ СЃ РґРѕРєСѓРјРµРЅС‚Р°РјРё</h2>
+        <p class="muted">РўРµРєСѓС‰Р°СЏ РІРµСЂСЃРёСЏ СЃРѕРіР»Р°СЃРёСЏ: ${required.document_version || ""}. Р’РµСЂСЃРёСЏ РїРѕР»РёС‚РёРєРё: ${required.privacy_policy_version || ""}.</p>
         ${legalLinks("legal-links consent-doc-links")}
         <label class="consent-check">
           <input name="consent_accepted" type="checkbox" />
           <span>
-            Я ознакомился/ознакомилась с Политикой обработки персональных данных и даю согласие на обработку персональных данных.
+            РЇ РѕР·РЅР°РєРѕРјРёР»СЃСЏ/РѕР·РЅР°РєРѕРјРёР»Р°СЃСЊ СЃ РџРѕР»РёС‚РёРєРѕР№ РѕР±СЂР°Р±РѕС‚РєРё РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С… Рё РґР°СЋ СЃРѕРіР»Р°СЃРёРµ РЅР° РѕР±СЂР°Р±РѕС‚РєСѓ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С….
           </span>
         </label>
-        <button class="primary-button" type="submit">Продолжить</button>
+        <button class="primary-button" type="submit">РџСЂРѕРґРѕР»Р¶РёС‚СЊ</button>
         <p class="error" id="requiredConsentError"></p>
       </form>
     </section>
   `;
-  bindDocumentLinks(view);
   view.querySelector("#requiredConsentForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const error = view.querySelector("#requiredConsentError");
     error.textContent = "";
     if (form.get("consent_accepted") !== "on") {
-      error.textContent = "Для продолжения необходимо принять документы.";
+      error.textContent = "Р”Р»СЏ РїСЂРѕРґРѕР»Р¶РµРЅРёСЏ РЅРµРѕР±С…РѕРґРёРјРѕ РїСЂРёРЅСЏС‚СЊ РґРѕРєСѓРјРµРЅС‚С‹.";
       return;
     }
     try {
@@ -539,6 +532,10 @@ async function restoreSession() {
   }
   if (window.location.pathname === "/consent") {
     await renderDocumentPage("consent");
+    return;
+  }
+  if (window.location.pathname === "/terms") {
+    await renderDocumentPage("terms");
     return;
   }
   if (!state.token) {
@@ -603,12 +600,12 @@ function renderCatalog() {
       <article class="activity-card">
         <div class="activity-mark">${meta.mark || "A"}</div>
         <div>
-          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложение" : "учебный модуль"}</p>
+          <p class="eyebrow">${activity.kind === "mini" ? "РјРёРЅРё-РїСЂРёР»РѕР¶РµРЅРёРµ" : "СѓС‡РµР±РЅС‹Р№ РјРѕРґСѓР»СЊ"}</p>
           <h2>${activity.title || meta.title}</h2>
           <p>${activity.description || meta.description}</p>
         </div>
         <button class="primary-button open-activity" data-activity="${activity.slug}" type="button">
-          ${activity.button || "Открыть"}
+          ${activity.button || "РћС‚РєСЂС‹С‚СЊ"}
         </button>
       </article>
     `;
@@ -617,8 +614,8 @@ function renderCatalog() {
     <section class="catalog-page">
       <div class="catalog-head">
         <div>
-          <p class="eyebrow">каталог активностей</p>
-          <h2>Выберите тренажер</h2>
+          <p class="eyebrow">РєР°С‚Р°Р»РѕРі Р°РєС‚РёРІРЅРѕСЃС‚РµР№</p>
+          <h2>Р’С‹Р±РµСЂРёС‚Рµ С‚СЂРµРЅР°Р¶РµСЂ</h2>
         </div>
         <div class="catalog-user">
           <strong>${state.user.display_name}</strong>
@@ -626,11 +623,10 @@ function renderCatalog() {
         </div>
       </div>
       <div class="activity-grid">${cards}</div>
-      ${state.user.role === "teacher" ? `<div class="catalog-actions"><button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button></div>` : ""}
+      ${state.user.role === "teacher" ? `<div class="catalog-actions"><button class="secondary-button" id="teacherCabinet" type="button">РљР°Р±РёРЅРµС‚ СѓС‡РёС‚РµР»СЏ</button></div>` : ""}
     </section>
   `;
   view.querySelector(".catalog-page").insertAdjacentHTML("beforeend", legalLinks("legal-links catalog-legal"));
-  bindDocumentLinks(view);
   view.querySelectorAll(".open-activity").forEach((button) => {
     button.addEventListener("click", () => loadActivity(button.dataset.activity));
   });
@@ -646,12 +642,12 @@ function renderMiniActivity() {
     <section class="mini-page">
       <div class="panel-head">
         <div>
-          <p class="eyebrow">HTML-мини-приложение</p>
-          <h2>Демо-активность</h2>
+          <p class="eyebrow">HTML-РјРёРЅРё-РїСЂРёР»РѕР¶РµРЅРёРµ</p>
+          <h2>Р”РµРјРѕ-Р°РєС‚РёРІРЅРѕСЃС‚СЊ</h2>
         </div>
-        <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
+        <button class="secondary-button" id="backToCatalogFromMini" type="button">РќР°Р·Р°Рґ РІ РєР°С‚Р°Р»РѕРі</button>
       </div>
-      <iframe class="mini-frame" title="Демо-мини-приложение" srcdoc="
+      <iframe class="mini-frame" title="Р”РµРјРѕ-РјРёРЅРё-РїСЂРёР»РѕР¶РµРЅРёРµ" srcdoc="
         <style>
           body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f7fbff;color:#202124;display:grid;place-items:center;min-height:100vh}
           main{width:min(720px,calc(100vw - 32px));padding:28px;border:1px solid #d8dee8;border-radius:8px;background:white}
@@ -659,9 +655,9 @@ function renderMiniActivity() {
           button{height:42px;border:0;border-radius:7px;background:#2f7d5c;color:white;font-weight:700;padding:0 16px}
         </style>
         <main>
-          <h1>Мини-приложение подключено</h1>
-          <p>Эта страница запускается внутри общей платформенной обертки и готова для замены на игру, карточки или одностраничный тренажер.</p>
-          <button onclick='document.querySelector(&quot;output&quot;).textContent = &quot;Готово&quot;'>Проверить</button>
+          <h1>РњРёРЅРё-РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕРґРєР»СЋС‡РµРЅРѕ</h1>
+          <p>Р­С‚Р° СЃС‚СЂР°РЅРёС†Р° Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РІРЅСѓС‚СЂРё РѕР±С‰РµР№ РїР»Р°С‚С„РѕСЂРјРµРЅРЅРѕР№ РѕР±РµСЂС‚РєРё Рё РіРѕС‚РѕРІР° РґР»СЏ Р·Р°РјРµРЅС‹ РЅР° РёРіСЂСѓ, РєР°СЂС‚РѕС‡РєРё РёР»Рё РѕРґРЅРѕСЃС‚СЂР°РЅРёС‡РЅС‹Р№ С‚СЂРµРЅР°Р¶РµСЂ.</p>
+          <button onclick='document.querySelector(&quot;output&quot;).textContent = &quot;Р“РѕС‚РѕРІРѕ&quot;'>РџСЂРѕРІРµСЂРёС‚СЊ</button>
           <output style='display:block;margin-top:14px'></output>
         </main>
       "></iframe>
@@ -677,12 +673,12 @@ function renderMiniActivity() {
 function renderSidebar() {
   const activity = activityMeta[state.currentActivity] || activityMeta.ege9;
   const teacherCode = state.user.role === "teacher" && state.user.teacher_code
-    ? `<span class="muted">Код для учеников: <b>${state.user.teacher_code}</b></span>`
+    ? `<span class="muted">РљРѕРґ РґР»СЏ СѓС‡РµРЅРёРєРѕРІ: <b>${state.user.teacher_code}</b></span>`
     : "";
   document.querySelector("#userBlock").innerHTML = `
     <span class="activity-badge">${activity.shortTitle}</span>
     <strong>${state.user.display_name}</strong>
-    <span class="muted">${state.user.role === "admin" ? "Кабинет администратора" : state.user.role === "teacher" ? "Кабинет учителя" : "Кабинет ученика"}</span>
+    <span class="muted">${state.user.role === "admin" ? "РљР°Р±РёРЅРµС‚ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°" : state.user.role === "teacher" ? "РљР°Р±РёРЅРµС‚ СѓС‡РёС‚РµР»СЏ" : "РљР°Р±РёРЅРµС‚ СѓС‡РµРЅРёРєР°"}</span>
     ${teacherCode}
   `;
   const list = document.querySelector("#modeList");
@@ -701,8 +697,8 @@ function renderSidebar() {
     list.append(button);
   });
   document.querySelector("#quickStats").innerHTML = `
-    <div class="stat"><b>${state.bootstrap.word_count}</b><span>слов в базе</span></div>
-    <div class="stat"><b>${Object.values(state.bootstrap.rules).flat().length}</b><span>подправила</span></div>
+    <div class="stat"><b>${state.bootstrap.word_count}</b><span>СЃР»РѕРІ РІ Р±Р°Р·Рµ</span></div>
+    <div class="stat"><b>${Object.values(state.bootstrap.rules).flat().length}</b><span>РїРѕРґРїСЂР°РІРёР»Р°</span></div>
   `;
 }
 
@@ -727,28 +723,28 @@ function renderSetup() {
   const ruleSelector = ["rule", "word_letter"].includes(state.mode) ? renderRuleSelector() : "";
   const errorModeSelector = state.mode === "errors" ? `
     <label>
-      Режим в копилке
+      Р РµР¶РёРј РІ РєРѕРїРёР»РєРµ
       <select id="errorTrainingMode">
-        <option value="cards" ${state.errorTrainingMode === "cards" ? "selected" : ""}>Карточки с вариантами</option>
-        <option value="word_letter" ${state.errorTrainingMode === "word_letter" ? "selected" : ""}>Слово - буква</option>
+        <option value="cards" ${state.errorTrainingMode === "cards" ? "selected" : ""}>РљР°СЂС‚РѕС‡РєРё СЃ РІР°СЂРёР°РЅС‚Р°РјРё</option>
+        <option value="word_letter" ${state.errorTrainingMode === "word_letter" ? "selected" : ""}>РЎР»РѕРІРѕ - Р±СѓРєРІР°</option>
       </select>
     </label>
   ` : "";
   setup.innerHTML = `
     <div class="setup-grid">
       <label>
-        Количество вопросов: <b id="questionCountValue">${state.questionCount}</b>
+        РљРѕР»РёС‡РµСЃС‚РІРѕ РІРѕРїСЂРѕСЃРѕРІ: <b id="questionCountValue">${state.questionCount}</b>
         <input id="questionCount" type="range" min="1" max="30" value="${state.questionCount}" />
       </label>
-      <button class="primary-button" id="startPractice" type="button">Начать</button>
+      <button class="primary-button" id="startPractice" type="button">РќР°С‡Р°С‚СЊ</button>
     </div>
     ${errorModeSelector}
     <label class="manual-toggle">
       <input id="manualInput" type="checkbox" ${state.manualInput || state.mode === "word_letter" ? "checked" : ""} ${state.mode === "word_letter" ? "disabled" : ""} />
-      <span>Самостоятельно вводить ответ с клавиатуры</span>
+      <span>РЎР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ РІРІРѕРґРёС‚СЊ РѕС‚РІРµС‚ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹</span>
     </label>
     <div class="practice-actions setup-actions">
-      <button class="ghost-button" id="backToMenu" type="button">Назад к меню</button>
+      <button class="ghost-button" id="backToMenu" type="button">РќР°Р·Р°Рґ Рє РјРµРЅСЋ</button>
     </div>
     ${ruleSelector}
   `;
@@ -822,14 +818,14 @@ function renderRuleSelector() {
         <div class="rule-check-list">
           <label class="rule-check rule-check-all">
             <input id="allRules" type="checkbox" ${allSelected ? "checked" : ""} />
-            <span>Все подгруппы внутри орфограммы</span>
+            <span>Р’СЃРµ РїРѕРґРіСЂСѓРїРїС‹ РІРЅСѓС‚СЂРё РѕСЂС„РѕРіСЂР°РјРјС‹</span>
             <b>${rules.reduce((sum, rule) => sum + rule.count, 0)}</b>
           </label>
           ${ruleOptions}
         </div>
         <div class="selected-rule">
           <b>${selectedCount}</b>
-          <span>слов в выбранных подгруппах</span>
+          <span>СЃР»РѕРІ РІ РІС‹Р±СЂР°РЅРЅС‹С… РїРѕРґРіСЂСѓРїРїР°С…</span>
         </div>
       </div>
     </section>
@@ -864,7 +860,7 @@ async function startPractice() {
 }
 
 function normalizeLetter(value) {
-  return String(value || "").trim().toLowerCase().replace("ё", "ё").slice(0, 1);
+  return String(value || "").trim().toLowerCase().replace("РµМ€", "С‘").slice(0, 1);
 }
 
 function renderLiveQuestion(feedback = null) {
@@ -884,19 +880,19 @@ function renderLiveQuestion(feedback = null) {
   practice.innerHTML = `
     <article class="question live-question">
       <div class="question-head">
-        <span>Слово ${state.currentQuestionIndex + 1} из ${state.currentSession.questions.length}</span>
+        <span>РЎР»РѕРІРѕ ${state.currentQuestionIndex + 1} РёР· ${state.currentSession.questions.length}</span>
         <span>${question.rule_name}</span>
       </div>
       <div class="word-prompt">${question.prompt}</div>
       <div class="letter-input-row">
-        <input id="liveAnswer" maxlength="1" autocomplete="off" inputmode="text" aria-label="Введите букву" />
-        <button class="primary-button" id="checkLiveAnswer" type="button">Проверить</button>
+        <input id="liveAnswer" maxlength="1" autocomplete="off" inputmode="text" aria-label="Р’РІРµРґРёС‚Рµ Р±СѓРєРІСѓ" />
+        <button class="primary-button" id="checkLiveAnswer" type="button">РџСЂРѕРІРµСЂРёС‚СЊ</button>
       </div>
       <div id="liveFeedback">${feedback || ""}</div>
     </article>
     <div class="practice-actions">
-      <button class="ghost-button" id="backPractice" type="button">Назад</button>
-      <button class="ghost-button" id="cancelPractice" type="button">Сбросить</button>
+      <button class="ghost-button" id="backPractice" type="button">РќР°Р·Р°Рґ</button>
+      <button class="ghost-button" id="cancelPractice" type="button">РЎР±СЂРѕСЃРёС‚СЊ</button>
     </div>
   `;
   const input = practice.querySelector("#liveAnswer");
@@ -923,10 +919,10 @@ function renderLiveQuestion(feedback = null) {
     }
     renderLiveQuestion(`
       <div class="result-item bad">
-        <b>Неверно. Правильно: ${item.correct_answer}</b>
+        <b>РќРµРІРµСЂРЅРѕ. РџСЂР°РІРёР»СЊРЅРѕ: ${item.correct_answer}</b>
         <p>${item.correct_spelling || ""}</p>
         <p class="muted">${item.explanation || ""}</p>
-        <button class="secondary-button" id="nextAfterRule" type="button">Дальше</button>
+        <button class="secondary-button" id="nextAfterRule" type="button">Р”Р°Р»СЊС€Рµ</button>
       </div>
     `);
     document.querySelector("#liveAnswer").disabled = true;
@@ -956,9 +952,9 @@ function renderQuestions() {
       ${state.currentSession.questions.map(renderQuestion).join("")}
     </div>
     <div class="practice-actions">
-      <button class="ghost-button" id="backPractice" type="button">Назад</button>
-      <button class="ghost-button" id="cancelPractice" type="button">Сбросить</button>
-      <button class="primary-button" id="submitPractice" type="button">Проверить</button>
+      <button class="ghost-button" id="backPractice" type="button">РќР°Р·Р°Рґ</button>
+      <button class="ghost-button" id="cancelPractice" type="button">РЎР±СЂРѕСЃРёС‚СЊ</button>
+      <button class="primary-button" id="submitPractice" type="button">РџСЂРѕРІРµСЂРёС‚СЊ</button>
     </div>
   `;
   practice.querySelector("#backPractice").addEventListener("click", backToMenu);
@@ -994,7 +990,7 @@ function renderQuestion(question, index) {
     if (state.manualInput) {
       return `
         <article class="question">
-          <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
+          <div class="question-head"><span>Р’РѕРїСЂРѕСЃ ${index + 1}</span><span>${question.rule_name}</span></div>
           <div>${question.prompt}</div>
           ${question.rows.map((row, rowIndex) => `
             <div class="line-row static-line-row">
@@ -1003,8 +999,8 @@ function renderQuestion(question, index) {
             </div>
           `).join("")}
           <label class="answer-input-label">
-            Ответ вручную
-            <input data-manual-answer="${question.question_id}" data-kind="line" placeholder="например, 135" value="${state.answers[question.question_id] || ""}" />
+            РћС‚РІРµС‚ РІСЂСѓС‡РЅСѓСЋ
+            <input data-manual-answer="${question.question_id}" data-kind="line" placeholder="РЅР°РїСЂРёРјРµСЂ, 135" value="${state.answers[question.question_id] || ""}" />
           </label>
         </article>
       `;
@@ -1023,7 +1019,7 @@ function renderQuestion(question, index) {
       .join("");
     return `
       <article class="question">
-        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
+        <div class="question-head"><span>Р’РѕРїСЂРѕСЃ ${index + 1}</span><span>${question.rule_name}</span></div>
         <div>${question.prompt}</div>
         ${rows}
       </article>
@@ -1038,10 +1034,10 @@ function renderQuestion(question, index) {
   if (state.manualInput) {
     return `
       <article class="question">
-        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
+        <div class="question-head"><span>Р’РѕРїСЂРѕСЃ ${index + 1}</span><span>${question.rule_name}</span></div>
         <div class="word-prompt">${question.prompt}</div>
         <label class="answer-input-label">
-          Введите букву
+          Р’РІРµРґРёС‚Рµ Р±СѓРєРІСѓ
           <input data-manual-answer="${question.question_id}" maxlength="1" autocomplete="off" value="${state.answers[question.question_id] || ""}" />
         </label>
       </article>
@@ -1049,7 +1045,7 @@ function renderQuestion(question, index) {
   }
   return `
     <article class="question">
-      <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
+      <div class="question-head"><span>Р’РѕРїСЂРѕСЃ ${index + 1}</span><span>${question.rule_name}</span></div>
       <div class="word-prompt">${question.prompt}</div>
       <div class="choice-row">${choices}</div>
     </article>
@@ -1060,7 +1056,7 @@ async function submitPractice() {
   const total = state.currentSession.questions.length;
   const answered = state.currentSession.questions.every((question) => String(state.answers[question.question_id] || "").trim());
   if (Object.keys(state.answers).length < total || !answered) {
-    alert("Ответьте на все вопросы перед проверкой.");
+    alert("РћС‚РІРµС‚СЊС‚Рµ РЅР° РІСЃРµ РІРѕРїСЂРѕСЃС‹ РїРµСЂРµРґ РїСЂРѕРІРµСЂРєРѕР№.");
     return;
   }
   const elapsed = Math.round((Date.now() - state.startedAt) / 1000);
@@ -1080,20 +1076,20 @@ function renderResults(data) {
   const result = document.querySelector("#resultView");
   result.classList.remove("hidden");
   result.innerHTML = `
-    <div class="stat"><b>${data.correct}/${data.total}</b><span>${pct(data.correct, data.total)} правильных ответов</span></div>
+    <div class="stat"><b>${data.correct}/${data.total}</b><span>${pct(data.correct, data.total)} РїСЂР°РІРёР»СЊРЅС‹С… РѕС‚РІРµС‚РѕРІ</span></div>
     <div class="result-list">
       ${data.results.map((item, index) => `
         <div class="result-item ${item.is_correct ? "ok" : "bad"}">
-          <b>${index + 1}. ${item.is_correct ? "Верно" : "Повторим еще"}</b>
-          <p>Ответ: ${item.given_answer || "—"} · правильно: ${item.correct_answer}</p>
+          <b>${index + 1}. ${item.is_correct ? "Р’РµСЂРЅРѕ" : "РџРѕРІС‚РѕСЂРёРј РµС‰Рµ"}</b>
+          <p>РћС‚РІРµС‚: ${item.given_answer || "вЂ”"} В· РїСЂР°РІРёР»СЊРЅРѕ: ${item.correct_answer}</p>
           <p>${item.correct_spelling || ""}</p>
           ${item.is_correct ? "" : `<p class="muted">${item.explanation || ""}</p>`}
         </div>
       `).join("")}
     </div>
     <div class="practice-actions">
-      <button class="ghost-button" type="button" id="backFromResults">Назад</button>
-      <button class="primary-button" type="button" id="againButton">Новая тренировка</button>
+      <button class="ghost-button" type="button" id="backFromResults">РќР°Р·Р°Рґ</button>
+      <button class="primary-button" type="button" id="againButton">РќРѕРІР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°</button>
     </div>
   `;
   result.querySelector("#backFromResults").addEventListener("click", backToMenu);
@@ -1102,19 +1098,19 @@ function renderResults(data) {
 
 function renderTeacherStudentCards(students) {
   if (!students.length) {
-    return `<p class="muted">Пока нет учеников, зарегистрированных по вашему коду.</p>`;
+    return `<p class="muted">РџРѕРєР° РЅРµС‚ СѓС‡РµРЅРёРєРѕРІ, Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… РїРѕ РІР°С€РµРјСѓ РєРѕРґСѓ.</p>`;
   }
   return students.map((student) => {
     const teacher = { consent_accepted: student.consent_accepted };
     const topErrors = student.top_errors.length
       ? student.top_errors.map((item) => `<li>${item.rule_name}: ${item.errors}</li>`).join("")
-      : "<li>ошибок пока нет</li>";
+      : "<li>РѕС€РёР±РѕРє РїРѕРєР° РЅРµС‚</li>";
     const pending = student.not_worked_out.length
       ? student.not_worked_out.slice(0, 5).map((item) => `<li>${item.correct_spelling || item.word}</li>`).join("")
-      : "<li>очередь повторения пуста</li>";
+      : "<li>РѕС‡РµСЂРµРґСЊ РїРѕРІС‚РѕСЂРµРЅРёСЏ РїСѓСЃС‚Р°</li>";
     const errorBank = student.error_bank.length
       ? student.error_bank.slice(0, 6).map((item) => `<li>${item.correct_spelling || item.word}</li>`).join("")
-      : "<li>копилка пуста</li>";
+      : "<li>РєРѕРїРёР»РєР° РїСѓСЃС‚Р°</li>";
     return `
       <article class="student-card">
         <div class="student-card-head">
@@ -1122,18 +1118,18 @@ function renderTeacherStudentCards(students) {
             <b>${student.display_name}</b>
             <span class="muted">@${student.username}</span>
           </div>
-          <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>точность</span></div>
+          <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>С‚РѕС‡РЅРѕСЃС‚СЊ</span></div>
         </div>
         <div class="teacher-metrics">
-          <div class="stat"><b>${teacher.consent_accepted ? "да" : "нет"}</b><span>согласие принято</span></div>
-          <div class="stat"><b>${student.total}</b><span>заданий решено</span></div>
-          <div class="stat"><b>${student.untouched}</b><span>слов не затронуто</span></div>
-          <div class="stat"><b>${student.error_bank.length}</b><span>в копилке ошибок</span></div>
+          <div class="stat"><b>${teacher.consent_accepted ? "РґР°" : "РЅРµС‚"}</b><span>СЃРѕРіР»Р°СЃРёРµ РїСЂРёРЅСЏС‚Рѕ</span></div>
+          <div class="stat"><b>${student.total}</b><span>Р·Р°РґР°РЅРёР№ СЂРµС€РµРЅРѕ</span></div>
+          <div class="stat"><b>${student.untouched}</b><span>СЃР»РѕРІ РЅРµ Р·Р°С‚СЂРѕРЅСѓС‚Рѕ</span></div>
+          <div class="stat"><b>${student.error_bank.length}</b><span>РІ РєРѕРїРёР»РєРµ РѕС€РёР±РѕРє</span></div>
         </div>
         <div class="student-lists">
-          <div><h4>Больше ошибок</h4><ul>${topErrors}</ul></div>
-          <div><h4>Не отработано</h4><ul>${pending}</ul></div>
-          <div><h4>Копилка</h4><ul>${errorBank}</ul></div>
+          <div><h4>Р‘РѕР»СЊС€Рµ РѕС€РёР±РѕРє</h4><ul>${topErrors}</ul></div>
+          <div><h4>РќРµ РѕС‚СЂР°Р±РѕС‚Р°РЅРѕ</h4><ul>${pending}</ul></div>
+          <div><h4>РљРѕРїРёР»РєР°</h4><ul>${errorBank}</ul></div>
         </div>
       </article>
     `;
@@ -1147,20 +1143,20 @@ async function renderTeacherDashboardPreview() {
   const panel = document.createElement("section");
   panel.className = "teacher-quick-panel";
   panel.id = "teacherQuickPanel";
-  panel.innerHTML = `<p class="muted">Загружаю быструю статистику...</p>`;
+  panel.innerHTML = `<p class="muted">Р—Р°РіСЂСѓР¶Р°СЋ Р±С‹СЃС‚СЂСѓСЋ СЃС‚Р°С‚РёСЃС‚РёРєСѓ...</p>`;
   main.insertBefore(panel, document.querySelector("#setupView"));
   try {
     const data = await api("/api/progress");
     panel.innerHTML = `
       <div class="section-head">
         <div>
-          <p class="eyebrow">быстрая статистика</p>
-          <h3>Ученики и зоны отработки</h3>
+          <p class="eyebrow">Р±С‹СЃС‚СЂР°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР°</p>
+          <h3>РЈС‡РµРЅРёРєРё Рё Р·РѕРЅС‹ РѕС‚СЂР°Р±РѕС‚РєРё</h3>
         </div>
         <div class="button-row">
-          <button class="secondary-button" id="makeTestButton" type="button">Составить тест</button>
-          <button class="secondary-button" id="downloadStudents" type="button">Скачать статистику</button>
-          <button class="secondary-button" id="openFullProgress" type="button">Полная активность</button>
+          <button class="secondary-button" id="makeTestButton" type="button">РЎРѕСЃС‚Р°РІРёС‚СЊ С‚РµСЃС‚</button>
+          <button class="secondary-button" id="downloadStudents" type="button">РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ</button>
+          <button class="secondary-button" id="openFullProgress" type="button">РџРѕР»РЅР°СЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ</button>
         </div>
       </div>
       <div class="student-card-grid">${renderTeacherStudentCards(data.teacher_dashboard.students)}</div>
@@ -1197,7 +1193,7 @@ async function showProgress() {
       <td>${row.category || ""}</td>
       <td>${row.rule_name || ""}</td>
       <td>${row.prompt}</td>
-      <td>${row.given_answer || "—"} / ${row.correct_answer}</td>
+      <td>${row.given_answer || "вЂ”"} / ${row.correct_answer}</td>
     </tr>
   `).join("");
   const recentRows = data.recent.map((row) => `
@@ -1208,43 +1204,43 @@ async function showProgress() {
       <td>${row.rule_name || ""}</td>
       <td>${row.prompt}</td>
       <td>${row.given_answer} / ${row.correct_answer}</td>
-      <td>${row.is_correct ? "да" : "нет"}</td>
+      <td>${row.is_correct ? "РґР°" : "РЅРµС‚"}</td>
     </tr>
   `).join("");
   const teacherOverview = state.user.role === "teacher" && data.teacher_dashboard
-    ? `<h3>Быстрая статистика учеников</h3><div class="student-card-grid">${renderTeacherStudentCards(data.teacher_dashboard.students)}</div>`
+    ? `<h3>Р‘С‹СЃС‚СЂР°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР° СѓС‡РµРЅРёРєРѕРІ</h3><div class="student-card-grid">${renderTeacherStudentCards(data.teacher_dashboard.students)}</div>`
     : "";
   backdrop.innerHTML = `
     <section class="progress-modal">
       <div class="panel-head">
-        <div><p class="eyebrow">прогресс</p><h2>${state.user.role === "teacher" ? "Журнал класса" : "Мои результаты"}</h2></div>
-        <button class="secondary-button" id="closeProgress" type="button">Закрыть</button>
+        <div><p class="eyebrow">РїСЂРѕРіСЂРµСЃСЃ</p><h2>${state.user.role === "teacher" ? "Р–СѓСЂРЅР°Р» РєР»Р°СЃСЃР°" : "РњРѕРё СЂРµР·СѓР»СЊС‚Р°С‚С‹"}</h2></div>
+        <button class="secondary-button" id="closeProgress" type="button">Р—Р°РєСЂС‹С‚СЊ</button>
       </div>
       <div class="progress-grid">
-        <div class="stat"><b>${summary.total}</b><span>ответов</span></div>
-        <div class="stat"><b>${summary.correct}</b><span>верно</span></div>
-        <div class="stat"><b>${pct(summary.correct, summary.total)}</b><span>точность</span></div>
+        <div class="stat"><b>${summary.total}</b><span>РѕС‚РІРµС‚РѕРІ</span></div>
+        <div class="stat"><b>${summary.correct}</b><span>РІРµСЂРЅРѕ</span></div>
+        <div class="stat"><b>${pct(summary.correct, summary.total)}</b><span>С‚РѕС‡РЅРѕСЃС‚СЊ</span></div>
       </div>
       ${state.user.role !== "teacher" ? `
         <div class="progress-grid">
-          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди повторения</span></div>
-          <div class="stat"><b>${data.error_bank_count}</b><span>слов в копилке ошибок</span></div>
+          <div class="stat"><b>${data.due_reviews}</b><span>СЃР»РѕРІ РІ РѕС‡РµСЂРµРґРё РїРѕРІС‚РѕСЂРµРЅРёСЏ</span></div>
+          <div class="stat"><b>${data.error_bank_count}</b><span>СЃР»РѕРІ РІ РєРѕРїРёР»РєРµ РѕС€РёР±РѕРє</span></div>
         </div>
       ` : ""}
       ${teacherOverview}
-      ${state.user.role === "teacher" ? `<div class="table-head"><h3>Ученики</h3>${downloadButton("students", "Скачать статистику")}</div><table class="table"><tr><th>Имя</th><th>Ответов</th><th>Точность</th></tr>${studentRows}</table>` : ""}
-      <div class="table-head"><h3>Группы</h3>${downloadButton("categories", "Скачать статистику")}</div>
-      <table class="table"><tr><th>Группа</th><th>Ответов</th><th>Точность</th></tr>${categoryRows}</table>
-      <div class="table-head"><h3>Подгруппы</h3>${downloadButton("rules", "Скачать статистику")}</div>
-      <table class="table"><tr><th>Группа</th><th>Подгруппа</th><th>Ответов</th><th>Точность</th></tr>${ruleRows}</table>
+      ${state.user.role === "teacher" ? `<div class="table-head"><h3>РЈС‡РµРЅРёРєРё</h3>${downloadButton("students", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div><table class="table"><tr><th>РРјСЏ</th><th>РћС‚РІРµС‚РѕРІ</th><th>РўРѕС‡РЅРѕСЃС‚СЊ</th></tr>${studentRows}</table>` : ""}
+      <div class="table-head"><h3>Р“СЂСѓРїРїС‹</h3>${downloadButton("categories", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div>
+      <table class="table"><tr><th>Р“СЂСѓРїРїР°</th><th>РћС‚РІРµС‚РѕРІ</th><th>РўРѕС‡РЅРѕСЃС‚СЊ</th></tr>${categoryRows}</table>
+      <div class="table-head"><h3>РџРѕРґРіСЂСѓРїРїС‹</h3>${downloadButton("rules", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div>
+      <table class="table"><tr><th>Р“СЂСѓРїРїР°</th><th>РџРѕРґРіСЂСѓРїРїР°</th><th>РћС‚РІРµС‚РѕРІ</th><th>РўРѕС‡РЅРѕСЃС‚СЊ</th></tr>${ruleRows}</table>
       <details class="activity-details">
-        <summary>Развернуть полную активность</summary>
-        <div class="table-head"><h3>Решено верно</h3>${downloadButton("correct", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Ученик</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th></tr>${answerListRows(data.correct_attempts)}</table>
-        <div class="table-head"><h3>Решено неверно</h3>${downloadButton("incorrect", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Ученик</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th></tr>${answerListRows(data.incorrect_attempts)}</table>
-        <div class="table-head"><h3>Последние попытки</h3>${downloadButton("recent", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Дата</th><th>Пользователь</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th><th>Верно</th></tr>${recentRows}</table>
+        <summary>Р Р°Р·РІРµСЂРЅСѓС‚СЊ РїРѕР»РЅСѓСЋ Р°РєС‚РёРІРЅРѕСЃС‚СЊ</summary>
+        <div class="table-head"><h3>Р РµС€РµРЅРѕ РІРµСЂРЅРѕ</h3>${downloadButton("correct", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div>
+        <table class="table"><tr><th>РЈС‡РµРЅРёРє</th><th>Р“СЂСѓРїРїР°</th><th>РџРѕРґРіСЂСѓРїРїР°</th><th>Р—Р°РґР°РЅРёРµ</th><th>РћС‚РІРµС‚</th></tr>${answerListRows(data.correct_attempts)}</table>
+        <div class="table-head"><h3>Р РµС€РµРЅРѕ РЅРµРІРµСЂРЅРѕ</h3>${downloadButton("incorrect", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div>
+        <table class="table"><tr><th>РЈС‡РµРЅРёРє</th><th>Р“СЂСѓРїРїР°</th><th>РџРѕРґРіСЂСѓРїРїР°</th><th>Р—Р°РґР°РЅРёРµ</th><th>РћС‚РІРµС‚</th></tr>${answerListRows(data.incorrect_attempts)}</table>
+        <div class="table-head"><h3>РџРѕСЃР»РµРґРЅРёРµ РїРѕРїС‹С‚РєРё</h3>${downloadButton("recent", "РЎРєР°С‡Р°С‚СЊ СЃС‚Р°С‚РёСЃС‚РёРєСѓ")}</div>
+        <table class="table"><tr><th>Р”Р°С‚Р°</th><th>РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ</th><th>Р“СЂСѓРїРїР°</th><th>РџРѕРґРіСЂСѓРїРїР°</th><th>Р—Р°РґР°РЅРёРµ</th><th>РћС‚РІРµС‚</th><th>Р’РµСЂРЅРѕ</th></tr>${recentRows}</table>
       </details>
     </section>
   `;
@@ -1262,32 +1258,32 @@ function showTestComposer() {
   backdrop.innerHTML = `
     <section class="progress-modal">
       <div class="panel-head">
-        <div><p class="eyebrow">тест</p><h2>Составить тест</h2></div>
-        <button class="secondary-button" id="closeTestComposer" type="button">Закрыть</button>
+        <div><p class="eyebrow">С‚РµСЃС‚</p><h2>РЎРѕСЃС‚Р°РІРёС‚СЊ С‚РµСЃС‚</h2></div>
+        <button class="secondary-button" id="closeTestComposer" type="button">Р—Р°РєСЂС‹С‚СЊ</button>
       </div>
       <div class="setup-grid">
         <label>
-          Режим
+          Р РµР¶РёРј
           <select id="testMode">
-            <option value="rule">Выбранные темы</option>
-            <option value="mix">Микс</option>
-            <option value="errors">Копилка ошибок</option>
-            <option value="line">Строки</option>
+            <option value="rule">Р’С‹Р±СЂР°РЅРЅС‹Рµ С‚РµРјС‹</option>
+            <option value="mix">РњРёРєСЃ</option>
+            <option value="errors">РљРѕРїРёР»РєР° РѕС€РёР±РѕРє</option>
+            <option value="line">РЎС‚СЂРѕРєРё</option>
           </select>
         </label>
         <label>
-          Количество заданий
+          РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РґР°РЅРёР№
           <input id="testCount" type="number" min="1" max="60" value="${state.questionCount}" />
         </label>
       </div>
       <label class="manual-toggle">
         <input id="testIncludeErrors" type="checkbox" />
-        <span>Добавить слова из копилки ошибок класса</span>
+        <span>Р”РѕР±Р°РІРёС‚СЊ СЃР»РѕРІР° РёР· РєРѕРїРёР»РєРё РѕС€РёР±РѕРє РєР»Р°СЃСЃР°</span>
       </label>
       <div id="testRuleSelector">${ruleSelector}</div>
       <p class="error" id="testComposerError"></p>
       <div class="practice-actions">
-        <button class="primary-button" id="downloadTest" type="button">Скачать .txt</button>
+        <button class="primary-button" id="downloadTest" type="button">РЎРєР°С‡Р°С‚СЊ .txt</button>
       </div>
     </section>
   `;
@@ -1341,55 +1337,55 @@ function showTestComposer() {
 function renderAdminContent(data, closeButton = "") {
   const platform = data.platform;
   const consentLabel = (row) => row.consent_accepted
-    ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
-    : "нет";
+    ? `РґР°${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
+    : "РЅРµС‚";
   const teacherCards = data.teachers.map((teacher) => {
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
           <td>${student.display_name}</td>
-          <td>${student.username}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
+          <td>${student.username}<br><span class="muted">СЃРѕРіР»Р°СЃРёРµ: ${consentLabel(student)}</span></td>
           <td>${student.attempts}</td>
           <td>${pct(student.correct, student.attempts)}</td>
           <td>
             <button class="ghost-button reset-password" data-user-id="${student.user_id}" data-username="${student.username}" type="button">
-              ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
+              ${student.password_reset_required ? "РћР¶РёРґР°РµС‚ РЅРѕРІС‹Р№ РїР°СЂРѕР»СЊ" : "РЎР±СЂРѕСЃРёС‚СЊ РїР°СЂРѕР»СЊ"}
             </button>
           </td>
         </tr>
       `).join("")
-      : `<tr><td colspan="5">Учеников пока нет</td></tr>`;
+      : `<tr><td colspan="5">РЈС‡РµРЅРёРєРѕРІ РїРѕРєР° РЅРµС‚</td></tr>`;
     return `
       <article class="admin-card">
         <div class="student-card-head">
           <div>
             <b>${teacher.display_name}</b>
-            <span class="muted">@${teacher.username} · код ${teacher.teacher_code || "не задан"}</span>
+            <span class="muted">@${teacher.username} В· РєРѕРґ ${teacher.teacher_code || "РЅРµ Р·Р°РґР°РЅ"}</span>
           </div>
           <div class="button-row">
-            <div class="mini-stat"><b>${teacher.students}</b><span>учеников</span></div>
+            <div class="mini-stat"><b>${teacher.students}</b><span>СѓС‡РµРЅРёРєРѕРІ</span></div>
             <button class="ghost-button reset-password" data-user-id="${teacher.user_id}" data-username="${teacher.username}" type="button">
-              ${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
+              ${teacher.password_reset_required ? "РћР¶РёРґР°РµС‚ РЅРѕРІС‹Р№ РїР°СЂРѕР»СЊ" : "РЎР±СЂРѕСЃРёС‚СЊ РїР°СЂРѕР»СЊ"}
             </button>
           </div>
         </div>
         <div class="teacher-metrics">
-          <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
-          <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>точность</span></div>
+          <div class="stat"><b>${teacher.attempts}</b><span>РѕС‚РІРµС‚РѕРІ</span></div>
+          <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>С‚РѕС‡РЅРѕСЃС‚СЊ</span></div>
         </div>
-        <table class="table"><tr><th>Ученик</th><th>Логин</th><th>Ответов</th><th>Точность</th><th>Пароль</th></tr>${students}</table>
+        <table class="table"><tr><th>РЈС‡РµРЅРёРє</th><th>Р›РѕРіРёРЅ</th><th>РћС‚РІРµС‚РѕРІ</th><th>РўРѕС‡РЅРѕСЃС‚СЊ</th><th>РџР°СЂРѕР»СЊ</th></tr>${students}</table>
       </article>
     `;
   }).join("");
   return `
     <div class="panel-head">
-      <div><p class="eyebrow">админ</p><h2>Обзор платформы</h2></div>
+      <div><p class="eyebrow">Р°РґРјРёРЅ</p><h2>РћР±Р·РѕСЂ РїР»Р°С‚С„РѕСЂРјС‹</h2></div>
       ${closeButton}
     </div>
     <div class="progress-grid">
-      <div class="stat"><b>${platform.total}</b><span>ответов всего</span></div>
-      <div class="stat"><b>${platform.active_users}</b><span>активных пользователей</span></div>
-      <div class="stat"><b>${pct(platform.correct, platform.total)}</b><span>общая точность</span></div>
+      <div class="stat"><b>${platform.total}</b><span>РѕС‚РІРµС‚РѕРІ РІСЃРµРіРѕ</span></div>
+      <div class="stat"><b>${platform.active_users}</b><span>Р°РєС‚РёРІРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№</span></div>
+      <div class="stat"><b>${pct(platform.correct, platform.total)}</b><span>РѕР±С‰Р°СЏ С‚РѕС‡РЅРѕСЃС‚СЊ</span></div>
     </div>
     <div class="admin-list">${teacherCards}</div>
   `;
@@ -1399,7 +1395,7 @@ async function renderAdminDashboard() {
   view.innerHTML = `
     <section class="workspace admin-workspace">
       <section class="main-panel admin-page">
-        <p class="muted">Загружаю админ-панель...</p>
+        <p class="muted">Р—Р°РіСЂСѓР¶Р°СЋ Р°РґРјРёРЅ-РїР°РЅРµР»СЊ...</p>
       </section>
     </section>
   `;
@@ -1419,7 +1415,7 @@ async function showAdmin() {
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
     <section class="progress-modal admin-modal">
-      ${renderAdminContent(data, `<button class="secondary-button" id="closeAdmin" type="button">Закрыть</button>`)}
+      ${renderAdminContent(data, `<button class="secondary-button" id="closeAdmin" type="button">Р—Р°РєСЂС‹С‚СЊ</button>`)}
     </section>
   `;
   document.body.append(backdrop);
@@ -1430,14 +1426,14 @@ async function showAdmin() {
 function bindAdminActions(root) {
   root.querySelectorAll(".reset-password").forEach((button) => {
     button.addEventListener("click", async () => {
-      if (!confirm(`Сбросить пароль пользователю ${button.dataset.username}?`)) return;
+      if (!confirm(`РЎР±СЂРѕСЃРёС‚СЊ РїР°СЂРѕР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ ${button.dataset.username}?`)) return;
       button.disabled = true;
       try {
         await api("/api/admin/reset-password", {
           method: "POST",
           body: JSON.stringify({ user_id: button.dataset.userId }),
         });
-        button.textContent = "Ожидает новый пароль";
+        button.textContent = "РћР¶РёРґР°РµС‚ РЅРѕРІС‹Р№ РїР°СЂРѕР»СЊ";
       } catch (err) {
         alert(err.message);
         button.disabled = false;
@@ -1453,6 +1449,10 @@ window.addEventListener("popstate", async () => {
   }
   if (window.location.pathname === "/consent") {
     await renderDocumentPage("consent");
+    return;
+  }
+  if (window.location.pathname === "/terms") {
+    await renderDocumentPage("terms");
     return;
   }
   if (!state.user && window.location.pathname === "/forgot-password") {
@@ -1473,3 +1473,5 @@ window.addEventListener("popstate", async () => {
 });
 
 restoreSession();
+
+

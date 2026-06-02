@@ -46,6 +46,7 @@ MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER).strip()
 SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "true").strip().lower() in {"1", "true", "yes", "on"}
 CURRENT_PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2026-06-02").strip()
 CURRENT_CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2026-06-02").strip()
+CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", "2026-06-02").strip()
 CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 
 SESSIONS: dict[str, dict[str, Any]] = {}
@@ -171,6 +172,16 @@ def document_seed_data() -> list[dict[str, str]]:
                 "Пользователь подтверждает, что ознакомился с Политикой обработки персональных данных и дает согласие "
                 "на обработку данных, необходимых для регистрации, авторизации, восстановления пароля, ведения учебного "
                 "прогресса и работы кабинетов администратора, учителя и ученика."
+            ),
+        },
+        {
+            "document_type": "terms",
+            "version": CURRENT_TERMS_VERSION,
+            "title": "Пользовательское соглашение",
+            "content": (
+                "Текст будет заменен после юридической вычитки.\n\n"
+                "Этот документ описывает правила использования учебной платформы, учетных записей, тренажеров, "
+                "HTML-мини-приложений и кабинетов администратора, учителя и ученика."
             ),
         },
     ]
@@ -1842,6 +1853,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(active_document("privacy_policy"))
             elif parsed.path == "/api/documents/consent":
                 self.send_json(active_document("personal_data_consent"))
+            elif parsed.path == "/api/documents/terms":
+                self.send_json(active_document("terms"))
             elif parsed.path == "/api/activities":
                 self.require_user_with_consents()
                 self.send_json({"activities": ACTIVITIES})
@@ -1875,7 +1888,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
             else:
-                if parsed.path == "/" or parsed.path.startswith("/apps/") or parsed.path in {"/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/consent", "/admin", "/teacher", "/student"}:
+                if parsed.path == "/" or parsed.path.startswith("/apps/") or parsed.path in {"/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/consent", "/terms", "/admin", "/teacher", "/student"}:
                     self.path = "/index.html"
                 super().do_GET()
         except PermissionError as error:
