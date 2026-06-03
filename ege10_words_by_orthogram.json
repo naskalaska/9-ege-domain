@@ -5,17 +5,17 @@
     "records_total": 944,
     "status_counts": {
       "auto_manual": 204,
-      "fixed": 74,
+      "fixed": 76,
       "auto_rule": 659,
       "checked": 5,
-      "needs_review": 2
+      "needs_review": 0
     },
     "category_counts": {
-      "неизменяемые приставки": 243,
+      "неизменяемые приставки": 236,
       "приставки ПРЕ/ПРИ": 221,
-      "приставки на -з/-с": 210,
-      "И/Ы после приставок": 119,
-      "ь/ъ": 151
+      "приставки на -з/-с": 209,
+      "И/Ы после приставок": 125,
+      "ь/ъ": 153
     },
     "note_count": 84,
     "notes_used_as_editorial_comments": "Колонка O / review_note использовалась как подсказка; итоговые карточки взяты из исправленных ячеек Excel.",
@@ -25,21 +25,21 @@
       "неизменяемые приставки": {
         "ПРА-/ПРО-": 51,
         "ПО-/ПА-": 11,
-        "РАЗ(-С)/РОЗ(-С)": 29,
-        "остальные неизменяемые приставки": 152
+        "РАЗ(-С)/РОЗ(-С)": 25,
+        "остальные неизменяемые приставки": 149
       },
       "приставки ПРЕ/ПРИ": {
         "ПРЕ-/ПРИ-": 116,
         "словарные слова ПРЕ/ПРИ": 105
       },
       "приставки на -з/-с": {
-        "приставки на -З/-С и С- / корневое З": 210
+        "приставки на -З/-С и С- / корневое З": 209
       },
       "И/Ы после приставок": {
-        "И/Ы после приставок": 119
+        "И/Ы после приставок": 125
       },
       "ь/ъ": {
-        "Ь/Ъ": 151
+        "Ь/Ъ": 153
       }
     },
     "cleaning_notes": "Из карточек удалены технические поля original_category, original_subgroup и пустое поле root. Учебные поля, contexts и first_address сохранены.",
@@ -47,7 +47,8 @@
       "original_category",
       "original_subgroup",
       "root"
-    ]
+    ],
+    "last_manual_check": "2026-06-03: исправлены ошибочные группировки, служебные объяснения и повторно проверена структура."
   },
   "categories": {
     "неизменяемые приставки": {
@@ -792,7 +793,7 @@
           "answer": "о",
           "correct_letter": "о",
           "correct_spelling": "преподаватель",
-          "explanation": "Приставка ПО- (Пре-по-даватель)",
+          "explanation": "В слове преподаватель пишется О: препо-даватель.",
           "dependency": "ПО-/ПА-",
           "occurrence_count": 1,
           "contexts": "преп..даватель, под..двинуться, с..мневаться",
@@ -806,47 +807,11 @@
           "answer": "а",
           "correct_letter": "а",
           "correct_spelling": "врассыпную",
-          "explanation": "В безударном положени в приставках РАЗ(С)/ РОЗ(С)",
+          "explanation": "В безударном положении в приставках РАЗ-/РАС- пишется А: врассыпную.",
           "dependency": "РАЗ(-С)/РОЗ(-С)",
           "occurrence_count": 1,
           "contexts": "пр..язык, вр..ссыпную, пр..дедушка",
           "first_address": "doshchinsky_36_2026: вар. 25, ряд 5"
-        },
-        {
-          "id": "ege10u_0175",
-          "variant": "д..рассказать",
-          "answer": "о",
-          "correct_letter": "о",
-          "correct_spelling": "дорассказать",
-          "explanation": "Пишется неизменяемая приставка ДО-.",
-          "dependency": "РАЗ(-С)/РОЗ(-С)",
-          "occurrence_count": 1,
-          "contexts": "пр..образ (героя), вз..браться (на гору), д..рассказать",
-          "first_address": "doshchinsky_36_2026: вар. 6, ряд 3"
-        },
-        {
-          "id": "ege10u_0351",
-          "variant": "о..бросить",
-          "answer": "т",
-          "correct_letter": "т",
-          "correct_spelling": "отбросить",
-          "explanation": "Пишется неизменяемая приставка ОТ-.",
-          "dependency": "РАЗ(-С)/РОЗ(-С)",
-          "occurrence_count": 1,
-          "contexts": "по..бородок, о..бросить, пре..сказать",
-          "first_address": "doshchinsky_36_2026: вар. 24, ряд 3"
-        },
-        {
-          "id": "ege10u_0433",
-          "variant": "пер..расчёт",
-          "answer": "е",
-          "correct_letter": "е",
-          "correct_spelling": "перерасчёт",
-          "explanation": "Пишется неизменяемая приставка ПЕРЕ-.",
-          "dependency": "РАЗ(-С)/РОЗ(-С)",
-          "occurrence_count": 1,
-          "contexts": "пр..дгорье, пер..расчёт, пр..дписание",
-          "first_address": "doshchinsky_50_2026: вар. 44, ряд 1"
         },
         {
           "id": "ege10u_0834",
@@ -895,18 +860,6 @@
           "occurrence_count": 1,
           "contexts": "п..обещать, раз..рвать, об..греватель",
           "first_address": "doshchinsky_36_2026: вар. 30, ряд 3"
-        },
-        {
-          "id": "ege10u_0906",
-          "variant": "сниз..шло (прозрение)",
-          "answer": "о",
-          "correct_letter": "о",
-          "correct_spelling": "снизошло (прозрение)",
-          "explanation": "В форме глагола снизойти пишется О.",
-          "dependency": "РАЗ(-С)/РОЗ(-С)",
-          "occurrence_count": 1,
-          "contexts": "пр..читать (книгу), п..дчинить, сниз..шло (прозрение)",
-          "first_address": "doshchinsky_50_2026: вар. 17, ряд 1"
         },
         {
           "id": "ege10u_0766",
@@ -1475,30 +1428,6 @@
           "first_address": "doshchinsky_36_2026: вар. 3, ряд 2"
         },
         {
-          "id": "ege10u_0282",
-          "variant": "на..гранно",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "надгранно",
-          "explanation": "Пишется неизменяемая приставка НАД-.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "на..гранно, недо..спользование, двух..гольное (шитьё)",
-          "first_address": "doshchinsky_50_2026: вар. 14, ряд 4"
-        },
-        {
-          "id": "ege10u_0283",
-          "variant": "на..граться",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "надграться",
-          "explanation": "Пишется неизменяемая приставка НАД-.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "сверх..нвестиции, на..граться, вз..мание (платы)",
-          "first_address": "doshchinsky_36_2026: вар. 21, ряд 1"
-        },
-        {
           "id": "ege10u_0284",
           "variant": "на..кусил",
           "answer": "д",
@@ -1583,18 +1512,6 @@
           "first_address": "doshchinsky_50_2026: вар. 45, ряд 5"
         },
         {
-          "id": "ege10u_0292",
-          "variant": "на..сечь",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "надсечь",
-          "explanation": "Пишется неизменяемая приставка НАД-.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "с..бросить, над..сечь, под..ступиться",
-          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
-        },
-        {
           "id": "ege10u_0027",
           "variant": "..богащать",
           "answer": "о",
@@ -1624,7 +1541,7 @@
           "answer": "о",
           "correct_letter": "о",
           "correct_spelling": "обогреватель",
-          "explanation": "После русской приставки на согласную начальное И корня переходит в Ы.",
+          "explanation": "Пишется вариант приставки ОБО-: обогреватель.",
           "dependency": "остальные неизменяемые приставки",
           "occurrence_count": 1,
           "contexts": "п..обещать, раз..рвать, об..греватель",
@@ -1636,7 +1553,7 @@
           "answer": "о",
           "correct_letter": "о",
           "correct_spelling": "обогревать",
-          "explanation": "После русской приставки на согласную начальное И корня переходит в Ы.",
+          "explanation": "Пишется вариант приставки ОБО-: обогревать.",
           "dependency": "остальные неизменяемые приставки",
           "occurrence_count": 1,
           "contexts": "поз..горать, пр..образ, об..гревать",
@@ -1857,18 +1774,6 @@
           "occurrence_count": 2,
           "contexts": "с..бираться, з..страховать (имущество), пр..бежка | с..йти (с поезда), з..страховать (имущество), пр..поведник",
           "first_address": "doshchinsky_50_2026: вар. 20, ряд 2"
-        },
-        {
-          "id": "ege10u_0195",
-          "variant": "за..нтересованный",
-          "answer": "и",
-          "correct_letter": "и",
-          "correct_spelling": "заинтересованный",
-          "explanation": "Пишется неизменяемая приставка ЗА- + И.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "без..скусный, вз..мать (штраф), за..нтересованный",
-          "first_address": "doshchinsky_36_2026: вар. 10, ряд 3"
         },
         {
           "id": "ege10u_0196",
@@ -2495,18 +2400,6 @@
           "first_address": "doshchinsky_50_2026: вар. 47, ряд 3"
         },
         {
-          "id": "ege10u_0445",
-          "variant": "по..меть",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "подметь",
-          "explanation": "Пишется неизменяемая приставка ПОД-.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "без..мянный, по..меть, из..сканный",
-          "first_address": "doshchinsky_50_2026: вар. 44, ряд 4"
-        },
-        {
           "id": "ege10u_0446",
           "variant": "по..прыгнул",
           "answer": "д",
@@ -2939,30 +2832,6 @@
           "first_address": "doshchinsky_50_2026: вар. 44, ряд 5"
         },
         {
-          "id": "ege10u_0868",
-          "variant": "с..змала",
-          "answer": "ы",
-          "correct_letter": "ы",
-          "correct_spelling": "сызмала",
-          "explanation": "В наречии сызмала пишется Ы.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 1,
-          "contexts": "с..змала, сверх..зысканный, об..ск",
-          "first_address": "doshchinsky_36_2026: вар. 29, ряд 3"
-        },
-        {
-          "id": "ege10u_0869",
-          "variant": "с..знова",
-          "answer": "ы",
-          "correct_letter": "ы",
-          "correct_spelling": "сызнова",
-          "explanation": "В наречии сызнова пишется Ы.",
-          "dependency": "остальные неизменяемые приставки",
-          "occurrence_count": 2,
-          "contexts": "вз..мать, спорт..нвентарь, с..знова | с..знова, из..мать, с..грать",
-          "first_address": "doshchinsky_50_2026: вар. 23, ряд 2"
-        },
-        {
           "id": "ege10u_0905",
           "variant": "сниз..йду",
           "answer": "о",
@@ -2973,6 +2842,54 @@
           "occurrence_count": 1,
           "contexts": "зак..улок, сниз..йду, пр..тивоборство",
           "first_address": "doshchinsky_50_2026: вар. 7, ряд 3"
+        },
+        {
+          "id": "ege10u_0175",
+          "variant": "д..рассказать",
+          "answer": "о",
+          "correct_letter": "о",
+          "correct_spelling": "дорассказать",
+          "explanation": "Пишется неизменяемая приставка ДО-.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "пр..образ (героя), вз..браться (на гору), д..рассказать",
+          "first_address": "doshchinsky_36_2026: вар. 6, ряд 3"
+        },
+        {
+          "id": "ege10u_0351",
+          "variant": "о..бросить",
+          "answer": "т",
+          "correct_letter": "т",
+          "correct_spelling": "отбросить",
+          "explanation": "Пишется неизменяемая приставка ОТ-.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "по..бородок, о..бросить, пре..сказать",
+          "first_address": "doshchinsky_36_2026: вар. 24, ряд 3"
+        },
+        {
+          "id": "ege10u_0433",
+          "variant": "пер..расчёт",
+          "answer": "е",
+          "correct_letter": "е",
+          "correct_spelling": "перерасчёт",
+          "explanation": "Пишется неизменяемая приставка ПЕРЕ-.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "пр..дгорье, пер..расчёт, пр..дписание",
+          "first_address": "doshchinsky_50_2026: вар. 44, ряд 1"
+        },
+        {
+          "id": "ege10u_0906",
+          "variant": "сниз..шло (прозрение)",
+          "answer": "о",
+          "correct_letter": "о",
+          "correct_spelling": "снизошло (прозрение)",
+          "explanation": "В форме глагола снизойти пишется О.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "пр..читать (книгу), п..дчинить, сниз..шло (прозрение)",
+          "first_address": "doshchinsky_50_2026: вар. 17, ряд 1"
         }
       ]
     },
@@ -3200,7 +3117,7 @@
           "answer": "и",
           "correct_letter": "и",
           "correct_spelling": "придержащая (власть)",
-          "explanation": "Пишется ПРИ-: значение приближения, присоединения, близости или неполноты действия.",
+          "explanation": "В устойчивом сочетании власть предержащая пишется Е: предержащая.",
           "dependency": "ПРЕ-/ПРИ-",
           "occurrence_count": 1,
           "contexts": "пр..держащая (власть), радиопр..ёмник, пр..успевающий",
@@ -7163,8 +7080,8 @@
         {
           "id": "ege10u_0033",
           "variant": "..добный",
-          "answer": "з",
-          "correct_letter": "з",
+          "answer": "с",
+          "correct_letter": "с",
           "correct_spelling": "сдобный",
           "explanation": "В слове сдобный начальная С входит в корень; приставки З- нет.",
           "dependency": "приставки на -З/-С и С- / корневое З",
@@ -8143,18 +8060,6 @@
           "occurrence_count": 3,
           "contexts": "ра..сада, не..добровать, бе..форменный | не..держанный, не..добровать, бе..перспективный | бе..церемонно, не..добровать, и..купление",
           "first_address": "doshchinsky_50_2026: вар. 13, ряд 4"
-        },
-        {
-          "id": "ege10u_0858",
-          "variant": "с..бросить",
-          "answer": "",
-          "correct_letter": "",
-          "correct_spelling": "сбросить",
-          "explanation": "Похоже на сбросить, где между С и Б нет буквы; нужна сверка с оригиналом.",
-          "dependency": "приставки на -З/-С и С- / корневое З",
-          "occurrence_count": 1,
-          "contexts": "с..бросить, над..сечь, под..ступиться",
-          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
         }
       ]
     },
@@ -8166,7 +8071,7 @@
           "answer": "и",
           "correct_letter": "и",
           "correct_spelling": "недоиспользование",
-          "explanation": "После приставки на гласную сохранияется И",
+          "explanation": "После приставки на гласную сохраняется И.",
           "dependency": "И/Ы после приставок",
           "occurrence_count": 1,
           "contexts": "на..гранно, недо..спользование, двух..гольное (шитьё)",
@@ -9102,7 +9007,7 @@
           "answer": "и",
           "correct_letter": "и",
           "correct_spelling": "неинициативный",
-          "explanation": "После приставки на гласную сохранияется И",
+          "explanation": "После приставки на гласную сохраняется И.",
           "dependency": "И/Ы после приставок",
           "occurrence_count": 1,
           "contexts": "без..мянный, не..нициативный, фин..нспектор",
@@ -9114,7 +9019,7 @@
           "answer": "и",
           "correct_letter": "и",
           "correct_spelling": "неинфекционный",
-          "explanation": "После приставки на гласную сохранияется И",
+          "explanation": "После приставки на гласную сохраняется И.",
           "dependency": "И/Ы после приставок",
           "occurrence_count": 1,
           "contexts": "не..нфекционный, пост..нъекционный, супер..нтендант",
@@ -9410,14 +9315,14 @@
         },
         {
           "id": "ege10u_0890",
-          "variant": "сверх,.скусный",
+          "variant": "сверх..скусный",
           "answer": "и",
           "correct_letter": "и",
           "correct_spelling": "сверхискусный",
           "explanation": "После приставки сверх- сохраняется И.",
           "dependency": "И/Ы после приставок",
           "occurrence_count": 1,
-          "contexts": "без..нвентарный, под..тожить, сверх,.скусный",
+          "contexts": "без..нвентарный, под..тожить, сверх..скусный",
           "first_address": "doshchinsky_36_2026: вар. 27, ряд 3"
         },
         {
@@ -9587,6 +9492,78 @@
           "occurrence_count": 1,
           "contexts": "транс..тальянский, без..мянный, про..грать",
           "first_address": "doshchinsky_50_2026: вар. 2, ряд 1"
+        },
+        {
+          "id": "ege10u_0282",
+          "variant": "на..гранно",
+          "answer": "д",
+          "correct_letter": "д",
+          "correct_spelling": "надгранно",
+          "explanation": "Пишется неизменяемая приставка НАД-.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 1,
+          "contexts": "на..гранно, недо..спользование, двух..гольное (шитьё)",
+          "first_address": "doshchinsky_50_2026: вар. 14, ряд 4"
+        },
+        {
+          "id": "ege10u_0283",
+          "variant": "на..граться",
+          "answer": "д",
+          "correct_letter": "д",
+          "correct_spelling": "надграться",
+          "explanation": "Пишется неизменяемая приставка НАД-.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 1,
+          "contexts": "сверх..нвестиции, на..граться, вз..мание (платы)",
+          "first_address": "doshchinsky_36_2026: вар. 21, ряд 1"
+        },
+        {
+          "id": "ege10u_0195",
+          "variant": "за..нтересованный",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "заинтересованный",
+          "explanation": "Пишется неизменяемая приставка ЗА- + И.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 1,
+          "contexts": "без..скусный, вз..мать (штраф), за..нтересованный",
+          "first_address": "doshchinsky_36_2026: вар. 10, ряд 3"
+        },
+        {
+          "id": "ege10u_0445",
+          "variant": "по..меть",
+          "answer": "д",
+          "correct_letter": "д",
+          "correct_spelling": "подметь",
+          "explanation": "Пишется неизменяемая приставка ПОД-.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 1,
+          "contexts": "без..мянный, по..меть, из..сканный",
+          "first_address": "doshchinsky_50_2026: вар. 44, ряд 4"
+        },
+        {
+          "id": "ege10u_0868",
+          "variant": "с..змала",
+          "answer": "ы",
+          "correct_letter": "ы",
+          "correct_spelling": "сызмала",
+          "explanation": "В наречии сызмала пишется Ы.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 1,
+          "contexts": "с..змала, сверх..зысканный, об..ск",
+          "first_address": "doshchinsky_36_2026: вар. 29, ряд 3"
+        },
+        {
+          "id": "ege10u_0869",
+          "variant": "с..знова",
+          "answer": "ы",
+          "correct_letter": "ы",
+          "correct_spelling": "сызнова",
+          "explanation": "В наречии сызнова пишется Ы.",
+          "dependency": "И/Ы после приставок",
+          "occurrence_count": 2,
+          "contexts": "вз..мать, спорт..нвентарь, с..знова | с..знова, из..мать, с..грать",
+          "first_address": "doshchinsky_50_2026: вар. 23, ряд 2"
         }
       ]
     },
@@ -11403,6 +11380,30 @@
           "occurrence_count": 1,
           "contexts": "трёх..этажный, под..езд, сверх..естественный",
           "first_address": "doshchinsky_36_2026: вар. 4, ряд 4"
+        },
+        {
+          "id": "ege10u_0858",
+          "variant": "с..бросить",
+          "answer": "-",
+          "correct_letter": "-",
+          "correct_spelling": "сбросить",
+          "explanation": "На месте пропуска никакая буква не нужна.",
+          "dependency": "Ь/Ъ не пишется",
+          "occurrence_count": 1,
+          "contexts": "с..бросить, над..сечь, под..ступиться",
+          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
+        },
+        {
+          "id": "ege10u_0292",
+          "variant": "над..сечь",
+          "answer": "-",
+          "correct_letter": "-",
+          "correct_spelling": "надсечь",
+          "explanation": "На месте пропуска никакая буква не нужна.",
+          "dependency": "Ь/Ъ не пишется",
+          "occurrence_count": 1,
+          "contexts": "с..бросить, над..сечь, под..ступиться",
+          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
         }
       ]
     }
