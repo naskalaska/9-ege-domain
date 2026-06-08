@@ -1428,6 +1428,30 @@
           "first_address": "doshchinsky_36_2026: вар. 3, ряд 2"
         },
         {
+          "id": "ege10u_0282",
+          "variant": "на..гранно",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "наигранно",
+          "explanation": "После приставки на гласную, корневое И не меняется.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "на..гранно, недо..спользование, двух..гольное (шитьё)",
+          "first_address": "doshchinsky_50_2026: вар. 14, ряд 4"
+        },
+        {
+          "id": "ege10u_0283",
+          "variant": "на..граться",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "наиграться",
+          "explanation": "После приставки на гласную, корневое И не меняется.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "сверх..нвестиции, на..граться, вз..мание (платы)",
+          "first_address": "doshchinsky_36_2026: вар. 21, ряд 1"
+        },
+        {
           "id": "ege10u_0284",
           "variant": "на..кусил",
           "answer": "д",
@@ -2400,6 +2424,18 @@
           "first_address": "doshchinsky_50_2026: вар. 47, ряд 3"
         },
         {
+          "id": "ege10u_0445",
+          "variant": "по..меть",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "поиметь",
+          "explanation": "После приставки на гласную корневая И не меняется.",
+          "dependency": "остальные неизменяемые приставки",
+          "occurrence_count": 1,
+          "contexts": "без..мянный, по..меть, из..сканный",
+          "first_address": "doshchinsky_50_2026: вар. 44, ряд 4"
+        },
+        {
           "id": "ege10u_0446",
           "variant": "по..прыгнул",
           "answer": "д",
@@ -3114,9 +3150,9 @@
         {
           "id": "ege10u_0550",
           "variant": "пр..держащая (власть)",
-          "answer": "и",
-          "correct_letter": "и",
-          "correct_spelling": "придержащая (власть)",
+          "answer": "е",
+          "correct_letter": "е",
+          "correct_spelling": "предержащая (власть)",
           "explanation": "В устойчивом сочетании власть предержащая пишется Е: предержащая.",
           "dependency": "ПРЕ-/ПРИ-",
           "occurrence_count": 1,
@@ -5000,9 +5036,9 @@
         {
           "id": "ege10u_0589",
           "variant": "пр..людно (высказаться)",
-          "answer": "е",
-          "correct_letter": "е",
-          "correct_spelling": "прелюдно (высказаться)",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "прилюдно (высказаться)",
           "explanation": "Пишется ПРЕ-: значение высокой степени, близость к ПЕРЕ- или словарное написание.",
           "dependency": "словарные слова ПРЕ/ПРИ",
           "occurrence_count": 1,
@@ -5228,10 +5264,10 @@
         {
           "id": "ege10u_0667",
           "variant": "пр..скорбный (факт)",
-          "answer": "е",
-          "correct_letter": "е",
-          "correct_spelling": "прескорбный (факт)",
-          "explanation": "Пишется ПРЕ-: значение высокой степени, близость к ПЕРЕ- или словарное написание.",
+          "answer": "и",
+          "correct_letter": "и",
+          "correct_spelling": "прискорбный (факт)",
+          "explanation": "Пишется ПРИ-: близкий к скорби",
           "dependency": "словарные слова ПРЕ/ПРИ",
           "occurrence_count": 1,
           "contexts": "пр..скорбный (факт), пр..страститься (к книге), пр..дать (значение)",
@@ -8060,6 +8096,18 @@
           "occurrence_count": 3,
           "contexts": "ра..сада, не..добровать, бе..форменный | не..держанный, не..добровать, бе..перспективный | бе..церемонно, не..добровать, и..купление",
           "first_address": "doshchinsky_50_2026: вар. 13, ряд 4"
+        },
+        {
+          "id": "ege10u_0858",
+          "variant": "..бросить",
+          "answer": "с",
+          "correct_letter": "с",
+          "correct_spelling": "сбросить",
+          "explanation": "Неизменяемая приставка С-",
+          "dependency": "приставки на -З/-С и С- / корневое З",
+          "occurrence_count": 1,
+          "contexts": "с..бросить, над..сечь, под..ступиться",
+          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
         }
       ]
     },
@@ -8211,10 +8259,10 @@
         },
         {
           "id": "ege10u_0097",
-          "variant": "без..ыскусный",
+          "variant": "без..скусный",
           "answer": "ы",
           "correct_letter": "ы",
-          "correct_spelling": "безыыскусный",
+          "correct_spelling": "безыскусный",
           "explanation": "После русской приставки на согласную начальное И корня переходит в Ы.",
           "dependency": "И/Ы после приставок",
           "occurrence_count": 1,
@@ -8644,11 +8692,11 @@
         {
           "id": "ege10u_0838",
           "variant": "раз..гревать",
-          "answer": "ы",
+          "answer": "о",
           "correct_letter": "ы",
-          "correct_spelling": "разыгревать",
-          "explanation": "После русской приставки на согласную начальное И корня переходит в Ы.",
-          "dependency": "И/Ы после приставок",
+          "correct_spelling": "разогревать",
+          "explanation": "Неизменяемая приставка РАЗ (разо-)",
+          "dependency": "неизменяемые приставки",
           "occurrence_count": 1,
           "contexts": "раз..гревать, пров..зглашать, от..гнуть",
           "first_address": "doshchinsky_50_2026: вар. 44, ряд 5"
@@ -9494,30 +9542,6 @@
           "first_address": "doshchinsky_50_2026: вар. 2, ряд 1"
         },
         {
-          "id": "ege10u_0282",
-          "variant": "на..гранно",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "надгранно",
-          "explanation": "Пишется неизменяемая приставка НАД-.",
-          "dependency": "И/Ы после приставок",
-          "occurrence_count": 1,
-          "contexts": "на..гранно, недо..спользование, двух..гольное (шитьё)",
-          "first_address": "doshchinsky_50_2026: вар. 14, ряд 4"
-        },
-        {
-          "id": "ege10u_0283",
-          "variant": "на..граться",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "надграться",
-          "explanation": "Пишется неизменяемая приставка НАД-.",
-          "dependency": "И/Ы после приставок",
-          "occurrence_count": 1,
-          "contexts": "сверх..нвестиции, на..граться, вз..мание (платы)",
-          "first_address": "doshchinsky_36_2026: вар. 21, ряд 1"
-        },
-        {
           "id": "ege10u_0195",
           "variant": "за..нтересованный",
           "answer": "и",
@@ -9528,18 +9552,6 @@
           "occurrence_count": 1,
           "contexts": "без..скусный, вз..мать (штраф), за..нтересованный",
           "first_address": "doshchinsky_36_2026: вар. 10, ряд 3"
-        },
-        {
-          "id": "ege10u_0445",
-          "variant": "по..меть",
-          "answer": "д",
-          "correct_letter": "д",
-          "correct_spelling": "подметь",
-          "explanation": "Пишется неизменяемая приставка ПОД-.",
-          "dependency": "И/Ы после приставок",
-          "occurrence_count": 1,
-          "contexts": "без..мянный, по..меть, из..сканный",
-          "first_address": "doshchinsky_50_2026: вар. 44, ряд 4"
         },
         {
           "id": "ege10u_0868",
@@ -11380,18 +11392,6 @@
           "occurrence_count": 1,
           "contexts": "трёх..этажный, под..езд, сверх..естественный",
           "first_address": "doshchinsky_36_2026: вар. 4, ряд 4"
-        },
-        {
-          "id": "ege10u_0858",
-          "variant": "с..бросить",
-          "answer": "-",
-          "correct_letter": "-",
-          "correct_spelling": "сбросить",
-          "explanation": "На месте пропуска никакая буква не нужна.",
-          "dependency": "Ь/Ъ не пишется",
-          "occurrence_count": 1,
-          "contexts": "с..бросить, над..сечь, под..ступиться",
-          "first_address": "doshchinsky_50_2026: вар. 39, ряд 4"
         },
         {
           "id": "ege10u_0292",

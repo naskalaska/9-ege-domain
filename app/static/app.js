@@ -67,7 +67,7 @@ const modes = {
     eyebrow: "перемешанные орфограммы",
   },
   line: {
-    title: "Строка",
+    title: "Формат ЕГЭ",
     hint: "Ряд с одной и той же буквой",
     eyebrow: "формат задания 9",
   },
@@ -225,6 +225,7 @@ function renderLogin() {
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
       </label>
       <button class="secondary-button" type="submit">Создать аккаунт</button>
+      <p class="muted">Email обязателен, т.к. используется для входа и восстановления пароля. Если вы ученик, и регистрируетесь самостоятельно, код учителя можно пропустить.</p>
       <p class="error" id="registerError"></p>
     </form>
   `);
@@ -621,7 +622,7 @@ function renderCatalog() {
       <article class="activity-card">
         <div class="activity-mark">${meta.mark || "A"}</div>
         <div>
-          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложение" : "учебный модуль"}</p>
+          <p class="eyebrow">${activity.kind === "mini" ? "мини-приложения" : "учебный модуль"}</p>
           <h2>${activity.title || meta.title}</h2>
           <p>${activity.description || meta.description}</p>
         </div>
@@ -636,7 +637,7 @@ function renderCatalog() {
       <div class="catalog-head">
         <div>
           <p class="eyebrow">каталог активностей</p>
-          <h2>Выберите тренажер</h2>
+          <h2>Выберите тренажёр</h2>
         </div>
         <div class="catalog-user">
           <strong>${state.user.display_name}</strong>
@@ -1261,7 +1262,7 @@ async function showProgress() {
       </div>
       ${state.user.role !== "teacher" ? `
         <div class="progress-grid">
-          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди повторения</span></div>
+          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди на повторение</span></div>
           <div class="stat"><b>${data.error_bank_count}</b><span>слов в копилке ошибок</span></div>
         </div>
       ` : ""}
