@@ -19,11 +19,12 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = ROOT / "app" / "static"
+HTML_DIR = ROOT / "app" / "HTML"
 DATA_DIR = ROOT / "data"
 IMAGES_DIR = ROOT / "images"
 WORDS_PATH = ROOT / "ege9_final_grouped_by_orthogram_v4.json"
@@ -79,13 +80,17 @@ ACTIVITIES = [
         "kind": "module",
     },
     {
-        "slug": "demo-mini",
-        "title": "HTML-мини-приложение",
-        "description": "Тестовая обертка для будущих мини-игр и интерактивных карточек.",
-        "button": "Открыть мини-приложение",
+        "slug": "html-games",
+        "title": "Игры",
+        "description": "Небольшие HTML-игры для тренировки орфографии.",
+        "button": "Выбрать игру",
         "kind": "mini",
     },
 ]
+
+HTML_GAMES = {
+    "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
+}
 
 
 def configure_console() -> None:
@@ -662,9 +667,9 @@ def activity_bootstrap(slug: str) -> dict[str, Any]:
         return bootstrap_for(RULES, len(WORDS))
     if slug == "ege10":
         return bootstrap_for(ege10_module.RULES, len(ege10_module.WORDS))
-    if slug == "demo-mini":
+    if slug == "html-games":
         return {
-            "activity": next(item for item in ACTIVITIES if item["slug"] == "demo-mini"),
+            "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
             "activities": ACTIVITIES,
         }
     raise ValueError("Активность не найдена.")
@@ -1901,6 +1906,29 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_html_game_file(self, slug: str, relative_path: str) -> None:
+        game_dir = HTML_GAMES.get(slug)
+        if not game_dir:
+            self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+            return
+        relative_path = unquote(relative_path).lstrip("/") or "index.html"
+        file_path = (game_dir / relative_path).resolve()
+        game_root = game_dir.resolve()
+        try:
+            file_path.relative_to(game_root)
+        except ValueError:
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
+        if not file_path.is_file():
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
+        body = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", self.guess_type(str(file_path)))
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def current_user(self) -> dict[str, Any] | None:
         header = self.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
@@ -1959,6 +1987,12 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_download(body, filename, content_type)
             elif parsed.path == "/api/admin":
                 self.send_json(admin_overview(self.require_user()))
+            elif parsed.path.startswith("/html-games/"):
+                parts = parsed.path.strip("/").split("/", 2)
+                if len(parts) < 2:
+                    self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+                    return
+                self.send_html_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
             elif parsed.path.startswith("/images/"):
                 image_name = Path(parsed.path).name
                 image_path = (IMAGES_DIR / image_name).resolve()

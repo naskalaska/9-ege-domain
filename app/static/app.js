@@ -14,6 +14,7 @@ const state = {
   currentQuestionIndex: 0,
   liveResults: [],
   currentActivity: null,
+  currentMiniGame: null,
 };
 
 const fallbackTeacherCode = "T-DDC378";
@@ -31,13 +32,23 @@ const activityMeta = {
     description: "Приставки, Ь/Ъ, И/Ы и другие орфограммы.",
     mark: "10",
   },
-  "demo-mini": {
-    title: "HTML-мини-приложение",
-    shortTitle: "Мини",
-    description: "Обертка для будущих мини-игр и интерактивных карточек.",
-    mark: "HTML",
+  "html-games": {
+    title: "Игры",
+    shortTitle: "Игры",
+    description: "Небольшие HTML-игры для тренировки орфографии.",
+    mark: "GAME",
   },
 };
+
+const miniGames = [
+  {
+    slug: "suffixes-nouns",
+    title: "Суффиксы существительных",
+    description: "Поймайте пушинки и выберите правильную букву в словах с суффиксами.",
+    button: "Играть",
+    path: "/html-games/suffixes-nouns/index.html",
+  },
+];
 
 const modes = {
   rule: {
@@ -214,7 +225,6 @@ function renderLogin() {
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
       </label>
       <button class="secondary-button" type="submit">Создать аккаунт</button>
-      <p class="muted">Email используется для входа и восстановления пароля. Код учителя можно пропустить только осознанно.</p>
       <p class="error" id="registerError"></p>
     </form>
   `);
@@ -503,9 +513,10 @@ async function loadBootstrap() {
 }
 
 async function loadActivity(slug, updateUrl = true) {
-  if (slug === "demo-mini") {
+  if (slug === "html-games") {
     state.currentActivity = slug;
-    if (updateUrl) history.pushState(null, "", `/apps/mini/${slug}`);
+    state.currentMiniGame = null;
+    if (updateUrl) history.pushState(null, "", "/apps/mini");
     renderMiniActivity();
     return;
   }
@@ -525,8 +536,13 @@ function activityFromPath() {
   const path = window.location.pathname;
   if (path === "/apps/ege9") return "ege9";
   if (path === "/apps/ege10") return "ege10";
-  if (path.startsWith("/apps/mini/")) return "demo-mini";
+  if (path === "/apps/mini" || path.startsWith("/apps/mini/")) return "html-games";
   return null;
+}
+
+function miniGameFromPath() {
+  const match = window.location.pathname.match(/^\/apps\/mini\/games\/([^/]+)$/);
+  return match ? match[1] : null;
 }
 
 async function restoreSession() {
@@ -643,33 +659,50 @@ function renderCatalog() {
 
 function renderMiniActivity() {
   renderTopActions();
+  const gameSlug = state.currentMiniGame || miniGameFromPath();
+  const selectedGame = miniGames.find((game) => game.slug === gameSlug);
+  const gameCards = miniGames.map((game) => `
+    <article class="mini-game-card">
+      <div>
+        <p class="eyebrow">мини-игра</p>
+        <h3>${game.title}</h3>
+        <p>${game.description}</p>
+      </div>
+      <button class="primary-button open-mini-game" data-game="${game.slug}" type="button">${game.button}</button>
+    </article>
+  `).join("");
   view.innerHTML = `
     <section class="mini-page">
       <div class="panel-head">
         <div>
-          <p class="eyebrow">HTML-мини-приложение</p>
-          <h2>Демо-активность</h2>
+          <p class="eyebrow">игры</p>
+          <h2>${selectedGame ? selectedGame.title : "Выберите игру"}</h2>
         </div>
-        <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
+        <div class="button-row">
+          ${selectedGame ? `<button class="secondary-button" id="backToMiniMenu" type="button">К списку игр</button>` : ""}
+          <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
+        </div>
       </div>
-      <iframe class="mini-frame" title="Демо-мини-приложение" srcdoc="
-        <style>
-          body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f7fbff;color:#202124;display:grid;place-items:center;min-height:100vh}
-          main{width:min(720px,calc(100vw - 32px));padding:28px;border:1px solid #d8dee8;border-radius:8px;background:white}
-          h1{margin:0 0 12px;font-size:30px}
-          button{height:42px;border:0;border-radius:7px;background:#2f7d5c;color:white;font-weight:700;padding:0 16px}
-        </style>
-        <main>
-          <h1>Мини-приложение подключено</h1>
-          <p>Эта страница запускается внутри общей платформенной обертки и готова для замены на игру, карточки или одностраничный тренажер.</p>
-          <button onclick='document.querySelector(&quot;output&quot;).textContent = &quot;Готово&quot;'>Проверить</button>
-          <output style='display:block;margin-top:14px'></output>
-        </main>
-      "></iframe>
+      ${selectedGame
+        ? `<iframe class="mini-frame" title="${selectedGame.title}" src="${selectedGame.path}"></iframe>`
+        : `<div class="mini-game-grid">${gameCards}</div>`}
     </section>
   `;
+  view.querySelectorAll(".open-mini-game").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.currentMiniGame = button.dataset.game;
+      history.pushState(null, "", `/apps/mini/games/${button.dataset.game}`);
+      renderMiniActivity();
+    });
+  });
+  view.querySelector("#backToMiniMenu")?.addEventListener("click", () => {
+    state.currentMiniGame = null;
+    history.pushState(null, "", "/apps/mini");
+    renderMiniActivity();
+  });
   view.querySelector("#backToCatalogFromMini").addEventListener("click", () => {
     state.currentActivity = null;
+    state.currentMiniGame = null;
     history.pushState(null, "", "/");
     renderDashboard();
   });
