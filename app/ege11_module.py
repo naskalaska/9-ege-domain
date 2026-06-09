@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import csv
 import io
 import json
@@ -9,103 +8,31 @@ import mimetypes
 import os
 import random
 import secrets
-import smtplib
 import sqlite3
 import sys
-import ege10_module
-import ege11_module
-from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
+from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = ROOT / "app" / "static"
-HTML_DIR = ROOT / "app" / "HTML"
 DATA_DIR = ROOT / "data"
 IMAGES_DIR = ROOT / "images"
-WORDS_PATH = ROOT / "ege9_final_grouped_by_orthogram_v4.json"
+WORDS_PATH = ROOT / "ege11_suffix_words_v4.json"
 DB_PATH = DATA_DIR / "ege_app.db"
 
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 8088
+DEFAULT_PORT = 8090
 REPEAT_ON_ERROR = 3
-APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
-APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8088").rstrip("/")
-ADMIN_USERNAME = os.environ.get("ADMIN_LOGIN", "admin").strip() or "admin"
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
-DEFAULT_DEV_ADMIN_PASSWORD = "admin2026"
-PASSWORD_HASH_ITERATIONS = int(os.environ.get("PASSWORD_HASH_ITERATIONS", "260000"))
-SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "465") or "465")
-SMTP_USER = os.environ.get("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
-MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER).strip()
-SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "true").strip().lower() in {"1", "true", "yes", "on"}
-CURRENT_PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2026-06-02").strip()
-CURRENT_CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2026-06-02").strip()
-CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", "2026-06-02").strip()
-CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
-FALLBACK_TEACHER_CODE = "T-DDC378"
-FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin2026"
 
 SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
-
-_ege10_scope_id_for = ege10_module.scope_id_for
-_ege11_scope_id_for = ege11_module.scope_id_for
-
-
-def ege10_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
-    return f"ege10:{_ege10_scope_id_for(mode, rule_id, rule_ids)}"
-
-
-def ege11_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
-    return f"ege11:{_ege11_scope_id_for(mode, rule_id, rule_ids)}"
-
-
-ege10_module.scope_id_for = ege10_scope_id_for
-ege11_module.scope_id_for = ege11_scope_id_for
-
-ACTIVITIES = [
-    {
-        "slug": "ege9",
-        "title": "ЕГЭ. Задание 9",
-        "description": "Орфография: корни, гласные, строки с общей буквой.",
-        "button": "Открыть тренажер",
-        "kind": "module",
-    },
-    {
-        "slug": "ege10",
-        "title": "ЕГЭ. Задание 10",
-        "description": "Приставки, Ь/Ъ, И/Ы и другие орфограммы задания 10.",
-        "button": "Открыть тренажер",
-        "kind": "module",
-    },
-    {
-        "slug": "ege11",
-        "title": "ЕГЭ. Задание 11",
-        "description": "Правописание суффиксов слов разных частей речи.",
-        "button": "Открыть тренажер",
-        "kind": "module",
-    },
-    {
-        "slug": "html-games",
-        "title": "Игры",
-        "description": "Небольшие HTML-игры для тренировки орфографии.",
-        "button": "Выбрать игру",
-        "kind": "mini",
-    },
-]
-
-HTML_GAMES = {
-    "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
-    "homogeneous-members-magic": HTML_DIR / "Фокусы",
-}
 
 
 def configure_console() -> None:
@@ -118,120 +45,14 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def legacy_password_hash(password: str, salt: str) -> str:
-    return hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
-
-
 def password_hash(password: str, salt: str) -> str:
-    digest = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt.encode("utf-8"),
-        PASSWORD_HASH_ITERATIONS,
-    ).hex()
-    return f"pbkdf2_sha256${PASSWORD_HASH_ITERATIONS}${salt}${digest}"
-
-
-def verify_password(password: str, salt: str, stored_hash: str) -> bool:
-    if stored_hash.startswith("pbkdf2_sha256$"):
-        try:
-            _, iterations, stored_salt, digest = stored_hash.split("$", 3)
-            candidate = hashlib.pbkdf2_hmac(
-                "sha256",
-                password.encode("utf-8"),
-                stored_salt.encode("utf-8"),
-                int(iterations),
-            ).hex()
-            return hmac.compare_digest(candidate, digest)
-        except (TypeError, ValueError):
-            return False
-    return hmac.compare_digest(legacy_password_hash(password, salt), stored_hash)
-
-
-def needs_password_rehash(stored_hash: str) -> bool:
-    if not stored_hash.startswith("pbkdf2_sha256$"):
-        return True
-    try:
-        _, iterations, _, _ = stored_hash.split("$", 3)
-    except ValueError:
-        return True
-    return int(iterations) < PASSWORD_HASH_ITERATIONS
-
-
-def production_mode() -> bool:
-    return APP_ENV in {"prod", "production"}
-
-
-def seed_demo_users() -> bool:
-    return os.environ.get("SEED_DEMO_USERS", "1" if not production_mode() else "0") == "1"
+    return hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
 
 
 def ensure_column(con: sqlite3.Connection, table: str, column: str, definition: str) -> None:
     columns = {row[1] for row in con.execute(f"PRAGMA table_info({table})").fetchall()}
     if column not in columns:
         con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
-
-
-def document_seed_data() -> list[dict[str, str]]:
-    return [
-        {
-            "document_type": "privacy_policy",
-            "version": CURRENT_PRIVACY_POLICY_VERSION,
-            "title": "Политика обработки персональных данных",
-            "content": (
-                "Текст будет заменен после юридической вычитки.\n\n"
-                "Платформа хранит учетные записи пользователей, роли, учебный прогресс, попытки выполнения заданий "
-                "и технические данные, необходимые для работы сервиса. Рабочая SQLite-база должна храниться на сервере "
-                "в Docker volume и не должна попадать в GitHub."
-            ),
-        },
-        {
-            "document_type": "personal_data_consent",
-            "version": CURRENT_CONSENT_VERSION,
-            "title": "Согласие на обработку персональных данных",
-            "content": (
-                "Текст будет заменен после юридической вычитки.\n\n"
-                "Пользователь подтверждает, что ознакомился с Политикой обработки персональных данных и дает согласие "
-                "на обработку данных, необходимых для регистрации, авторизации, восстановления пароля, ведения учебного "
-                "прогресса и работы кабинетов администратора, учителя и ученика."
-            ),
-        },
-        {
-            "document_type": "terms",
-            "version": CURRENT_TERMS_VERSION,
-            "title": "Пользовательское соглашение",
-            "content": (
-                "Текст будет заменен после юридической вычитки.\n\n"
-                "Этот документ описывает правила использования учебной платформы, учетных записей, тренажеров, "
-                "HTML-мини-приложений и кабинетов администратора, учителя и ученика."
-            ),
-        },
-    ]
-
-
-def seed_documents(con: sqlite3.Connection) -> None:
-    for document in document_seed_data():
-        con.execute(
-            """
-            INSERT INTO documents
-                (id, document_type, version, title, content, is_active, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-            ON CONFLICT(document_type, version) DO UPDATE SET
-                title = excluded.title,
-                content = excluded.content,
-                is_active = 1,
-                updated_at = excluded.updated_at
-            """,
-            (
-                f"{document['document_type']}:{document['version']}",
-                document["document_type"],
-                document["version"],
-                document["title"],
-                document["content"],
-                now_iso(),
-                now_iso(),
-            ),
-        )
 
 
 def ensure_admin_role_supported(con: sqlite3.Connection) -> None:
@@ -276,7 +97,6 @@ def ensure_admin_role_supported(con: sqlite3.Connection) -> None:
 def ensure_app_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as con:
-        con.row_factory = sqlite3.Row
         con.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -323,96 +143,44 @@ def ensure_app_db() -> None:
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             );
 
-            CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                token_id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                token_hash TEXT UNIQUE NOT NULL,
-                expires_at TEXT NOT NULL,
-                used_at TEXT,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY(user_id) REFERENCES users(user_id)
-            );
-
-            CREATE TABLE IF NOT EXISTS documents (
-                id TEXT PRIMARY KEY,
-                document_type TEXT NOT NULL,
-                version TEXT NOT NULL,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                is_active INTEGER NOT NULL DEFAULT 1,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                UNIQUE(document_type, version)
-            );
-
-            CREATE TABLE IF NOT EXISTS user_consents (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                consent_type TEXT NOT NULL,
-                document_version TEXT NOT NULL,
-                accepted_at TEXT NOT NULL,
-                ip_address TEXT,
-                user_agent TEXT,
-                FOREIGN KEY(user_id) REFERENCES users(user_id),
-                UNIQUE(user_id, consent_type, document_version)
-            );
-
             CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
             CREATE INDEX IF NOT EXISTS idx_attempts_mode ON attempts(mode);
             CREATE INDEX IF NOT EXISTS idx_attempts_created_at ON attempts(created_at);
             CREATE INDEX IF NOT EXISTS idx_word_progress_user_scope ON word_progress(user_id, scope_id);
-            CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
-            CREATE INDEX IF NOT EXISTS idx_user_consents_user_type ON user_consents(user_id, consent_type);
-            CREATE INDEX IF NOT EXISTS idx_documents_type_active ON documents(document_type, is_active);
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
-                ON users(teacher_code)
-                WHERE teacher_code IS NOT NULL;
             """
         )
         ensure_column(con, "users", "teacher_code", "TEXT")
         ensure_column(con, "users", "teacher_id", "TEXT")
-        ensure_column(con, "users", "email", "TEXT")
         ensure_column(con, "users", "password_reset_required", "INTEGER NOT NULL DEFAULT 0")
         ensure_admin_role_supported(con)
-        con.execute("UPDATE users SET email = LOWER(username) WHERE email IS NULL AND instr(username, '@') > 1")
-        con.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email
-                ON users(LOWER(email))
-                WHERE email IS NOT NULL AND email <> ''
-            """
-        )
         ensure_column(con, "attempts", "scope_id", "TEXT")
         ensure_column(con, "attempts", "word_id", "TEXT")
-        seed_documents(con)
         ensure_service_admin(con)
-        ensure_fallback_teacher(con)
-        if seed_demo_users():
-            seed_user(con, "teacher", "teacher123", "teacher", "Учитель")
-            seed_user(con, "student", "student123", "student", "Ученик")
-            con.execute(
-                """
-                UPDATE users
-                SET teacher_code = COALESCE(teacher_code, 'TEACHER-2026'),
-                    display_name = 'Учитель'
-                WHERE username = 'teacher'
-                """
-            )
-            con.execute(
-                """
-                UPDATE users
-                SET teacher_id = COALESCE(teacher_id, 'user_teacher'),
-                    display_name = 'Ученик'
-                WHERE username = 'student'
-                """
-            )
+        seed_user(con, "teacher", "teacher123", "teacher", "Учитель")
+        seed_user(con, "student", "student123", "student", "Ученик")
+        con.execute(
+            """
+            UPDATE users
+            SET teacher_code = COALESCE(teacher_code, 'TEACHER-2026'),
+                display_name = 'Учитель'
+            WHERE username = 'teacher'
+            """
+        )
+        con.execute(
+            """
+            UPDATE users
+            SET teacher_id = COALESCE(teacher_id, 'user_teacher'),
+                display_name = 'Ученик'
+            WHERE username = 'student'
+            """
+        )
 
 
 def seed_user(con: sqlite3.Connection, username: str, password: str, role: str, display_name: str) -> None:
     exists = con.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone()
     if exists:
         return
-    salt = secrets.token_hex(16)
+    salt = secrets.token_hex(8)
     con.execute(
         """
         INSERT INTO users (user_id, username, display_name, role, password_salt, password_hash, created_at)
@@ -423,19 +191,9 @@ def seed_user(con: sqlite3.Connection, username: str, password: str, role: str, 
 
 
 def ensure_service_admin(con: sqlite3.Connection) -> None:
+    salt = secrets.token_hex(8)
+    hashed = password_hash(ADMIN_PASSWORD, salt)
     existing = con.execute("SELECT 1 FROM users WHERE username = ?", (ADMIN_USERNAME,)).fetchone()
-    admin_password = ADMIN_PASSWORD
-    if not admin_password:
-        if existing:
-            return
-        if production_mode():
-            raise RuntimeError("ADMIN_PASSWORD must be set before creating the first admin in production.")
-        admin_password = DEFAULT_DEV_ADMIN_PASSWORD
-    if production_mode() and admin_password in {"admin", "admin2026", "password", "teacher123", "student123"}:
-        raise RuntimeError("ADMIN_PASSWORD is too obvious for production.")
-
-    salt = secrets.token_hex(16)
-    hashed = password_hash(admin_password, salt)
     if existing:
         con.execute(
             """
@@ -466,84 +224,23 @@ def make_teacher_code() -> str:
     return f"T-{secrets.token_hex(3).upper()}"
 
 
-def make_unique_teacher_code(con: sqlite3.Connection) -> str:
-    for _ in range(20):
-        code = make_teacher_code()
-        exists = con.execute("SELECT 1 FROM users WHERE teacher_code = ?", (code,)).fetchone()
-        if not exists:
-            return code
-    raise RuntimeError("Could not generate a unique teacher code.")
-
-
-def normalize_email(value: Any) -> str:
-    return str(value or "").strip().lower()
-
-
-def validate_email(email: str) -> None:
-    if not email:
-        raise ValueError("Укажите email.")
-    if email.count("@") != 1:
-        raise ValueError("Email должен содержать @.")
-    local, domain = email.rsplit("@", 1)
-    if not local or not domain or "." not in domain.strip("."):
-        raise ValueError("Укажите корректный email с доменной частью.")
-
-
-def ensure_fallback_teacher(con: sqlite3.Connection) -> None:
-    row = con.execute(
-        "SELECT * FROM users WHERE role = 'teacher' AND UPPER(teacher_code) = ?",
-        (FALLBACK_TEACHER_CODE,),
-    ).fetchone()
-    if row:
-        if "email" in row.keys() and not row["email"]:
-            con.execute(
-                "UPDATE users SET email = ? WHERE user_id = ?",
-                (FALLBACK_TEACHER_EMAIL, row["user_id"]),
-            )
-        return
-
-    salt = secrets.token_hex(16)
-    con.execute(
-        """
-        INSERT INTO users
-            (user_id, username, email, display_name, role, password_salt, password_hash,
-             created_at, teacher_code, password_reset_required)
-        VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?, ?, 1)
-        """,
-        (
-            "user_service_teacher",
-            FALLBACK_TEACHER_EMAIL,
-            FALLBACK_TEACHER_EMAIL,
-            "Служебный учитель",
-            salt,
-            password_hash(secrets.token_urlsafe(32), salt),
-            now_iso(),
-            FALLBACK_TEACHER_CODE,
-        ),
-    )
-
-
-def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str = "") -> dict[str, Any]:
-    email = normalize_email(payload.get("email"))
-    username = email
+def register_user(payload: dict[str, Any]) -> dict[str, Any]:
+    username = str(payload.get("username") or "").strip()
     password = str(payload.get("password") or "")
     display_name = str(payload.get("display_name") or username).strip()
     role = str(payload.get("role") or "student").strip()
     teacher_code = str(payload.get("teacher_code") or "").strip().upper()
-    consent_accepted = bool(payload.get("consent_accepted"))
 
     if role not in {"teacher", "student"}:
         raise ValueError("Неизвестная роль.")
-    if not consent_accepted:
-        raise ValueError("Для регистрации необходимо принять Политику обработки персональных данных и дать согласие на обработку персональных данных.")
-    validate_email(email)
+    if len(username) < 3:
+        raise ValueError("Логин должен быть не короче 3 символов.")
     if len(password) < 6:
         raise ValueError("Пароль должен быть не короче 6 символов.")
     if role == "student" and not teacher_code:
-        teacher_code = FALLBACK_TEACHER_CODE
+        raise ValueError("Для регистрации ученика нужен код учителя.")
 
     with db() as con:
-        ensure_fallback_teacher(con)
         teacher_id = None
         own_teacher_code = None
         if role == "student":
@@ -555,52 +252,43 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
                 raise ValueError("Код учителя не найден.")
             teacher_id = teacher["user_id"]
         else:
-            own_teacher_code = make_unique_teacher_code(con)
+            own_teacher_code = make_teacher_code()
 
-        existing = con.execute(
-            "SELECT * FROM users WHERE LOWER(COALESCE(email, '')) = ? OR LOWER(username) = ?",
-            (email, username),
-        ).fetchone()
+        existing = con.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
         if existing:
             if not int(existing["password_reset_required"] or 0):
-                raise ValueError("Пользователь с таким email уже зарегистрирован")
+                raise ValueError("Такой логин уже занят.")
             if existing["role"] != role:
                 raise ValueError("Для восстановления выберите прежнюю роль.")
             if role == "student" and existing["teacher_id"] != teacher_id:
                 raise ValueError("Код учителя не совпадает с текущим аккаунтом.")
-            salt = secrets.token_hex(16)
+            salt = secrets.token_hex(8)
             con.execute(
                 """
                 UPDATE users
                 SET display_name = COALESCE(NULLIF(?, ''), display_name),
-                    username = ?,
-                    email = ?,
                     password_salt = ?,
                     password_hash = ?,
                     password_reset_required = 0
                 WHERE user_id = ?
                 """,
-                (display_name, username, email, salt, password_hash(password, salt), existing["user_id"]),
+                (display_name, salt, password_hash(password, salt), existing["user_id"]),
             )
             row = con.execute("SELECT * FROM users WHERE user_id = ?", (existing["user_id"],)).fetchone()
-            insert_user_consent(con, row["user_id"], ip_address, user_agent)
-            user = public_user(row)
-            user["has_required_consents"] = True
-            return user
+            return public_user(row)
 
-        salt = secrets.token_hex(16)
+        salt = secrets.token_hex(8)
         user_id = f"user_{secrets.token_hex(8)}"
         con.execute(
             """
             INSERT INTO users
-                (user_id, username, email, display_name, role, password_salt, password_hash,
+                (user_id, username, display_name, role, password_salt, password_hash,
                  created_at, teacher_code, teacher_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
                 username,
-                email,
                 display_name,
                 role,
                 salt,
@@ -611,10 +299,7 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
             ),
         )
         row = con.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
-        insert_user_consent(con, user_id, ip_address, user_agent)
-    user = public_user(row)
-    user["has_required_consents"] = True
-    return user
+    return public_user(row)
 
 
 def load_words() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -622,34 +307,39 @@ def load_words() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     words: list[dict[str, Any]] = []
     rules: list[dict[str, Any]] = []
     for category, grouped_rules in data.get("categories", {}).items():
-        for rule_name, items in grouped_rules.items():
-            rule_id = make_rule_id(category, rule_name)
-            rule_words = []
-            for item in items:
-                if not item.get("variant") or not item.get("correct_letter"):
-                    continue
-                word = {
-                    "id": str(item.get("id") or f"{rule_id}_{len(words)}"),
-                    "category": category,
-                    "rule_name": rule_name,
-                    "rule_id": rule_id,
-                    "variant": item.get("variant"),
-                    "correct_letter": str(item.get("correct_letter") or item.get("answer")).strip().lower(),
-                    "correct_spelling": item.get("correct_spelling") or "",
-                    "explanation": item.get("explanation") or "",
-                    "dependency": item.get("dependency") or "",
-                    "address": item.get("first_address") or "",
-                }
-                words.append(word)
-                rule_words.append(word)
-            rules.append(
-                {
-                    "rule_id": rule_id,
-                    "category": category,
-                    "rule_name": rule_name,
-                    "count": len(rule_words),
-                }
-            )
+        for rule_group, suffix_groups in grouped_rules.items():
+            if isinstance(suffix_groups, list):
+                suffix_groups = {rule_group: suffix_groups}
+            for suffix_name, items in suffix_groups.items():
+                rule_name = f"{rule_group} / {suffix_name}" if suffix_name != rule_group else rule_group
+                rule_id = make_rule_id(category, rule_name)
+                rule_words = []
+                for item in items:
+                    if not item.get("variant"):
+                        continue
+                    correct_letter = str(item.get("correct_letter") or item.get("answer") or "-").strip().lower()
+                    word = {
+                        "id": str(item.get("id") or f"{rule_id}_{len(words)}"),
+                        "category": category,
+                        "rule_name": rule_name,
+                        "rule_id": rule_id,
+                        "variant": item.get("variant"),
+                        "correct_letter": correct_letter,
+                        "correct_spelling": item.get("correct_spelling") or "",
+                        "explanation": item.get("explanation") or "",
+                        "dependency": item.get("dependency") or "",
+                        "address": item.get("first_address") or "",
+                    }
+                    words.append(word)
+                    rule_words.append(word)
+                rules.append(
+                    {
+                        "rule_id": rule_id,
+                        "category": category,
+                        "rule_name": rule_name,
+                        "count": len(rule_words),
+                    }
+                )
     return words, rules
 
 
@@ -663,58 +353,7 @@ WORDS_BY_RULE: dict[str, list[dict[str, Any]]] = {}
 for word in WORDS:
     WORDS_BY_RULE.setdefault(word["rule_id"], []).append(word)
 RULE_BY_ID = {rule["rule_id"]: rule for rule in RULES}
-
-
-def bootstrap_for(rules: list[dict[str, Any]], word_count: int) -> dict[str, Any]:
-    grouped: dict[str, list[dict[str, Any]]] = {}
-    for rule in rules:
-        grouped.setdefault(rule["category"], []).append(rule)
-    return {
-        "rules": grouped,
-        "word_count": word_count,
-        "repeat_on_error": REPEAT_ON_ERROR,
-        "activities": ACTIVITIES,
-    }
-
-
-def activity_bootstrap(slug: str) -> dict[str, Any]:
-    if slug == "ege9":
-        return bootstrap_for(RULES, len(WORDS))
-    if slug == "ege10":
-        return bootstrap_for(ege10_module.RULES, len(ege10_module.WORDS))
-    if slug == "ege11":
-        return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS))
-    if slug == "html-games":
-        return {
-            "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
-            "activities": ACTIVITIES,
-        }
-    raise ValueError("Активность не найдена.")
-
-
-def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    if slug == "ege9":
-        if action == "start":
-            return start_practice(user, payload)
-        if action == "submit":
-            return submit_practice(user, payload)
-        if action == "check":
-            return check_practice_answer(user, payload)
-    if slug == "ege10":
-        if action == "start":
-            return ege10_module.start_practice(user, payload)
-        if action == "submit":
-            return ege10_module.submit_practice(user, payload)
-        if action == "check":
-            return ege10_module.check_practice_answer(user, payload)
-    if slug == "ege11":
-        if action == "start":
-            return ege11_module.start_practice(user, payload)
-        if action == "submit":
-            return ege11_module.submit_practice(user, payload)
-        if action == "check":
-            return ege11_module.check_practice_answer(user, payload)
-    raise ValueError("Действие активности не найдено.")
+FALLBACK_LETTERS = ["е", "и", "о", "а", "ы", "я", "ё", "с", "ч", "щ", "-", "к"]
 
 
 def db() -> sqlite3.Connection:
@@ -723,107 +362,14 @@ def db() -> sqlite3.Connection:
     return con
 
 
-def required_consents() -> list[dict[str, str]]:
-    return [
-        {
-            "consent_type": CONSENT_TYPE_PERSONAL_DATA,
-            "document_version": CURRENT_CONSENT_VERSION,
-            "privacy_policy_version": CURRENT_PRIVACY_POLICY_VERSION,
-        }
-    ]
-
-
-def active_document(document_type: str) -> dict[str, Any]:
-    with db() as con:
-        row = con.execute(
-            """
-            SELECT document_type, version, title, content, updated_at
-            FROM documents
-            WHERE document_type = ? AND is_active = 1
-            ORDER BY updated_at DESC
-            LIMIT 1
-            """,
-            (document_type,),
-        ).fetchone()
-    if not row:
-        raise ValueError("Документ не найден.")
-    return dict(row)
-
-
-def consent_status(user_id: str) -> dict[str, Any]:
-    with db() as con:
-        accepted_rows = con.execute(
-            """
-            SELECT consent_type, document_version, accepted_at
-            FROM user_consents
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        ).fetchall()
-    accepted = {(row["consent_type"], row["document_version"]): row for row in accepted_rows}
-    required = []
-    for item in required_consents():
-        key = (item["consent_type"], item["document_version"])
-        row = accepted.get(key)
-        required.append(
-            {
-                **item,
-                "accepted": row is not None,
-                "accepted_at": row["accepted_at"] if row else None,
-            }
-        )
-    return {
-        "has_required_consents": all(item["accepted"] for item in required),
-        "required": required,
-    }
-
-
-def user_has_required_consents(user_id: str) -> bool:
-    return bool(consent_status(user_id)["has_required_consents"])
-
-
-def insert_user_consent(con: sqlite3.Connection, user_id: str, ip_address: str = "", user_agent: str = "") -> None:
-    item = required_consents()[0]
-    con.execute(
-        """
-        INSERT INTO user_consents
-            (id, user_id, consent_type, document_version, accepted_at, ip_address, user_agent)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(user_id, consent_type, document_version) DO UPDATE SET
-            accepted_at = excluded.accepted_at,
-            ip_address = excluded.ip_address,
-            user_agent = excluded.user_agent
-        """,
-        (
-            secrets.token_hex(12),
-            user_id,
-            item["consent_type"],
-            item["document_version"],
-            now_iso(),
-            ip_address,
-            user_agent[:500] if user_agent else "",
-        ),
-    )
-
-
-def record_user_consent(user_id: str, ip_address: str = "", user_agent: str = "") -> dict[str, Any]:
-    with db() as con:
-        insert_user_consent(con, user_id, ip_address, user_agent)
-    return consent_status(user_id)
-
-
 def public_user(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
-    has_consents = user_has_required_consents(row["user_id"])
-    email = row["email"] if "email" in row.keys() else None
     return {
         "user_id": row["user_id"],
         "username": row["username"],
-        "email": email,
         "display_name": row["display_name"],
         "role": row["role"],
         "teacher_code": row["teacher_code"] if row["role"] == "teacher" else None,
         "teacher_id": row["teacher_id"] if row["role"] == "student" else None,
-        "has_required_consents": has_consents,
     }
 
 
@@ -856,40 +402,59 @@ def normalize_letter(value: Any) -> str:
     return str(value or "").strip().lower().replace("ё", "ё")[:1]
 
 
+def unique_letters(letters: list[str]) -> list[str]:
+    result: list[str] = []
+    for letter in letters:
+        normalized = normalize_letter(letter)
+        if normalized and normalized not in result:
+            result.append(normalized)
+    return result
+
+
+def answer_options_for_word(word: dict[str, Any]) -> list[str]:
+    category = word["category"]
+    rule_name = word["rule_name"]
+    correct = normalize_letter(word["correct_letter"])
+
+    if category == "приставки ПРЕ/ПРИ":
+        options = ["е", "и"]
+    elif category == "приставки на -з/-с":
+        options = ["з", "с"]
+    elif category == "И/Ы после приставок":
+        options = ["и", "ы"]
+    elif category == "ь/ъ":
+        options = ["ь", "ъ", "-"]
+    elif rule_name in {"ПРА-/ПРО-", "ПО-/ПА-", "РАЗ(-С)/РОЗ(-С)"}:
+        options = ["а", "о"]
+    else:
+        options = sorted(
+            {
+                normalize_letter(item["correct_letter"])
+                for item in WORDS_BY_RULE.get(word["rule_id"], [])
+                if normalize_letter(item["correct_letter"])
+            }
+        )
+
+    options = unique_letters(options)
+    if correct and correct not in options:
+        options.append(correct)
+    if len(options) < 2:
+        category_letters = [
+            item["correct_letter"]
+            for item in WORDS
+            if item["category"] == category and normalize_letter(item["correct_letter"])
+        ]
+        options = unique_letters(options + category_letters + FALLBACK_LETTERS)
+    if len(options) > 4:
+        distractors = [option for option in options if option != correct]
+        random.shuffle(distractors)
+        options = unique_letters(([correct] if correct else []) + distractors[:3])
+    return options or [correct]
+
+
 def letter_choices(word: dict[str, Any]) -> list[str]:
     correct = normalize_letter(word["correct_letter"])
-    marker = f"{word['category']} {word['rule_name']} {word['dependency']} {word.get('root', '')}".lower()
-    common_letters = ["а", "о", "е", "и", "ы", "я", "ю", "э", "ё", "у"]
-
-    if "после ц" in marker and correct in {"и", "ы"}:
-        priority = ["и", "ы"]
-    elif "шип" in marker and correct in {"о", "ё", "е"}:
-        priority = ["о", "ё", "е"]
-    elif correct in {"а", "о"}:
-        priority = ["а", "о"]
-    elif correct in {"и", "е"}:
-        priority = ["и", "е"]
-    elif correct in {"я", "а"}:
-        priority = ["я", "а"]
-    elif correct in {"ю", "у"}:
-        priority = ["ю", "у"]
-    else:
-        priority = [correct]
-
-    choices: list[str] = []
-    for letter in priority:
-        letter = normalize_letter(letter)
-        if letter and letter not in choices:
-            choices.append(letter)
-
-    if len(choices) <= 1:
-        for letter in common_letters:
-            letter = normalize_letter(letter)
-            if letter and letter not in choices:
-                choices.append(letter)
-            if len(choices) >= 4:
-                break
-
+    choices = answer_options_for_word(word)
     random.shuffle(choices)
     if correct not in choices:
         choices[0] = correct
@@ -1010,35 +575,13 @@ def update_word_progress(
     )
 
 
-LINE_PAIRS = {
-    "а/о": {"letters": ("а", "о"), "label": "А/О"},
-    "и/е": {"letters": ("и", "е"), "label": "И/Е"},
-    "и/ы после ц": {"letters": ("и", "ы"), "label": "И/Ы после Ц"},
-    "о/ё после шипящих": {"letters": ("о", "ё"), "label": "О/Ё после шипящих"},
-}
-
-
-def line_pair_key(word: dict[str, Any]) -> str | None:
-    letter = word["correct_letter"]
-    marker = f"{word['category']} {word['rule_name']} {word['dependency']}".lower()
-    if "ц" in marker and letter in {"и", "ы"}:
-        return "и/ы после ц"
-    if "шип" in marker and letter in {"о", "ё"}:
-        return "о/ё после шипящих"
-    if letter in {"а", "о"}:
-        return "а/о"
-    if letter in {"и", "е"}:
-        return "и/е"
-    return None
-
-
-def line_pair_pools() -> dict[str, dict[str, list[dict[str, Any]]]]:
+def category_pools(source_words: list[dict[str, Any]] | None = None) -> dict[str, dict[str, list[dict[str, Any]]]]:
     pools: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    for word in WORDS:
-        key = line_pair_key(word)
-        if not key:
+    for word in source_words or WORDS:
+        letter = normalize_letter(word["correct_letter"])
+        if not letter:
             continue
-        pools.setdefault(key, {}).setdefault(word["correct_letter"], []).append(word)
+        pools.setdefault(word["category"], {}).setdefault(letter, []).append(word)
     return pools
 
 
@@ -1059,38 +602,64 @@ def shuffle_line_rows(rows: list[dict[str, Any]]) -> None:
             rows[0], rows[swap_index] = rows[swap_index], rows[0]
 
 
-def make_line_question() -> dict[str, Any]:
-    pools = line_pair_pools()
-    viable_pairs = [
-        pair_key
-        for pair_key, by_letter in pools.items()
-        if all(len(by_letter.get(letter, [])) >= 3 for letter in LINE_PAIRS[pair_key]["letters"])
-    ]
-    pair_key = random.choice(viable_pairs)
-    letters = LINE_PAIRS[pair_key]["letters"]
-    by_letter = pools[pair_key]
+def make_line_question(source_words: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    pools = category_pools()
+    focus_pools = category_pools(source_words) if source_words else {}
+    viable_categories = [category for category in pools if len(pools[category]) >= 2]
+    focus_categories = [category for category in focus_pools if category in viable_categories]
+    random.shuffle(focus_categories)
+    random.shuffle(viable_categories)
+    categories = list(dict.fromkeys(focus_categories + viable_categories))[:5]
+    if len(categories) < 5:
+        raise ValueError("Для режима строки в копилке нужно больше ошибок из разных орфограмм.")
     used_ids: set[str] = set()
+    correct_targets = set(random.sample(range(len(categories)), k=random.choice([2, 3])))
+
+    def pool_for(category: str, letter: str) -> list[dict[str, Any]]:
+        focused = focus_pools.get(category, {}).get(letter, [])
+        focused_ids = {word["id"] for word in focused}
+        rest = [word for word in pools[category][letter] if word["id"] not in focused_ids]
+        return focused + rest
 
     rows: list[dict[str, Any]] = []
-    correct_row_count = random.choice([2, 3])
-    for _ in range(correct_row_count):
-        letter = random.choice(letters)
-        rows.append(
-            {
-                "is_correct": True,
-                "letter": letter,
-                "words": sample_words(by_letter[letter], 3, used_ids),
-            }
-        )
+    for index, category in enumerate(categories):
+        by_letter = pools[category]
+        letters = [letter for letter, words in by_letter.items() if len(words) >= 1]
+        same_letter_options = [letter for letter, words in by_letter.items() if len(words) >= 3]
+        should_be_correct = index in correct_targets and bool(same_letter_options)
 
-    for _ in range(5 - correct_row_count):
-        first, second = letters
-        pattern = random.choice([(first, first, second), (first, second, second)])
+        if should_be_correct:
+            letter = random.choice(same_letter_options)
+            rows.append(
+                {
+                    "category": category,
+                    "is_correct": True,
+                    "letter": letter,
+                    "words": sample_words(pool_for(category, letter), 3, used_ids),
+                }
+            )
+            continue
+
+        if len(letters) < 2:
+            letter = random.choice(same_letter_options or letters)
+            rows.append(
+                {
+                    "category": category,
+                    "is_correct": True,
+                    "letter": letter,
+                    "words": sample_words(pool_for(category, letter), 3, used_ids),
+                }
+            )
+            continue
+
+        first, second = random.sample(letters, 2)
+        third = random.choice([first, second])
+        pattern = [first, second, third]
         words: list[dict[str, Any]] = []
         for letter in pattern:
-            words.extend(sample_words(by_letter[letter], 1, used_ids))
+            words.extend(sample_words(pool_for(category, letter), 1, used_ids))
         random.SystemRandom().shuffle(words)
-        rows.append({"is_correct": False, "letter": None, "words": words})
+        rows.append({"category": category, "is_correct": False, "letter": None, "words": words})
 
     shuffle_line_rows(rows)
     correct_indexes = [str(index + 1) for index, row in enumerate(rows) if row["is_correct"]]
@@ -1101,13 +670,19 @@ def make_line_question() -> dict[str, Any]:
         "kind": "line",
         "prompt": "Выберите все строки, где во всех трех словах пропущена одна и та же буква.",
         "rows": [[word["variant"] for word in row["words"]] for row in rows],
-        "row_word_ids": [[word["id"] for word in row["words"]] for row in rows],
+        "_line_rows": [
+            {
+                "is_correct": row["is_correct"],
+                "word_ids": [word["id"] for word in row["words"]],
+            }
+            for row in rows
+        ],
         "choices": [str(number) for number in range(1, len(rows) + 1)],
         "category": "Строка",
         "rule_id": "line_same_letter",
-        "rule_name": f"Строка: {LINE_PAIRS[pair_key]['label']}",
+        "rule_name": "Строка: 5 орфограмм",
         "explanation": (
-            f"В этом варианте работала пара {LINE_PAIRS[pair_key]['label']}. "
+            "Каждая строка собрана из отдельной крупной группы задания 10. "
             f"Правильные строки: {', '.join(correct_indexes)}."
         ),
         "correct_spelling": "; ".join(
@@ -1122,7 +697,7 @@ def normalize_given_answer(question: dict[str, Any], value: Any) -> str:
     raw = str(value or "").strip().lower()
     if question.get("kind") == "line":
         return "".join(sorted(char for char in raw if char.isdigit()))
-    return raw
+    return normalize_letter(raw)
 
 
 def record_attempt(
@@ -1138,11 +713,9 @@ def record_attempt(
     is_correct = int(given == correct)
     word_id = question.get("source_word_id")
     if word_id:
-        if session["scope_id"] != scope_id_for("errors"):
-            update_word_progress(con, user_id, session["scope_id"], word_id, is_correct)
-        update_error_bank_progress(con, user_id, word_id, is_correct)
-    elif question.get("kind") == "line":
-        record_line_word_progress(con, user_id, session, question_id, question, given, is_correct, elapsed)
+        update_word_progress(con, user_id, session["scope_id"], word_id, is_correct)
+    if question.get("kind") == "line" and not is_correct:
+        record_line_word_errors(con, user_id, session, question, question_id, given, elapsed)
     con.execute(
         """
         INSERT INTO attempts
@@ -1178,88 +751,54 @@ def record_attempt(
     }
 
 
-def update_error_bank_progress(
-    con: sqlite3.Connection,
-    user_id: str,
-    word_id: str,
-    is_correct: int,
-) -> None:
-    update_word_progress(con, user_id, scope_id_for("errors"), word_id, is_correct)
-
-
-def record_word_attempt(
+def record_line_word_errors(
     con: sqlite3.Connection,
     user_id: str,
     session: dict[str, Any],
-    question_id: str,
-    word: dict[str, Any],
-    given: str,
-    is_correct: int,
-    elapsed: Any = None,
-) -> None:
-    con.execute(
-        """
-        INSERT INTO attempts
-            (attempt_id, user_id, mode, scope_id, word_id, rule_id, category, rule_name,
-             question_id, prompt, given_answer, correct_answer, is_correct, created_at, time_spent_sec)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            secrets.token_hex(12),
-            user_id,
-            session["mode"],
-            scope_id_for("errors"),
-            word["id"],
-            word["rule_id"],
-            word["category"],
-            word["rule_name"],
-            question_id,
-            word["variant"],
-            given,
-            word["correct_letter"],
-            is_correct,
-            now_iso(),
-            elapsed,
-        ),
-    )
-
-
-def record_line_word_progress(
-    con: sqlite3.Connection,
-    user_id: str,
-    session: dict[str, Any],
-    question_id: str,
     question: dict[str, Any],
+    question_id: str,
     given: str,
-    is_correct: int,
     elapsed: Any = None,
 ) -> None:
     correct_rows = set(question["correct_answer"])
     given_rows = set(given)
-    affected_rows = correct_rows.symmetric_difference(given_rows)
-    row_word_ids = question.get("row_word_ids") or []
-    if is_correct:
-        affected_rows = {str(index + 1) for index in range(len(row_word_ids))}
+    missed_or_extra = correct_rows.symmetric_difference(given_rows)
+    rows = question.get("line_rows") or []
 
-    for row_number in sorted(affected_rows):
-        row_index = int(row_number) - 1
-        if row_index < 0 or row_index >= len(row_word_ids):
+    for row_number in missed_or_extra:
+        if not row_number.isdigit():
             continue
-        for word_id in row_word_ids[row_index]:
+        row_index = int(row_number) - 1
+        if row_index < 0 or row_index >= len(rows):
+            continue
+        for word_id in rows[row_index].get("word_ids", []):
             word = WORD_BY_ID.get(word_id)
             if not word:
                 continue
-            update_word_progress(con, user_id, scope_id_for("line"), word_id, is_correct)
-            update_error_bank_progress(con, user_id, word_id, is_correct)
-            record_word_attempt(
-                con,
-                user_id,
-                session,
-                f"{question_id}:row{row_number}:{word_id}",
-                word,
-                f"строка {row_number}",
-                is_correct,
-                elapsed,
+            update_word_progress(con, user_id, "errors:bank", word_id, 0)
+            con.execute(
+                """
+                INSERT INTO attempts
+                    (attempt_id, user_id, mode, scope_id, word_id, rule_id, category, rule_name,
+                     question_id, prompt, given_answer, correct_answer, is_correct, created_at, time_spent_sec)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+                """,
+                (
+                    secrets.token_hex(12),
+                    user_id,
+                    f"{session['mode']}:line_word",
+                    "errors:bank",
+                    word_id,
+                    word["rule_id"],
+                    word["category"],
+                    word["rule_name"],
+                    question_id,
+                    word["variant"],
+                    given,
+                    word["correct_letter"],
+                    now_iso(),
+                    elapsed,
+                ),
             )
 
 
@@ -1267,12 +806,13 @@ def error_bank_words(user_id: str) -> list[dict[str, Any]]:
     with db() as con:
         rows = con.execute(
             """
-            SELECT word_id, due_reviews, error_count, last_seen_at
-            FROM word_progress
-            WHERE user_id = ? AND scope_id = ? AND due_reviews > 0
-            ORDER BY due_reviews DESC, error_count DESC, last_seen_at DESC
+            SELECT word_id, MAX(created_at) AS last_error_at
+            FROM attempts
+            WHERE user_id = ? AND is_correct = 0 AND word_id IS NOT NULL
+            GROUP BY word_id
+            ORDER BY last_error_at DESC
             """,
-            (user_id, scope_id_for("errors")),
+            (user_id,),
         ).fetchall()
     return [WORD_BY_ID[row["word_id"]] for row in rows if row["word_id"] in WORD_BY_ID]
 
@@ -1280,7 +820,7 @@ def error_bank_words(user_id: str) -> list[dict[str, Any]]:
 def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any]:
     students = con.execute(
         """
-        SELECT user_id, display_name, username, email
+        SELECT user_id, display_name, username
         FROM users
         WHERE role = 'student' AND teacher_id = ?
         ORDER BY display_name
@@ -1324,13 +864,14 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
         ).fetchall()
         error_bank = con.execute(
             """
-            SELECT word_id, error_count AS errors
-            FROM word_progress
-            WHERE user_id = ? AND scope_id = ? AND due_reviews > 0
-            ORDER BY due_reviews DESC, error_count DESC, last_seen_at DESC
+            SELECT a.word_id, MAX(a.created_at) AS last_error_at, COUNT(*) AS errors
+            FROM attempts a
+            WHERE a.user_id = ? AND a.is_correct = 0 AND a.word_id IS NOT NULL
+            GROUP BY a.word_id
+            ORDER BY last_error_at DESC
             LIMIT 20
             """,
-            (user_id, scope_id_for("errors")),
+            (user_id,),
         ).fetchall()
         touched = int(summary["touched"] or 0)
         result_students.append(
@@ -1338,7 +879,6 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
                 "user_id": user_id,
                 "display_name": student["display_name"],
                 "username": student["username"],
-                "email": student["email"],
                 "total": int(summary["total"] or 0),
                 "correct": int(summary["correct"] or 0),
                 "untouched": max(len(WORDS) - touched, 0),
@@ -1380,24 +920,17 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         ).fetchone()
         teachers = con.execute(
             """
-            SELECT t.user_id, t.display_name, t.username, t.email, t.teacher_code, t.password_reset_required,
-                   uc.accepted_at AS consent_accepted_at,
+            SELECT t.user_id, t.display_name, t.username, t.teacher_code, t.password_reset_required,
                    COUNT(DISTINCT s.user_id) AS students,
                    COUNT(a.attempt_id) AS attempts,
                    COALESCE(SUM(a.is_correct), 0) AS correct
             FROM users t
-            LEFT JOIN user_consents uc
-                ON uc.user_id = t.user_id
-               AND uc.consent_type = ?
-               AND uc.document_version = ?
             LEFT JOIN users s ON s.teacher_id = t.user_id AND s.role = 'student'
             LEFT JOIN attempts a ON a.user_id = s.user_id
             WHERE t.role = 'teacher'
             GROUP BY t.user_id
             ORDER BY t.display_name
             """
-            ,
-            (CONSENT_TYPE_PERSONAL_DATA, CURRENT_CONSENT_VERSION),
         ).fetchall()
         teacher_ids = [row["user_id"] for row in teachers]
         student_rows = []
@@ -1405,35 +938,25 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             placeholders = ",".join("?" for _ in teacher_ids)
             student_rows = con.execute(
                 f"""
-                SELECT s.user_id, s.teacher_id, s.display_name, s.username, s.email, s.password_reset_required,
-                       uc.accepted_at AS consent_accepted_at,
+                SELECT s.user_id, s.teacher_id, s.display_name, s.username, s.password_reset_required,
                        COUNT(a.attempt_id) AS attempts,
                        COALESCE(SUM(a.is_correct), 0) AS correct
                 FROM users s
-                LEFT JOIN user_consents uc
-                    ON uc.user_id = s.user_id
-                   AND uc.consent_type = ?
-                   AND uc.document_version = ?
                 LEFT JOIN attempts a ON a.user_id = s.user_id
                 WHERE s.role = 'student' AND s.teacher_id IN ({placeholders})
                 GROUP BY s.user_id
                 ORDER BY s.display_name
                 """,
-                (CONSENT_TYPE_PERSONAL_DATA, CURRENT_CONSENT_VERSION, *teacher_ids),
+                tuple(teacher_ids),
             ).fetchall()
         students_by_teacher: dict[str, list[dict[str, Any]]] = {}
         for row in student_rows:
-            item = dict(row)
-            item["consent_accepted"] = bool(row["consent_accepted_at"])
-            item["consent_version"] = CURRENT_CONSENT_VERSION
-            students_by_teacher.setdefault(row["teacher_id"], []).append(item)
+            students_by_teacher.setdefault(row["teacher_id"], []).append(dict(row))
     return {
         "platform": dict(platform),
         "teachers": [
             {
                 **dict(row),
-                "consent_accepted": bool(row["consent_accepted_at"]),
-                "consent_version": CURRENT_CONSENT_VERSION,
                 "students_list": students_by_teacher.get(row["user_id"], []),
             }
             for row in teachers
@@ -1471,7 +994,11 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
         pool = error_bank_words(user["user_id"])
         if not pool:
             raise ValueError("Копилка ошибок пока пуста.")
-        questions = [make_word_question(word) for word in pick_words_for_scope(user["user_id"], scope_id, pool, min(count, len(pool)))]
+        errors_mode = str(payload.get("errors_mode") or "word_letter")
+        if errors_mode == "line":
+            questions = [make_line_question(pool) for _ in range(count)]
+        else:
+            questions = [make_word_question(word) for word in pick_words_for_scope(user["user_id"], scope_id, pool, min(count, len(pool)))]
     else:
         raise ValueError("Неизвестный режим тренировки.")
 
@@ -1480,8 +1007,11 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
     public_questions = []
     for question in questions:
         correct_answer = question.pop("_correct_answer", "")
-        answer_key[question["question_id"]] = {**question, "correct_answer": str(correct_answer).lower()}
-        question.pop("row_word_ids", None)
+        line_rows = question.pop("_line_rows", None)
+        private_question = {**question, "correct_answer": str(correct_answer).lower()}
+        if line_rows is not None:
+            private_question["line_rows"] = line_rows
+        answer_key[question["question_id"]] = private_question
         public_questions.append(question)
 
     PRACTICE_SESSIONS[session_id] = {
@@ -1631,11 +1161,11 @@ def progress_for(user: dict[str, Any]) -> dict[str, Any]:
         ).fetchone() if user["role"] != "teacher" else {"due": 0}
         error_bank = con.execute(
             """
-            SELECT COUNT(*) AS total
-            FROM word_progress
-            WHERE user_id = ? AND scope_id = ? AND due_reviews > 0
+            SELECT COUNT(DISTINCT word_id) AS total
+            FROM attempts
+            WHERE user_id = ? AND is_correct = 0 AND word_id IS NOT NULL
             """,
-            (user["user_id"], scope_id_for("errors")),
+            (user["user_id"],),
         ).fetchone() if user["role"] != "teacher" else {"total": 0}
     return {
         "summary": dict(summary),
@@ -1703,14 +1233,14 @@ def teacher_error_pool(teacher_id: str) -> list[dict[str, Any]]:
     with db() as con:
         rows = con.execute(
             """
-            SELECT wp.word_id
-            FROM word_progress wp
-            JOIN users u ON u.user_id = wp.user_id
-            WHERE u.teacher_id = ? AND wp.scope_id = ? AND wp.due_reviews > 0
-            GROUP BY wp.word_id
-            ORDER BY MAX(wp.due_reviews) DESC, MAX(wp.error_count) DESC, MAX(wp.last_seen_at) DESC
+            SELECT a.word_id, MAX(a.created_at) AS last_error_at
+            FROM attempts a
+            JOIN users u ON u.user_id = a.user_id
+            WHERE u.teacher_id = ? AND a.is_correct = 0 AND a.word_id IS NOT NULL
+            GROUP BY a.word_id
+            ORDER BY last_error_at DESC
             """,
-            (teacher_id, scope_id_for("errors")),
+            (teacher_id,),
         ).fetchall()
     return [WORD_BY_ID[row["word_id"]] for row in rows if row["word_id"] in WORD_BY_ID]
 
@@ -1776,7 +1306,7 @@ def reset_user_password(admin: dict[str, Any], payload: dict[str, Any]) -> dict[
         row = con.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
         if not row:
             raise ValueError("Пользователь не найден.")
-        salt = secrets.token_hex(16)
+        salt = secrets.token_hex(8)
         con.execute(
             """
             UPDATE users
@@ -1790,116 +1320,6 @@ def reset_user_password(admin: dict[str, Any], payload: dict[str, Any]) -> dict[
     return {"ok": True, "username": row["username"]}
 
 
-def reset_token_hash(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
-
-
-def send_password_reset_email(email: str, link: str) -> None:
-    if not SMTP_HOST or not MAIL_FROM:
-        if not production_mode():
-            print(f"Password reset link for {email}: {link}")
-            return
-        raise RuntimeError("SMTP is not configured.")
-
-    message = EmailMessage()
-    message["Subject"] = "Восстановление пароля"
-    message["From"] = MAIL_FROM
-    message["To"] = email
-    message.set_content(
-        "Здравствуйте.\n\n"
-        "Для смены пароля откройте ссылку ниже. Она действует 30 минут:\n\n"
-        f"{link}\n\n"
-        "Если вы не запрашивали восстановление пароля, просто игнорируйте это письмо.\n"
-    )
-
-    if SMTP_USE_SSL:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
-            if SMTP_USER:
-                smtp.login(SMTP_USER, SMTP_PASSWORD)
-            smtp.send_message(message)
-        return
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.starttls()
-        if SMTP_USER:
-            smtp.login(SMTP_USER, SMTP_PASSWORD)
-        smtp.send_message(message)
-
-
-def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
-    email = normalize_email(payload.get("email") or payload.get("username"))
-    neutral = {
-        "ok": True,
-        "message": "Если такой email есть в системе, мы отправили ссылку для восстановления пароля.",
-    }
-    if not email:
-        return neutral
-
-    with db() as con:
-        row = con.execute(
-            """
-            SELECT user_id, username, COALESCE(email, username) AS email
-            FROM users
-            WHERE LOWER(COALESCE(email, '')) = ?
-               OR (email IS NULL AND LOWER(username) = ? AND instr(username, '@') > 1)
-            """,
-            (email, email),
-        ).fetchone()
-        if not row:
-            return neutral
-        token = secrets.token_urlsafe(32)
-        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat(timespec="seconds")
-        con.execute(
-            """
-            INSERT INTO password_reset_tokens
-                (token_id, user_id, token_hash, expires_at, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (secrets.token_hex(12), row["user_id"], reset_token_hash(token), expires_at, now_iso()),
-        )
-    send_password_reset_email(row["email"], f"{APP_BASE_URL}/reset-password?token={token}")
-    return neutral
-
-
-def reset_password_by_token(payload: dict[str, Any]) -> dict[str, Any]:
-    token = str(payload.get("token") or "").strip()
-    new_password = str(payload.get("password") or payload.get("new_password") or "")
-    if not token or len(new_password) < 6:
-        raise ValueError("Укажите токен и новый пароль не короче 6 символов.")
-    token_hash = reset_token_hash(token)
-    with db() as con:
-        row = con.execute(
-            """
-            SELECT prt.*, u.username
-            FROM password_reset_tokens prt
-            JOIN users u ON u.user_id = prt.user_id
-            WHERE prt.token_hash = ? AND prt.used_at IS NULL
-            """,
-            (token_hash,),
-        ).fetchone()
-        if not row:
-            raise ValueError("Ссылка восстановления недействительна.")
-        expires_at = datetime.fromisoformat(row["expires_at"])
-        if expires_at < datetime.now(timezone.utc):
-            raise ValueError("Срок действия ссылки истек.")
-        salt = secrets.token_hex(16)
-        con.execute(
-            """
-            UPDATE users
-            SET password_salt = ?,
-                password_hash = ?,
-                password_reset_required = 0
-            WHERE user_id = ?
-            """,
-            (salt, password_hash(new_password, salt), row["user_id"]),
-        )
-        con.execute(
-            "UPDATE password_reset_tokens SET used_at = ? WHERE token_id = ?",
-            (now_iso(), row["token_id"]),
-        )
-    return {"ok": True, "username": row["username"]}
-
-
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, directory=str(STATIC_DIR), **kwargs)
@@ -1907,12 +1327,6 @@ class Handler(SimpleHTTPRequestHandler):
     def end_headers(self) -> None:
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
-
-    def guess_type(self, path: str) -> str:
-        content_type = super().guess_type(path)
-        if content_type in {"text/html", "text/css", "text/javascript", "application/javascript"}:
-            return f"{content_type}; charset=utf-8"
-        return content_type
 
     def send_json(self, data: Any, status: int = 200) -> None:
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -1930,29 +1344,6 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def send_html_game_file(self, slug: str, relative_path: str) -> None:
-        game_dir = HTML_GAMES.get(slug)
-        if not game_dir:
-            self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
-            return
-        relative_path = unquote(relative_path).lstrip("/") or "index.html"
-        file_path = (game_dir / relative_path).resolve()
-        game_root = game_dir.resolve()
-        try:
-            file_path.relative_to(game_root)
-        except ValueError:
-            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
-            return
-        if not file_path.is_file():
-            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
-            return
-        body = file_path.read_bytes()
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", self.guess_type(str(file_path)))
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
     def current_user(self) -> dict[str, Any] | None:
         header = self.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
@@ -1965,58 +1356,30 @@ class Handler(SimpleHTTPRequestHandler):
             raise PermissionError("Нужен вход в приложение.")
         return user
 
-    def request_ip(self) -> str:
-        forwarded = self.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",", 1)[0].strip()
-        return self.client_address[0] if self.client_address else ""
-
-    def request_user_agent(self) -> str:
-        return self.headers.get("User-Agent", "")
-
-    def require_user_with_consents(self) -> dict[str, Any]:
-        user = self.require_user()
-        if not user_has_required_consents(user["user_id"]):
-            raise PermissionError("Перед началом работы необходимо принять документы по обработке персональных данных.")
-        return user
-
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         try:
             if parsed.path == "/api/bootstrap":
-                self.send_json(activity_bootstrap("ege9"))
-            elif parsed.path == "/api/documents/privacy":
-                self.send_json(active_document("privacy_policy"))
-            elif parsed.path == "/api/documents/consent":
-                self.send_json(active_document("personal_data_consent"))
-            elif parsed.path == "/api/documents/terms":
-                self.send_json(active_document("terms"))
-            elif parsed.path == "/api/activities":
-                self.require_user_with_consents()
-                self.send_json({"activities": ACTIVITIES})
-            elif parsed.path.startswith("/api/apps/") and parsed.path.endswith("/bootstrap"):
-                parts = parsed.path.strip("/").split("/")
-                self.require_user_with_consents()
-                self.send_json(activity_bootstrap(parts[2]))
-            elif parsed.path in {"/api/me", "/api/auth/me"}:
+                grouped: dict[str, list[dict[str, Any]]] = {}
+                for rule in RULES:
+                    grouped.setdefault(rule["category"], []).append(rule)
+                self.send_json(
+                    {
+                        "rules": grouped,
+                        "word_count": len(WORDS),
+                        "repeat_on_error": REPEAT_ON_ERROR,
+                    }
+                )
+            elif parsed.path == "/api/me":
                 self.send_json({"user": self.current_user()})
-            elif parsed.path == "/api/me/consents":
-                user = self.require_user()
-                self.send_json(consent_status(user["user_id"]))
             elif parsed.path == "/api/progress":
-                self.send_json(progress_for(self.require_user_with_consents()))
+                self.send_json(progress_for(self.require_user()))
             elif parsed.path == "/api/progress/export":
                 query = parse_qs(parsed.query)
                 body, filename, content_type = progress_export(self.require_user(), query.get("section", ["recent"])[0])
                 self.send_download(body, filename, content_type)
             elif parsed.path == "/api/admin":
                 self.send_json(admin_overview(self.require_user()))
-            elif parsed.path.startswith("/html-games/"):
-                parts = parsed.path.strip("/").split("/", 2)
-                if len(parts) < 2:
-                    self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
-                    return
-                self.send_html_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
             elif parsed.path.startswith("/images/"):
                 image_name = Path(parsed.path).name
                 image_path = (IMAGES_DIR / image_name).resolve()
@@ -2030,7 +1393,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
             else:
-                if parsed.path == "/" or parsed.path.startswith("/apps/") or parsed.path in {"/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/consent", "/terms", "/admin", "/teacher", "/student"}:
+                if parsed.path == "/":
                     self.path = "/index.html"
                 super().do_GET()
         except PermissionError as error:
@@ -2042,71 +1405,37 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         try:
             payload = parse_json_body(self)
-            if parsed.path in {"/api/login", "/api/auth/login"}:
-                username = normalize_email(payload.get("email") or payload.get("username"))
+            if parsed.path == "/api/login":
+                username = str(payload.get("username") or "").strip()
                 password = str(payload.get("password") or "")
                 with db() as con:
-                    row = con.execute(
-                        """
-                        SELECT * FROM users
-                        WHERE LOWER(COALESCE(email, '')) = ?
-                           OR (email IS NULL AND LOWER(username) = ?)
-                        """,
-                        (username, username),
-                    ).fetchone()
-                    if row and int(row["password_reset_required"] or 0):
-                        self.send_json({"error": "Пароль сброшен администратором. Зарегистрируйтесь с тем же логином и кодом учителя, чтобы задать новый пароль."}, HTTPStatus.UNAUTHORIZED)
-                        return
-                    if not row or not verify_password(password, row["password_salt"], row["password_hash"]):
-                        self.send_json({"error": "Неверный логин или пароль."}, HTTPStatus.UNAUTHORIZED)
-                        return
-                    if needs_password_rehash(row["password_hash"]):
-                        salt = secrets.token_hex(16)
-                        con.execute(
-                            """
-                            UPDATE users
-                            SET password_salt = ?, password_hash = ?
-                            WHERE user_id = ?
-                            """,
-                            (salt, password_hash(password, salt), row["user_id"]),
-                        )
-                        row = con.execute("SELECT * FROM users WHERE user_id = ?", (row["user_id"],)).fetchone()
+                    row = con.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+                if row and int(row["password_reset_required"] or 0):
+                    self.send_json({"error": "Пароль сброшен администратором. Зарегистрируйтесь с тем же логином и кодом учителя, чтобы задать новый пароль."}, HTTPStatus.UNAUTHORIZED)
+                    return
+                if not row or password_hash(password, row["password_salt"]) != row["password_hash"]:
+                    self.send_json({"error": "Неверный логин или пароль."}, HTTPStatus.UNAUTHORIZED)
+                    return
                 token = secrets.token_urlsafe(24)
                 user = public_user(row)
                 SESSIONS[token] = {"user": user, "created_at": now_iso()}
                 self.send_json({"token": token, "user": user})
-            elif parsed.path in {"/api/register", "/api/auth/register"}:
-                user = register_user(payload, self.request_ip(), self.request_user_agent())
+            elif parsed.path == "/api/register":
+                user = register_user(payload)
                 token = secrets.token_urlsafe(24)
                 SESSIONS[token] = {"user": user, "created_at": now_iso()}
                 self.send_json({"token": token, "user": user})
-            elif parsed.path in {"/api/logout", "/api/auth/logout"}:
+            elif parsed.path == "/api/logout":
                 header = self.headers.get("Authorization", "")
                 token = header.removeprefix("Bearer ").strip()
                 SESSIONS.pop(token, None)
                 self.send_json({"ok": True})
-            elif parsed.path in {"/api/forgot-password", "/api/auth/forgot-password"}:
-                self.send_json(request_password_reset(payload))
-            elif parsed.path in {"/api/reset-password", "/api/auth/reset-password"}:
-                self.send_json(reset_password_by_token(payload))
-            elif parsed.path == "/api/me/consents":
-                user = self.require_user()
-                status = record_user_consent(user["user_id"], self.request_ip(), self.request_user_agent())
-                user = {**user, "has_required_consents": status["has_required_consents"]}
-                header = self.headers.get("Authorization", "")
-                token = header.removeprefix("Bearer ").strip()
-                if token in SESSIONS:
-                    SESSIONS[token]["user"] = user
-                self.send_json(status)
             elif parsed.path == "/api/practice/start":
-                self.send_json(start_practice(self.require_user_with_consents(), payload))
+                self.send_json(start_practice(self.require_user(), payload))
             elif parsed.path == "/api/practice/submit":
-                self.send_json(submit_practice(self.require_user_with_consents(), payload))
+                self.send_json(submit_practice(self.require_user(), payload))
             elif parsed.path == "/api/practice/check":
-                self.send_json(check_practice_answer(self.require_user_with_consents(), payload))
-            elif parsed.path.startswith("/api/apps/") and "/practice/" in parsed.path:
-                parts = parsed.path.strip("/").split("/")
-                self.send_json(activity_post(parts[2], parts[-1], self.require_user_with_consents(), payload))
+                self.send_json(check_practice_answer(self.require_user(), payload))
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
@@ -2124,9 +1453,19 @@ def main() -> int:
     configure_console()
     ensure_app_db()
     host = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("HOST", DEFAULT_HOST)
-    port = int(sys.argv[2]) if len(sys.argv) > 2 else int(os.environ.get("PORT", DEFAULT_PORT))
-    server = ThreadingHTTPServer((host, port), Handler)
-    print(f"EGE Russian app: http://{host}:{port}")
+    preferred_port = int(sys.argv[2]) if len(sys.argv) > 2 else int(os.environ.get("PORT", DEFAULT_PORT))
+    server = None
+    port = preferred_port
+    for candidate in range(preferred_port, preferred_port + 20):
+        try:
+            server = ThreadingHTTPServer((host, candidate), Handler)
+            port = candidate
+            break
+        except OSError:
+            continue
+    if server is None:
+        raise OSError(f"Не удалось открыть порт с {preferred_port} по {preferred_port + 19}.")
+    print(f"EGE 10 app: http://{host}:{port}")
     print(f"Words loaded: {len(WORDS)}; rules: {len(RULES)}")
     server.serve_forever()
     return 0

@@ -32,6 +32,12 @@ const activityMeta = {
     description: "Приставки, Ь/Ъ, И/Ы и другие орфограммы.",
     mark: "10",
   },
+  ege11: {
+    title: "ЕГЭ. Задание 11",
+    shortTitle: "Задание 11",
+    description: "Правописание суффиксов слов разных частей речи.",
+    mark: "11",
+  },
   "html-games": {
     title: "Игры",
     shortTitle: "Игры",
@@ -543,6 +549,7 @@ function activityFromPath() {
   const path = window.location.pathname;
   if (path === "/apps/ege9") return "ege9";
   if (path === "/apps/ege10") return "ege10";
+  if (path === "/apps/ege11") return "ege11";
   if (path === "/apps/mini" || path.startsWith("/apps/mini/")) return "html-games";
   return null;
 }
