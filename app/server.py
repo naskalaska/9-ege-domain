@@ -105,12 +105,12 @@ ACTIVITIES = [
 HTML_GAMES = {
     "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
     "homogeneous-members-magic": HTML_DIR / "Фокусы",
-    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
+    "berry-season-ik-ek": HTML_DIR / "ЯГодный сезон ИК-ЕК",
 }
 
 PUBLIC_GAMES = {
     "fluffs": HTML_DIR / "Пушинки",
-    "berry-season": HTML_DIR / "Ягодный сезон ИК-ЕК",
+    "berry-season": HTML_DIR / "ЯГодный сезон ИК-ЕК",
 }
 
 GAME_SET_MAX_ITEMS = 200
