@@ -110,12 +110,13 @@ HTML_GAMES = {
 
 PUBLIC_GAMES = {
     "fluffs": HTML_DIR / "Пушинки",
+    "berry-season": HTML_DIR / "Ягодный сезон ИК-ЕК",
 }
 
 GAME_SET_MAX_ITEMS = 200
 GAME_SET_MAX_STRING = 600
 GAME_SET_MAX_PAYLOAD_BYTES = 200_000
-GAME_MECHANICS = {"fluffs"}
+GAME_MECHANICS = {"fluffs", "berry-season"}
 
 
 def configure_console() -> None:
@@ -1785,7 +1786,7 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
         raise ValueError("JSON должен быть объектом.")
     mechanic = clean_game_string(payload.get("mechanic") or default_mechanic, 40) or default_mechanic
     if mechanic not in GAME_MECHANICS:
-        raise ValueError("Пока доступна только механика «Пушинки».")
+        raise ValueError("Выбранная механика пока недоступна.")
     items = payload.get("items")
     if not isinstance(items, list) or not items:
         raise ValueError("Поле items должно быть непустым массивом.")
@@ -1795,6 +1796,10 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
     if not title:
         raise ValueError("Нужно указать title.")
     normalized_items = [normalize_game_item(item, index + 1) for index, item in enumerate(items)]
+    if mechanic == "berry-season":
+        bad_answers = [item["answer"] for item in normalized_items if item["answer"] not in {"е", "и"}]
+        if bad_answers:
+            raise ValueError("Для «Ягодного сезона» подходят только ответы «е» и «и».")
     return {
         "title": title,
         "description": clean_game_string(payload.get("description"), 300),
@@ -1820,6 +1825,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
     return {
         "mechanics": [
             {"id": "fluffs", "title": "Пушинки", "available": True},
+            {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True},
             {"id": "focus", "title": "Фокус", "available": False},
         ],
         "sources": sources,
@@ -1879,7 +1885,7 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     require_teacher_or_admin(user)
     mechanic = clean_game_string(payload.get("mechanic") or "fluffs", 40)
     if mechanic not in GAME_MECHANICS:
-        raise ValueError("Пока доступна только механика «Пушинки».")
+        raise ValueError("Выбранная механика пока недоступна.")
     source = clean_game_string(payload.get("source") or "ege9", 20)
     raw_rule_ids = payload.get("rule_ids")
     if isinstance(raw_rule_ids, list):
@@ -1898,10 +1904,16 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     if not pool:
         raise ValueError("В выбранных рубриках нет заданий.")
     random.shuffle(pool)
-    items = [game_item_from_word(word, config["letter_choices"]) for word in pool[:count]]
+    items = [game_item_from_word(word, config["letter_choices"]) for word in pool]
+    if mechanic == "berry-season":
+        items = [item for item in items if item["answer"] in {"е", "и"}]
+    items = items[:count]
+    if not items:
+        raise ValueError("В выбранных рубриках нет заданий для этой механики.")
     selected_rules = [item for item in config["rules"] if item["rule_id"] in set(rule_ids)]
     default_title = selected_rules[0]["rule_name"] if len(selected_rules) == 1 else f"{len(selected_rules)} рубрики"
-    title = clean_game_string(payload.get("title"), 120) or f"Пушинки: {default_title}"
+    mechanic_title = "Ягодный сезон" if mechanic == "berry-season" else "Пушинки"
+    title = clean_game_string(payload.get("title"), 120) or f"{mechanic_title}: {default_title}"
     game_payload = normalize_game_payload(
         {
             "title": title,

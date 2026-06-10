@@ -797,6 +797,7 @@ function renderMiniActivity() {
           <label>Механика
             <select name="mechanic">
               <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
+              <option value="berry-season">Ягодный сезон: ИК-ЕК</option>
               <option value="focus" disabled>Фокус - скоро</option>
             </select>
           </label>

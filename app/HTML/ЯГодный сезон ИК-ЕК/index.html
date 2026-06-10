@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <base href="/games/berry-season/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Корзинки: Е или И в суффиксах</title>
   <style>
@@ -943,7 +944,7 @@
     (() => {
       "use strict";
 
-      const rawData = JSON.parse(document.getElementById("gameData").textContent);
+      let rawData = JSON.parse(document.getElementById("gameData").textContent);
       const orchard = document.getElementById("orchard");
       const fruitLayer = document.getElementById("fruitLayer");
       const basketZone = document.getElementById("basketZone");
@@ -1003,6 +1004,44 @@
         return String(str).replace(/[&<>"']/g, ch => ({
           "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
         }[ch]));
+      }
+
+      function normalizeAnswer(value){
+        return String(value || "").trim().toLowerCase().replace("ё", "ё");
+      }
+
+      function normalizeLoadedItem(item, index){
+        return {
+          id: String(item.id || item.source_word_id || `berry_${index}`),
+          variant: String(item.variant || item.prompt || item.text || "").trim(),
+          answer: normalizeAnswer(item.answer || item.correct_letter),
+          correct_spelling: String(item.correct_spelling || item.variant || "").trim(),
+          explanation: String(item.explanation || "").trim()
+        };
+      }
+
+      async function loadGameData(){
+        const setId = new URLSearchParams(window.location.search).get("set");
+        if(!setId) return rawData;
+
+        const response = await fetch(`/api/games/sets/${encodeURIComponent(setId)}`);
+        const data = await response.json().catch(() => ({}));
+        if(!response.ok) throw new Error(data.error || "Набор не найден или ссылка устарела.");
+
+        if(data.title){
+          document.title = data.title;
+          const title = document.querySelector(".brand h1");
+          if(title) title.textContent = data.title;
+        }
+        if(data.description){
+          const subtitle = document.querySelector(".subtitle");
+          if(subtitle) subtitle.textContent = data.description;
+        }
+
+        const items = Array.isArray(data.items) ? data.items.map(normalizeLoadedItem) : [];
+        const filtered = items.filter(item => item.variant && ["е", "и"].includes(item.answer));
+        if(!filtered.length) throw new Error("В наборе нет заданий с ответами Е или И.");
+        return filtered;
       }
 
       function updateProgress(){
@@ -1281,7 +1320,19 @@
       shuffleBtn.addEventListener("click", () => renderGame(true));
       playAgainBtn.addEventListener("click", () => renderGame(true));
 
-      renderGame(true);
+      async function start(){
+        try{
+          rawData = await loadGameData();
+          renderGame(true);
+        } catch(error){
+          rawData = [];
+          fruitLayer.innerHTML = "";
+          updateProgress();
+          setFeedback("bad", "Не удалось загрузить игру.", error.message || "Проверьте ссылку на набор.");
+        }
+      }
+
+      start();
     })();
   </script>
 </body>
