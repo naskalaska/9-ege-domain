@@ -4,7 +4,9 @@ const state = {
   bootstrap: null,
   mode: "rule",
   selectedCategory: null,
+  selectedCategories: [],
   selectedRuleIds: [],
+  ruleSelectionTouched: false,
   currentSession: null,
   answers: {},
   startedAt: null,
@@ -108,6 +110,16 @@ function legalLinks(className = "legal-links") {
   `;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
 function api(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
@@ -144,8 +156,13 @@ function ruleCategories() {
   return Object.keys(state.bootstrap.rules);
 }
 
+function selectedCategorySet() {
+  return new Set(state.selectedCategories || []);
+}
+
 function selectedRules() {
-  return state.bootstrap.rules[state.selectedCategory] || [];
+  const categories = state.selectedCategories?.length ? state.selectedCategories : [state.selectedCategory].filter(Boolean);
+  return categories.flatMap((category) => state.bootstrap.rules[category] || []);
 }
 
 function selectedRuleSet() {
@@ -154,15 +171,59 @@ function selectedRuleSet() {
 
 function ensureRuleSelection() {
   const categories = ruleCategories();
-  if (!state.selectedCategory || !state.bootstrap.rules[state.selectedCategory]) {
-    state.selectedCategory = categories[0] || null;
+  state.selectedCategories = (state.selectedCategories || []).filter((category) => state.bootstrap.rules[category]);
+  if (!state.selectedCategories.length && state.selectedCategory && state.bootstrap.rules[state.selectedCategory]) {
+    state.selectedCategories = [state.selectedCategory];
   }
+  if (!state.selectedCategories.length && categories.length) {
+    state.selectedCategories = [categories[0]];
+  }
+  state.selectedCategory = state.selectedCategories[0] || null;
   const rules = selectedRules();
   const available = new Set(rules.map((rule) => rule.rule_id));
   state.selectedRuleIds = state.selectedRuleIds.filter((ruleId) => available.has(ruleId));
-  if (!state.selectedRuleIds.length && rules.length) {
+  if (!state.ruleSelectionTouched && !state.selectedRuleIds.length && rules.length) {
     state.selectedRuleIds = rules.map((rule) => rule.rule_id);
   }
+}
+
+function ruleIdsForCategory(category) {
+  return (state.bootstrap.rules[category] || []).map((rule) => rule.rule_id);
+}
+
+function toggleRuleCategory(category) {
+  state.ruleSelectionTouched = true;
+  const categories = selectedCategorySet();
+  const selected = selectedRuleSet();
+  const ids = ruleIdsForCategory(category);
+
+  if (categories.has(category)) {
+    categories.delete(category);
+    ids.forEach((ruleId) => selected.delete(ruleId));
+  } else {
+    categories.add(category);
+    ids.forEach((ruleId) => selected.add(ruleId));
+  }
+
+  state.selectedCategories = [...categories].filter((item) => state.bootstrap.rules[item]);
+  state.selectedCategory = state.selectedCategories[0] || null;
+  state.selectedRuleIds = [...selected];
+  ensureRuleSelection();
+}
+
+function updateRuleSelectorSummary(root) {
+  const rules = selectedRules();
+  const selected = selectedRuleSet();
+  const visibleSelected = rules.filter((rule) => selected.has(rule.rule_id));
+  const selectedCount = visibleSelected.reduce((sum, rule) => sum + rule.count, 0);
+  const allRules = root.querySelector("#allRules");
+  const selectedWordCount = root.querySelector("[data-selected-word-count]");
+
+  if (allRules) {
+    allRules.checked = rules.length > 0 && visibleSelected.length === rules.length;
+    allRules.indeterminate = visibleSelected.length > 0 && visibleSelected.length < rules.length;
+  }
+  if (selectedWordCount) selectedWordCount.textContent = selectedCount;
 }
 
 function renderTopActions() {
@@ -537,7 +598,9 @@ async function loadActivity(slug, updateUrl = true) {
   state.bootstrap = await api(`/api/apps/${slug}/bootstrap`);
   state.mode = "rule";
   state.selectedCategory = null;
+  state.selectedCategories = [];
   state.selectedRuleIds = [];
+  state.ruleSelectionTouched = false;
   state.currentSession = null;
   state.answers = {};
   ensureRuleSelection();
@@ -685,6 +748,93 @@ function renderMiniActivity() {
       <button class="primary-button open-mini-game" data-game="${game.slug}" type="button">${game.button}</button>
     </article>
   `).join("");
+  const teacherBuilder = !selectedGame && state.user.role === "teacher" ? `
+    <section class="game-builder" id="gameBuilder">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">для учителя</p>
+          <h3>Создать HTML-игру</h3>
+        </div>
+      </div>
+      <div class="builder-grid">
+        <form class="builder-panel" id="baseGameForm">
+          <h4>Из моих баз</h4>
+          <label>Механика
+            <select name="mechanic">
+              <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
+              <option value="focus" disabled>Фокус - скоро</option>
+            </select>
+          </label>
+          <label>База
+            <select name="source" id="gameSourceSelect"></select>
+          </label>
+          <label>Рубрика
+            <select name="rule_id" id="gameRuleSelect"></select>
+          </label>
+          <label>Количество
+            <input name="count" type="number" min="1" max="200" value="10" />
+          </label>
+          <label>Название игры
+            <input name="title" placeholder="Пушинки: тренировка" />
+          </label>
+          <label>Описание
+            <input name="description" placeholder="Поймайте пушинки и выберите правильную букву" />
+          </label>
+          <button class="primary-button" type="submit">Создать ссылку</button>
+          <p class="error" id="baseGameError"></p>
+        </form>
+        <form class="builder-panel" id="uploadGameForm">
+          <h4>Загрузить свой JSON</h4>
+          <label>JSON-файл
+            <input name="file" type="file" accept="application/json,.json" />
+          </label>
+          <button class="primary-button" type="submit">Загрузить JSON</button>
+          <details class="prompt-box">
+            <summary>Промпт для нейросети: подготовить JSON для игры</summary>
+            <textarea readonly>Ты опытный преподаватель русского языка. Преврати мой список слов/заданий в JSON для HTML-игры «Пушинки».
+
+Нужен строго валидный JSON без комментариев, без пояснений до и после, без Markdown-разметки.
+
+Формат JSON:
+{
+  "title": "Название игры",
+  "description": "Короткое описание",
+  "mechanic": "fluffs",
+  "items": [
+    {
+      "variant": "слово или предложение с пропуском",
+      "answer": "правильный ответ",
+      "options": ["вариант 1", "вариант 2"],
+      "correct_spelling": "правильное написание полностью",
+      "explanation": "краткое объяснение правила"
+    }
+  ]
+}
+
+Правила:
+1. В поле variant поставь пропуск двумя точками: ..
+2. В поле answer укажи только то, что должно быть вставлено на место пропуска.
+3. Если на месте пропуска ничего не пишется, в answer поставь "-".
+4. В correct_spelling напиши слово полностью без пропуска.
+5. В explanation дай короткое объяснение для ученика.
+6. В options дай 2-4 варианта ответа.
+7. Для орфографии часто подходят варианты ["а", "о"], ["е", "и"], ["е", "ё", "о"], ["ь", "ъ", "-"].
+8. Не добавляй лишних полей.
+9. Верни только JSON.
+
+Мой список:
+[ВСТАВЬТЕ СЮДА СВОЙ СПИСОК СЛОВ ИЛИ ЗАДАНИЙ]</textarea>
+          </details>
+          <p class="error" id="uploadGameError"></p>
+        </form>
+      </div>
+      <div class="builder-result hidden" id="gameBuilderResult">
+        <span class="muted">Ссылка для учеников</span>
+        <a id="gameBuilderLink" target="_blank" rel="noopener"></a>
+        <button class="secondary-button" id="copyGameLink" type="button">Скопировать ссылку</button>
+      </div>
+    </section>
+  ` : "";
   view.innerHTML = `
     <section class="mini-page">
       <div class="panel-head">
@@ -700,6 +850,7 @@ function renderMiniActivity() {
       ${selectedGame
         ? `<iframe class="mini-frame" title="${selectedGame.title}" src="${selectedGame.path}"></iframe>`
         : `<div class="mini-game-grid">${gameCards}</div>`}
+      ${teacherBuilder}
     </section>
   `;
   view.querySelectorAll(".open-mini-game").forEach((button) => {
@@ -719,6 +870,102 @@ function renderMiniActivity() {
     state.currentMiniGame = null;
     history.pushState(null, "", "/");
     renderDashboard();
+  });
+  if (!selectedGame && state.user.role === "teacher") setupGameBuilder();
+}
+
+async function setupGameBuilder() {
+  const builder = view.querySelector("#gameBuilder");
+  if (!builder) return;
+
+  const sourceSelect = builder.querySelector("#gameSourceSelect");
+  const ruleSelect = builder.querySelector("#gameRuleSelect");
+  const result = builder.querySelector("#gameBuilderResult");
+  const link = builder.querySelector("#gameBuilderLink");
+  let sources = [];
+
+  function showResult(data) {
+    result.classList.remove("hidden");
+    link.href = data.url;
+    link.textContent = data.url;
+  }
+
+  function showBuilderError(id, message) {
+    builder.querySelector(id).textContent = message || "";
+  }
+
+  function fillRules() {
+    const source = sources.find((item) => item.id === sourceSelect.value);
+    const rules = source ? Object.entries(source.rules).flatMap(([category, items]) =>
+      items.map((rule) => ({ ...rule, category }))
+    ) : [];
+    ruleSelect.innerHTML = rules.map((rule) =>
+      `<option value="${escapeHtml(rule.rule_id)}">${escapeHtml(rule.category)} - ${escapeHtml(rule.rule_name)} (${rule.count})</option>`
+    ).join("");
+  }
+
+  try {
+    const data = await api("/api/games/sources");
+    sources = data.sources || [];
+    sourceSelect.innerHTML = sources.map((source) =>
+      `<option value="${escapeHtml(source.id)}">${escapeHtml(source.title)}</option>`
+    ).join("");
+    fillRules();
+  } catch (error) {
+    showBuilderError("#baseGameError", error.message);
+  }
+
+  sourceSelect.addEventListener("change", fillRules);
+
+  builder.querySelector("#baseGameForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showBuilderError("#baseGameError", "");
+    const form = new FormData(event.currentTarget);
+    try {
+      const data = await api("/api/games/sets/from-base", {
+        method: "POST",
+        body: JSON.stringify({
+          mechanic: form.get("mechanic"),
+          source: form.get("source"),
+          rule_id: form.get("rule_id"),
+          count: Number(form.get("count") || 10),
+          title: form.get("title"),
+          description: form.get("description"),
+        }),
+      });
+      showResult(data);
+    } catch (error) {
+      showBuilderError("#baseGameError", error.message);
+    }
+  });
+
+  builder.querySelector("#uploadGameForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showBuilderError("#uploadGameError", "");
+    const file = new FormData(event.currentTarget).get("file");
+    if (!file || !file.name) {
+      showBuilderError("#uploadGameError", "Выберите JSON-файл.");
+      return;
+    }
+    if (file.size > 200000) {
+      showBuilderError("#uploadGameError", "Файл слишком большой.");
+      return;
+    }
+    try {
+      const payload = JSON.parse(await file.text());
+      const data = await api("/api/games/sets/upload-json", {
+        method: "POST",
+        body: JSON.stringify({ payload }),
+      });
+      showResult(data);
+    } catch (error) {
+      showBuilderError("#uploadGameError", error.message || "JSON не удалось прочитать.");
+    }
+  });
+
+  builder.querySelector("#copyGameLink").addEventListener("click", async () => {
+    if (!link.href) return;
+    await navigator.clipboard.writeText(link.href);
   });
 }
 
@@ -812,37 +1059,15 @@ function renderSetup() {
     state.errorTrainingMode = event.target.value;
   });
   setup.querySelector("#backToMenu").addEventListener("click", backToMenu);
-  setup.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedCategory = button.dataset.category;
-      state.selectedRuleIds = [];
-      ensureRuleSelection();
-      renderSetup();
-    });
-  });
-  setup.querySelector("#allRules")?.addEventListener("change", (event) => {
-    state.selectedRuleIds = event.target.checked ? selectedRules().map((rule) => rule.rule_id) : [];
-    renderSetup();
-  });
-  setup.querySelectorAll("[data-rule-id]").forEach((checkbox) => {
-    checkbox.addEventListener("change", () => {
-      const next = selectedRuleSet();
-      if (checkbox.checked) {
-        next.add(checkbox.dataset.ruleId);
-      } else {
-        next.delete(checkbox.dataset.ruleId);
-      }
-      state.selectedRuleIds = [...next];
-      renderSetup();
-    });
-  });
+  bindRuleSelector(setup, renderSetup);
 }
 
 function renderRuleSelector() {
   ensureRuleSelection();
+  const activeCategories = selectedCategorySet();
   const categoryButtons = ruleCategories()
     .map((category) => `
-      <button class="category-pill ${category === state.selectedCategory ? "active" : ""}" data-category="${category}" type="button">
+      <button class="category-pill ${activeCategories.has(category) ? "active" : ""}" data-category="${category}" type="button">
         <span>${category}</span>
         <b>${state.bootstrap.rules[category].reduce((sum, rule) => sum + rule.count, 0)}</b>
       </button>
@@ -850,7 +1075,8 @@ function renderRuleSelector() {
     .join("");
   const selected = selectedRuleSet();
   const rules = selectedRules();
-  const allSelected = rules.length > 0 && selected.size === rules.length;
+  const selectedVisible = rules.filter((rule) => selected.has(rule.rule_id));
+  const allSelected = rules.length > 0 && selectedVisible.length === rules.length;
   const selectedCount = rules
     .filter((rule) => selected.has(rule.rule_id))
     .reduce((sum, rule) => sum + rule.count, 0);
@@ -870,18 +1096,56 @@ function renderRuleSelector() {
         <div class="rule-check-list">
           <label class="rule-check rule-check-all">
             <input id="allRules" type="checkbox" ${allSelected ? "checked" : ""} />
-            <span>Все подгруппы внутри орфограммы</span>
+            <span>Все подгруппы в выбранных разделах</span>
             <b>${rules.reduce((sum, rule) => sum + rule.count, 0)}</b>
           </label>
           ${ruleOptions}
         </div>
         <div class="selected-rule">
-          <b>${selectedCount}</b>
+          <b data-selected-word-count>${selectedCount}</b>
           <span>слов в выбранных подгруппах</span>
         </div>
       </div>
     </section>
   `;
+}
+
+function bindRuleSelector(root, rerenderCategories) {
+  root.querySelectorAll("[data-category]").forEach((button) => {
+    button.addEventListener("click", () => {
+      toggleRuleCategory(button.dataset.category);
+      rerenderCategories();
+    });
+  });
+  root.querySelector("#allRules")?.addEventListener("change", (event) => {
+    state.ruleSelectionTouched = true;
+    const next = selectedRuleSet();
+    const ids = selectedRules().map((rule) => rule.rule_id);
+    if (event.target.checked) {
+      ids.forEach((ruleId) => next.add(ruleId));
+    } else {
+      ids.forEach((ruleId) => next.delete(ruleId));
+    }
+    state.selectedRuleIds = [...next];
+    root.querySelectorAll("[data-rule-id]").forEach((checkbox) => {
+      checkbox.checked = event.target.checked;
+    });
+    updateRuleSelectorSummary(root);
+  });
+  root.querySelectorAll("[data-rule-id]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      state.ruleSelectionTouched = true;
+      const next = selectedRuleSet();
+      if (checkbox.checked) {
+        next.add(checkbox.dataset.ruleId);
+      } else {
+        next.delete(checkbox.dataset.ruleId);
+      }
+      state.selectedRuleIds = [...next];
+      updateRuleSelectorSummary(root);
+    });
+  });
+  updateRuleSelectorSummary(root);
 }
 
 async function startPractice() {
@@ -1339,32 +1603,17 @@ function showTestComposer() {
     </section>
   `;
   document.body.append(backdrop);
+  const mountTestRuleSelector = () => {
+    backdrop.querySelector("#testRuleSelector").innerHTML = renderRuleSelector();
+    bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
+    refreshRules();
+  };
   const refreshRules = () => {
     backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", backdrop.querySelector("#testMode").value !== "rule");
   };
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#testMode").addEventListener("change", refreshRules);
-  backdrop.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedCategory = button.dataset.category;
-      state.selectedRuleIds = [];
-      ensureRuleSelection();
-      backdrop.remove();
-      showTestComposer();
-    });
-  });
-  backdrop.querySelector("#allRules")?.addEventListener("change", (event) => {
-    state.selectedRuleIds = event.target.checked ? selectedRules().map((rule) => rule.rule_id) : [];
-    backdrop.remove();
-    showTestComposer();
-  });
-  backdrop.querySelectorAll("[data-rule-id]").forEach((checkbox) => {
-    checkbox.addEventListener("change", () => {
-      const next = selectedRuleSet();
-      checkbox.checked ? next.add(checkbox.dataset.ruleId) : next.delete(checkbox.dataset.ruleId);
-      state.selectedRuleIds = [...next];
-    });
-  });
+  bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
   backdrop.querySelector("#downloadTest").addEventListener("click", async () => {
     const error = backdrop.querySelector("#testComposerError");
     error.textContent = "";

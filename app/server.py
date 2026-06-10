@@ -107,6 +107,15 @@ HTML_GAMES = {
     "homogeneous-members-magic": HTML_DIR / "Фокусы",
 }
 
+PUBLIC_GAMES = {
+    "fluffs": HTML_DIR / "Пушинки",
+}
+
+GAME_SET_MAX_ITEMS = 200
+GAME_SET_MAX_STRING = 600
+GAME_SET_MAX_PAYLOAD_BYTES = 200_000
+GAME_MECHANICS = {"fluffs"}
+
 
 def configure_console() -> None:
     for stream in (sys.stdout, sys.stderr):
@@ -357,6 +366,20 @@ def ensure_app_db() -> None:
                 UNIQUE(user_id, consent_type, document_version)
             );
 
+            CREATE TABLE IF NOT EXISTS game_sets (
+                id TEXT PRIMARY KEY,
+                public_id TEXT UNIQUE NOT NULL,
+                teacher_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                mechanic TEXT NOT NULL,
+                source_type TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(teacher_id) REFERENCES users(user_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
             CREATE INDEX IF NOT EXISTS idx_attempts_mode ON attempts(mode);
             CREATE INDEX IF NOT EXISTS idx_attempts_created_at ON attempts(created_at);
@@ -364,6 +387,7 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
             CREATE INDEX IF NOT EXISTS idx_user_consents_user_type ON user_consents(user_id, consent_type);
             CREATE INDEX IF NOT EXISTS idx_documents_type_active ON documents(document_type, is_active);
+            CREATE INDEX IF NOT EXISTS idx_game_sets_teacher ON game_sets(teacher_id, created_at);
             CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
                 ON users(teacher_code)
                 WHERE teacher_code IS NOT NULL;
@@ -1656,6 +1680,263 @@ def require_teacher(user: dict[str, Any]) -> None:
         raise PermissionError("Функция доступна только учителю.")
 
 
+def require_teacher_or_admin(user: dict[str, Any]) -> None:
+    if user["role"] not in {"teacher", "admin"}:
+        raise PermissionError("Функция доступна только учителю или администратору.")
+
+
+def game_source_config(source: str) -> dict[str, Any]:
+    sources = {
+        "ege9": {
+            "title": "ЕГЭ-9",
+            "rules": RULES,
+            "words_by_rule": WORDS_BY_RULE,
+            "letter_choices": letter_choices,
+        },
+        "ege10": {
+            "title": "ЕГЭ-10",
+            "rules": ege10_module.RULES,
+            "words_by_rule": ege10_module.WORDS_BY_RULE,
+            "letter_choices": ege10_module.letter_choices,
+        },
+        "ege11": {
+            "title": "ЕГЭ-11",
+            "rules": ege11_module.RULES,
+            "words_by_rule": ege11_module.WORDS_BY_RULE,
+            "letter_choices": ege11_module.letter_choices,
+        },
+    }
+    if source not in sources:
+        raise ValueError("Источник заданий не найден.")
+    return sources[source]
+
+
+def public_game_url(mechanic: str, public_id: str) -> str:
+    return f"{APP_BASE_URL}/games/{mechanic}?set={public_id}"
+
+
+def make_game_public_id(con: sqlite3.Connection) -> str:
+    for _ in range(20):
+        public_id = secrets.token_urlsafe(8).replace("-", "").replace("_", "")
+        exists = con.execute("SELECT 1 FROM game_sets WHERE public_id = ?", (public_id,)).fetchone()
+        if not exists:
+            return public_id
+    raise RuntimeError("Не удалось создать уникальную ссылку.")
+
+
+def clean_game_string(value: Any, limit: int = GAME_SET_MAX_STRING) -> str:
+    text = str(value or "").strip()
+    return text[:limit]
+
+
+def generic_game_options(answer: str) -> list[str]:
+    answer = clean_game_string(answer, 20).lower()
+    groups = [
+        ["а", "о"],
+        ["е", "и"],
+        ["е", "ё", "о"],
+        ["ь", "ъ", "-"],
+        ["и", "ы"],
+    ]
+    for group in groups:
+        if answer in group:
+            return group
+    return [answer] if answer else []
+
+
+def normalize_game_options(options: Any, answer: str) -> list[str]:
+    result: list[str] = []
+    if isinstance(options, list):
+        for option in options:
+            text = clean_game_string(option, 80)
+            if text and text not in result:
+                result.append(text)
+            if len(result) >= 6:
+                break
+    if not result:
+        result = generic_game_options(answer)
+    answer_text = clean_game_string(answer, 80)
+    if answer_text and answer_text not in result:
+        result.insert(0, answer_text)
+    return result[:6]
+
+
+def normalize_game_item(item: Any, index: int) -> dict[str, Any]:
+    if not isinstance(item, dict):
+        raise ValueError(f"Задание {index}: ожидается объект.")
+    variant = clean_game_string(item.get("variant") or item.get("prompt") or item.get("text"))
+    answer = clean_game_string(item.get("answer") or item.get("correct_letter") or item.get("correct"))
+    if not variant:
+        raise ValueError(f"Задание {index}: нет поля variant.")
+    if not answer:
+        raise ValueError(f"Задание {index}: нет поля answer.")
+    return {
+        "variant": variant,
+        "answer": answer.lower(),
+        "options": normalize_game_options(item.get("options") or item.get("choices"), answer),
+        "correct_spelling": clean_game_string(item.get("correct_spelling")),
+        "explanation": clean_game_string(item.get("explanation")),
+    }
+
+
+def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError("JSON должен быть объектом.")
+    mechanic = clean_game_string(payload.get("mechanic") or default_mechanic, 40) or default_mechanic
+    if mechanic not in GAME_MECHANICS:
+        raise ValueError("Пока доступна только механика «Пушинки».")
+    items = payload.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValueError("Поле items должно быть непустым массивом.")
+    if len(items) > GAME_SET_MAX_ITEMS:
+        raise ValueError(f"В одном наборе можно сохранить не больше {GAME_SET_MAX_ITEMS} заданий.")
+    title = clean_game_string(payload.get("title"), 120)
+    if not title:
+        raise ValueError("Нужно указать title.")
+    normalized_items = [normalize_game_item(item, index + 1) for index, item in enumerate(items)]
+    return {
+        "title": title,
+        "description": clean_game_string(payload.get("description"), 300),
+        "mechanic": mechanic,
+        "items": normalized_items,
+    }
+
+
+def game_sources_for_teacher() -> dict[str, Any]:
+    sources = []
+    for source_id in ("ege9", "ege10", "ege11"):
+        config = game_source_config(source_id)
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for rule in config["rules"]:
+            grouped.setdefault(rule["category"], []).append(rule)
+        sources.append(
+            {
+                "id": source_id,
+                "title": config["title"],
+                "rules": grouped,
+            }
+        )
+    return {
+        "mechanics": [
+            {"id": "fluffs", "title": "Пушинки", "available": True},
+            {"id": "focus", "title": "Фокус", "available": False},
+        ],
+        "sources": sources,
+    }
+
+
+def game_item_from_word(word: dict[str, Any], choices_func: Any) -> dict[str, Any]:
+    answer = clean_game_string(word.get("correct_letter") or word.get("answer"), 40).lower()
+    return {
+        "variant": clean_game_string(word.get("variant")),
+        "answer": answer,
+        "options": normalize_game_options(choices_func(word), answer),
+        "correct_spelling": clean_game_string(word.get("correct_spelling")),
+        "explanation": clean_game_string(word.get("explanation")),
+    }
+
+
+def save_game_set(
+    con: sqlite3.Connection,
+    user: dict[str, Any],
+    payload: dict[str, Any],
+    source_type: str,
+) -> dict[str, Any]:
+    public_id = make_game_public_id(con)
+    created_at = now_iso()
+    con.execute(
+        """
+        INSERT INTO game_sets
+            (id, public_id, teacher_id, title, description, mechanic, source_type,
+             payload_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            secrets.token_hex(12),
+            public_id,
+            user["user_id"],
+            payload["title"],
+            payload.get("description") or "",
+            payload["mechanic"],
+            source_type,
+            json.dumps(payload, ensure_ascii=False),
+            created_at,
+            created_at,
+        ),
+    )
+    return {
+        "public_id": public_id,
+        "url": public_game_url(payload["mechanic"], public_id),
+        "title": payload["title"],
+        "description": payload.get("description") or "",
+        "mechanic": payload["mechanic"],
+        "items_count": len(payload["items"]),
+    }
+
+
+def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_teacher_or_admin(user)
+    mechanic = clean_game_string(payload.get("mechanic") or "fluffs", 40)
+    if mechanic not in GAME_MECHANICS:
+        raise ValueError("Пока доступна только механика «Пушинки».")
+    source = clean_game_string(payload.get("source") or "ege9", 20)
+    rule_id = clean_game_string(payload.get("rule_id"), 80)
+    if not rule_id:
+        raise ValueError("Выберите рубрику.")
+    count = int(payload.get("count") or 10)
+    count = max(1, min(count, GAME_SET_MAX_ITEMS))
+    config = game_source_config(source)
+    pool = list(config["words_by_rule"].get(rule_id, []))
+    if not pool:
+        raise ValueError("В выбранной рубрике нет заданий.")
+    random.shuffle(pool)
+    items = [game_item_from_word(word, config["letter_choices"]) for word in pool[:count]]
+    rule = next((item for item in config["rules"] if item["rule_id"] == rule_id), None)
+    title = clean_game_string(payload.get("title"), 120) or f"Пушинки: {rule['rule_name'] if rule else 'тренировка'}"
+    game_payload = normalize_game_payload(
+        {
+            "title": title,
+            "description": clean_game_string(payload.get("description"), 300),
+            "mechanic": mechanic,
+            "items": items,
+        }
+    )
+    with db() as con:
+        return save_game_set(con, user, game_payload, "from_base")
+
+
+def create_game_set_from_upload(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_teacher_or_admin(user)
+    raw_payload = payload.get("payload", payload)
+    encoded = json.dumps(raw_payload, ensure_ascii=False).encode("utf-8")
+    if len(encoded) > GAME_SET_MAX_PAYLOAD_BYTES:
+        raise ValueError("JSON слишком большой.")
+    game_payload = normalize_game_payload(raw_payload)
+    with db() as con:
+        return save_game_set(con, user, game_payload, "uploaded_json")
+
+
+def public_game_set(public_id: str) -> dict[str, Any]:
+    with db() as con:
+        row = con.execute(
+            """
+            SELECT title, description, mechanic, payload_json
+            FROM game_sets
+            WHERE public_id = ?
+            """,
+            (public_id,),
+        ).fetchone()
+    if not row:
+        raise LookupError("Набор не найден или ссылка устарела.")
+    payload = json.loads(row["payload_json"])
+    return {
+        "title": row["title"],
+        "description": row["description"] or "",
+        "mechanic": row["mechanic"],
+        "items": payload.get("items", []),
+    }
+
+
 def csv_bytes(rows: list[dict[str, Any]], headers: list[tuple[str, str]]) -> bytes:
     output = io.StringIO()
     output.write("\ufeff")
@@ -1953,6 +2234,29 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_public_game_file(self, slug: str, relative_path: str) -> None:
+        game_dir = PUBLIC_GAMES.get(slug)
+        if not game_dir:
+            self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+            return
+        relative_path = unquote(relative_path).lstrip("/") or "index.html"
+        file_path = (game_dir / relative_path).resolve()
+        game_root = game_dir.resolve()
+        try:
+            file_path.relative_to(game_root)
+        except ValueError:
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
+        if not file_path.is_file():
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
+        body = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", self.guess_type(str(file_path)))
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def current_user(self) -> dict[str, Any] | None:
         header = self.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
@@ -2009,6 +2313,12 @@ class Handler(SimpleHTTPRequestHandler):
                 query = parse_qs(parsed.query)
                 body, filename, content_type = progress_export(self.require_user(), query.get("section", ["recent"])[0])
                 self.send_download(body, filename, content_type)
+            elif parsed.path == "/api/games/sources":
+                require_teacher_or_admin(self.require_user_with_consents())
+                self.send_json(game_sources_for_teacher())
+            elif parsed.path.startswith("/api/games/sets/"):
+                public_id = parsed.path.rsplit("/", 1)[-1]
+                self.send_json(public_game_set(public_id))
             elif parsed.path == "/api/admin":
                 self.send_json(admin_overview(self.require_user()))
             elif parsed.path.startswith("/html-games/"):
@@ -2017,6 +2327,12 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
                     return
                 self.send_html_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
+            elif parsed.path.startswith("/games/"):
+                parts = parsed.path.strip("/").split("/", 2)
+                if len(parts) < 2:
+                    self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+                    return
+                self.send_public_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
             elif parsed.path.startswith("/images/"):
                 image_name = Path(parsed.path).name
                 image_path = (IMAGES_DIR / image_name).resolve()
@@ -2035,6 +2351,8 @@ class Handler(SimpleHTTPRequestHandler):
                 super().do_GET()
         except PermissionError as error:
             self.send_json({"error": str(error)}, HTTPStatus.UNAUTHORIZED)
+        except LookupError as error:
+            self.send_json({"error": str(error)}, HTTPStatus.NOT_FOUND)
         except Exception as error:
             self.send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
 
@@ -2110,6 +2428,10 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
+            elif parsed.path == "/api/games/sets/from-base":
+                self.send_json(create_game_set_from_base(self.require_user_with_consents(), payload))
+            elif parsed.path == "/api/games/sets/upload-json":
+                self.send_json(create_game_set_from_upload(self.require_user_with_consents(), payload))
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
             else:
