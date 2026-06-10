@@ -2345,12 +2345,18 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(public_game_set(public_id))
             elif parsed.path == "/api/admin":
                 self.send_json(admin_overview(self.require_user()))
+            elif parsed.path == "/html-games/":
+                self.path = "/index.html"
+                super().do_GET()
             elif parsed.path.startswith("/html-games/"):
                 parts = parsed.path.strip("/").split("/", 2)
                 if len(parts) < 2:
                     self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
                     return
                 self.send_html_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
+            elif parsed.path == "/games/":
+                self.path = "/index.html"
+                super().do_GET()
             elif parsed.path.startswith("/games/"):
                 parts = parsed.path.strip("/").split("/", 2)
                 if len(parts) < 2:
