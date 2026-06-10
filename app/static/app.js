@@ -72,6 +72,162 @@ const miniGames = [
   },
 ];
 
+const shopProducts = [
+  {
+    slug: "fruit-garden-ik-ek",
+    title: "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
+    price: "500 ₽",
+    image: "/assets/shop/kard_fruktovyisad.png",
+    demoUrl: "https://dimitrieva-av.ru/games/berry-season-ik-ek/index.html",
+    shortDescription: "Редактируемая игра по русскому языку для тренировки суффиксов -ик- и -ек-. Ученики сортируют фрукты со словами по корзинкам Е и И, закрепляя правило в игровой форме.",
+    fullDescription: "Редактируемая HTML-игра по русскому языку для тренировки написания суффиксов -ик- и -ек-. Ученики перетаскивают фрукты с пропущенной буквой в корзинки Е или И, а игра сразу показывает результат и помогает закрепить правило через визуальную сортировку.",
+    tryBefore: [
+      "Перед покупкой можно открыть демонстрационную версию игры на сайте:",
+      "https://dimitrieva-av.ru/games/berry-season-ik-ek/index.html",
+      "Демонстрационная версия позволяет посмотреть механику игры, внешний вид и принцип работы. В комплекте после покупки передаётся редактируемая версия игры с необходимыми файлами и инструкцией по изменению заданий.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения темы",
+      "для игровой тренировки",
+      "для самостоятельной работы ученика",
+      "для подготовки к заданиям на орфографию",
+    ],
+    howItWorks: [
+      "На экране — фруктовый сад, корзинки Е и И и фрукты со словами. В каждом слове пропущена одна буква: е или и. Ученик выбирает фрукт и отправляет его в нужную корзинку. Если ответ верный, фрукт засчитывается. Если ответ неверный, игра возвращает его обратно, чтобы ученик мог попробовать ещё раз.",
+      "В игре есть:",
+      "визуальная сцена с фруктовым садом",
+      "слова на фруктах",
+      "две корзинки для сортировки",
+      "счётчик прогресса",
+      "подсказка по правилу",
+      "реакция на правильный и неправильный ответ",
+    ],
+    package: [
+      "Редактируемая версия HTML-игры с необходимыми картинками. Игра открывается на любом устройстве в браузере и не требует подключения к интернету.",
+      "Видео-инструкция по работе с игрой. В инструкции показано, как открыть игру и как подготовить её к использованию.",
+      "Промпт для нейросети. Промпт поможет быстро модифицировать игру: добавить новую лексику, изменить количество вариантов, заменить подсказку, адаптировать материал под другую тему или класс.",
+    ],
+    adaptation: [
+      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Я самостоятельно заменю лексику в игре под вашу тему, если она предполагает выбор между Е и И.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "папка с HTML-файлом и картинками из комплекта",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, необходимые изображения, видео-инструкция и промпт для редактирования игры.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
+      "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
+    ],
+  },
+  {
+    slug: "dandelion-suffixes",
+    title: "HTML-игра «Одуванчик: суффиксы существительных»",
+    price: "500 ₽",
+    image: "/assets/shop/Kard_oduvanchik.png",
+    demoUrl: "https://dimitrieva-av.ru/games/suffixes-nouns/index.html",
+    shortDescription: "Редактируемая игра по русскому языку для тренировки суффиксов существительных. Ученики ловят одуванчики и выбирают пропущенную букву в слове, закрепляя орфографию в игровой форме.",
+    fullDescription: "Редактируемая HTML-игра по русскому языку для тренировки суффиксов существительных. Ученики ловят одуванчики и выбирают пропущенную букву в слове. Игра помогает отрабатывать орфографию в лёгкой игровой механике с мгновенной проверкой.",
+    tryBefore: [
+      "Перед покупкой можно открыть демонстрационную версию игры на сайте:",
+      "https://dimitrieva-av.ru/games/suffixes-nouns/index.html",
+      "Демонстрационная версия позволяет посмотреть механику игры, внешний вид и принцип работы. В комплекте после покупки передаётся редактируемая версия игры с необходимыми файлами и инструкцией по изменению заданий.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения темы",
+      "для игровой тренировки",
+      "для самостоятельной работы ученика",
+      "для подготовки к орфографическим заданиям",
+    ],
+    howItWorks: [
+      "На экране появляется летний луг с одуванчиками. Ученик ловит одуванчик и получает слово с пропущенной буквой. Нужно выбрать правильный вариант из предложенных. Если ответ верный, задание засчитывается. Если ответ неверный, можно продолжить тренировку и закрепить правило через повторение.",
+      "В игре есть:",
+      "яркая визуальная сцена с летним лугом",
+      "слова с пропущенной буквой",
+      "выбор ответа из нескольких вариантов",
+      "мгновенная проверка",
+      "игровая механика «поймай и ответь»",
+      "удобный формат для тренировки на любом устройстве",
+    ],
+    package: [
+      "Редактируемая версия HTML-игры с необходимыми картинками. Игра открывается на любом устройстве в браузере и не требует подключения к интернету.",
+      "Видео-инструкция по работе с игрой. В инструкции показано, как открыть игру и как подготовить её к использованию.",
+      "Промпт для нейросети. Промпт поможет быстро модифицировать игру: добавить новую лексику, изменить количество вариантов, заменить подсказки, адаптировать материал под другую тему или класс.",
+    ],
+    adaptation: [
+      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Я самостоятельно заменю лексику в игре под вашу тему, если она подходит для механики выбора правильной буквы из нескольких вариантов.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "папка с HTML-файлом и картинками из комплекта",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, необходимые изображения, видео-инструкция и промпт для редактирования игры.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
+      "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
+    ],
+  },
+  {
+    slug: "homogeneous-members-magic",
+    title: "HTML-игра «Фокус: однородные члены предложения»",
+    price: "500 ₽",
+    image: "/assets/shop/Kard_focus.png",
+    demoUrl: "https://dimitrieva-av.ru/games/homogeneous-members-magic/index.html",
+    shortDescription: "Редактируемая игра по русскому языку для тренировки постановки запятых при однородных членах предложения. Ученики читают предложение, выбирают правильный вариант ответа и закрепляют тему в игровой форме.",
+    fullDescription: "Редактируемая HTML-игра по русскому языку для тренировки постановки запятых при однородных членах предложения. Ученики читают предложение, выбирают правильный вариант ответа на свитке и закрепляют тему в игровой механике с магическим оформлением.",
+    tryBefore: [
+      "Перед покупкой можно открыть демонстрационную версию игры на сайте:",
+      "https://dimitrieva-av.ru/games/homogeneous-members-magic/index.html",
+      "Демонстрационная версия позволяет посмотреть механику игры, внешний вид и принцип работы. В комплекте после покупки передаётся редактируемая версия игры с необходимыми файлами и инструкцией по изменению заданий.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения темы «однородные члены предложения»",
+      "для игровой тренировки",
+      "для самостоятельной работы ученика",
+      "для подготовки к заданиям по пунктуации",
+    ],
+    howItWorks: [
+      "На экране появляется театральная магическая сцена. Ученик читает предложение с цифрами на месте возможных запятых и выбирает правильный вариант ответа. Каждый вариант расположен на отдельном свитке. Игра помогает отрабатывать постановку запятых в наглядной и увлекательной форме.",
+      "В игре есть:",
+      "яркая игровая сцена в стиле магического фокуса",
+      "предложения с цифрами на месте возможных запятых",
+      "выбор ответа из нескольких вариантов",
+      "мгновенная проверка",
+      "счёт верных ответов",
+      "удобный формат для тренировки на любом устройстве",
+    ],
+    package: [
+      "Редактируемая версия HTML-игры с необходимыми картинками. Игра открывается на любом устройстве в браузере и не требует подключения к интернету.",
+      "Видео-инструкция по работе с игрой. В инструкции показано, как открыть игру и как подготовить её к использованию.",
+      "Промпт для нейросети. Промпт поможет быстро модифицировать игру: заменить предложения, изменить количество заданий, обновить варианты ответов, скорректировать подсказки и адаптировать материал под ваш класс.",
+    ],
+    adaptation: [
+      "Если вы хотите использовать игру с другими предложениями, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Я самостоятельно заменю предложения внутри игры под вашу тему или нужный материал, если он подходит для этой механики.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "папка с HTML-файлом и картинками из комплекта",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, необходимые изображения, видео-инструкция и промпт для редактирования игры.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
+      "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
+    ],
+  },
+];
+
 const modes = {
   rule: {
     title: "Правило",
@@ -166,7 +322,7 @@ function ruleCategories() {
 }
 
 function isPublicPage(path = window.location.pathname) {
-  return ["/", "/games", "/shop", "/support"].includes(path);
+  return ["/", "/games", "/support", "/contacts", "/delivery", "/refund", "/offer"].includes(path) || path === "/shop" || path.startsWith("/shop/");
 }
 
 function setShellMode(mode = "app") {
@@ -181,6 +337,24 @@ function setShellMode(mode = "app") {
 function navigate(path) {
   history.pushState(null, "", path);
   restoreSession();
+}
+
+function publicFooter() {
+  return `
+    <footer class="public-footer">
+      <div class="public-footer-inner">
+        <div>© Анастасия Димитриева. Русский язык, тренажеры, игры и материалы.</div>
+        <nav class="public-footer-links" aria-label="Документы">
+          <a href="/contacts" data-route="/contacts">Контакты</a>
+          <a href="/offer" data-route="/offer">Оферта</a>
+          <a href="/delivery" data-route="/delivery">Получение заказа</a>
+          <a href="/refund" data-route="/refund">Возврат</a>
+          <a href="/privacy" data-route="/privacy">Политика обработки персональных данных</a>
+          <a href="/consent" data-route="/consent">Согласие на обработку персональных данных</a>
+        </nav>
+      </div>
+    </footer>
+  `;
 }
 
 function selectedCategorySet() {
@@ -324,6 +498,7 @@ function renderTopActions() {
 function renderPublicTopActions(active = "") {
   setShellMode("public");
   topActions.innerHTML = `
+    <button class="ghost-button public-nav-link" data-route="/" type="button">Главная</button>
     <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажеры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
@@ -345,6 +520,18 @@ function renderPublicTopActions(active = "") {
       }
       document.querySelector(button.dataset.publicNav)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  });
+}
+
+function bindPublicShell(root = document) {
+  root.querySelectorAll("[data-route]").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      navigate(item.dataset.route);
+    });
+  });
+  root.querySelectorAll("[data-scroll]").forEach((item) => {
+    item.addEventListener("click", () => document.querySelector(item.dataset.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   });
 }
 
@@ -727,12 +914,12 @@ function renderLandingPage(scrollTarget = "") {
               </div>
               <div>
                 <p class="landing-lead">Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
-                <p class="landing-lead">Раздел готовится к запуску: позже появятся описания, форматы, фиксированные цены и понятный способ получения.</p>
+                <p class="landing-lead">В разделе уже можно посмотреть первые материалы, открыть демо-версии игр и заранее выбрать подходящий комплект.</p>
               </div>
             </div>
             <div class="landing-actions">
               <button class="primary-button" data-route="/shop" type="button">Открыть магазин</button>
-              <span class="muted">Покупки и оплата пока не подключены.</span>
+              <span class="muted">Продажи скоро откроются, оплата пока не подключена.</span>
             </div>
           </article>
           <div class="landing-gallery">
@@ -743,6 +930,7 @@ function renderLandingPage(scrollTarget = "") {
         </div>
       </section>
     </main>
+    ${publicFooter()}
   `;
   bindPublicNavigation(view);
   if (scrollTarget) {
@@ -751,12 +939,7 @@ function renderLandingPage(scrollTarget = "") {
 }
 
 function bindPublicNavigation(root) {
-  root.querySelectorAll("[data-route]").forEach((button) => {
-    button.addEventListener("click", () => navigate(button.dataset.route));
-  });
-  root.querySelectorAll("[data-scroll]").forEach((button) => {
-    button.addEventListener("click", () => document.querySelector(button.dataset.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  });
+  bindPublicShell(root);
 }
 
 function renderPublicGames() {
@@ -836,46 +1019,137 @@ function renderPublicGames() {
       <div class="mini-game-grid">${cards}</div>
       ${teacherBuilder}
     </section>
+    ${publicFooter()}
   `;
   bindPublicNavigation(view);
   if (state.user?.role === "teacher") setupGameBuilder();
 }
 
-function renderShopPlaceholder() {
-  renderPublicTopActions("/shop");
+async function renderPublicTextPage(slug) {
+  const titles = {
+    contacts: "Контакты",
+    delivery: "Получение заказа",
+    refund: "Возврат",
+    offer: "Оферта",
+    support: "Поддержать проект",
+  };
+  renderPublicTopActions(`/${slug}`);
   view.innerHTML = `
     <section class="public-placeholder public-page">
-      <p class="eyebrow">скоро</p>
-      <h2>Магазин материалов скоро откроется</h2>
-      <p>Здесь появятся цифровые материалы по русскому языку для уроков, тренировки и подготовки: редактируемые HTML-игры, карточки, интерактивные задания, методические комплекты и другие авторские разработки.</p>
-      <p>Сейчас раздел готовится к запуску. Позже у каждого материала появятся описание, формат, фиксированная цена и понятный способ получения.</p>
-      <div class="landing-features">
-        <div><b>Редактируемые HTML-игры</b><span>Игры для любого устройства с возможностью адаптации заданий.</span></div>
-        <div><b>Карточки и интерактивы</b><span>Материалы для уроков, повторения и самостоятельной тренировки.</span></div>
-        <div><b>Методические комплекты</b><span>Разработки, которые можно быстро встроить в занятие.</span></div>
-        <div><b>Получение по ссылке</b><span>После оплаты покупатель будет получать ссылку на цифровой материал.</span></div>
-      </div>
-      <div class="landing-actions">
-        <button class="primary-button" data-route="/" type="button">На главную</button>
-        <button class="secondary-button" data-route="/support" type="button">Поддержать проект</button>
-      </div>
+      <p class="eyebrow">документы</p>
+      <h2>${titles[slug] || "Документ"}</h2>
+      <div class="public-doc-content"><p class="muted">Загрузка...</p></div>
     </section>
+    ${publicFooter()}
+  `;
+  bindPublicNavigation(view);
+  const content = view.querySelector(".public-doc-content");
+  try {
+    const data = await api(`/api/public-documents/${slug}`);
+    content.textContent = data.content || "";
+  } catch (err) {
+    content.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function renderShopPlaceholder() {
+  renderPublicTopActions("/shop");
+  const cards = shopProducts.map(shopProductCard).join("");
+  view.innerHTML = `
+    <section class="public-placeholder public-page shop-page">
+      <p class="eyebrow">магазин</p>
+      <h2>Магазин материалов</h2>
+      <p>Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
+      <div class="shop-notice">
+        Продажи скоро откроются. Сейчас можно посмотреть описание материалов и попробовать демонстрационные версии игр.
+      </div>
+      <div class="shop-product-grid">${cards}</div>
+    </section>
+    ${publicFooter()}
   `;
   bindPublicNavigation(view);
 }
 
-function renderSupportPlaceholder() {
-  renderPublicTopActions("/support");
+function shopProductCard(product) {
+  return `
+    <article class="shop-product-card">
+      <div class="shop-product-cover">
+        <img src="${product.image}" alt="${escapeHtml(product.title)}" />
+        <span>Продажи скоро откроются</span>
+      </div>
+      <div class="shop-product-body">
+        <p class="eyebrow">цифровой материал</p>
+        <h3>${escapeHtml(product.title)}</h3>
+        <p>${escapeHtml(product.shortDescription)}</p>
+        <div class="shop-product-meta">
+          <strong>${escapeHtml(product.price)}</strong>
+          <span>Формат: Цифровой материал</span>
+          <span>Получение: Ссылка на папку после оплаты</span>
+        </div>
+        <div class="shop-product-actions">
+          <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
+          <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
+        </div>
+        <span class="shop-soon-badge">Скоро</span>
+      </div>
+    </article>
+  `;
+}
+
+function renderList(items) {
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function renderProductBlock(title, content) {
+  const body = Array.isArray(content) ? renderList(content) : `<p>${escapeHtml(content)}</p>`;
+  return `
+    <section class="product-detail-block">
+      <h3>${escapeHtml(title)}</h3>
+      ${body}
+    </section>
+  `;
+}
+
+function renderShopProductPage(slug) {
+  const product = shopProducts.find((item) => item.slug === slug);
+  if (!product) {
+    renderShopPlaceholder();
+    return;
+  }
+  renderPublicTopActions("/shop");
   view.innerHTML = `
-    <section class="public-placeholder public-page">
-      <p class="eyebrow">поддержка</p>
-      <h2>Поддержать проект</h2>
-      <p>Скоро здесь появится возможность поддержать развитие тренажеров, игр и новых материалов по русскому языку.</p>
-      <div class="landing-actions">
-        <button class="primary-button" data-route="/" type="button">На главную</button>
-        <button class="secondary-button" data-route="/games" type="button">К играм</button>
+    <section class="public-placeholder public-page product-detail-page">
+      <div class="product-detail-hero">
+        <div class="product-detail-cover">
+          <img src="${product.image}" alt="${escapeHtml(product.title)}" />
+        </div>
+        <div class="product-detail-summary">
+          <p class="eyebrow">цифровой материал</p>
+          <h2>${escapeHtml(product.title)}</h2>
+          <p>${escapeHtml(product.shortDescription)}</p>
+          <p>${escapeHtml(product.fullDescription)}</p>
+          <div class="product-price">${escapeHtml(product.price)}</div>
+          <div class="shop-notice">Продажи скоро откроются.</div>
+          <div class="shop-product-actions">
+            <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
+            <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
+            <button class="secondary-button" type="button" disabled>Купить скоро</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-detail-grid">
+        ${renderProductBlock("Попробовать перед покупкой", product.tryBefore)}
+        ${renderProductBlock("Что входит в комплект", product.package)}
+        ${renderProductBlock("Для чего подойдёт", product.suitableFor)}
+        ${renderProductBlock("Как работает игра", product.howItWorks)}
+        ${renderProductBlock("Формат", product.format)}
+        ${renderProductBlock("Что понадобится для использования", product.requirements)}
+        ${renderProductBlock("Как получить после оплаты", product.delivery)}
+        ${renderProductBlock("Помощь с адаптацией", product.adaptation)}
+        ${renderProductBlock("Важно", product.important)}
       </div>
     </section>
+    ${publicFooter()}
   `;
   bindPublicNavigation(view);
 }
@@ -1001,8 +1275,28 @@ async function restoreSession() {
     renderShopPlaceholder();
     return;
   }
+  if (window.location.pathname.startsWith("/shop/")) {
+    renderShopProductPage(window.location.pathname.split("/").filter(Boolean)[1]);
+    return;
+  }
   if (window.location.pathname === "/support") {
-    renderSupportPlaceholder();
+    await renderPublicTextPage("support");
+    return;
+  }
+  if (window.location.pathname === "/contacts") {
+    await renderPublicTextPage("contacts");
+    return;
+  }
+  if (window.location.pathname === "/delivery") {
+    await renderPublicTextPage("delivery");
+    return;
+  }
+  if (window.location.pathname === "/refund") {
+    await renderPublicTextPage("refund");
+    return;
+  }
+  if (window.location.pathname === "/offer") {
+    await renderPublicTextPage("offer");
     return;
   }
   if (!state.token) {

@@ -26,6 +26,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 ROOT = Path(__file__).resolve().parents[1]
 STATIC_DIR = ROOT / "app" / "static"
 HTML_DIR = ROOT / "app" / "HTML"
+DOCS_DIR = ROOT / "app" / "docs"
 DATA_DIR = ROOT / "data"
 IMAGES_DIR = ROOT / "images"
 WORDS_PATH = ROOT / "ege9_final_grouped_by_orthogram_v4.json"
@@ -124,6 +125,13 @@ GAME_SET_MAX_ITEMS = 200
 GAME_SET_MAX_STRING = 600
 GAME_SET_MAX_PAYLOAD_BYTES = 200_000
 GAME_MECHANICS = {"fluffs", "berry-season"}
+PUBLIC_DOC_FILES = {
+    "contacts": "contacts.txt",
+    "delivery": "delivery.txt",
+    "refund": "refund.txt",
+    "offer": "offer.txt",
+    "support": "support_stub.txt",
+}
 
 
 def configure_console() -> None:
@@ -781,6 +789,24 @@ def active_document(document_type: str) -> dict[str, Any]:
     if not row:
         raise ValueError("Документ не найден.")
     return dict(row)
+
+
+def public_text_document(slug: str) -> dict[str, str]:
+    filename = PUBLIC_DOC_FILES.get(slug)
+    if not filename:
+        raise ValueError("Документ не найден.")
+    path = (DOCS_DIR / filename).resolve()
+    try:
+        path.relative_to(DOCS_DIR.resolve())
+    except ValueError:
+        raise ValueError("Документ не найден.")
+    if not path.is_file():
+        raise ValueError("Документ не найден.")
+    return {
+        "slug": slug,
+        "filename": filename,
+        "content": path.read_text(encoding="utf-8"),
+    }
 
 
 def consent_status(user_id: str) -> dict[str, Any]:
@@ -2328,6 +2354,9 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(active_document("personal_data_consent"))
             elif parsed.path == "/api/documents/terms":
                 self.send_json(active_document("terms"))
+            elif parsed.path.startswith("/api/public-documents/"):
+                slug = parsed.path.rsplit("/", 1)[-1]
+                self.send_json(public_text_document(slug))
             elif parsed.path == "/api/activities":
                 self.require_user_with_consents()
                 self.send_json({"activities": ACTIVITIES})
@@ -2397,6 +2426,10 @@ class Handler(SimpleHTTPRequestHandler):
                         "/privacy",
                         "/consent",
                         "/terms",
+                        "/contacts",
+                        "/delivery",
+                        "/refund",
+                        "/offer",
                         "/admin",
                         "/teacher",
                         "/student",
@@ -2404,6 +2437,7 @@ class Handler(SimpleHTTPRequestHandler):
                         "/shop",
                         "/support",
                     }
+                    or parsed.path.startswith("/shop/")
                 ):
                     self.path = "/index.html"
                 super().do_GET()

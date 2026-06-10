@@ -1396,6 +1396,236 @@ button {
   gap: 4px;
 }
 
+.public-doc-content {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: #253142;
+  font-size: 17px;
+  line-height: 1.72;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.shop-page {
+  gap: 18px;
+}
+
+.shop-notice {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(199, 213, 200, 0.92);
+  border-radius: 8px;
+  background: rgba(238, 246, 232, 0.9);
+  color: var(--green-dark);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.shop-product-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.shop-product-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid rgba(199, 213, 200, 0.92);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 34px rgba(38, 71, 55, 0.12);
+}
+
+.shop-product-cover {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #eef4ec;
+}
+
+.shop-product-cover img,
+.product-detail-cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.shop-product-cover span,
+.shop-soon-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(33, 62, 49, 0.12);
+}
+
+.shop-product-body {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+}
+
+.shop-product-body h3 {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.shop-product-body p {
+  margin: 0;
+  color: #344154;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.shop-product-meta {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.shop-product-meta strong,
+.product-price {
+  color: #223427;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.shop-product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.shop-product-actions .primary-button,
+.shop-product-actions .secondary-button {
+  min-height: 42px;
+}
+
+.shop-soon-badge {
+  position: static;
+  width: max-content;
+  background: #f7e6b7;
+}
+
+.product-detail-page {
+  gap: 22px;
+}
+
+.product-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1.2fr);
+  gap: clamp(18px, 3vw, 34px);
+  align-items: start;
+}
+
+.product-detail-cover {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(199, 213, 200, 0.92);
+  border-radius: 8px;
+  background: #eef4ec;
+}
+
+.product-detail-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.product-detail-summary h2 {
+  font-size: clamp(32px, 4vw, 54px);
+}
+
+.product-detail-summary p {
+  max-width: 780px;
+}
+
+.product-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.product-detail-block {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid rgba(199, 213, 200, 0.92);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.product-detail-block h3 {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 21px;
+}
+
+.product-detail-block p,
+.product-detail-block li {
+  color: #344154;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.product-detail-block p,
+.product-detail-block ul {
+  margin: 0;
+}
+
+.product-detail-block ul {
+  padding-left: 20px;
+}
+
+.public-footer {
+  padding: 28px 22px;
+  border-top: 1px solid var(--line);
+  background: rgba(246, 248, 243, 0.88);
+}
+
+.public-footer-inner {
+  width: min(1220px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.public-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.public-footer-links a {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--green-dark);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  box-shadow: none;
+}
+
 @media (max-width: 900px) {
   .topbar,
   .panel-head {
@@ -1416,7 +1646,10 @@ button {
   .student-lists,
   .landing-text-row,
   .landing-features,
-  .landing-gallery {
+  .landing-gallery,
+  .shop-product-grid,
+  .product-detail-hero,
+  .product-detail-grid {
     grid-template-columns: 1fr;
   }
 
