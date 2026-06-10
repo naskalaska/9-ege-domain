@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Русский язык: тренажёры и игры для системной подготовки к экзаменам</title>
+  <style>
+    :root {
+      --ink: #101828;
+      --muted: #334155;
+      --green: #2f815f;
+      --green-dark: #135c46;
+      --green-soft: rgba(47, 129, 95, .12);
+      --line: rgba(196, 211, 197, .72);
+      --shadow: 0 18px 48px rgba(31, 54, 44, .13);
+      --radius: 24px;
+      --max: 1220px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #f3f6ef;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .topbar {
+      position: fixed;
+      left: 50%;
+      top: 12px;
+      z-index: 50;
+      transform: translateX(-50%);
+      width: min(calc(100% - 32px), var(--max));
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 10px 8px 16px;
+      border: 1px solid rgba(255, 255, 255, .68);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .78);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 44px rgba(31, 54, 44, .12);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: max-content;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+
+    .brand-text {
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: -.035em;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 850;
+      color: #243044;
+    }
+
+    .nav a:hover { background: rgba(47, 129, 95, .1); }
+
+    .nav .login {
+      background: rgba(255, 255, 255, .78);
+      border: 1px solid var(--line);
+    }
+
+    .section {
+      min-height: clamp(680px, 90vh, 860px);
+      position: relative;
+      display: grid;
+      align-items: center;
+      overflow: hidden;
+      padding: 88px 22px 42px;
+      isolation: isolate;
+    }
+
+    .section::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--bg);
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.02);
+      z-index: -3;
+    }
+
+    .section::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(247, 250, 245, .95) 0%, rgba(247, 250, 245, .78) 42%, rgba(247, 250, 245, .6) 100%),
+        radial-gradient(circle at 15% 12%, rgba(255,255,255,.82), transparent 34%),
+        radial-gradient(circle at 88% 88%, rgba(47,129,95,.14), transparent 34%);
+      z-index: -2;
+    }
+
+    .section.games::after {
+      background:
+        linear-gradient(180deg, rgba(239, 244, 237, .95) 0%, rgba(239, 244, 237, .78) 42%, rgba(239, 244, 237, .58) 100%),
+        radial-gradient(circle at 12% 20%, rgba(255,255,255,.78), transparent 34%),
+        radial-gradient(circle at 85% 82%, rgba(47,129,95,.14), transparent 32%);
+    }
+
+    .section.shop::after {
+      background:
+        linear-gradient(180deg, rgba(250, 247, 239, .95) 0%, rgba(250, 247, 239, .78) 43%, rgba(250, 247, 239, .58) 100%),
+        radial-gradient(circle at 15% 18%, rgba(255,255,255,.8), transparent 34%),
+        radial-gradient(circle at 88% 78%, rgba(47,129,95,.12), transparent 32%);
+    }
+
+    .wrap {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-divider {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      z-index: 3;
+      transform: translateX(-50%);
+      width: min(calc(100% - 44px), var(--max));
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(47,129,95,.55), transparent);
+    }
+
+    .section-tag {
+      position: absolute;
+      left: 50%;
+      top: 74px;
+      z-index: 4;
+      transform: translateX(-50%);
+      width: min(calc(100% - 44px), var(--max));
+      pointer-events: none;
+    }
+
+    .section-tag span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(19, 92, 70, .88);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      box-shadow: 0 12px 28px rgba(31, 54, 44, .15);
+    }
+
+    .section-tag span::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.85);
+    }
+
+    .content-card {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .72);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .56);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 2.7vw, 34px);
+      isolation: isolate;
+    }
+
+    .content-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background-image:
+        linear-gradient(90deg, rgba(250, 252, 248, .97) 0%, rgba(250, 252, 248, .93) 48%, rgba(250, 252, 248, .86) 100%),
+        var(--bg);
+      background-size: cover;
+      background-position: center;
+      filter: saturate(.94);
+      transform: scale(1.02);
+    }
+
+    .content-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08)),
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.28), transparent 28%);
+    }
+
+    .text-row {
+      display: grid;
+      grid-template-columns: minmax(280px, .9fr) minmax(360px, 1.1fr);
+      gap: clamp(22px, 3vw, 42px);
+      align-items: end;
+    }
+
+    .hero .text-row {
+      grid-template-columns: minmax(330px, .95fr) minmax(380px, 1.05fr);
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-size: clamp(38px, 4.6vw, 64px);
+      line-height: .96;
+      letter-spacing: -.058em;
+    }
+
+    .hero h1 {
+      font-size: clamp(40px, 5.2vw, 74px);
+    }
+
+    .lead {
+      margin: 0;
+      color: #2f3b4c;
+      font-size: clamp(16px, 1.45vw, 19px);
+      line-height: 1.5;
+      font-weight: 520;
+    }
+
+    .lead + .lead { margin-top: 12px; }
+
+    .features {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .feature {
+      min-height: 96px;
+      padding: 13px;
+      border: 1px solid rgba(199, 213, 200, .92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .82);
+    }
+
+    .feature-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 950;
+      letter-spacing: -.02em;
+    }
+
+    .feature-title::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 6px var(--green-soft);
+    }
+
+    .feature-text {
+      color: #3c4858;
+      font-size: 13px;
+      line-height: 1.34;
+      font-weight: 500;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .button {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border-radius: 16px;
+      font-weight: 950;
+      border: 1px solid transparent;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(31, 54, 44, .15);
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--green);
+    }
+
+    .secondary {
+      background: rgba(255,255,255,.72);
+      border-color: var(--line);
+    }
+
+    .note {
+      color: #3c4858;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    .media-panel {
+      border-radius: calc(var(--radius) + 4px);
+      background: rgba(244, 247, 241, .96);
+      border: 1px solid rgba(213, 222, 213, .92);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .media-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .media-card {
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(222, 229, 222, .96);
+      background: #ffffff;
+      box-shadow: 0 10px 26px rgba(31, 54, 44, .08);
+    }
+
+    .media-card img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+
+    .hero-gallery .media-card img {
+      min-height: 210px;
+    }
+
+    .support {
+      min-height: auto;
+      padding-top: 56px;
+      padding-bottom: 56px;
+      background:
+        radial-gradient(circle at 15% 22%, rgba(47,129,95,.13), transparent 34%),
+        linear-gradient(135deg, #f6f8f3, #efeade);
+    }
+
+    .support::before, .support::after { display: none; }
+
+    .support-box {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      padding: clamp(24px, 4vw, 40px);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .support h2 {
+      font-size: clamp(30px, 4vw, 48px);
+    }
+
+    .support p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+
+    footer {
+      padding: 30px 22px;
+      background: #f6f8f3;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+
+    .footer-inner {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-links a {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    @media (max-width: 980px) {
+      .nav a:not(.login) { display: none; }
+
+      .section {
+        min-height: auto;
+        padding-top: 96px;
+        padding-bottom: 30px;
+      }
+
+      .section-tag { top: 68px; }
+
+      .text-row,
+      .hero .text-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .features,
+      .media-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .media-panel { padding: 12px; }
+      .support-box { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar {
+        top: 10px;
+        width: calc(100% - 20px);
+      }
+
+      .brand-text { display: none; }
+      h1, h2 { font-size: 40px; }
+      .lead { font-size: 16px; }
+      .content-card { border-radius: 22px; }
+
+      .section {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .features,
+      .media-row {
+        grid-template-columns: 1fr;
+      }
+
+      .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top">
+      <span class="brand-mark">РЯ</span>
+      <span class="brand-text">Русский язык</span>
+    </a>
+    <nav class="nav" aria-label="Навигация">
+      <a href="#trainers">Тренажёры</a>
+      <a href="#games">Игры</a>
+      <a href="#shop">Магазин</a>
+      <a href="#support">Поддержать</a>
+      <a class="login" href="/login">Вход</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section hero" id="top" style="--bg: url('asset_trainer1.png');">
+      <div class="wrap">
+        <article class="content-card">
+          <div class="text-row">
+            <div>
+              <p class="eyebrow">образовательная платформа</p>
+              <h1>Русский язык: тренажёры и игры для системной подготовки к экзаменам</h1>
+            </div>
+            <div>
+              <p class="lead">
+                Платформа объединяет тренажёры в формате ЕГЭ, учебные игры по русскому языку и цифровые материалы для уроков.
+              </p>
+              <p class="lead">
+                Ученики могут тренироваться, играть и закреплять темы, а учитель — быстро собирать тесты, отслеживать статистику и подбирать материалы под задачи класса.
+              </p>
+              <div class="actions">
+                <a class="button primary" href="#trainers">Тренажёры</a>
+                <a class="button secondary" href="#games">Игры</a>
+                <a class="button secondary" href="#shop">Магазин</a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="media-panel hero-gallery">
+          <div class="media-row">
+            <figure class="media-card">
+              <img src="asset_trainer3.png" alt="Тренажёры по русскому языку" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_game3.png" alt="Игры по русскому языку" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_shop3.png" alt="Магазин материалов" />
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section trainers" id="trainers" style="--bg: url('asset_trainer2.png');">
+      <div class="section-divider"></div>
+      <div class="section-tag"><span>Тренажёры</span></div>
+
+      <div class="wrap">
+        <article class="content-card">
+          <div class="text-row">
+            <div>
+              <p class="eyebrow">тренажёры</p>
+              <h2>Тренажёры в формате ЕГЭ</h2>
+            </div>
+            <div>
+              <p class="lead">
+                Тренировки по русскому языку: по правилам, в миксе и в экзаменационном формате.
+                Система запоминает ошибки, возвращает сложные слова и помогает постепенно закрывать слабые места.
+              </p>
+              <p class="lead">
+                Ученики подключаются по коду учителя, а в кабинете учителя собирается статистика и доступна быстрая сборка тестов.
+              </p>
+            </div>
+          </div>
+
+          <div class="features">
+            <div class="feature">
+              <div class="feature-title">Формат ЕГЭ</div>
+              <div class="feature-text">Тренировка в логике экзаменационных заданий.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Умный повтор</div>
+              <div class="feature-text">Верные ответы уходят из выдачи, ошибки возвращаются.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Копилка ошибок</div>
+              <div class="feature-text">Сложные слова дорабатываются до устойчивого результата.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Кабинет учителя</div>
+              <div class="feature-text">Статистика учеников и быстрая сборка тестов.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <a class="button primary" href="/login">Войти в тренажёры</a>
+            <span class="note">Для доступа нужен аккаунт ученика или учителя.</span>
+          </div>
+        </article>
+
+        <div class="media-panel">
+          <div class="media-row">
+            <figure class="media-card">
+              <img src="asset_trainer3.png" alt="Интерфейс тренажёров" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_trainer4.png" alt="Копилка ошибок и повторы" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_trainer5.png" alt="Кабинет учителя и сборка тестов" />
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section games" id="games" style="--bg: url('asset_game2.png');">
+      <div class="section-divider"></div>
+      <div class="section-tag"><span>Игры</span></div>
+
+      <div class="wrap">
+        <article class="content-card">
+          <div class="text-row">
+            <div>
+              <p class="eyebrow">игры</p>
+              <h2>Игры по русскому языку</h2>
+            </div>
+            <div>
+              <p class="lead">
+                Учебные мини-игры, которые можно быстро открыть, запустить и дать ученикам ссылку.
+              </p>
+              <p class="lead">
+                Задания по русскому языку превращаются в корзинки, карточки, свитки, фокусы, летающие объекты и игровые сцены.
+                Ученики могут играть без регистрации, а авторизованный учитель может заменить лексику внутри игры.
+              </p>
+            </div>
+          </div>
+
+          <div class="features">
+            <div class="feature">
+              <div class="feature-title">Играть без входа</div>
+              <div class="feature-text">Ученику достаточно открыть ссылку.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Готовые механики</div>
+              <div class="feature-text">Сортировка, выбор ответа, карточки, движение объектов и игровые сцены.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Своя лексика</div>
+              <div class="feature-text">Учитель может заменить слова в игре под тему урока.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Быстрая настройка</div>
+              <div class="feature-text">Готовая игра превращается в упражнение под конкретный класс.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <a class="button primary" href="/games">Перейти к играм</a>
+            <span class="note">Играть можно без регистрации. Настройка доступна авторизованным учителям.</span>
+          </div>
+        </article>
+
+        <div class="media-panel">
+          <div class="media-row">
+            <figure class="media-card">
+              <img src="asset_game3.png" alt="Каталог игр" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_game4.png" alt="Мини-игра с одуванчиком" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_game5.png" alt="Игровые механики по русскому языку" />
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shop" id="shop" style="--bg: url('Asset_shop.png');">
+      <div class="section-divider"></div>
+      <div class="section-tag"><span>Магазин</span></div>
+
+      <div class="wrap">
+        <article class="content-card">
+          <div class="text-row">
+            <div>
+              <p class="eyebrow">магазин</p>
+              <h2>Магазин материалов</h2>
+            </div>
+            <div>
+              <p class="lead">
+                Цифровые материалы по русскому языку для уроков, тренировки и подготовки.
+              </p>
+              <p class="lead">
+                В магазине появляются готовые авторские материалы: игры, карточки, интерактивные задания, методические комплекты и другие цифровые разработки.
+                Сейчас в продаже — редактируемые HTML-игры, которые уже доступны на сайте.
+              </p>
+            </div>
+          </div>
+
+          <div class="features">
+            <div class="feature">
+              <div class="feature-title">Цифровые материалы</div>
+              <div class="feature-text">Игры, карточки, интерактивы и другие разработки по русскому языку.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Готово к использованию</div>
+              <div class="feature-text">Материал можно открыть, запустить и использовать на уроке.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Можно адаптировать</div>
+              <div class="feature-text">В редактируемых материалах можно заменить задания.</div>
+            </div>
+            <div class="feature">
+              <div class="feature-title">Получение по ссылке</div>
+              <div class="feature-text">После оплаты покупатель получает ссылку на материалы.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <a class="button primary" href="/shop">Открыть магазин</a>
+            <span class="note">Материалы предоставляются в цифровом формате по ссылке после оплаты.</span>
+          </div>
+        </article>
+
+        <div class="media-panel">
+          <div class="media-row">
+            <figure class="media-card">
+              <img src="asset_shop3.png" alt="Магазин материалов" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_shop4.png" alt="Карточки товаров в магазине" />
+            </figure>
+            <figure class="media-card">
+              <img src="asset_shop5.png" alt="Страница товара" />
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="support" id="support">
+      <div class="support-box">
+        <div>
+          <p class="eyebrow">поддержка</p>
+          <h2>Поддержать проект</h2>
+          <p>
+            Кнопка поддержки будет доступна на страницах тренажёров и игр. Можно помочь развитию платформы и появлению новых заданий, механик и материалов.
+          </p>
+        </div>
+        <a class="button primary" href="/support">Поддержать</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>© Анастасия Димитриева. Русский язык, тренажёры, игры и материалы.</div>
+      <div class="footer-links">
+        <a href="/contacts">Контакты</a>
+        <a href="/offer">Оферта</a>
+        <a href="/delivery">Получение заказа</a>
+        <a href="/privacy">Политика обработки данных</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

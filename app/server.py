@@ -105,12 +105,15 @@ ACTIVITIES = [
 HTML_GAMES = {
     "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
     "homogeneous-members-magic": HTML_DIR / "Фокусы",
-    "berry-season-ik-ek": HTML_DIR / "ЯГодный сезон ИК-ЕК",
+    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
 }
 
 PUBLIC_GAMES = {
     "fluffs": HTML_DIR / "Пушинки",
-    "berry-season": HTML_DIR / "ЯГодный сезон ИК-ЕК",
+    "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
+    "homogeneous-members-magic": HTML_DIR / "Фокусы",
+    "berry-season": HTML_DIR / "Ягодный сезон ИК-ЕК",
+    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -2367,7 +2370,26 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
             else:
-                if parsed.path == "/" or parsed.path.startswith("/apps/") or parsed.path in {"/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/consent", "/terms", "/admin", "/teacher", "/student"}:
+                if (
+                    parsed.path == "/"
+                    or parsed.path == "/apps"
+                    or parsed.path.startswith("/apps/")
+                    or parsed.path in {
+                        "/login",
+                        "/register",
+                        "/forgot-password",
+                        "/reset-password",
+                        "/privacy",
+                        "/consent",
+                        "/terms",
+                        "/admin",
+                        "/teacher",
+                        "/student",
+                        "/games",
+                        "/shop",
+                        "/support",
+                    }
+                ):
                     self.path = "/index.html"
                 super().do_GET()
         except PermissionError as error:
