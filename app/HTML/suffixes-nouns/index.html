@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Снежинки: суффиксы существительных</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-image: url('Фон.png');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .item {
+      width: 200px;
+      height: 200px;
+      background-image: url('перо.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: absolute;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.3s;
+    }
+
+    .item:hover {
+      transform: scale(1.08);
+    }
+
+    .flipped {
+      transform: scaleX(-1);
+    }
+
+    .score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 50;
+      font-size: 24px;
+      background: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: block;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+    }
+
+    .start-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      background: #4CAF50;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0,0,0,0.25);
+      user-select: none;
+    }
+
+    .question-box {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 22px;
+      border-radius: 16px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.35);
+      display: none;
+      z-index: 100;
+      width: 84%;
+      max-width: 460px;
+      text-align: center;
+    }
+
+    .question-box h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .question-box p {
+      margin: 8px 0 16px;
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    .answer-option {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px 14px;
+      font-size: 19px;
+      border-radius: 10px;
+      border: 1px solid #cfcfcf;
+      background: #f4f4f4;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .answer-option:hover {
+      background: #e8f3ff;
+      transform: translateY(-1px);
+    }
+
+    .answer-option.correct {
+      background: #c8f7c5;
+      border-color: #4CAF50;
+    }
+
+    .answer-option.wrong {
+      background: #ffd6d6;
+      border-color: #d9534f;
+    }
+
+    .answer-feedback {
+      min-height: 24px;
+      margin-top: 12px;
+      font-size: 18px;
+    }
+
+    .final-message {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 34px;
+      border-radius: 16px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.35);
+      display: none;
+      z-index: 200;
+      text-align: center;
+      max-width: 420px;
+    }
+
+    .final-message h2 {
+      margin: 0 0 12px;
+      font-size: 30px;
+    }
+
+    .final-message p {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .play-again-btn {
+      margin-top: 22px;
+      font-size: 18px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="score" id="score">Счёт: 0</div>
+
+<div class="start-btn" id="startBtn">Начать игру</div>
+
+<div class="question-box" id="questionBox">
+  <h3>Поймали одуванчик!</h3>
+  <p id="questionText">Вопрос</p>
+  <div id="answerOptions"></div>
+  <div class="answer-feedback" id="answerFeedback"></div>
+</div>
+
+<div class="final-message" id="finalMessage">
+  <h2>Молодец!</h2>
+  <p>Все пушинки пойманы правильно 🌼</p>
+  <button class="play-again-btn" id="playAgainBtn">Играть снова?</button>
+</div>
+
+<script>
+  const questions = [
+    {
+      text: "Вставьте пропущенную букву: дружоч..к",
+      options: ["е", "и", "о", "а"],
+      correct: 0,
+      explanation: "Правильно: дружочек. Пишется суффикс -ЕК-."
+    },
+    {
+      text: "Вставьте пропущенную букву: карандаш..к",
+      options: ["е", "и", "о", "а"],
+      correct: 1,
+      explanation: "Правильно: карандашик. Пишется суффикс -ИК-."
+    },
+    {
+      text: "Выберите нужную букву: водопровод..ик",
+      options: ["ч", "щ", "ц", "ш"],
+      correct: 0,
+      explanation: "Правильно: водопроводчик. После Д пишется -ЧИК-."
+    },
+    {
+      text: "Выберите нужную букву: фонар..ик",
+      options: ["ч", "щ", "ц", "ш"],
+      correct: 1,
+      explanation: "Правильно: фонарщик. После Р пишется -ЩИК-."
+    },
+    {
+      text: "Вставьте пропущенную букву: владел..ц",
+      options: ["и", "е", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: владелец. Пишется суффикс -ЕЦ-."
+    },
+    {
+      text: "Вставьте пропущенную букву: красав..ца",
+      options: ["е", "и", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: красавица. Пишется суффикс -ИЦ-."
+    },
+    {
+      text: "Вставьте пропущенную букву: виш..нка",
+      options: ["и", "е", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: вишенка. Пишется суффикс -ЕНК-."
+    },
+    {
+      text: "Вставьте пропущенную букву: жемчуж..нка",
+      options: ["е", "и", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: жемчужинка. Пишется суффикс -ИНК-."
+    },
+    {
+      text: "Вставьте пропущенную букву: пугов..чка",
+      options: ["е", "и", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: пуговичка. Пишется суффикс -ИЧК-."
+    },
+    {
+      text: "Вставьте пропущенную букву: высоч..ство",
+      options: ["и", "е", "а", "о"],
+      correct: 1,
+      explanation: "Правильно: высочество. Пишется суффикс -ЕСТВ-."
+    }
+  ];
+
+  let score = 0;
+  let birds = [];
+  let currentBird = null;
+  let currentQuestionIndex = null;
+  let questionIsOpen = false;
+  let gameQuestions = [];
+
+  function shuffleArray(array) {
+    const copy = [...array];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+  }
+
+  function createBird(index) {
+    const bird = document.createElement('div');
+    bird.className = 'item';
+
+    let x = Math.random() * (window.innerWidth - 200);
+    let y = Math.random() * (window.innerHeight - 200);
+    let dx = 0.5 + Math.random();
+    let dy = 0.5 + Math.random();
+
+    bird.style.left = x + 'px';
+    bird.style.top = y + 'px';
+
+    bird.addEventListener('click', () => {
+      if (questionIsOpen) return;
+
+      currentBird = bird;
+      currentQuestionIndex = index;
+      openQuestion(index);
+      bird.style.pointerEvents = 'none';
+    });
+
+    document.body.appendChild(bird);
+    birds.push(bird);
+
+    function moveBird() {
+      x += dx;
+      y += dy;
+
+      if (x <= 0 || x + 200 >= window.innerWidth) {
+        dx = -dx;
+        bird.classList.toggle('flipped');
+        x = Math.max(0, Math.min(window.innerWidth - 200, x));
+      }
+
+      if (y <= 0 || y + 200 >= window.innerHeight) {
+        dy = -dy;
+        y = Math.max(0, Math.min(window.innerHeight - 200, y));
+      }
+
+      bird.style.left = x + 'px';
+      bird.style.top = y + 'px';
+
+      if (document.body.contains(bird)) {
+        requestAnimationFrame(moveBird);
+      }
+    }
+
+    moveBird();
+  }
+
+  function openQuestion(index) {
+    const question = gameQuestions[index];
+
+    questionIsOpen = true;
+
+    document.getElementById('questionBox').style.display = 'block';
+    document.getElementById('questionText').innerText = question.text;
+    document.getElementById('answerFeedback').innerText = '';
+
+    const optionsBox = document.getElementById('answerOptions');
+    optionsBox.innerHTML = '';
+
+    question.options.forEach((option, optionIndex) => {
+      const button = document.createElement('button');
+      button.className = 'answer-option';
+      button.innerText = option;
+
+      button.addEventListener('click', () => {
+        checkAnswer(optionIndex, button);
+      });
+
+      optionsBox.appendChild(button);
+    });
+  }
+
+  function checkAnswer(selectedIndex, selectedButton) {
+    const question = gameQuestions[currentQuestionIndex];
+    const optionButtons = document.querySelectorAll('.answer-option');
+
+    optionButtons.forEach(button => {
+      button.disabled = true;
+      button.style.cursor = 'default';
+    });
+
+    if (selectedIndex === question.correct) {
+      selectedButton.classList.add('correct');
+      document.getElementById('answerFeedback').innerText = 'Верно! Пушинка поймана 🌼';
+
+      setTimeout(() => {
+        document.getElementById('questionBox').style.display = 'none';
+
+        if (currentBird) {
+          currentBird.style.opacity = '0';
+          const birdToRemove = currentBird;
+          currentBird = null;
+
+          setTimeout(() => {
+            birdToRemove.remove();
+          }, 250);
+        }
+
+        score++;
+        document.getElementById('score').innerText = `Счёт: ${score}`;
+        questionIsOpen = false;
+        currentQuestionIndex = null;
+
+        if (score === gameQuestions.length) {
+          setTimeout(() => {
+            document.getElementById('finalMessage').style.display = 'block';
+            document.getElementById('playAgainBtn').style.display = 'inline-block';
+          }, 400);
+        }
+      }, 700);
+
+    } else {
+      selectedButton.classList.add('wrong');
+      document.getElementById('answerFeedback').innerText = 'Не совсем. Пушинка летит дальше.';
+
+      setTimeout(() => {
+        document.getElementById('questionBox').style.display = 'none';
+
+        if (currentBird) {
+          currentBird.style.pointerEvents = 'auto';
+          currentBird = null;
+        }
+
+        currentQuestionIndex = null;
+        questionIsOpen = false;
+      }, 900);
+    }
+  }
+
+  function startGame() {
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('finalMessage').style.display = 'none';
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('questionBox').style.display = 'none';
+
+    score = 0;
+    questionIsOpen = false;
+    currentBird = null;
+    currentQuestionIndex = null;
+    gameQuestions = shuffleArray(questions);
+
+    document.getElementById('score').innerText = `Счёт: ${score}`;
+
+    birds.forEach(bird => bird.remove());
+    birds = [];
+
+    for (let i = 0; i < gameQuestions.length; i++) {
+      createBird(i);
+    }
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+
+  document.getElementById('playAgainBtn').addEventListener('click', () => {
+    startGame();
+  });
+</script>
+
+</body>
+</html>

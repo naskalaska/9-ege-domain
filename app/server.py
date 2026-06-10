@@ -102,18 +102,22 @@ ACTIVITIES = [
     },
 ]
 
+def first_existing_path(*paths: Path) -> Path:
+    return next((path for path in paths if path.exists()), paths[0])
+
+
 HTML_GAMES = {
-    "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
-    "homogeneous-members-magic": HTML_DIR / "Фокусы",
-    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
+    "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
+    "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
+    "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
 }
 
 PUBLIC_GAMES = {
-    "fluffs": HTML_DIR / "Пушинки",
-    "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
-    "homogeneous-members-magic": HTML_DIR / "Фокусы",
-    "berry-season": HTML_DIR / "Ягодный сезон ИК-ЕК",
-    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
+    "fluffs": first_existing_path(HTML_DIR / "fluffs", HTML_DIR / "Пушинки"),
+    "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
+    "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
+    "berry-season": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
+    "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -1766,18 +1770,23 @@ def normalize_game_options(options: Any, answer: str) -> list[str]:
     return result[:6]
 
 
+def normalize_game_answer(value: Any) -> str:
+    answer = clean_game_string(value, 80).lower()
+    return {"e": "е", "i": "и"}.get(answer, answer)
+
+
 def normalize_game_item(item: Any, index: int) -> dict[str, Any]:
     if not isinstance(item, dict):
         raise ValueError(f"Задание {index}: ожидается объект.")
     variant = clean_game_string(item.get("variant") or item.get("prompt") or item.get("text"))
-    answer = clean_game_string(item.get("answer") or item.get("correct_letter") or item.get("correct"))
+    answer = normalize_game_answer(item.get("answer") or item.get("correct_letter") or item.get("correct"))
     if not variant:
         raise ValueError(f"Задание {index}: нет поля variant.")
     if not answer:
         raise ValueError(f"Задание {index}: нет поля answer.")
     return {
         "variant": variant,
-        "answer": answer.lower(),
+        "answer": answer,
         "options": normalize_game_options(item.get("options") or item.get("choices"), answer),
         "correct_spelling": clean_game_string(item.get("correct_spelling")),
         "explanation": clean_game_string(item.get("explanation")),
@@ -1836,7 +1845,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
 
 
 def game_item_from_word(word: dict[str, Any], choices_func: Any) -> dict[str, Any]:
-    answer = clean_game_string(word.get("correct_letter") or word.get("answer"), 40).lower()
+    answer = normalize_game_answer(word.get("correct_letter") or word.get("answer"))
     return {
         "variant": clean_game_string(word.get("variant")),
         "answer": answer,
