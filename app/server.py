@@ -105,6 +105,7 @@ ACTIVITIES = [
 HTML_GAMES = {
     "suffixes-nouns": HTML_DIR / "Лето. Суффиксы",
     "homogeneous-members-magic": HTML_DIR / "Фокусы",
+    "berry-season-ik-ek": HTML_DIR / "Ягодный сезон ИК-ЕК",
 }
 
 PUBLIC_GAMES = {
@@ -1880,19 +1881,27 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     if mechanic not in GAME_MECHANICS:
         raise ValueError("Пока доступна только механика «Пушинки».")
     source = clean_game_string(payload.get("source") or "ege9", 20)
-    rule_id = clean_game_string(payload.get("rule_id"), 80)
-    if not rule_id:
+    raw_rule_ids = payload.get("rule_ids")
+    if isinstance(raw_rule_ids, list):
+        rule_ids = [clean_game_string(rule_id, 80) for rule_id in raw_rule_ids]
+    else:
+        rule_ids = [clean_game_string(payload.get("rule_id"), 80)]
+    rule_ids = list(dict.fromkeys(rule_id for rule_id in rule_ids if rule_id))
+    if not rule_ids:
         raise ValueError("Выберите рубрику.")
     count = int(payload.get("count") or 10)
     count = max(1, min(count, GAME_SET_MAX_ITEMS))
     config = game_source_config(source)
-    pool = list(config["words_by_rule"].get(rule_id, []))
+    pool: list[dict[str, Any]] = []
+    for rule_id in rule_ids:
+        pool.extend(config["words_by_rule"].get(rule_id, []))
     if not pool:
-        raise ValueError("В выбранной рубрике нет заданий.")
+        raise ValueError("В выбранных рубриках нет заданий.")
     random.shuffle(pool)
     items = [game_item_from_word(word, config["letter_choices"]) for word in pool[:count]]
-    rule = next((item for item in config["rules"] if item["rule_id"] == rule_id), None)
-    title = clean_game_string(payload.get("title"), 120) or f"Пушинки: {rule['rule_name'] if rule else 'тренировка'}"
+    selected_rules = [item for item in config["rules"] if item["rule_id"] in set(rule_ids)]
+    default_title = selected_rules[0]["rule_name"] if len(selected_rules) == 1 else f"{len(selected_rules)} рубрики"
+    title = clean_game_string(payload.get("title"), 120) or f"Пушинки: {default_title}"
     game_payload = normalize_game_payload(
         {
             "title": title,

@@ -63,6 +63,13 @@ const miniGames = [
     button: "Играть",
     path: "/html-games/homogeneous-members-magic/index.html",
   },
+  {
+    slug: "berry-season-ik-ek",
+    title: "Ягодный сезон: ИК-ЕК",
+    description: "Собирайте слова в корзинки Е и И, тренируя суффиксы -ек- и -ик-.",
+    button: "Играть",
+    path: "/html-games/berry-season-ik-ek/index.html",
+  },
 ];
 
 const modes = {
@@ -224,6 +231,34 @@ function updateRuleSelectorSummary(root) {
     allRules.indeterminate = visibleSelected.length > 0 && visibleSelected.length < rules.length;
   }
   if (selectedWordCount) selectedWordCount.textContent = selectedCount;
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      // Fall through to the textarea fallback below.
+    }
+  }
+
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  input.style.top = "0";
+  document.body.append(input);
+  input.focus();
+  input.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    input.remove();
+  }
+  return copied;
 }
 
 function renderTopActions() {
@@ -768,9 +803,7 @@ function renderMiniActivity() {
           <label>База
             <select name="source" id="gameSourceSelect"></select>
           </label>
-          <label>Рубрика
-            <select name="rule_id" id="gameRuleSelect"></select>
-          </label>
+          <div class="game-rule-picker" id="gameRulePicker"></div>
           <label>Количество
             <input name="count" type="number" min="1" max="200" value="10" />
           </label>
@@ -879,10 +912,11 @@ async function setupGameBuilder() {
   if (!builder) return;
 
   const sourceSelect = builder.querySelector("#gameSourceSelect");
-  const ruleSelect = builder.querySelector("#gameRuleSelect");
+  const rulePicker = builder.querySelector("#gameRulePicker");
   const result = builder.querySelector("#gameBuilderResult");
   const link = builder.querySelector("#gameBuilderLink");
   let sources = [];
+  let selectedGameRuleIds = new Set();
 
   function showResult(data) {
     result.classList.remove("hidden");
@@ -894,14 +928,82 @@ async function setupGameBuilder() {
     builder.querySelector(id).textContent = message || "";
   }
 
-  function fillRules() {
+  function sourceRules() {
     const source = sources.find((item) => item.id === sourceSelect.value);
-    const rules = source ? Object.entries(source.rules).flatMap(([category, items]) =>
-      items.map((rule) => ({ ...rule, category }))
-    ) : [];
-    ruleSelect.innerHTML = rules.map((rule) =>
-      `<option value="${escapeHtml(rule.rule_id)}">${escapeHtml(rule.category)} - ${escapeHtml(rule.rule_name)} (${rule.count})</option>`
-    ).join("");
+    return source?.rules || {};
+  }
+
+  function updateGameRuleSummary() {
+    const rules = Object.values(sourceRules()).flat();
+    const selectedWords = rules
+      .filter((rule) => selectedGameRuleIds.has(rule.rule_id))
+      .reduce((sum, rule) => sum + rule.count, 0);
+    const summary = rulePicker.querySelector("[data-game-rule-summary]");
+    if (summary) summary.textContent = `${selectedGameRuleIds.size} подгрупп, ${selectedWords} слов`;
+    rulePicker.querySelectorAll("[data-game-rule-id]").forEach((checkbox) => {
+      checkbox.checked = selectedGameRuleIds.has(checkbox.dataset.gameRuleId);
+    });
+  }
+
+  function fillRules() {
+    const grouped = sourceRules();
+    const allRuleIds = Object.values(grouped).flat().map((rule) => rule.rule_id);
+    selectedGameRuleIds = new Set([...selectedGameRuleIds].filter((ruleId) => allRuleIds.includes(ruleId)));
+    if (!selectedGameRuleIds.size && allRuleIds.length) selectedGameRuleIds.add(allRuleIds[0]);
+
+    const groups = Object.entries(grouped).map(([category, rules]) => `
+      <div class="game-rule-group">
+        <button class="ghost-button game-rule-category" data-game-category="${escapeHtml(category)}" type="button">
+          ${escapeHtml(category)}
+        </button>
+        <div class="game-rule-checks">
+          ${rules.map((rule) => `
+            <label class="rule-check">
+              <input type="checkbox" data-game-rule-id="${escapeHtml(rule.rule_id)}" ${selectedGameRuleIds.has(rule.rule_id) ? "checked" : ""} />
+              <span>${escapeHtml(rule.rule_name)}</span>
+              <b>${rule.count}</b>
+            </label>
+          `).join("")}
+        </div>
+      </div>
+    `).join("");
+
+    rulePicker.innerHTML = `
+      <div class="game-rule-head">
+        <b>Рубрики</b>
+        <span class="muted" data-game-rule-summary></span>
+      </div>
+      ${groups || `<p class="muted">В этой базе нет рубрик.</p>`}
+    `;
+
+    rulePicker.querySelectorAll("[data-game-category]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.gameCategory;
+        const ids = (grouped[category] || []).map((rule) => rule.rule_id);
+        const allSelected = ids.length > 0 && ids.every((ruleId) => selectedGameRuleIds.has(ruleId));
+        ids.forEach((ruleId) => {
+          if (allSelected) {
+            selectedGameRuleIds.delete(ruleId);
+          } else {
+            selectedGameRuleIds.add(ruleId);
+          }
+        });
+        updateGameRuleSummary();
+      });
+    });
+
+    rulePicker.querySelectorAll("[data-game-rule-id]").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          selectedGameRuleIds.add(checkbox.dataset.gameRuleId);
+        } else {
+          selectedGameRuleIds.delete(checkbox.dataset.gameRuleId);
+        }
+        updateGameRuleSummary();
+      });
+    });
+
+    updateGameRuleSummary();
   }
 
   try {
@@ -915,7 +1017,10 @@ async function setupGameBuilder() {
     showBuilderError("#baseGameError", error.message);
   }
 
-  sourceSelect.addEventListener("change", fillRules);
+  sourceSelect.addEventListener("change", () => {
+    selectedGameRuleIds = new Set();
+    fillRules();
+  });
 
   builder.querySelector("#baseGameForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -927,7 +1032,7 @@ async function setupGameBuilder() {
         body: JSON.stringify({
           mechanic: form.get("mechanic"),
           source: form.get("source"),
-          rule_id: form.get("rule_id"),
+          rule_ids: [...selectedGameRuleIds],
           count: Number(form.get("count") || 10),
           title: form.get("title"),
           description: form.get("description"),
@@ -965,7 +1070,12 @@ async function setupGameBuilder() {
 
   builder.querySelector("#copyGameLink").addEventListener("click", async () => {
     if (!link.href) return;
-    await navigator.clipboard.writeText(link.href);
+    const button = builder.querySelector("#copyGameLink");
+    const copied = await copyTextToClipboard(link.href);
+    button.textContent = copied ? "Ссылка скопирована" : "Не удалось скопировать";
+    setTimeout(() => {
+      button.textContent = "Скопировать ссылку";
+    }, 1800);
   });
 }
 
