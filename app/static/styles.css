@@ -487,6 +487,12 @@ button {
   overflow-wrap: anywhere;
 }
 
+.category-pill small {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .rule-select-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 150px;
@@ -941,6 +947,23 @@ button {
 
 .admin-table {
   min-width: 760px;
+}
+
+.delivery-url-form,
+.receipt-form {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.delivery-url-form input,
+.receipt-form input {
+  width: 100%;
+}
+
+.receipt-filters .active {
+  border-color: var(--green);
+  color: var(--green-dark);
 }
 
 .admin-section {

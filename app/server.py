@@ -652,6 +652,9 @@ def ensure_app_db() -> None:
         ensure_column(con, "game_sets", "is_deleted", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "game_sets", "deleted_at", "TEXT")
         ensure_column(con, "game_sets", "deleted_by", "TEXT")
+        ensure_column(con, "shop_orders", "receipt_sent", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(con, "shop_orders", "receipt_sent_at", "TEXT")
+        ensure_column(con, "shop_orders", "receipt_note", "TEXT")
         seed_paid_entities(con)
         seed_documents(con)
         ensure_service_admin(con)
@@ -936,25 +939,92 @@ for word in WORDS:
 RULE_BY_ID = {rule["rule_id"]: rule for rule in RULES}
 
 
-def bootstrap_for(rules: list[dict[str, Any]], word_count: int) -> dict[str, Any]:
+def category_progress_for_user(
+    user_id: str | None,
+    rules: list[dict[str, Any]],
+    words_by_rule: dict[str, list[dict[str, Any]]],
+    scope_func: Any = None,
+) -> dict[str, dict[str, int]]:
+    scope_func = scope_func or scope_id_for
+    progress: dict[str, dict[str, int]] = {}
+    for rule in rules:
+        category = rule["category"]
+        progress.setdefault(category, {"total": 0, "solved": 0})
+        progress[category]["total"] += int(rule.get("count") or len(words_by_rule.get(rule["rule_id"], [])))
+    if not user_id:
+        return progress
+
+    with db() as con:
+        for category in progress:
+            word_ids = [
+                word["id"]
+                for rule in rules
+                if rule["category"] == category
+                for word in words_by_rule.get(rule["rule_id"], [])
+            ]
+            if not word_ids:
+                continue
+            solved_ids: set[str] = set()
+            due_error_ids: set[str] = set()
+            for chunk in chunked(word_ids):
+                placeholders = ",".join("?" for _ in chunk)
+                rows = con.execute(
+                    f"""
+                    SELECT DISTINCT word_id
+                    FROM attempts
+                    WHERE user_id = ?
+                      AND category = ?
+                      AND is_correct = 1
+                      AND word_id IN ({placeholders})
+                    """,
+                    (user_id, category, *chunk),
+                ).fetchall()
+                solved_ids.update(row["word_id"] for row in rows)
+                due_rows = con.execute(
+                    f"""
+                    SELECT DISTINCT word_id
+                    FROM word_progress
+                    WHERE user_id = ?
+                      AND scope_id = ?
+                      AND due_reviews > 0
+                      AND word_id IN ({placeholders})
+                    """,
+                    (user_id, scope_func("errors"), *chunk),
+                ).fetchall()
+                due_error_ids.update(row["word_id"] for row in due_rows)
+            progress[category]["solved"] = len(solved_ids - due_error_ids)
+    return progress
+
+
+def bootstrap_for(
+    rules: list[dict[str, Any]],
+    word_count: int,
+    user_id: str | None = None,
+    words_by_rule: dict[str, list[dict[str, Any]]] | None = None,
+    scope_func: Any = None,
+) -> dict[str, Any]:
+    scope_func = scope_func or scope_id_for
     grouped: dict[str, list[dict[str, Any]]] = {}
     for rule in rules:
         grouped.setdefault(rule["category"], []).append(rule)
+    words_by_rule = words_by_rule or WORDS_BY_RULE
     return {
         "rules": grouped,
         "word_count": word_count,
         "repeat_on_error": REPEAT_ON_ERROR,
         "activities": ACTIVITIES,
+        "category_progress": category_progress_for_user(user_id, rules, words_by_rule, scope_func),
     }
 
 
-def activity_bootstrap(slug: str) -> dict[str, Any]:
+def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[str, Any]:
+    user_id = user["user_id"] if user else None
     if slug == "ege9":
-        return bootstrap_for(RULES, len(WORDS))
+        return bootstrap_for(RULES, len(WORDS), user_id, WORDS_BY_RULE, scope_id_for)
     if slug == "ege10":
-        return bootstrap_for(ege10_module.RULES, len(ege10_module.WORDS))
+        return bootstrap_for(ege10_module.RULES, len(ege10_module.WORDS), user_id, ege10_module.WORDS_BY_RULE, ege10_module.scope_id_for)
     if slug == "ege11":
-        return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS))
+        return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS), user_id, ege11_module.WORDS_BY_RULE, ege11_module.scope_id_for)
     if slug == "html-games":
         return {
             "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
@@ -1203,6 +1273,30 @@ def make_word_question(word: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def chunked(items: list[str], size: int = 700) -> list[list[str]]:
+    return [items[index:index + size] for index in range(0, len(items), size)]
+
+
+def solved_word_ids_for_pool(con: sqlite3.Connection, user_id: str, word_ids: list[str]) -> set[str]:
+    solved: set[str] = set()
+    for chunk in chunked(word_ids):
+        placeholders = ",".join("?" for _ in chunk)
+        rows = con.execute(
+            f"""
+            SELECT DISTINCT word_id
+            FROM word_progress
+            WHERE user_id = ?
+              AND scope_id <> ?
+              AND due_reviews = 0
+              AND cycle_seen = 1
+              AND word_id IN ({placeholders})
+            """,
+            (user_id, scope_id_for("errors"), *chunk),
+        ).fetchall()
+        solved.update(row["word_id"] for row in rows)
+    return solved
+
+
 def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]], count: int) -> list[dict[str, Any]]:
     if not pool:
         return []
@@ -1210,6 +1304,23 @@ def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]]
     pool_by_id = {word["id"]: word for word in pool}
     selected: list[dict[str, Any]] = []
     with db() as con:
+        if scope_id != scope_id_for("errors"):
+            error_rows = con.execute(
+                """
+                SELECT word_id, due_reviews, last_seen_at
+                FROM word_progress
+                WHERE user_id = ? AND scope_id = ? AND due_reviews > 0
+                ORDER BY due_reviews DESC, last_seen_at ASC
+                """,
+                (user_id, scope_id_for("errors")),
+            ).fetchall()
+            for row in error_rows:
+                word_id = row["word_id"]
+                if word_id in pool_by_id and word_id not in {word["id"] for word in selected}:
+                    selected.append(pool_by_id[word_id])
+                if len(selected) >= count:
+                    return selected
+
         rows = con.execute(
             """
             SELECT word_id, cycle_seen, due_reviews, last_seen_at
@@ -1225,19 +1336,27 @@ def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]]
             for row in sorted(progress.values(), key=lambda item: (item["last_seen_at"] or "", item["word_id"]))
             if int(row["due_reviews"]) > 0
         ]
+        selected_ids = {word["id"] for word in selected}
         for row in due[:count]:
+            if row["word_id"] in selected_ids:
+                continue
             selected.append(pool_by_id[row["word_id"]])
+            selected_ids.add(row["word_id"])
+            if len(selected) >= count:
+                return selected
 
         remaining = count - len(selected)
         if remaining <= 0:
             return selected
 
         selected_ids = {word["id"] for word in selected}
+        solved_anywhere = solved_word_ids_for_pool(con, user_id, list(pool_by_id)) if scope_id != scope_id_for("errors") else set()
         fresh = [
             word
             for word in pool
             if word["id"] not in selected_ids
             and (word["id"] not in progress or int(progress[word["id"]]["cycle_seen"]) == 0)
+            and word["id"] not in solved_anywhere
         ]
         if not fresh:
             con.execute(
@@ -1866,6 +1985,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         created_games = created_games_for_admin(con)
         recent_game_visits = recent_game_visits_for_admin(con)
         paid_entities = paid_entities_for_admin(con)
+        receipt_orders = receipt_orders_for_admin(con)
         total_games = len(created_games)
         active_games = sum(1 for item in created_games if item["is_active"] and not item.get("is_deleted"))
         visible_games = sum(1 for item in created_games if not item.get("is_deleted"))
@@ -1884,6 +2004,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             "opens": opened_games,
         },
         "paid_entities": paid_entities,
+        "receipt_orders": receipt_orders,
         "teachers": [
             {
                 **dict(row),
@@ -2620,6 +2741,83 @@ def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     ]
 
 
+def receipt_orders_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT so.order_uid, so.product_id, so.product_title, so.amount, so.currency,
+               so.buyer_email, so.status, so.email_sent, so.paid_at, so.created_at,
+               so.receipt_sent, so.receipt_sent_at, so.receipt_note,
+               pe.type AS entity_type
+        FROM shop_orders so
+        LEFT JOIN paid_entities pe ON pe.product_id = so.product_id
+        WHERE so.status = 'paid'
+        ORDER BY COALESCE(so.paid_at, so.created_at) DESC
+        """
+    ).fetchall()
+    return [
+        {
+            **dict(row),
+            "email_sent": bool(row["email_sent"]),
+            "receipt_sent": bool(row["receipt_sent"]),
+            "entity_type": row["entity_type"] or "product",
+        }
+        for row in rows
+    ]
+
+
+def mark_order_receipt_sent(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    order_uid = trim_for_admin(payload.get("order_uid"), 120)
+    receipt_note = str(payload.get("receipt_note") or "").strip()
+    receipt_sent = 0 if payload.get("receipt_sent") is False else 1
+    if not order_uid:
+        raise ValueError("Не указан заказ.")
+    with db() as con:
+        row = con.execute("SELECT order_uid FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
+        if not row:
+            raise LookupError("Заказ не найден.")
+        if receipt_sent:
+            con.execute(
+                """
+                UPDATE shop_orders
+                SET receipt_sent = 1,
+                    receipt_sent_at = ?,
+                    receipt_note = COALESCE(NULLIF(?, ''), receipt_note)
+                WHERE order_uid = ?
+                """,
+                (now_iso(), receipt_note, order_uid),
+            )
+        else:
+            clear_note = receipt_note or "Отметка о чеке снята вручную."
+            con.execute(
+                """
+                UPDATE shop_orders
+                SET receipt_sent = 0,
+                    receipt_sent_at = NULL,
+                    receipt_note = ?
+                WHERE order_uid = ?
+                """,
+                (clear_note, order_uid),
+            )
+        updated = con.execute(
+            """
+            SELECT so.order_uid, so.product_id, so.product_title, so.amount, so.currency,
+                   so.buyer_email, so.status, so.email_sent, so.paid_at, so.created_at,
+                   so.receipt_sent, so.receipt_sent_at, so.receipt_note,
+                   pe.type AS entity_type
+            FROM shop_orders so
+            LEFT JOIN paid_entities pe ON pe.product_id = so.product_id
+            WHERE so.order_uid = ?
+            """,
+            (order_uid,),
+        ).fetchone()
+    item = dict(updated)
+    item["email_sent"] = bool(updated["email_sent"])
+    item["receipt_sent"] = bool(updated["receipt_sent"])
+    item["entity_type"] = updated["entity_type"] or "product"
+    return {"ok": True, "order": item}
+
+
 def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     require_admin(admin)
     product_id = trim_for_admin(payload.get("product_id"), 80)
@@ -2725,7 +2923,8 @@ def send_product_email(email: str, product: dict[str, str], product_url: str) ->
         message.set_content(
             "Здравствуйте!\n\n"
             "Спасибо за поддержку проекта «Русский язык».\n\n"
-            "Ссылка после оплаты:\n"
+            "От меня вам небольшая благодарность ❤️\n"
+            "Заберите её по ссылке:\n"
             f"{product_url}\n\n"
             "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
             "С уважением,\n"
@@ -3308,7 +3507,7 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         try:
             if parsed.path == "/api/bootstrap":
-                self.send_json(activity_bootstrap("ege9"))
+                self.send_json(activity_bootstrap("ege9", self.current_user()))
             elif parsed.path == "/api/documents/privacy":
                 self.send_json(active_document("privacy_policy"))
             elif parsed.path == "/api/documents/consent":
@@ -3323,8 +3522,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"activities": ACTIVITIES})
             elif parsed.path.startswith("/api/apps/") and parsed.path.endswith("/bootstrap"):
                 parts = parsed.path.strip("/").split("/")
-                self.require_user_with_consents()
-                self.send_json(activity_bootstrap(parts[2]))
+                user = self.require_user_with_consents()
+                self.send_json(activity_bootstrap(parts[2], user))
             elif parsed.path in {"/api/me", "/api/auth/me"}:
                 self.send_json({"user": self.current_user()})
             elif parsed.path == "/api/me/consents":
@@ -3535,6 +3734,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(reset_user_password(self.require_user(), payload))
             elif parsed.path == "/api/admin/delivery-url":
                 self.send_json(update_paid_entity_delivery(self.require_user(), payload))
+            elif parsed.path == "/api/admin/orders/mark-receipt-sent":
+                self.send_json(mark_order_receipt_sent(self.require_user(), payload))
             elif parsed.path == "/api/admin/games/toggle":
                 self.send_json(toggle_admin_game(self.require_user(), payload))
             elif parsed.path in {"/api/admin/games/delete", "/api/games/sets/delete"}:

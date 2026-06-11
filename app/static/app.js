@@ -2034,12 +2034,18 @@ function renderRuleSelector() {
   ensureRuleSelection();
   const activeCategories = selectedCategorySet();
   const categoryButtons = ruleCategories()
-    .map((category) => `
+    .map((category) => {
+      const progress = state.bootstrap.category_progress?.[category] || {};
+      const solved = Number(progress.solved || 0);
+      const total = Number(progress.total || state.bootstrap.rules[category].reduce((sum, rule) => sum + rule.count, 0));
+      return `
       <button class="category-pill ${activeCategories.has(category) ? "active" : ""}" data-category="${category}" type="button">
         <span>${category}</span>
         <b>${state.bootstrap.rules[category].reduce((sum, rule) => sum + rule.count, 0)}</b>
+        <small>${solved}/${total} · ${pct(solved, total)}</small>
       </button>
-    `)
+    `;
+    })
     .join("");
   const selected = selectedRuleSet();
   const rules = selectedRules();
@@ -2630,6 +2636,7 @@ function renderAdminContent(data, closeButton = "") {
   const recentGameVisits = data.recent_game_visits || [];
   const gameStats = data.game_stats || {};
   const paidEntities = data.paid_entities || [];
+  const receiptOrders = data.receipt_orders || [];
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
@@ -2640,7 +2647,66 @@ function renderAdminContent(data, closeButton = "") {
       <td>${item.seconds_ago || 0} сек. назад</td>
     </tr>
   `).join("") : `<tr><td colspan="3">Сейчас активных посетителей не видно</td></tr>`;
-  const attemptRows = recentAttempts.length ? recentAttempts.map((row) => `
+  const attemptsByUser = new Map();
+  recentAttempts.forEach((row) => {
+    const key = row.email || row.username || row.display_name || "unknown";
+    if (!attemptsByUser.has(key)) {
+      attemptsByUser.set(key, {
+        display_name: row.display_name || "Без имени",
+        email: row.email || row.username || "",
+        role: row.role || "",
+        rows: [],
+      });
+    }
+    attemptsByUser.get(key).rows.push(row);
+  });
+  const attemptRows = [...attemptsByUser.values()].length ? [...attemptsByUser.values()].map((group, index) => {
+    const total = group.rows.length;
+    const correct = group.rows.filter((row) => row.is_correct).length;
+    const errors = group.rows.filter((row) => !row.is_correct);
+    const detailsRows = group.rows.map((row) => `
+      <tr>
+        <td>${formatAdminDate(row.created_at)}</td>
+        <td>${escapeHtml(row.activity_title || "")}<br><span class="muted">${escapeHtml(row.mode_title || row.mode || "")}</span></td>
+        <td>${escapeHtml(row.rule_name || row.category || "—")}<br><span class="muted">${escapeHtml(row.prompt || "")}</span></td>
+        <td>${escapeHtml(row.given_answer || "—")}<br><span class="muted">верно: ${escapeHtml(row.correct_answer || "")}</span></td>
+        <td><span class="${row.is_correct ? "status-ok" : "status-bad"}">${row.is_correct ? "верно" : "ошибка"}</span></td>
+      </tr>
+    `).join("");
+    const errorRows = errors.length ? errors.map((row) => `
+      <tr>
+        <td>${formatAdminDate(row.created_at)}</td>
+        <td>${escapeHtml(row.rule_name || row.category || "—")}</td>
+        <td>${escapeHtml(row.prompt || "")}</td>
+        <td>${escapeHtml(row.given_answer || "—")}</td>
+        <td>${escapeHtml(row.correct_answer || "")}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="5">Ошибок в последних попытках нет</td></tr>`;
+    return `
+      <article class="admin-card admin-activity-card">
+        <div class="student-card-head">
+          <div>
+            <b>${escapeHtml(group.display_name)}</b>
+            <span class="muted">${escapeHtml(group.email)} · ${escapeHtml(group.role)}</span>
+          </div>
+          <button class="ghost-button admin-activity-toggle" type="button">Подробнее</button>
+        </div>
+        <div class="teacher-metrics">
+          <div class="stat"><b>${total}</b><span>попыток</span></div>
+          <div class="stat"><b>${correct}</b><span>верно</span></div>
+          <div class="stat"><b>${errors.length}</b><span>ошибок/опечаток</span></div>
+          <div class="stat"><b>${pct(correct, total)}</b><span>точность</span></div>
+        </div>
+        <div class="admin-activity-details hidden">
+          <div class="table-head"><h3>Ошибки и возможные опечатки</h3><span class="muted">последние ответы пользователя</span></div>
+          <table class="table admin-table"><tr><th>Время</th><th>Тема</th><th>Задание</th><th>Ответ</th><th>Правильно</th></tr>${errorRows}</table>
+          <div class="table-head"><h3>Все последние попытки</h3></div>
+          <table class="table admin-table"><tr><th>Время</th><th>Где</th><th>Задание</th><th>Ответ</th><th>Итог</th></tr>${detailsRows}</table>
+        </div>
+      </article>
+    `;
+  }).join("") : `<p class="muted">Решений пока нет</p>`;
+  const rawAttemptRows = recentAttempts.length ? recentAttempts.map((row) => `
     <tr>
       <td>${formatAdminDate(row.created_at)}</td>
       <td>${formatAdminUser(row)}</td>
@@ -2683,6 +2749,27 @@ function renderAdminContent(data, closeButton = "") {
       <td><span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "ссылка задана" : "ссылка не задана"}</span></td>
     </tr>
   `).join("") : `<tr><td colspan="6">Платные сущности не найдены</td></tr>`;
+  const receiptRows = receiptOrders.length ? receiptOrders.map((order) => `
+    <tr data-receipt-sent="${order.receipt_sent ? "1" : "0"}" class="${order.receipt_sent ? "hidden" : ""}">
+      <td>${formatAdminDate(order.paid_at || order.created_at)}</td>
+      <td><a href="mailto:${escapeHtml(order.buyer_email || "")}">${escapeHtml(order.buyer_email || "—")}</a></td>
+      <td>${escapeHtml(order.product_title || order.product_id || "—")}</td>
+      <td>${escapeHtml(order.amount || "0.00")} ${escapeHtml(order.currency || "RUB")}</td>
+      <td>${order.entity_type === "donation" ? "донат" : "товар"}</td>
+      <td>Материал отправлен: ${order.email_sent ? "да" : "нет"}</td>
+      <td>
+        <span class="${order.receipt_sent ? "status-ok" : "status-bad"}">Чек отправлен: ${order.receipt_sent ? "да" : "нет"}</span>
+        ${order.receipt_sent_at ? `<br><span class="muted">${formatAdminDate(order.receipt_sent_at)}</span>` : ""}
+        ${order.receipt_note ? `<br><span class="muted">${escapeHtml(order.receipt_note)}</span>` : ""}
+      </td>
+      <td>
+        <form class="receipt-form" data-order-uid="${escapeHtml(order.order_uid)}" data-next-sent="${order.receipt_sent ? "0" : "1"}">
+          <input name="receipt_note" placeholder="Комментарий" value="${escapeHtml(order.receipt_note || "")}" />
+          <button class="ghost-button" type="submit">${order.receipt_sent ? "Снять отметку" : "Отметить чек отправленным"}</button>
+        </form>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="8">Оплаченных заказов пока нет</td></tr>`;
   const gameVisitRows = recentGameVisits.length ? recentGameVisits.map((visit) => `
     <tr>
       <td>${formatAdminDate(visit.opened_at)}</td>
@@ -2755,6 +2842,7 @@ function renderAdminContent(data, closeButton = "") {
       <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
       <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>
       <button class="secondary-button admin-tab" data-admin-section="delivery" type="button">Ссылки доставки</button>
+      <button class="secondary-button admin-tab" data-admin-section="receipts" type="button">Чеки самозанятого</button>
       <button class="secondary-button admin-tab" data-admin-section="users" type="button">Пользователи</button>
       <button class="secondary-button admin-tab" data-admin-section="mail" type="button">Почта</button>
     </div>
@@ -2763,8 +2851,12 @@ function renderAdminContent(data, closeButton = "") {
       <table class="table admin-table"><tr><th>Пользователь</th><th>Где находится</th><th>Был</th></tr>${onlineRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="activity">
-      <div class="table-head"><h3>Последние решения</h3><span class="muted">до 60 последних ответов</span></div>
-      <table class="table admin-table"><tr><th>Время</th><th>Пользователь</th><th>Где</th><th>Задание</th><th>Ответ</th><th>Итог</th></tr>${attemptRows}</table>
+      <div class="table-head"><h3>Последние решения</h3><span class="muted">свернуто по пользователям</span></div>
+      <div class="admin-list">${attemptRows}</div>
+      <details class="activity-details">
+        <summary>Показать общую ленту</summary>
+        <table class="table admin-table"><tr><th>Время</th><th>Пользователь</th><th>Где</th><th>Задание</th><th>Ответ</th><th>Итог</th></tr>${rawAttemptRows}</table>
+      </details>
     </section>
     <section class="admin-section hidden" data-admin-panel="games">
       <div class="table-head"><h3>Ссылки на созданные игры</h3><label class="consent-check"><input type="checkbox" id="showDeletedGames" /><span>Показать удалённые</span></label></div>
@@ -2775,6 +2867,20 @@ function renderAdminContent(data, closeButton = "") {
     <section class="admin-section hidden" data-admin-panel="delivery">
       <div class="table-head"><h3>Ссылки для доставки</h3><span class="muted">если ссылка не задана, оплату начать нельзя</span></div>
       <table class="table admin-table delivery-table"><tr><th>id</th><th>Название</th><th>Тип</th><th>Цена</th><th>delivery_url</th><th>Статус</th></tr>${deliveryRows}</table>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="receipts">
+      <div class="table-head">
+        <h3>Чеки самозанятого</h3>
+        <div class="button-row receipt-filters">
+          <button class="ghost-button active" data-receipt-filter="pending" type="button">Чек не отправлен</button>
+          <button class="ghost-button" data-receipt-filter="sent" type="button">Чек отправлен</button>
+          <button class="ghost-button" data-receipt-filter="all" type="button">Все оплаченные</button>
+        </div>
+      </div>
+      <table class="table admin-table receipt-table">
+        <tr><th>Оплата</th><th>Email</th><th>Товар / донат</th><th>Сумма</th><th>Тип</th><th>Материал</th><th>Чек</th><th>Действие</th></tr>
+        ${receiptRows}
+      </table>
     </section>
     <section class="admin-section hidden" data-admin-panel="users">
       <div class="admin-list">${teacherCards}</div>
@@ -2861,6 +2967,14 @@ function bindAdminActions(root) {
       button.textContent = willOpen ? "Свернуть" : "Подробнее";
     });
   });
+  root.querySelectorAll(".admin-activity-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const details = button.closest(".admin-activity-card")?.querySelector(".admin-activity-details");
+      const willOpen = details?.classList.contains("hidden");
+      details?.classList.toggle("hidden", !willOpen);
+      button.textContent = willOpen ? "Свернуть" : "Подробнее";
+    });
+  });
   root.querySelectorAll(".delivery-url-form").forEach((form) => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -2872,6 +2986,41 @@ function bindAdminActions(root) {
           body: JSON.stringify({
             product_id: form.dataset.productId,
             delivery_url: new FormData(form).get("delivery_url"),
+          }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        submit.disabled = false;
+      }
+    });
+  });
+  function applyReceiptFilter(filter) {
+    root.querySelectorAll("[data-receipt-sent]").forEach((row) => {
+      const sent = row.dataset.receiptSent === "1";
+      row.classList.toggle("hidden", (filter === "pending" && sent) || (filter === "sent" && !sent));
+    });
+  }
+  root.querySelectorAll("[data-receipt-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      root.querySelectorAll("[data-receipt-filter]").forEach((item) => item.classList.toggle("active", item === button));
+      applyReceiptFilter(button.dataset.receiptFilter);
+    });
+  });
+  applyReceiptFilter("pending");
+  root.querySelectorAll(".receipt-form").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = form.querySelector("button[type='submit']");
+      const nextSent = form.dataset.nextSent === "1";
+      submit.disabled = true;
+      try {
+        await api("/api/admin/orders/mark-receipt-sent", {
+          method: "POST",
+          body: JSON.stringify({
+            order_uid: form.dataset.orderUid,
+            receipt_sent: nextSent,
+            receipt_note: new FormData(form).get("receipt_note"),
           }),
         });
         await reloadAdminPanel();

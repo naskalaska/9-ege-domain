@@ -479,6 +479,30 @@ def make_word_question(word: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def chunked(items: list[str], size: int = 700) -> list[list[str]]:
+    return [items[index:index + size] for index in range(0, len(items), size)]
+
+
+def solved_word_ids_for_pool(con: sqlite3.Connection, user_id: str, word_ids: list[str]) -> set[str]:
+    solved: set[str] = set()
+    for chunk in chunked(word_ids):
+        placeholders = ",".join("?" for _ in chunk)
+        rows = con.execute(
+            f"""
+            SELECT DISTINCT word_id
+            FROM word_progress
+            WHERE user_id = ?
+              AND scope_id <> ?
+              AND due_reviews = 0
+              AND cycle_seen = 1
+              AND word_id IN ({placeholders})
+            """,
+            (user_id, scope_id_for("errors"), *chunk),
+        ).fetchall()
+        solved.update(row["word_id"] for row in rows)
+    return solved
+
+
 def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]], count: int) -> list[dict[str, Any]]:
     if not pool:
         return []
@@ -486,6 +510,23 @@ def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]]
     pool_by_id = {word["id"]: word for word in pool}
     selected: list[dict[str, Any]] = []
     with db() as con:
+        if scope_id != scope_id_for("errors"):
+            error_rows = con.execute(
+                """
+                SELECT word_id, due_reviews, last_seen_at
+                FROM word_progress
+                WHERE user_id = ? AND scope_id = ? AND due_reviews > 0
+                ORDER BY due_reviews DESC, last_seen_at ASC
+                """,
+                (user_id, scope_id_for("errors")),
+            ).fetchall()
+            for row in error_rows:
+                word_id = row["word_id"]
+                if word_id in pool_by_id and word_id not in {word["id"] for word in selected}:
+                    selected.append(pool_by_id[word_id])
+                if len(selected) >= count:
+                    return selected
+
         rows = con.execute(
             """
             SELECT word_id, cycle_seen, due_reviews, last_seen_at
@@ -501,19 +542,27 @@ def pick_words_for_scope(user_id: str, scope_id: str, pool: list[dict[str, Any]]
             for row in sorted(progress.values(), key=lambda item: (item["last_seen_at"] or "", item["word_id"]))
             if int(row["due_reviews"]) > 0
         ]
+        selected_ids = {word["id"] for word in selected}
         for row in due[:count]:
+            if row["word_id"] in selected_ids:
+                continue
             selected.append(pool_by_id[row["word_id"]])
+            selected_ids.add(row["word_id"])
+            if len(selected) >= count:
+                return selected
 
         remaining = count - len(selected)
         if remaining <= 0:
             return selected
 
         selected_ids = {word["id"] for word in selected}
+        solved_anywhere = solved_word_ids_for_pool(con, user_id, list(pool_by_id)) if scope_id != scope_id_for("errors") else set()
         fresh = [
             word
             for word in pool
             if word["id"] not in selected_ids
             and (word["id"] not in progress or int(progress[word["id"]]["cycle_seen"]) == 0)
+            and word["id"] not in solved_anywhere
         ]
         if not fresh:
             con.execute(
