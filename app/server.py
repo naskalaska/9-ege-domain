@@ -66,6 +66,8 @@ PRODUCT_BERRY_SEASON = {
 
 SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
+ACTIVE_VISITORS: dict[str, dict[str, Any]] = {}
+ACTIVE_VISITOR_WINDOW_SEC = 300
 
 _ege10_scope_id_for = ege10_module.scope_id_for
 _ege11_scope_id_for = ege11_module.scope_id_for
@@ -152,6 +154,22 @@ def configure_console() -> None:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def parse_iso(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def seconds_since(value: str | None) -> int | None:
+    parsed = parse_iso(value)
+    if not parsed:
+        return None
+    return max(0, int((datetime.now(timezone.utc) - parsed).total_seconds()))
 
 
 def legacy_password_hash(password: str, salt: str) -> str:
@@ -454,6 +472,14 @@ def ensure_app_db() -> None:
                 raw_webhook TEXT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS game_visits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT NOT NULL,
+                public_id TEXT,
+                path TEXT,
+                opened_at TEXT NOT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
             CREATE INDEX IF NOT EXISTS idx_attempts_mode ON attempts(mode);
             CREATE INDEX IF NOT EXISTS idx_attempts_created_at ON attempts(created_at);
@@ -464,6 +490,7 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_game_sets_teacher ON game_sets(teacher_id, created_at);
             CREATE INDEX IF NOT EXISTS idx_shop_orders_uid ON shop_orders(order_uid);
             CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(yookassa_payment_id);
+            CREATE INDEX IF NOT EXISTS idx_game_visits_opened_at ON game_visits(opened_at);
             CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
                 ON users(teacher_code)
                 WHERE teacher_code IS NOT NULL;
@@ -484,6 +511,11 @@ def ensure_app_db() -> None:
         )
         ensure_column(con, "attempts", "scope_id", "TEXT")
         ensure_column(con, "attempts", "word_id", "TEXT")
+        ensure_column(con, "game_sets", "is_active", "INTEGER NOT NULL DEFAULT 1")
+        ensure_column(con, "game_sets", "last_used_at", "TEXT")
+        ensure_column(con, "game_sets", "use_count", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(con, "game_sets", "deactivated_at", "TEXT")
+        ensure_column(con, "game_sets", "deactivated_by", "TEXT")
         seed_documents(con)
         ensure_service_admin(con)
         ensure_fallback_teacher(con)
@@ -1488,6 +1520,140 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
     return {"students": result_students}
 
 
+def activity_title_from_scope(scope_id: str | None) -> str:
+    scope = scope_id or ""
+    if scope.startswith("ege10:"):
+        return "ЕГЭ-10"
+    if scope.startswith("ege11:"):
+        return "ЕГЭ-11"
+    return "ЕГЭ-9"
+
+
+def mode_title(mode: str | None) -> str:
+    return {
+        "rule": "Правило",
+        "word_letter": "Слово - буква",
+        "mix": "Микс",
+        "line": "Строка",
+        "errors": "Копилка ошибок",
+    }.get(mode or "", mode or "")
+
+
+def trim_for_admin(value: Any, limit: int = 140) -> str:
+    text = str(value or "").strip()
+    return text if len(text) <= limit else f"{text[:limit - 1]}…"
+
+
+def active_visitors_for_admin() -> list[dict[str, Any]]:
+    now = datetime.now(timezone.utc)
+    result: list[dict[str, Any]] = []
+    stale: list[str] = []
+    for visitor_id, visitor in ACTIVE_VISITORS.items():
+        last_seen = parse_iso(visitor.get("last_seen_at"))
+        if not last_seen or (now - last_seen).total_seconds() > ACTIVE_VISITOR_WINDOW_SEC:
+            stale.append(visitor_id)
+            continue
+        result.append({**visitor, "seconds_ago": max(0, int((now - last_seen).total_seconds()))})
+    for visitor_id in stale:
+        ACTIVE_VISITORS.pop(visitor_id, None)
+    result.sort(key=lambda item: item.get("last_seen_at") or "", reverse=True)
+    return result
+
+
+def record_visitor_heartbeat(user: dict[str, Any] | None, payload: dict[str, Any], ip_address: str, user_agent: str) -> dict[str, Any]:
+    visitor_id = trim_for_admin(payload.get("visitor_id"), 80) or secrets.token_urlsafe(12)
+    now = now_iso()
+    ACTIVE_VISITORS[visitor_id] = {
+        "visitor_id": visitor_id,
+        "user_id": user["user_id"] if user else None,
+        "display_name": user["display_name"] if user else "Гость",
+        "role": user["role"] if user else "guest",
+        "path": trim_for_admin(payload.get("path"), 200) or "/",
+        "current_activity": trim_for_admin(payload.get("current_activity"), 60),
+        "current_mini_game": trim_for_admin(payload.get("current_mini_game"), 80),
+        "last_seen_at": now,
+        "ip_address": ip_address,
+        "user_agent": trim_for_admin(user_agent, 160),
+    }
+    return {"ok": True, "visitor_id": visitor_id, "active_seconds": ACTIVE_VISITOR_WINDOW_SEC}
+
+
+def recent_attempts_for_admin(con: sqlite3.Connection, limit: int = 60) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT a.created_at, a.mode, a.scope_id, a.category, a.rule_name, a.prompt,
+               a.given_answer, a.correct_answer, a.is_correct, a.time_spent_sec,
+               u.display_name, u.username, u.email, u.role
+        FROM attempts a
+        JOIN users u ON u.user_id = a.user_id
+        ORDER BY a.created_at DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [
+        {
+            **dict(row),
+            "activity_title": activity_title_from_scope(row["scope_id"]),
+            "mode_title": mode_title(row["mode"]),
+            "prompt": trim_for_admin(row["prompt"]),
+            "is_correct": bool(row["is_correct"]),
+        }
+        for row in rows
+    ]
+
+
+def created_games_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT gs.public_id, gs.title, gs.description, gs.mechanic, gs.source_type,
+               gs.created_at, gs.updated_at, gs.last_used_at, gs.use_count, gs.is_active,
+               gs.deactivated_at, u.display_name AS teacher_name,
+               COALESCE(u.email, u.username) AS teacher_email
+        FROM game_sets gs
+        LEFT JOIN users u ON u.user_id = gs.teacher_id
+        ORDER BY COALESCE(gs.last_used_at, gs.created_at) DESC
+        """
+    ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        item["is_active"] = bool(row["is_active"])
+        item["url"] = public_game_url(row["mechanic"], row["public_id"])
+        since = seconds_since(row["last_used_at"] or row["created_at"])
+        item["days_since_used"] = None if since is None else since // 86400
+        result.append(item)
+    return result
+
+
+def recent_game_visits_for_admin(con: sqlite3.Connection, limit: int = 40) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT gv.slug, gv.public_id, gv.path, gv.opened_at,
+               gs.title AS set_title, gs.mechanic,
+               u.display_name AS teacher_name
+        FROM game_visits gv
+        LEFT JOIN game_sets gs ON gs.public_id = gv.public_id
+        LEFT JOIN users u ON u.user_id = gs.teacher_id
+        ORDER BY gv.opened_at DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def record_public_game_visit(slug: str, public_id: str | None, path: str) -> None:
+    with db() as con:
+        con.execute(
+            """
+            INSERT INTO game_visits (slug, public_id, path, opened_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (slug, public_id, trim_for_admin(path, 240), now_iso()),
+        )
+
+
 def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
     require_admin(user)
     with db() as con:
@@ -1547,8 +1713,24 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             item["consent_accepted"] = bool(row["consent_accepted_at"])
             item["consent_version"] = CURRENT_CONSENT_VERSION
             students_by_teacher.setdefault(row["teacher_id"], []).append(item)
+        recent_attempts = recent_attempts_for_admin(con)
+        created_games = created_games_for_admin(con)
+        recent_game_visits = recent_game_visits_for_admin(con)
+        total_games = len(created_games)
+        active_games = sum(1 for item in created_games if item["is_active"])
+        opened_games = sum(int(item.get("use_count") or 0) for item in created_games)
     return {
         "platform": dict(platform),
+        "online": active_visitors_for_admin(),
+        "recent_attempts": recent_attempts,
+        "created_games": created_games,
+        "recent_game_visits": recent_game_visits,
+        "game_stats": {
+            "total": total_games,
+            "active": active_games,
+            "inactive": total_games - active_games,
+            "opens": opened_games,
+        },
         "teachers": [
             {
                 **dict(row),
@@ -2040,20 +2222,66 @@ def public_game_set(public_id: str) -> dict[str, Any]:
     with db() as con:
         row = con.execute(
             """
-            SELECT title, description, mechanic, payload_json
+            SELECT title, description, mechanic, payload_json, is_active
             FROM game_sets
             WHERE public_id = ?
             """,
             (public_id,),
         ).fetchone()
-    if not row:
-        raise LookupError("Набор не найден или ссылка устарела.")
-    payload = json.loads(row["payload_json"])
+        if not row:
+            raise LookupError("Набор не найден или ссылка устарела.")
+        if not int(row["is_active"] or 0):
+            raise PermissionError("Эта игра деактивирована администратором.")
+        con.execute(
+            """
+            UPDATE game_sets
+            SET last_used_at = ?, use_count = COALESCE(use_count, 0) + 1
+            WHERE public_id = ?
+            """,
+            (now_iso(), public_id),
+        )
+        payload = json.loads(row["payload_json"])
     return {
         "title": row["title"],
         "description": row["description"] or "",
         "mechanic": row["mechanic"],
         "items": payload.get("items", []),
+    }
+
+
+def toggle_admin_game(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(user)
+    public_id = trim_for_admin(payload.get("public_id"), 80)
+    is_active = 1 if payload.get("is_active") else 0
+    if not public_id:
+        raise ValueError("Не указана игра.")
+    with db() as con:
+        row = con.execute("SELECT public_id, title, mechanic FROM game_sets WHERE public_id = ?", (public_id,)).fetchone()
+        if not row:
+            raise LookupError("Игра не найдена.")
+        if is_active:
+            con.execute(
+                """
+                UPDATE game_sets
+                SET is_active = 1, deactivated_at = NULL, deactivated_by = NULL, updated_at = ?
+                WHERE public_id = ?
+                """,
+                (now_iso(), public_id),
+            )
+        else:
+            con.execute(
+                """
+                UPDATE game_sets
+                SET is_active = 0, deactivated_at = ?, deactivated_by = ?, updated_at = ?
+                WHERE public_id = ?
+                """,
+                (now_iso(), user["user_id"], now_iso(), public_id),
+            )
+    return {
+        "ok": True,
+        "public_id": public_id,
+        "is_active": bool(is_active),
+        "url": public_game_url(row["mechanic"], public_id),
     }
 
 
@@ -2693,6 +2921,8 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
+        if relative_path in {"index.html", ""}:
+            record_public_game_visit(slug, None, self.path)
         body = file_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
@@ -2716,6 +2946,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
+        if relative_path in {"index.html", ""}:
+            query = parse_qs(urlparse(self.path).query)
+            record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
         body = file_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
@@ -2727,6 +2960,8 @@ class Handler(SimpleHTTPRequestHandler):
         header = self.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
         session = SESSIONS.get(token)
+        if session:
+            session["last_seen_at"] = now_iso()
         return session["user"] if session else None
 
     def require_user(self) -> dict[str, Any]:
@@ -2903,6 +3138,8 @@ class Handler(SimpleHTTPRequestHandler):
                 token = secrets.token_urlsafe(24)
                 SESSIONS[token] = {"user": user, "created_at": now_iso()}
                 self.send_json({"token": token, "user": user})
+            elif parsed.path == "/api/heartbeat":
+                self.send_json(record_visitor_heartbeat(self.current_user(), payload, self.request_ip(), self.request_user_agent()))
             elif parsed.path in {"/api/logout", "/api/auth/logout"}:
                 header = self.headers.get("Authorization", "")
                 token = header.removeprefix("Bearer ").strip()
@@ -2961,6 +3198,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": str(error), "smtp": smtp_debug_info()}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
+            elif parsed.path == "/api/admin/games/toggle":
+                self.send_json(toggle_admin_game(self.require_user(), payload))
             else:
                 self.send_json({"error": "Unknown endpoint"}, HTTPStatus.NOT_FOUND)
         except PermissionError as error:

@@ -836,6 +836,24 @@ button {
   gap: 12px;
 }
 
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.admin-tab.active {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+.admin-section {
+  display: grid;
+  gap: 12px;
+}
+
 .student-card,
 .admin-card {
   padding: 14px;
@@ -919,6 +937,35 @@ button {
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
+}
+
+.admin-table {
+  min-width: 760px;
+}
+
+.admin-section {
+  overflow-x: auto;
+}
+
+.status-ok,
+.status-bad {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-ok {
+  color: #12613d;
+  background: #dff5e8;
+}
+
+.status-bad {
+  color: #8a2d23;
+  background: #ffe1d8;
 }
 
 .hidden {

@@ -341,6 +341,7 @@ function setShellMode(mode = "app") {
 function navigate(path) {
   history.pushState(null, "", path);
   restoreSession();
+  sendHeartbeat();
 }
 
 function publicFooter() {
@@ -2554,22 +2555,79 @@ function showTestComposer() {
   refreshRules();
 }
 
+function formatAdminDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
+
+function formatAdminUser(row) {
+  return `${escapeHtml(row.display_name || "Без имени")}<br><span class="muted">${escapeHtml(row.email || row.username || row.role || "")}</span>`;
+}
+
 function renderAdminContent(data, closeButton = "") {
   const platform = data.platform;
+  const online = data.online || [];
+  const recentAttempts = data.recent_attempts || [];
+  const createdGames = data.created_games || [];
+  const recentGameVisits = data.recent_game_visits || [];
+  const gameStats = data.game_stats || {};
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
+  const onlineRows = online.length ? online.map((item) => `
+    <tr>
+      <td>${escapeHtml(item.display_name || "Гость")}<br><span class="muted">${escapeHtml(item.role || "guest")}</span></td>
+      <td>${escapeHtml(item.path || "/")}<br><span class="muted">${escapeHtml([item.current_activity, item.current_mini_game].filter(Boolean).join(" · "))}</span></td>
+      <td>${item.seconds_ago || 0} сек. назад</td>
+    </tr>
+  `).join("") : `<tr><td colspan="3">Сейчас активных посетителей не видно</td></tr>`;
+  const attemptRows = recentAttempts.length ? recentAttempts.map((row) => `
+    <tr>
+      <td>${formatAdminDate(row.created_at)}</td>
+      <td>${formatAdminUser(row)}</td>
+      <td>${escapeHtml(row.activity_title || "")}<br><span class="muted">${escapeHtml(row.mode_title || row.mode || "")}</span></td>
+      <td>${escapeHtml(row.rule_name || row.category || "—")}<br><span class="muted">${escapeHtml(row.prompt || "")}</span></td>
+      <td>${escapeHtml(row.given_answer || "—")}<br><span class="muted">верно: ${escapeHtml(row.correct_answer || "")}</span></td>
+      <td><span class="${row.is_correct ? "status-ok" : "status-bad"}">${row.is_correct ? "верно" : "ошибка"}</span></td>
+    </tr>
+  `).join("") : `<tr><td colspan="6">Решений пока нет</td></tr>`;
+  const gameRows = createdGames.length ? createdGames.map((game) => `
+    <tr>
+      <td>
+        <b>${escapeHtml(game.title || "Без названия")}</b><br>
+        <a href="${escapeHtml(game.url)}" target="_blank" rel="noopener">${escapeHtml(game.public_id)}</a>
+      </td>
+      <td>${escapeHtml(game.teacher_name || "—")}<br><span class="muted">${escapeHtml(game.teacher_email || "")}</span></td>
+      <td>${escapeHtml(game.mechanic || "")}<br><span class="muted">${escapeHtml(game.source_type || "")}</span></td>
+      <td>${game.use_count || 0}<br><span class="muted">последний раз: ${formatAdminDate(game.last_used_at)}</span></td>
+      <td>${game.is_active ? `<span class="status-ok">активна</span>` : `<span class="status-bad">отключена</span>`}<br><span class="muted">${game.days_since_used ?? "—"} дн. без использования</span></td>
+      <td>
+        <button class="ghost-button toggle-game-active" data-public-id="${escapeHtml(game.public_id)}" data-next-active="${game.is_active ? "0" : "1"}" type="button">
+          ${game.is_active ? "Деактивировать" : "Включить"}
+        </button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="6">Учителя ещё не создавали игры</td></tr>`;
+  const gameVisitRows = recentGameVisits.length ? recentGameVisits.map((visit) => `
+    <tr>
+      <td>${formatAdminDate(visit.opened_at)}</td>
+      <td>${escapeHtml(visit.set_title || visit.slug || "Игра")}<br><span class="muted">${escapeHtml(visit.public_id || "готовая игра")}</span></td>
+      <td>${escapeHtml(visit.teacher_name || "—")}</td>
+      <td>${escapeHtml(visit.path || "")}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="4">Открытий игр пока нет</td></tr>`;
   const teacherCards = data.teachers.map((teacher) => {
     const teacherEmail = teacher.email || teacher.username;
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
-          <td>${student.display_name}</td>
-          <td>${student.email || student.username}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
+          <td>${escapeHtml(student.display_name)}</td>
+          <td>${escapeHtml(student.email || student.username)}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
           <td>${student.attempts}</td>
           <td>${pct(student.correct, student.attempts)}</td>
           <td>
-            <button class="ghost-button reset-password" data-user-id="${student.user_id}" data-username="${student.email || student.username}" type="button">
+            <button class="ghost-button reset-password" data-user-id="${escapeHtml(student.user_id)}" data-username="${escapeHtml(student.email || student.username)}" type="button">
               ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
           </td>
@@ -2580,11 +2638,11 @@ function renderAdminContent(data, closeButton = "") {
       <article class="admin-card">
         <div class="student-card-head">
           <div>
-            <b>${teacher.display_name}</b>
-            <span class="muted">${teacherEmail} · код ${teacher.teacher_code || "не задан"}</span>
+            <b>${escapeHtml(teacher.display_name)}</b>
+            <span class="muted">${escapeHtml(teacherEmail)} · код ${escapeHtml(teacher.teacher_code || "не задан")}</span>
           </div>
           <div class="button-row">
-            <button class="ghost-button reset-password" data-user-id="${teacher.user_id}" data-username="${teacherEmail}" type="button">
+            <button class="ghost-button reset-password" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail)}" type="button">
               ${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
           </div>
@@ -2602,25 +2660,53 @@ function renderAdminContent(data, closeButton = "") {
       <div><p class="eyebrow">админ</p><h2>Обзор платформы</h2></div>
       ${closeButton}
     </div>
-    <form class="admin-card smtp-test-panel" id="smtpTestForm">
-      <div>
-        <p class="eyebrow">почта</p>
-        <h3>Проверка SMTP</h3>
-      </div>
-      <label>
-        Email для тестового письма
-        <input name="email" type="email" autocomplete="email" placeholder="example@mail.ru" required />
-      </label>
-      <button class="secondary-button" type="submit">Отправить тест SMTP</button>
-      <p class="muted" id="smtpTestStatus"></p>
-      <p class="error" id="smtpTestError"></p>
-    </form>
     <div class="progress-grid">
       <div class="stat"><b>${platform.total}</b><span>ответов всего</span></div>
       <div class="stat"><b>${platform.active_users}</b><span>активных пользователей</span></div>
       <div class="stat"><b>${pct(platform.correct, platform.total)}</b><span>общая точность</span></div>
+      <div class="stat"><b>${online.length}</b><span>сейчас на сайте</span></div>
+      <div class="stat"><b>${gameStats.active || 0}/${gameStats.total || 0}</b><span>активных игр</span></div>
+      <div class="stat"><b>${gameStats.opens || 0}</b><span>открытий игр</span></div>
     </div>
-    <div class="admin-list">${teacherCards}</div>
+    <div class="admin-tabs" role="tablist">
+      <button class="secondary-button admin-tab active" data-admin-section="online" type="button">Сейчас на сайте</button>
+      <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
+      <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>
+      <button class="secondary-button admin-tab" data-admin-section="users" type="button">Пользователи</button>
+      <button class="secondary-button admin-tab" data-admin-section="mail" type="button">Почта</button>
+    </div>
+    <section class="admin-section" data-admin-panel="online">
+      <div class="table-head"><h3>Кто сейчас на сайте</h3><span class="muted">последние 5 минут</span></div>
+      <table class="table admin-table"><tr><th>Пользователь</th><th>Где находится</th><th>Был</th></tr>${onlineRows}</table>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="activity">
+      <div class="table-head"><h3>Последние решения</h3><span class="muted">до 60 последних ответов</span></div>
+      <table class="table admin-table"><tr><th>Время</th><th>Пользователь</th><th>Где</th><th>Задание</th><th>Ответ</th><th>Итог</th></tr>${attemptRows}</table>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="games">
+      <div class="table-head"><h3>Ссылки на созданные игры</h3><span class="muted">старые игры можно отключать</span></div>
+      <table class="table admin-table"><tr><th>Игра</th><th>Автор</th><th>Механика</th><th>Открытия</th><th>Статус</th><th>Действие</th></tr>${gameRows}</table>
+      <div class="table-head"><h3>Во что играли</h3><span class="muted">последние открытия игровых страниц</span></div>
+      <table class="table admin-table"><tr><th>Время</th><th>Игра</th><th>Автор набора</th><th>Страница</th></tr>${gameVisitRows}</table>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="users">
+      <div class="admin-list">${teacherCards}</div>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="mail">
+      <form class="admin-card smtp-test-panel" id="smtpTestForm">
+        <div>
+          <p class="eyebrow">почта</p>
+          <h3>Проверка SMTP</h3>
+        </div>
+        <label>
+          Email для тестового письма
+          <input name="email" type="email" autocomplete="email" placeholder="example@mail.ru" required />
+        </label>
+        <button class="secondary-button" type="submit">Отправить тест SMTP</button>
+        <p class="muted" id="smtpTestStatus"></p>
+        <p class="error" id="smtpTestError"></p>
+      </form>
+    </section>
   `;
 }
 
@@ -2657,6 +2743,23 @@ async function showAdmin() {
 }
 
 function bindAdminActions(root) {
+  const reloadAdminPanel = async () => {
+    const data = await api("/api/admin");
+    const modalPanel = root.querySelector?.(".admin-modal");
+    const panel = modalPanel || root;
+    const closeButton = modalPanel ? `<button class="secondary-button" id="closeAdmin" type="button">Закрыть</button>` : "";
+    panel.innerHTML = renderAdminContent(data, closeButton);
+    panel.querySelector("#closeAdmin")?.addEventListener("click", () => root.remove());
+    bindAdminActions(root);
+  };
+  root.querySelectorAll(".admin-tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      root.querySelectorAll(".admin-tab").forEach((item) => item.classList.toggle("active", item === button));
+      root.querySelectorAll("[data-admin-panel]").forEach((panel) => {
+        panel.classList.toggle("hidden", panel.dataset.adminPanel !== button.dataset.adminSection);
+      });
+    });
+  });
   root.querySelector("#smtpTestForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -2705,12 +2808,68 @@ function bindAdminActions(root) {
       }
     });
   });
+  root.querySelectorAll(".toggle-game-active").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const nextActive = button.dataset.nextActive === "1";
+      const action = nextActive ? "включить" : "деактивировать";
+      if (!confirm(`Вы уверены, что хотите ${action} эту игру?`)) return;
+      button.disabled = true;
+      try {
+        await api("/api/admin/games/toggle", {
+          method: "POST",
+          body: JSON.stringify({
+            public_id: button.dataset.publicId,
+            is_active: nextActive,
+          }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
+      }
+    });
+  });
+}
+
+let heartbeatTimer = null;
+
+async function sendHeartbeat() {
+  const visitorKey = "ege_visitor_id";
+  let visitorId = localStorage.getItem(visitorKey);
+  if (!visitorId) {
+    visitorId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(visitorKey, visitorId);
+  }
+  try {
+    const data = await api("/api/heartbeat", {
+      method: "POST",
+      body: JSON.stringify({
+        visitor_id: visitorId,
+        path: `${window.location.pathname}${window.location.search}`,
+        current_activity: state.currentActivity,
+        current_mini_game: state.currentMiniGame || miniGameFromPath(),
+      }),
+    });
+    if (data.visitor_id && data.visitor_id !== visitorId) {
+      localStorage.setItem(visitorKey, data.visitor_id);
+    }
+  } catch (error) {
+    // Heartbeat is observational only; the app should keep working if it fails.
+  }
+}
+
+function startHeartbeat() {
+  if (heartbeatTimer) return;
+  sendHeartbeat();
+  heartbeatTimer = setInterval(sendHeartbeat, 30000);
 }
 
 window.addEventListener("popstate", async () => {
   await restoreSession();
+  sendHeartbeat();
 });
 
+startHeartbeat();
 restoreSession();
 
 
