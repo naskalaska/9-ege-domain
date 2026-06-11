@@ -2238,8 +2238,14 @@ def yookassa_env() -> tuple[str, str, str]:
     secret_key = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
     product_url = os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
     if not shop_id or not secret_key:
+        print(
+            "YooKassa env missing: "
+            f"YOOKASSA_SHOP_ID={'yes' if shop_id else 'no'}, "
+            f"YOOKASSA_SECRET_KEY={'yes' if secret_key else 'no'}"
+        )
         raise RuntimeError("Оплата временно недоступна. Попробуйте позже")
     if not product_url:
+        print("YooKassa env missing: BERRY_SEASON_PRODUCT_URL=no")
         raise RuntimeError("Материал временно недоступен. Попробуйте позже")
     return shop_id, secret_key, product_url
 
