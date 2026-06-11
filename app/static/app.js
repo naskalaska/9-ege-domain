@@ -290,7 +290,11 @@ function api(path, options = {}) {
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   return fetch(path, { ...options, headers }).then(async (response) => {
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Ошибка запроса");
+    if (!response.ok) {
+      const error = new Error(data.error || "Ошибка запроса");
+      Object.assign(error, data);
+      throw error;
+    }
     return data;
   });
 }
@@ -2674,10 +2678,13 @@ function bindAdminActions(root) {
         body: JSON.stringify({ email }),
       });
       const smtp = data.smtp || {};
-      status.textContent = `${data.message} SMTP: host ${smtp.host_configured ? "есть" : "нет"}, from ${smtp.mail_from_configured ? "есть" : "нет"}, user ${smtp.user_configured ? "есть" : "нет"}, порт ${smtp.port}.`;
+      status.textContent = `${data.message} SMTP: host ${smtp.host_configured ? "есть" : "нет"}, user ${smtp.user_masked || "нет"}, from ${smtp.mail_from_masked || "нет"}, пароль ${smtp.password_configured ? "есть" : "нет"}, длина ${smtp.password_used_length ?? 0}${smtp.password_had_whitespace ? " (пробелы удалены)" : ""}, порт ${smtp.port}, SSL ${smtp.use_ssl ? "да" : "нет"}.`;
     } catch (err) {
       error.textContent = err.message;
-      status.textContent = "";
+      if (err.smtp) {
+        const smtp = err.smtp;
+        status.textContent = `SMTP прочитан так: host ${smtp.host_configured ? "есть" : "нет"}, user ${smtp.user_masked || "нет"}, from ${smtp.mail_from_masked || "нет"}, пароль ${smtp.password_configured ? "есть" : "нет"}, длина ${smtp.password_used_length ?? 0}${smtp.password_had_whitespace ? " (пробелы удалены)" : ""}, порт ${smtp.port}, SSL ${smtp.use_ssl ? "да" : "нет"}.`;
+      }
     } finally {
       submit.disabled = false;
     }

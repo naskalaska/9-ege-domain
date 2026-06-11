@@ -47,7 +47,8 @@ PASSWORD_HASH_ITERATIONS = int(os.environ.get("PASSWORD_HASH_ITERATIONS", "26000
 SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "465") or "465")
 SMTP_USER = os.environ.get("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_PASSWORD_RAW = os.environ.get("SMTP_PASSWORD", "")
+SMTP_PASSWORD = "".join(SMTP_PASSWORD_RAW.split()) if any(char.isspace() for char in SMTP_PASSWORD_RAW) else SMTP_PASSWORD_RAW
 MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER).strip()
 SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "true").strip().lower() in {"1", "true", "yes", "on"}
 CURRENT_PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2026-06-02").strip()
@@ -195,6 +196,37 @@ def needs_password_rehash(stored_hash: str) -> bool:
 
 def production_mode() -> bool:
     return APP_ENV in {"prod", "production"}
+
+
+def mask_email(value: str) -> str:
+    if not value:
+        return ""
+    if "@" not in value:
+        return f"{value[:2]}***"
+    local, domain = value.split("@", 1)
+    if len(local) <= 2:
+        masked_local = f"{local[:1]}***"
+    else:
+        masked_local = f"{local[:2]}***{local[-1:]}"
+    return f"{masked_local}@{domain}"
+
+
+def smtp_debug_info() -> dict[str, Any]:
+    return {
+        "host_configured": bool(SMTP_HOST),
+        "host": SMTP_HOST,
+        "port": SMTP_PORT,
+        "use_ssl": SMTP_USE_SSL,
+        "user_configured": bool(SMTP_USER),
+        "user_masked": mask_email(SMTP_USER),
+        "mail_from_configured": bool(MAIL_FROM),
+        "mail_from_masked": mask_email(MAIL_FROM),
+        "mail_from_matches_user": bool(SMTP_USER and MAIL_FROM and SMTP_USER.lower() == MAIL_FROM.lower()),
+        "password_configured": bool(SMTP_PASSWORD_RAW),
+        "password_raw_length": len(SMTP_PASSWORD_RAW),
+        "password_used_length": len(SMTP_PASSWORD),
+        "password_had_whitespace": SMTP_PASSWORD_RAW != SMTP_PASSWORD,
+    }
 
 
 def seed_demo_users() -> bool:
@@ -2181,18 +2213,25 @@ def send_password_reset_email(email: str, link: str) -> None:
         "Если вы не запрашивали восстановление пароля, просто игнорируйте это письмо.\n"
     )
 
-    if SMTP_USE_SSL:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
+    try:
+        if SMTP_USE_SSL:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
+                if SMTP_USER:
+                    smtp.login(SMTP_USER, SMTP_PASSWORD)
+                smtp.send_message(message)
+            return
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+            smtp.starttls()
             if SMTP_USER:
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
             smtp.send_message(message)
-        return
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.starttls()
-        if SMTP_USER:
-            smtp.login(SMTP_USER, SMTP_PASSWORD)
-        smtp.send_message(message)
+    except smtplib.SMTPAuthenticationError as error:
+        print(f"SMTP authentication failed: code={error.smtp_code}, debug={smtp_debug_info()}")
+        raise RuntimeError("SMTP: неверный логин или пароль. Проверьте SMTP_USER и SMTP_PASSWORD.") from error
+    except smtplib.SMTPException as error:
+        print(f"SMTP password reset send failed: {error}")
+        raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
 
 
 def send_email_message(message: EmailMessage) -> None:
@@ -2202,18 +2241,25 @@ def send_email_message(message: EmailMessage) -> None:
             return
         raise RuntimeError("SMTP is not configured.")
 
-    if SMTP_USE_SSL:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
+    try:
+        if SMTP_USE_SSL:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
+                if SMTP_USER:
+                    smtp.login(SMTP_USER, SMTP_PASSWORD)
+                smtp.send_message(message)
+            return
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+            smtp.starttls()
             if SMTP_USER:
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
             smtp.send_message(message)
-        return
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.starttls()
-        if SMTP_USER:
-            smtp.login(SMTP_USER, SMTP_PASSWORD)
-        smtp.send_message(message)
+    except smtplib.SMTPAuthenticationError as error:
+        print(f"SMTP authentication failed: code={error.smtp_code}, debug={smtp_debug_info()}")
+        raise RuntimeError("SMTP: неверный логин или пароль. Проверьте SMTP_USER и SMTP_PASSWORD.") from error
+    except smtplib.SMTPException as error:
+        print(f"SMTP send failed: {error}")
+        raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
 
 
 def send_berry_season_email(email: str, product_url: str) -> None:
@@ -2251,13 +2297,7 @@ def send_admin_smtp_test(admin: dict[str, Any], payload: dict[str, Any]) -> dict
     return {
         "ok": True,
         "message": "Тестовое письмо отправлено.",
-        "smtp": {
-            "host_configured": bool(SMTP_HOST),
-            "mail_from_configured": bool(MAIL_FROM),
-            "user_configured": bool(SMTP_USER),
-            "use_ssl": SMTP_USE_SSL,
-            "port": SMTP_PORT,
-        },
+        "smtp": smtp_debug_info(),
     }
 
 
@@ -2918,7 +2958,7 @@ class Handler(SimpleHTTPRequestHandler):
                 try:
                     self.send_json(send_admin_smtp_test(self.require_user(), payload))
                 except RuntimeError as error:
-                    self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+                    self.send_json({"error": str(error), "smtp": smtp_debug_info()}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
             else:
