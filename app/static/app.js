@@ -322,7 +322,7 @@ function ruleCategories() {
 }
 
 function isPublicPage(path = window.location.pathname) {
-  return ["/", "/games", "/support", "/contacts", "/delivery", "/refund", "/offer"].includes(path) || path === "/shop" || path.startsWith("/shop/");
+  return ["/", "/games", "/support", "/contacts", "/delivery", "/refund", "/offer", "/shop/thanks"].includes(path) || path === "/shop" || path.startsWith("/shop/");
 }
 
 function setShellMode(mode = "app") {
@@ -1061,21 +1061,23 @@ function renderShopPlaceholder() {
       <h2>Магазин материалов</h2>
       <p>Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
       <div class="shop-notice">
-        Продажи скоро откроются. Сейчас можно посмотреть описание материалов и попробовать демонстрационные версии игр.
+        Игра «Фруктовый сад: суффиксы ИК-ЕК» доступна к покупке. Остальные материалы пока можно посмотреть в описании и попробовать в демо-версиях.
       </div>
       <div class="shop-product-grid">${cards}</div>
     </section>
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  bindShopPayment(view);
 }
 
 function shopProductCard(product) {
+  const canBuy = product.slug === "fruit-garden-ik-ek";
   return `
     <article class="shop-product-card">
       <div class="shop-product-cover">
         <img src="${product.image}" alt="${escapeHtml(product.title)}" />
-        <span>Продажи скоро откроются</span>
+        <span>${canBuy ? "Доступно к покупке" : "Продажи скоро откроются"}</span>
       </div>
       <div class="shop-product-body">
         <p class="eyebrow">цифровой материал</p>
@@ -1088,9 +1090,10 @@ function shopProductCard(product) {
         </div>
         <div class="shop-product-actions">
           <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
+          ${canBuy ? `<button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>` : ""}
           <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
         </div>
-        <span class="shop-soon-badge">Скоро</span>
+        <span class="shop-soon-badge">${canBuy ? "500 ₽" : "Скоро"}</span>
       </div>
     </article>
   `;
@@ -1116,6 +1119,7 @@ function renderShopProductPage(slug) {
     renderShopPlaceholder();
     return;
   }
+  const canBuy = product.slug === "fruit-garden-ik-ek";
   renderPublicTopActions("/shop");
   view.innerHTML = `
     <section class="public-placeholder public-page product-detail-page">
@@ -1129,11 +1133,13 @@ function renderShopProductPage(slug) {
           <p>${escapeHtml(product.shortDescription)}</p>
           <p>${escapeHtml(product.fullDescription)}</p>
           <div class="product-price">${escapeHtml(product.price)}</div>
-          <div class="shop-notice">Продажи скоро откроются.</div>
+          <div class="shop-notice">${canBuy ? "После оплаты ссылка на материал придёт на указанную электронную почту." : "Продажи скоро откроются."}</div>
           <div class="shop-product-actions">
             <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
-            <button class="secondary-button" type="button" disabled>Купить скоро</button>
+            ${canBuy
+              ? `<button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>`
+              : `<button class="secondary-button" type="button" disabled>Купить скоро</button>`}
           </div>
         </div>
       </div>
@@ -1147,6 +1153,97 @@ function renderShopProductPage(slug) {
         ${renderProductBlock("Как получить после оплаты", product.delivery)}
         ${renderProductBlock("Помощь с адаптацией", product.adaptation)}
         ${renderProductBlock("Важно", product.important)}
+      </div>
+    </section>
+    ${publicFooter()}
+  `;
+  bindPublicNavigation(view);
+  bindShopPayment(view);
+}
+
+function bindShopPayment(root = document) {
+  root.querySelectorAll("[data-buy-product='fruit-garden-ik-ek']").forEach((button) => {
+    button.addEventListener("click", () => openBerrySeasonPaymentForm());
+  });
+}
+
+function looksLikeEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function openBerrySeasonPaymentForm() {
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  backdrop.innerHTML = `
+    <form class="payment-modal" id="berrySeasonPaymentForm">
+      <button class="modal-close" type="button" aria-label="Закрыть">×</button>
+      <p class="eyebrow">покупка материала</p>
+      <h2>Куда отправить материал?</h2>
+      <p>После успешной оплаты ссылка на «Ягодный сезон» придёт на эту почту.</p>
+      <label>
+        Email
+        <input name="email" type="email" autocomplete="email" required />
+      </label>
+      <button class="primary-button" type="submit">Перейти к оплате</button>
+      <p class="muted" data-payment-status></p>
+      <p class="error" data-payment-error></p>
+    </form>
+  `;
+  document.body.append(backdrop);
+  const form = backdrop.querySelector("#berrySeasonPaymentForm");
+  const emailInput = form.querySelector("input[name='email']");
+  const status = form.querySelector("[data-payment-status]");
+  const error = form.querySelector("[data-payment-error]");
+  const submit = form.querySelector("button[type='submit']");
+  const close = () => backdrop.remove();
+  backdrop.querySelector(".modal-close").addEventListener("click", close);
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) close();
+  });
+  emailInput.focus();
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = emailInput.value.trim();
+    error.textContent = "";
+    status.textContent = "";
+    if (!email) {
+      error.textContent = "Укажите email.";
+      emailInput.focus();
+      return;
+    }
+    if (!looksLikeEmail(email)) {
+      error.textContent = "Укажите корректный email.";
+      emailInput.focus();
+      return;
+    }
+    submit.disabled = true;
+    status.textContent = "Создаём платёж…";
+    try {
+      const data = await api("/api/shop/berry-season/create-payment", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      if (!data.confirmation_url) throw new Error("Не удалось получить ссылку на оплату.");
+      window.location.href = data.confirmation_url;
+    } catch (err) {
+      submit.disabled = false;
+      status.textContent = "";
+      error.textContent = err.message || "Не удалось создать платёж. Попробуйте позже.";
+    }
+  });
+}
+
+function renderShopThanksPage() {
+  renderPublicTopActions("/shop");
+  view.innerHTML = `
+    <section class="public-placeholder public-page shop-thanks-page">
+      <p class="eyebrow">магазин</p>
+      <h2>Спасибо за покупку!</h2>
+      <p>Если платёж прошёл успешно, ссылка на материал «Ягодный сезон» придёт на указанную почту в течение нескольких минут.</p>
+      <p>Если письмо не пришло, проверьте папку «Спам» или напишите мне.</p>
+      <div class="landing-actions">
+        <button class="primary-button" data-route="/shop" type="button">Вернуться в магазин</button>
+        <button class="secondary-button" data-route="/" type="button">На главную</button>
       </div>
     </section>
     ${publicFooter()}
@@ -1273,6 +1370,10 @@ async function restoreSession() {
   }
   if (window.location.pathname === "/shop") {
     renderShopPlaceholder();
+    return;
+  }
+  if (window.location.pathname === "/shop/thanks") {
+    renderShopThanksPage();
     return;
   }
   if (window.location.pathname.startsWith("/shop/")) {

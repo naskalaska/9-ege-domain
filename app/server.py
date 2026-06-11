@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import base64
 import csv
 import io
 import json
@@ -20,6 +21,8 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from urllib.parse import parse_qs, unquote, urlparse
 
 
@@ -53,6 +56,12 @@ CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", "2026-06-02").strip()
 CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
+PRODUCT_BERRY_SEASON = {
+    "id": "berry_season",
+    "title": "Ягодный сезон",
+    "amount": "500.00",
+    "currency": "RUB",
+}
 
 SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
@@ -397,6 +406,22 @@ def ensure_app_db() -> None:
                 FOREIGN KEY(teacher_id) REFERENCES users(user_id)
             );
 
+            CREATE TABLE IF NOT EXISTS shop_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_uid TEXT UNIQUE,
+                product_id TEXT,
+                product_title TEXT,
+                amount TEXT,
+                currency TEXT DEFAULT 'RUB',
+                buyer_email TEXT,
+                yookassa_payment_id TEXT,
+                status TEXT DEFAULT 'pending',
+                email_sent INTEGER DEFAULT 0,
+                created_at TEXT,
+                paid_at TEXT NULL,
+                raw_webhook TEXT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
             CREATE INDEX IF NOT EXISTS idx_attempts_mode ON attempts(mode);
             CREATE INDEX IF NOT EXISTS idx_attempts_created_at ON attempts(created_at);
@@ -405,6 +430,8 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_user_consents_user_type ON user_consents(user_id, consent_type);
             CREATE INDEX IF NOT EXISTS idx_documents_type_active ON documents(document_type, is_active);
             CREATE INDEX IF NOT EXISTS idx_game_sets_teacher ON game_sets(teacher_id, created_at);
+            CREATE INDEX IF NOT EXISTS idx_shop_orders_uid ON shop_orders(order_uid);
+            CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(yookassa_payment_id);
             CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
                 ON users(teacher_code)
                 WHERE teacher_code IS NOT NULL;
@@ -583,6 +610,8 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
     if role == "student" and not teacher_code:
         teacher_code = FALLBACK_TEACHER_CODE
 
+    should_send_email = False
+    buyer_email = ""
     with db() as con:
         ensure_fallback_teacher(con)
         teacher_id = None
@@ -2166,6 +2195,195 @@ def send_password_reset_email(email: str, link: str) -> None:
         smtp.send_message(message)
 
 
+def send_email_message(message: EmailMessage) -> None:
+    if not SMTP_HOST or not MAIL_FROM:
+        if not production_mode():
+            print(message.as_string())
+            return
+        raise RuntimeError("SMTP is not configured.")
+
+    if SMTP_USE_SSL:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
+            if SMTP_USER:
+                smtp.login(SMTP_USER, SMTP_PASSWORD)
+            smtp.send_message(message)
+        return
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+        smtp.starttls()
+        if SMTP_USER:
+            smtp.login(SMTP_USER, SMTP_PASSWORD)
+        smtp.send_message(message)
+
+
+def send_berry_season_email(email: str, product_url: str) -> None:
+    message = EmailMessage()
+    message["Subject"] = "Ваш материал «HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»»"
+    message["From"] = MAIL_FROM
+    message["To"] = email
+    message.set_content(
+        "Здравствуйте!\n\n"
+        "Спасибо за покупку материала «Ягодный сезон».\n\n"
+        "Ссылка на материал:\n"
+        f"{product_url}\n\n"
+        "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
+        "С уважением,\n"
+        "Анастасия Димитриева\n"
+    )
+    send_email_message(message)
+
+
+def yookassa_env() -> tuple[str, str, str]:
+    shop_id = os.getenv("YOOKASSA_SHOP_ID", "").strip()
+    secret_key = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
+    product_url = os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
+    if not shop_id or not secret_key:
+        raise RuntimeError("Оплата временно недоступна. Попробуйте позже")
+    if not product_url:
+        raise RuntimeError("Материал временно недоступен. Попробуйте позже")
+    return shop_id, secret_key, product_url
+
+
+def create_yookassa_payment(shop_id: str, secret_key: str, order_uid: str, email: str) -> dict[str, Any]:
+    payload = {
+        "amount": {
+            "value": PRODUCT_BERRY_SEASON["amount"],
+            "currency": PRODUCT_BERRY_SEASON["currency"],
+        },
+        "capture": True,
+        "confirmation": {
+            "type": "redirect",
+            "return_url": "https://dimitrieva-av.ru/shop/thanks",
+        },
+        "description": "Покупка: HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
+        "metadata": {
+            "product_id": PRODUCT_BERRY_SEASON["id"],
+            "order_uid": order_uid,
+            "email": email,
+            "type": "digital_product",
+        },
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    auth = base64.b64encode(f"{shop_id}:{secret_key}".encode("utf-8")).decode("ascii")
+    request = Request(
+        "https://api.yookassa.ru/v3/payments",
+        data=body,
+        headers={
+            "Authorization": f"Basic {auth}",
+            "Content-Type": "application/json",
+            "Idempotence-Key": order_uid,
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=15) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        details = error.read().decode("utf-8", errors="replace")
+        print(f"YooKassa payment error: {error.code} {details}")
+        raise RuntimeError("Не удалось создать платёж. Попробуйте позже.") from error
+    except URLError as error:
+        print(f"YooKassa connection error: {error}")
+        raise RuntimeError("Не удалось создать платёж. Попробуйте позже.") from error
+
+
+def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
+    email = normalize_email(payload.get("email"))
+    validate_email(email)
+    shop_id, secret_key, _product_url = yookassa_env()
+    order_uid = secrets.token_urlsafe(18)
+    with db() as con:
+        con.execute(
+            """
+            INSERT INTO shop_orders (
+                order_uid, product_id, product_title, amount, currency,
+                buyer_email, status, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
+            """,
+            (
+                order_uid,
+                PRODUCT_BERRY_SEASON["id"],
+                PRODUCT_BERRY_SEASON["title"],
+                PRODUCT_BERRY_SEASON["amount"],
+                PRODUCT_BERRY_SEASON["currency"],
+                email,
+                now_iso(),
+            ),
+        )
+    try:
+        payment = create_yookassa_payment(shop_id, secret_key, order_uid, email)
+    except RuntimeError:
+        with db() as con:
+            con.execute("UPDATE shop_orders SET status = 'payment_error' WHERE order_uid = ?", (order_uid,))
+        raise
+    payment_id = str(payment.get("id") or "")
+    confirmation_url = (payment.get("confirmation") or {}).get("confirmation_url")
+    if not payment_id or not confirmation_url:
+        with db() as con:
+            con.execute("UPDATE shop_orders SET status = 'payment_error' WHERE order_uid = ?", (order_uid,))
+        raise RuntimeError("Не удалось создать платёж. Попробуйте позже.")
+    with db() as con:
+        con.execute(
+            "UPDATE shop_orders SET yookassa_payment_id = ? WHERE order_uid = ?",
+            (payment_id, order_uid),
+        )
+    return {"confirmation_url": confirmation_url}
+
+
+def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[str, Any]:
+    event = str(payload.get("event") or "")
+    payment = payload.get("object") if isinstance(payload.get("object"), dict) else {}
+    payment_id = str(payment.get("id") or "")
+    metadata = payment.get("metadata") if isinstance(payment.get("metadata"), dict) else {}
+    order_uid = str(metadata.get("order_uid") or "")
+    product_id = str(metadata.get("product_id") or "")
+    if not payment_id or not order_uid:
+        return {"ok": True}
+
+    with db() as con:
+        order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
+        if not order:
+            return {"ok": True}
+        if product_id != PRODUCT_BERRY_SEASON["id"] or order["product_id"] != PRODUCT_BERRY_SEASON["id"]:
+            return {"ok": True}
+
+        if event == "payment.succeeded":
+            con.execute(
+                """
+                UPDATE shop_orders
+                SET status = 'paid',
+                    paid_at = COALESCE(paid_at, ?),
+                    yookassa_payment_id = COALESCE(yookassa_payment_id, ?),
+                    raw_webhook = ?
+                WHERE order_uid = ?
+                """,
+                (now_iso(), payment_id, raw_payload, order_uid),
+            )
+            if not int(order["email_sent"] or 0):
+                should_send_email = True
+                buyer_email = order["buyer_email"]
+        elif event == "payment.canceled":
+            con.execute(
+                """
+                UPDATE shop_orders
+                SET status = 'canceled',
+                    yookassa_payment_id = COALESCE(yookassa_payment_id, ?),
+                    raw_webhook = ?
+                WHERE order_uid = ?
+                """,
+                (payment_id, raw_payload, order_uid),
+            )
+    if should_send_email:
+        product_url = os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
+        if not product_url:
+            raise RuntimeError("Материал временно недоступен. Попробуйте позже")
+        send_berry_season_email(buyer_email, product_url)
+        with db() as con:
+            con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
+    return {"ok": True}
+
+
 def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
     email = normalize_email(payload.get("email") or payload.get("username"))
     neutral = {
@@ -2451,7 +2669,13 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         try:
-            payload = parse_json_body(self)
+            if parsed.path == "/api/yookassa/webhook":
+                length = int(self.headers.get("Content-Length") or 0)
+                raw_payload = self.rfile.read(length).decode("utf-8") if length else "{}"
+                payload = json.loads(raw_payload or "{}")
+            else:
+                raw_payload = ""
+                payload = parse_json_body(self)
             if parsed.path in {"/api/login", "/api/auth/login"}:
                 username = normalize_email(payload.get("email") or payload.get("username"))
                 password = str(payload.get("password") or "")
@@ -2524,6 +2748,13 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(create_game_set_from_base(self.require_user_with_consents(), payload))
             elif parsed.path == "/api/games/sets/upload-json":
                 self.send_json(create_game_set_from_upload(self.require_user_with_consents(), payload))
+            elif parsed.path == "/api/shop/berry-season/create-payment":
+                try:
+                    self.send_json(create_berry_season_payment(payload))
+                except RuntimeError as error:
+                    self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+            elif parsed.path == "/api/yookassa/webhook":
+                self.send_json(process_yookassa_webhook(payload, raw_payload))
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
             else:
