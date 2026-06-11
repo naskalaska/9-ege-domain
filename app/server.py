@@ -57,12 +57,79 @@ CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", "2026-06-02").strip()
 CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
-PRODUCT_BERRY_SEASON = {
-    "id": "berry_season",
-    "title": "Ягодный сезон",
-    "amount": "500.00",
-    "currency": "RUB",
+SHOP_PRODUCTS = {
+    "fruit-garden-ik-ek": {
+        "id": "berry_season",
+        "title": "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
+        "short_title": "Ягодный сезон",
+        "amount": "500.00",
+        "currency": "RUB",
+        "url_env": "BERRY_SEASON_PRODUCT_URL",
+        "default_url": "",
+        "kind": "product",
+    },
+    "dandelion-suffixes": {
+        "id": "dandelion_suffixes",
+        "title": "HTML-игра «Одуванчик: суффиксы существительных»",
+        "short_title": "Одуванчик",
+        "amount": "500.00",
+        "currency": "RUB",
+        "url_env": "DANDELION_SUFFIXES_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/IHgUFHcgkK8fAw",
+        "kind": "product",
+    },
+    "homogeneous-members-magic": {
+        "id": "focus_homogeneous",
+        "title": "HTML-игра «Фокус: однородные члены предложения»",
+        "short_title": "Фокус: однородные члены предложения",
+        "amount": "500.00",
+        "currency": "RUB",
+        "url_env": "HOMOGENEOUS_MEMBERS_MAGIC_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/o4evyJ1A1Flv4Q",
+        "kind": "product",
+    },
+    "support-100": {
+        "id": "support_100",
+        "title": "Поддержка проекта 100 ₽",
+        "short_title": "Поддержка проекта",
+        "amount": "100.00",
+        "currency": "RUB",
+        "url_env": "SUPPORT_100_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/M3avG3To68fHMw",
+        "kind": "donation",
+    },
+    "support-300": {
+        "id": "support_300",
+        "title": "Поддержка проекта 300 ₽",
+        "short_title": "Поддержка проекта",
+        "amount": "300.00",
+        "currency": "RUB",
+        "url_env": "SUPPORT_300_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/VfpRyCwgn2vkFA",
+        "kind": "donation",
+    },
+    "support-500": {
+        "id": "support_500",
+        "title": "Поддержка проекта 500 ₽",
+        "short_title": "Поддержка проекта",
+        "amount": "500.00",
+        "currency": "RUB",
+        "url_env": "SUPPORT_500_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/F7r4stcTO4saIw",
+        "kind": "donation",
+    },
+    "support-1000": {
+        "id": "support_1000",
+        "title": "Поддержка проекта 1000 ₽",
+        "short_title": "Поддержка проекта",
+        "amount": "1000.00",
+        "currency": "RUB",
+        "url_env": "SUPPORT_1000_PRODUCT_URL",
+        "default_url": "https://disk.yandex.ru/d/z_guLJ0-kWCIJg",
+        "kind": "donation",
+    },
 }
+PRODUCT_BERRY_SEASON = SHOP_PRODUCTS["fruit-garden-ik-ek"]
 
 SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
@@ -89,21 +156,21 @@ ACTIVITIES = [
         "slug": "ege9",
         "title": "ЕГЭ. Задание 9",
         "description": "Орфография: корни, гласные, строки с общей буквой.",
-        "button": "Открыть тренажер",
+        "button": "Открыть тренажёр",
         "kind": "module",
     },
     {
         "slug": "ege10",
         "title": "ЕГЭ. Задание 10",
         "description": "Приставки, Ь/Ъ, И/Ы и другие орфограммы задания 10.",
-        "button": "Открыть тренажер",
+        "button": "Открыть тренажёр",
         "kind": "module",
     },
     {
         "slug": "ege11",
         "title": "ЕГЭ. Задание 11",
         "description": "Правописание суффиксов слов разных частей речи.",
-        "button": "Открыть тренажер",
+        "button": "Открыть тренажёр",
         "kind": "module",
     },
     {
@@ -257,6 +324,57 @@ def ensure_column(con: sqlite3.Connection, table: str, column: str, definition: 
         con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
+def seed_paid_entities(con: sqlite3.Connection) -> None:
+    now = now_iso()
+    for slug, product in SHOP_PRODUCTS.items():
+        existing = con.execute(
+            "SELECT product_id FROM paid_entities WHERE product_id = ? OR slug = ?",
+            (product["id"], slug),
+        ).fetchone()
+        if existing:
+            con.execute(
+                """
+                UPDATE paid_entities
+                SET product_id = ?, slug = ?, title = ?, type = ?, amount = ?, currency = ?,
+                    url_env = ?, is_active = COALESCE(is_active, 1), updated_at = ?
+                WHERE product_id = ?
+                """,
+                (
+                    product["id"],
+                    slug,
+                    product["title"],
+                    product["kind"],
+                    product["amount"],
+                    product["currency"],
+                    product["url_env"],
+                    now,
+                    existing["product_id"],
+                ),
+            )
+            continue
+        con.execute(
+            """
+            INSERT INTO paid_entities (
+                product_id, slug, title, type, amount, currency,
+                delivery_url, url_env, is_active, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+            """,
+            (
+                product["id"],
+                slug,
+                product["title"],
+                product["kind"],
+                product["amount"],
+                product["currency"],
+                product.get("default_url") or "",
+                product["url_env"],
+                now,
+                now,
+            ),
+        )
+
+
 def document_seed_data() -> list[dict[str, str]]:
     return [
         {
@@ -287,7 +405,7 @@ def document_seed_data() -> list[dict[str, str]]:
             "title": "Пользовательское соглашение",
             "content": (
                 "Текст будет заменен после юридической вычитки.\n\n"
-                "Этот документ описывает правила использования учебной платформы, учетных записей, тренажеров, "
+                "Этот документ описывает правила использования учебной платформы, учетных записей, тренажёров, "
                 "HTML-мини-приложений и кабинетов администратора, учителя и ученика."
             ),
         },
@@ -472,6 +590,20 @@ def ensure_app_db() -> None:
                 raw_webhook TEXT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS paid_entities (
+                product_id TEXT PRIMARY KEY,
+                slug TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                type TEXT NOT NULL CHECK(type IN ('product', 'donation')),
+                amount TEXT NOT NULL,
+                currency TEXT DEFAULT 'RUB',
+                delivery_url TEXT,
+                url_env TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS game_visits (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 slug TEXT NOT NULL,
@@ -491,6 +623,7 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_shop_orders_uid ON shop_orders(order_uid);
             CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(yookassa_payment_id);
             CREATE INDEX IF NOT EXISTS idx_game_visits_opened_at ON game_visits(opened_at);
+            CREATE INDEX IF NOT EXISTS idx_paid_entities_slug ON paid_entities(slug);
             CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
                 ON users(teacher_code)
                 WHERE teacher_code IS NOT NULL;
@@ -516,6 +649,10 @@ def ensure_app_db() -> None:
         ensure_column(con, "game_sets", "use_count", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "game_sets", "deactivated_at", "TEXT")
         ensure_column(con, "game_sets", "deactivated_by", "TEXT")
+        ensure_column(con, "game_sets", "is_deleted", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(con, "game_sets", "deleted_at", "TEXT")
+        ensure_column(con, "game_sets", "deleted_by", "TEXT")
+        seed_paid_entities(con)
         seed_documents(con)
         ensure_service_admin(con)
         ensure_fallback_teacher(con)
@@ -1608,7 +1745,7 @@ def created_games_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
         """
         SELECT gs.public_id, gs.title, gs.description, gs.mechanic, gs.source_type,
                gs.created_at, gs.updated_at, gs.last_used_at, gs.use_count, gs.is_active,
-               gs.deactivated_at, u.display_name AS teacher_name,
+               gs.deactivated_at, gs.is_deleted, gs.deleted_at, u.display_name AS teacher_name,
                COALESCE(u.email, u.username) AS teacher_email
         FROM game_sets gs
         LEFT JOIN users u ON u.user_id = gs.teacher_id
@@ -1619,6 +1756,7 @@ def created_games_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     for row in rows:
         item = dict(row)
         item["is_active"] = bool(row["is_active"])
+        item["is_deleted"] = bool(row["is_deleted"])
         item["url"] = public_game_url(row["mechanic"], row["public_id"])
         since = seconds_since(row["last_used_at"] or row["created_at"])
         item["days_since_used"] = None if since is None else since // 86400
@@ -1712,12 +1850,25 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             item = dict(row)
             item["consent_accepted"] = bool(row["consent_accepted_at"])
             item["consent_version"] = CURRENT_CONSENT_VERSION
+            mode_rows = con.execute(
+                """
+                SELECT mode, COUNT(*) AS attempts, COALESCE(SUM(is_correct), 0) AS correct
+                FROM attempts
+                WHERE user_id = ?
+                GROUP BY mode
+                ORDER BY attempts DESC
+                """,
+                (row["user_id"],),
+            ).fetchall()
+            item["mode_summary"] = [dict(mode_row) for mode_row in mode_rows]
             students_by_teacher.setdefault(row["teacher_id"], []).append(item)
         recent_attempts = recent_attempts_for_admin(con)
         created_games = created_games_for_admin(con)
         recent_game_visits = recent_game_visits_for_admin(con)
+        paid_entities = paid_entities_for_admin(con)
         total_games = len(created_games)
-        active_games = sum(1 for item in created_games if item["is_active"])
+        active_games = sum(1 for item in created_games if item["is_active"] and not item.get("is_deleted"))
+        visible_games = sum(1 for item in created_games if not item.get("is_deleted"))
         opened_games = sum(int(item.get("use_count") or 0) for item in created_games)
     return {
         "platform": dict(platform),
@@ -1726,11 +1877,13 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         "created_games": created_games,
         "recent_game_visits": recent_game_visits,
         "game_stats": {
-            "total": total_games,
+            "total": visible_games,
             "active": active_games,
-            "inactive": total_games - active_games,
+            "inactive": visible_games - active_games,
+            "deleted": total_games - visible_games,
             "opens": opened_games,
         },
+        "paid_entities": paid_entities,
         "teachers": [
             {
                 **dict(row),
@@ -2222,7 +2375,7 @@ def public_game_set(public_id: str) -> dict[str, Any]:
     with db() as con:
         row = con.execute(
             """
-            SELECT title, description, mechanic, payload_json, is_active
+            SELECT title, description, mechanic, payload_json, is_active, is_deleted
             FROM game_sets
             WHERE public_id = ?
             """,
@@ -2230,6 +2383,8 @@ def public_game_set(public_id: str) -> dict[str, Any]:
         ).fetchone()
         if not row:
             raise LookupError("Набор не найден или ссылка устарела.")
+        if int(row["is_deleted"] or 0):
+            raise PermissionError("Эта игра больше недоступна.")
         if not int(row["is_active"] or 0):
             raise PermissionError("Эта игра деактивирована администратором.")
         con.execute(
@@ -2283,6 +2438,33 @@ def toggle_admin_game(user: dict[str, Any], payload: dict[str, Any]) -> dict[str
         "is_active": bool(is_active),
         "url": public_game_url(row["mechanic"], public_id),
     }
+
+
+def soft_delete_game(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_teacher_or_admin(user)
+    public_id = trim_for_admin(payload.get("public_id"), 80)
+    if not public_id:
+        raise ValueError("Не указана игра.")
+    with db() as con:
+        row = con.execute(
+            "SELECT public_id, title, mechanic, teacher_id, is_deleted FROM game_sets WHERE public_id = ?",
+            (public_id,),
+        ).fetchone()
+        if not row:
+            raise LookupError("Игра не найдена.")
+        if user["role"] != "admin" and row["teacher_id"] != user["user_id"]:
+            raise PermissionError("Можно удалить только свою созданную игру.")
+        if int(row["is_deleted"] or 0):
+            return {"ok": True, "public_id": public_id, "is_deleted": True}
+        con.execute(
+            """
+            UPDATE game_sets
+            SET is_deleted = 1, deleted_at = ?, deleted_by = ?, updated_at = ?
+            WHERE public_id = ?
+            """,
+            (now_iso(), user["user_id"], now_iso(), public_id),
+        )
+    return {"ok": True, "public_id": public_id, "is_deleted": True}
 
 
 def csv_bytes(rows: list[dict[str, Any]], headers: list[tuple[str, str]]) -> bytes:
@@ -2419,6 +2601,47 @@ def reset_user_password(admin: dict[str, Any], payload: dict[str, Any]) -> dict[
     return {"ok": True, "username": row["username"]}
 
 
+def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT product_id, slug, title, type, amount, currency, delivery_url,
+               is_active, updated_at
+        FROM paid_entities
+        ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
+        """
+    ).fetchall()
+    return [
+        {
+            **dict(row),
+            "is_active": bool(row["is_active"]),
+            "has_delivery_url": bool(str(row["delivery_url"] or "").strip()),
+        }
+        for row in rows
+    ]
+
+
+def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    product_id = trim_for_admin(payload.get("product_id"), 80)
+    delivery_url = str(payload.get("delivery_url") or "").strip()
+    if not product_id:
+        raise ValueError("Не указана платная сущность.")
+    with db() as con:
+        row = con.execute("SELECT product_id FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+        if not row:
+            raise LookupError("Платная сущность не найдена.")
+        con.execute(
+            """
+            UPDATE paid_entities
+            SET delivery_url = ?, updated_at = ?
+            WHERE product_id = ?
+            """,
+            (delivery_url, now_iso(), product_id),
+        )
+        updated = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+    return {"ok": True, "entity": paid_entity_row(updated)}
+
+
 def reset_token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
@@ -2490,21 +2713,39 @@ def send_email_message(message: EmailMessage) -> None:
         raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
 
 
-def send_berry_season_email(email: str, product_url: str) -> None:
+def send_product_email(email: str, product: dict[str, str], product_url: str) -> None:
     message = EmailMessage()
-    message["Subject"] = "Ваш материал «HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»»"
+    if product.get("kind") == "donation" or product.get("type") == "donation":
+        message["Subject"] = "Спасибо за поддержку проекта"
+    else:
+        message["Subject"] = f"Ваш материал «{product['title']}»"
     message["From"] = MAIL_FROM
     message["To"] = email
-    message.set_content(
-        "Здравствуйте!\n\n"
-        "Спасибо за покупку материала «Ягодный сезон».\n\n"
-        "Ссылка на материал:\n"
-        f"{product_url}\n\n"
-        "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
-        "С уважением,\n"
-        "Анастасия Димитриева\n"
-    )
+    if product.get("kind") == "donation" or product.get("type") == "donation":
+        message.set_content(
+            "Здравствуйте!\n\n"
+            "Спасибо за поддержку проекта «Русский язык».\n\n"
+            "Ссылка после оплаты:\n"
+            f"{product_url}\n\n"
+            "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
+            "С уважением,\n"
+            "Анастасия Димитриева\n"
+        )
+    else:
+        message.set_content(
+            "Здравствуйте!\n\n"
+            f"Спасибо за покупку материала «{product.get('short_title') or product['title']}».\n\n"
+            "Ссылка на материал:\n"
+            f"{product_url}\n\n"
+            "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
+            "С уважением,\n"
+            "Анастасия Димитриева\n"
+        )
     send_email_message(message)
+
+
+def send_berry_season_email(email: str, product_url: str) -> None:
+    send_product_email(email, PRODUCT_BERRY_SEASON, product_url)
 
 
 def send_admin_smtp_test(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -2529,10 +2770,43 @@ def send_admin_smtp_test(admin: dict[str, Any], payload: dict[str, Any]) -> dict
     }
 
 
-def yookassa_env() -> tuple[str, str, str]:
+def paid_entity_row(row: sqlite3.Row) -> dict[str, str]:
+    item = dict(row)
+    item["id"] = item["product_id"]
+    item["kind"] = item["type"]
+    item["short_title"] = item["title"]
+    item["is_active"] = bool(item.get("is_active"))
+    return item
+
+
+def product_by_slug(slug: str) -> dict[str, str]:
+    clean_slug = str(slug or "").strip()
+    with db() as con:
+        row = con.execute("SELECT * FROM paid_entities WHERE slug = ?", (clean_slug,)).fetchone()
+    if not row:
+        raise ValueError("Материал не найден.")
+    return paid_entity_row(row)
+
+
+def product_by_id(product_id: str) -> dict[str, str] | None:
+    with db() as con:
+        row = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+    return paid_entity_row(row) if row else None
+
+
+def product_delivery_url(product: dict[str, str]) -> str:
+    delivery_url = str(product.get("delivery_url") or "").strip()
+    if delivery_url:
+        return delivery_url
+    if product.get("id") == PRODUCT_BERRY_SEASON["id"] or product.get("product_id") == PRODUCT_BERRY_SEASON["id"]:
+        return os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
+    return ""
+
+
+def yookassa_env(product: dict[str, str] | None = None) -> tuple[str, str, str]:
     shop_id = os.getenv("YOOKASSA_SHOP_ID", "").strip()
     secret_key = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
-    product_url = os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
+    product_url = product_delivery_url(product or PRODUCT_BERRY_SEASON)
     if not shop_id or not secret_key:
         print(
             "YooKassa env missing: "
@@ -2541,7 +2815,8 @@ def yookassa_env() -> tuple[str, str, str]:
         )
         raise RuntimeError("Оплата временно недоступна. Попробуйте позже")
     if not product_url:
-        print("YooKassa env missing: BERRY_SEASON_PRODUCT_URL=no")
+        env_name = (product or PRODUCT_BERRY_SEASON)["url_env"]
+        print(f"YooKassa env missing: {env_name}=no")
         raise RuntimeError("Материал временно недоступен. Попробуйте позже")
     return shop_id, secret_key, product_url
 
@@ -2569,23 +2844,23 @@ def yookassa_api_request(shop_id: str, secret_key: str, path: str, payload: dict
         return json.loads(response.read().decode("utf-8"))
 
 
-def create_yookassa_payment(shop_id: str, secret_key: str, order_uid: str, email: str) -> dict[str, Any]:
+def create_yookassa_payment(shop_id: str, secret_key: str, product: dict[str, str], order_uid: str, email: str) -> dict[str, Any]:
     payload = {
         "amount": {
-            "value": PRODUCT_BERRY_SEASON["amount"],
-            "currency": PRODUCT_BERRY_SEASON["currency"],
+            "value": product["amount"],
+            "currency": product["currency"],
         },
         "capture": True,
         "confirmation": {
             "type": "redirect",
             "return_url": f"https://dimitrieva-av.ru/shop/thanks?order={order_uid}",
         },
-        "description": "Покупка: HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
+        "description": product["title"],
         "metadata": {
-            "product_id": PRODUCT_BERRY_SEASON["id"],
+            "product_id": product["id"],
             "order_uid": order_uid,
             "email": email,
-            "type": "digital_product",
+            "type": product["kind"],
         },
     }
     try:
@@ -2611,10 +2886,13 @@ def get_yookassa_payment(shop_id: str, secret_key: str, payment_id: str) -> dict
         raise RuntimeError("Не удалось проверить платёж. Попробуйте позже.") from error
 
 
-def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
+def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-garden-ik-ek") -> dict[str, Any]:
     email = normalize_email(payload.get("email"))
     validate_email(email)
-    shop_id, secret_key, _product_url = yookassa_env()
+    product = product_by_slug(str(payload.get("product") or default_slug))
+    if not product.get("is_active", True):
+        raise RuntimeError("Материал временно недоступен. Попробуйте позже.")
+    shop_id, secret_key, _product_url = yookassa_env(product)
     order_uid = secrets.token_urlsafe(18)
     with db() as con:
         con.execute(
@@ -2627,16 +2905,16 @@ def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
             """,
             (
                 order_uid,
-                PRODUCT_BERRY_SEASON["id"],
-                PRODUCT_BERRY_SEASON["title"],
-                PRODUCT_BERRY_SEASON["amount"],
-                PRODUCT_BERRY_SEASON["currency"],
+                product["id"],
+                product["title"],
+                product["amount"],
+                product["currency"],
                 email,
                 now_iso(),
             ),
         )
     try:
-        payment = create_yookassa_payment(shop_id, secret_key, order_uid, email)
+        payment = create_yookassa_payment(shop_id, secret_key, product, order_uid, email)
     except RuntimeError:
         with db() as con:
             con.execute("UPDATE shop_orders SET status = 'payment_error' WHERE order_uid = ?", (order_uid,))
@@ -2655,8 +2933,20 @@ def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
     return {"confirmation_url": confirmation_url}
 
 
-def deliver_berry_season_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
-    shop_id, secret_key, product_url = yookassa_env()
+def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
+    return create_product_payment(payload, "fruit-garden-ik-ek")
+
+
+def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
+    with db() as con:
+        order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
+    if not order:
+        raise ValueError("Заказ не найден.")
+    product = product_by_id(str(order["product_id"] or ""))
+    if not product:
+        raise ValueError("Материал не найден.")
+
+    shop_id, secret_key, product_url = yookassa_env(product)
     payment = get_yookassa_payment(shop_id, secret_key, payment_id)
     payment_status = str(payment.get("status") or "")
     metadata = payment.get("metadata") if isinstance(payment.get("metadata"), dict) else {}
@@ -2665,7 +2955,7 @@ def deliver_berry_season_order(order_uid: str, payment_id: str, raw_payload: str
 
     with db() as con:
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
-        if not order or order["product_id"] != PRODUCT_BERRY_SEASON["id"]:
+        if not order or order["product_id"] != product["id"]:
             raise ValueError("Заказ не найден.")
         if payment_status == "canceled":
             con.execute(
@@ -2689,14 +2979,18 @@ def deliver_berry_season_order(order_uid: str, payment_id: str, raw_payload: str
             return {"ok": True, "status": "paid", "email_sent": True}
         buyer_email = order["buyer_email"]
 
-    send_berry_season_email(buyer_email, product_url)
+    send_product_email(buyer_email, product, product_url)
     with db() as con:
         con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-    print(f"Berry season email sent: order_uid={order_uid}")
+    print(f"Product email sent: order_uid={order_uid}, product_id={product['id']}")
     return {"ok": True, "status": "paid", "email_sent": True}
 
 
-def confirm_berry_season_return(payload: dict[str, Any]) -> dict[str, Any]:
+def deliver_berry_season_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
+    return deliver_product_order(order_uid, payment_id, raw_payload)
+
+
+def confirm_order_return(payload: dict[str, Any]) -> dict[str, Any]:
     order_uid = str(payload.get("order_uid") or "").strip()
     if not order_uid:
         raise ValueError("Заказ не найден.")
@@ -2705,9 +2999,9 @@ def confirm_berry_season_return(payload: dict[str, Any]) -> dict[str, Any]:
             """
             SELECT order_uid, yookassa_payment_id, status, email_sent
             FROM shop_orders
-            WHERE order_uid = ? AND product_id = ?
+            WHERE order_uid = ?
             """,
-            (order_uid, PRODUCT_BERRY_SEASON["id"]),
+            (order_uid,),
         ).fetchone()
     if not order:
         raise ValueError("Заказ не найден.")
@@ -2716,30 +3010,53 @@ def confirm_berry_season_return(payload: dict[str, Any]) -> dict[str, Any]:
     payment_id = str(order["yookassa_payment_id"] or "")
     if not payment_id:
         return {"ok": True, "status": order["status"], "email_sent": False}
-    return deliver_berry_season_order(order_uid, payment_id)
+    return deliver_product_order(order_uid, payment_id)
 
 
-def resend_berry_season_by_email(payload: dict[str, Any]) -> dict[str, Any]:
+def confirm_berry_season_return(payload: dict[str, Any]) -> dict[str, Any]:
+    return confirm_order_return(payload)
+
+
+def resend_order_by_email(payload: dict[str, Any], default_slug: str | None = None) -> dict[str, Any]:
     email = normalize_email(payload.get("email"))
     validate_email(email)
+    requested_product = str(payload.get("product") or "").strip()
+    product = product_by_slug(requested_product or default_slug) if (requested_product or default_slug) else None
     with db() as con:
-        order = con.execute(
-            """
-            SELECT order_uid, yookassa_payment_id, status, email_sent
-            FROM shop_orders
-            WHERE LOWER(buyer_email) = ?
-              AND product_id = ?
-              AND yookassa_payment_id IS NOT NULL
-            ORDER BY created_at DESC
-            LIMIT 1
-            """,
-            (email, PRODUCT_BERRY_SEASON["id"]),
-        ).fetchone()
+        if product:
+            order = con.execute(
+                """
+                SELECT order_uid, yookassa_payment_id, status, email_sent
+                FROM shop_orders
+                WHERE LOWER(buyer_email) = ?
+                  AND product_id = ?
+                  AND yookassa_payment_id IS NOT NULL
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (email, product["id"]),
+            ).fetchone()
+        else:
+            order = con.execute(
+                """
+                SELECT order_uid, yookassa_payment_id, status, email_sent
+                FROM shop_orders
+                WHERE LOWER(buyer_email) = ?
+                  AND yookassa_payment_id IS NOT NULL
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (email,),
+            ).fetchone()
     if not order:
         raise ValueError("Заказ с этой почтой не найден.")
     if int(order["email_sent"] or 0):
         return {"ok": True, "status": order["status"], "email_sent": True}
-    return deliver_berry_season_order(order["order_uid"], order["yookassa_payment_id"])
+    return deliver_product_order(order["order_uid"], order["yookassa_payment_id"])
+
+
+def resend_berry_season_by_email(payload: dict[str, Any]) -> dict[str, Any]:
+    return resend_order_by_email(payload, "fruit-garden-ik-ek")
 
 
 def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[str, Any]:
@@ -2760,7 +3077,8 @@ def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[
         if not order:
             print(f"YooKassa webhook ignored: order not found, order_uid={order_uid}")
             return {"ok": True}
-        if product_id != PRODUCT_BERRY_SEASON["id"] or order["product_id"] != PRODUCT_BERRY_SEASON["id"]:
+        product = product_by_id(str(order["product_id"] or ""))
+        if not product or product_id != product["id"]:
             print(f"YooKassa webhook ignored: product mismatch, order_uid={order_uid}")
             return {"ok": True}
 
@@ -2791,13 +3109,14 @@ def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[
                 (payment_id, raw_payload, order_uid),
             )
     if should_send_email:
-        product_url = os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
+        product = product_by_id(product_id)
+        product_url = product_delivery_url(product) if product else ""
         if not product_url:
             raise RuntimeError("Материал временно недоступен. Попробуйте позже")
-        send_berry_season_email(buyer_email, product_url)
+        send_product_email(buyer_email, product, product_url)
         with db() as con:
             con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-        print(f"Berry season email sent by webhook: order_uid={order_uid}")
+        print(f"Product email sent by webhook: order_uid={order_uid}, product_id={product_id}")
     return {"ok": True}
 
 
@@ -3076,6 +3395,7 @@ class Handler(SimpleHTTPRequestHandler):
                         "/teacher",
                         "/student",
                         "/games",
+                        "/donate",
                         "/shop",
                         "/support",
                     }
@@ -3174,6 +3494,21 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(create_game_set_from_base(self.require_user_with_consents(), payload))
             elif parsed.path == "/api/games/sets/upload-json":
                 self.send_json(create_game_set_from_upload(self.require_user_with_consents(), payload))
+            elif parsed.path == "/api/shop/create-payment":
+                try:
+                    self.send_json(create_product_payment(payload))
+                except RuntimeError as error:
+                    self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+            elif parsed.path == "/api/shop/confirm-return":
+                try:
+                    self.send_json(confirm_order_return(payload))
+                except RuntimeError as error:
+                    self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+            elif parsed.path == "/api/shop/resend-by-email":
+                try:
+                    self.send_json(resend_order_by_email(payload))
+                except RuntimeError as error:
+                    self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/shop/berry-season/create-payment":
                 try:
                     self.send_json(create_berry_season_payment(payload))
@@ -3198,8 +3533,12 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": str(error), "smtp": smtp_debug_info()}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
+            elif parsed.path == "/api/admin/delivery-url":
+                self.send_json(update_paid_entity_delivery(self.require_user(), payload))
             elif parsed.path == "/api/admin/games/toggle":
                 self.send_json(toggle_admin_game(self.require_user(), payload))
+            elif parsed.path in {"/api/admin/games/delete", "/api/games/sets/delete"}:
+                self.send_json(soft_delete_game(self.require_user(), payload))
             else:
                 self.send_json({"error": "Unknown endpoint"}, HTTPStatus.NOT_FOUND)
         except PermissionError as error:

@@ -228,6 +228,13 @@ const shopProducts = [
   },
 ];
 
+const supportProducts = [
+  { slug: "support-100", id: "support_100", title: "Тёплое спасибо", price: "100 ₽", description: "Небольшая поддержка проекта и знак, что такие материалы действительно нужны." },
+  { slug: "support-300", id: "support_300", title: "На новые задания", price: "300 ₽", description: "Помогает пополнять и вычитывать базы, добавлять новые режимы тренировки и чинить мелочи, которые “почти незаметны”, но очень важны." },
+  { slug: "support-500", id: "support_500", title: "На новые игры", price: "500 ₽", description: "Поддержка разработки учебных HTML-игр, которые можно запускать прямо из браузера и использовать на уроке." },
+  { slug: "support-1000", id: "support_1000", title: "Большая поддержка", price: "1000 ₽", description: "Помогает быстрее развивать платформу, оплачивать технические расходы и выпускать новые материалы." },
+];
+
 const modes = {
   rule: {
     title: "Правило",
@@ -326,15 +333,15 @@ function ruleCategories() {
 }
 
 function isPublicPage(path = window.location.pathname) {
-  return ["/", "/games", "/support", "/contacts", "/delivery", "/refund", "/offer", "/shop/thanks"].includes(path) || path === "/shop" || path.startsWith("/shop/");
+  return ["/", "/games", "/donate", "/support", "/contacts", "/delivery", "/refund", "/offer", "/shop/thanks"].includes(path) || path === "/shop" || path.startsWith("/shop/");
 }
 
 function setShellMode(mode = "app") {
   appShell.classList.toggle("public-shell", mode === "public");
   if (brand) {
     brand.innerHTML = mode === "public"
-      ? `<div class="brand-mark">РЯ</div><div><h1>Русский язык</h1><p>тренажеры, игры и материалы</p></div>`
-      : `<div class="brand-mark">ЕГЭ</div><div><h1>ЕГЭ: платформа активностей</h1><p>Единый вход, каталог тренажеров и общий прогресс</p></div>`;
+      ? `<div class="brand-mark">РЯ</div><div><h1>Русский язык</h1><p>тренажёры, игры и материалы</p></div>`
+      : `<div class="brand-mark">ЕГЭ</div><div><h1>ЕГЭ: платформа активностей</h1><p>Единый вход, каталог тренажёров и общий прогресс</p></div>`;
   }
 }
 
@@ -348,7 +355,7 @@ function publicFooter() {
   return `
     <footer class="public-footer">
       <div class="public-footer-inner">
-        <div>© Анастасия Димитриева. Русский язык, тренажеры, игры и материалы.</div>
+        <div>© Анастасия Димитриева. Русский язык, тренажёры, игры и материалы.</div>
         <nav class="public-footer-links" aria-label="Документы">
           <a href="/contacts" data-route="/contacts">Контакты</a>
           <a href="/offer" data-route="/offer">Оферта</a>
@@ -504,10 +511,10 @@ function renderPublicTopActions(active = "") {
   setShellMode("public");
   topActions.innerHTML = `
     <button class="ghost-button public-nav-link" data-route="/" type="button">Главная</button>
-    <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажеры</button>
+    <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажёры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
-    <button class="ghost-button public-nav-link" data-route="/support" type="button">Поддержать</button>
+    <button class="ghost-button public-nav-link" data-route="/donate" type="button">Поддержать</button>
     <button class="primary-button public-nav-login" data-route="${state.user ? "/apps" : "/login"}" type="button">
       ${state.user ? "Кабинет" : "Вход"}
     </button>
@@ -824,13 +831,13 @@ function renderLandingPage(scrollTarget = "") {
             <div class="landing-text-row">
               <div>
                 <p class="eyebrow">образовательная платформа</p>
-                <h2>Русский язык: тренажеры и игры для системной подготовки к экзаменам</h2>
+                <h2>Русский язык: тренажёры и игры для системной подготовки к экзаменам</h2>
               </div>
               <div>
-                <p class="landing-lead">Платформа объединяет тренажеры в формате ЕГЭ, учебные игры по русскому языку и цифровые материалы для уроков.</p>
+                <p class="landing-lead">Платформа объединяет тренажёры в формате ЕГЭ, учебные игры по русскому языку и цифровые материалы для уроков.</p>
                 <p class="landing-lead">Ученики могут тренироваться, играть и закреплять темы, а учитель - быстро собирать тесты, отслеживать статистику и подбирать материалы под задачи класса.</p>
                 <div class="landing-actions">
-                  <button class="primary-button" data-scroll="#trainers" type="button">Тренажеры</button>
+                  <button class="primary-button" data-scroll="#trainers" type="button">Тренажёры</button>
                   <button class="secondary-button" data-route="/games" type="button">Игры</button>
                   <button class="secondary-button" data-route="/shop" type="button">Магазин</button>
                 </div>
@@ -838,7 +845,7 @@ function renderLandingPage(scrollTarget = "") {
             </div>
           </article>
           <div class="landing-gallery">
-            <img src="${landingAsset("asset_trainer3.png")}" alt="Тренажеры по русскому языку" />
+            <img src="${landingAsset("asset_trainer3.png")}" alt="Тренажёры по русскому языку" />
             <img src="${landingAsset("asset_game3.png")}" alt="Игры по русскому языку" />
             <img src="${landingAsset("asset_shop3.png")}" alt="Магазин материалов" />
           </div>
@@ -850,8 +857,8 @@ function renderLandingPage(scrollTarget = "") {
           <article class="landing-card">
             <div class="landing-text-row">
               <div>
-                <p class="eyebrow">тренажеры</p>
-                <h2>Тренажеры в формате ЕГЭ</h2>
+                <p class="eyebrow">тренажёры</p>
+                <h2>Тренажёры в формате ЕГЭ</h2>
               </div>
               <div>
                 <p class="landing-lead">Тренировки по русскому языку: по правилам, в миксе и в экзаменационном формате. Система запоминает ошибки, возвращает сложные слова и помогает постепенно закрывать слабые места.</p>
@@ -865,12 +872,12 @@ function renderLandingPage(scrollTarget = "") {
               <div><b>Кабинет учителя</b><span>Статистика учеников и быстрая сборка тестов.</span></div>
             </div>
             <div class="landing-actions">
-              <button class="primary-button" data-route="${state.user ? "/apps" : "/login"}" type="button">Войти в тренажеры</button>
+              <button class="primary-button" data-route="${state.user ? "/apps" : "/login"}" type="button">Войти в тренажёры</button>
               <span class="muted">Для доступа нужен аккаунт ученика или учителя.</span>
             </div>
           </article>
           <div class="landing-gallery">
-            <img src="${landingAsset("asset_trainer3.png")}" alt="Интерфейс тренажеров" />
+            <img src="${landingAsset("asset_trainer3.png")}" alt="Интерфейс тренажёров" />
             <img src="${landingAsset("asset_trainer4.png")}" alt="Копилка ошибок и повторы" />
             <img src="${landingAsset("asset_trainer5.png")}" alt="Кабинет учителя и сборка тестов" />
           </div>
@@ -924,7 +931,7 @@ function renderLandingPage(scrollTarget = "") {
             </div>
             <div class="landing-actions">
               <button class="primary-button" data-route="/shop" type="button">Открыть магазин</button>
-              <span class="muted">Продажи скоро откроются, оплата пока не подключена.</span>
+              <span class="muted">После оплаты ссылка на материал приходит на указанную почту.</span>
             </div>
           </article>
           <div class="landing-gallery">
@@ -1017,7 +1024,7 @@ function renderPublicGames() {
         </div>
         <div class="button-row">
           <button class="secondary-button" data-route="/" type="button">На главную</button>
-          <button class="secondary-button" data-route="/support" type="button">Поддержать проект</button>
+          <button class="secondary-button" data-route="/donate" type="button">Поддержать проект</button>
         </div>
       </div>
       <p class="public-page-lead">Игры открываются без регистрации. Создание своих наборов доступно только авторизованным учителям.</p>
@@ -1057,6 +1064,44 @@ async function renderPublicTextPage(slug) {
   }
 }
 
+function renderDonatePage() {
+  renderPublicTopActions("/donate");
+  const supportCards = supportProducts.map((product) => `
+    <article class="shop-product-card support-card">
+      <div class="shop-product-body">
+        <p class="eyebrow">поддержка проекта</p>
+        <h3>${escapeHtml(product.price)}</h3>
+        <strong>${escapeHtml(product.title)}</strong>
+        <p>${escapeHtml(product.description)}</p>
+        <div class="shop-product-meta">
+          <span>${escapeHtml(product.id)}</span>
+        </div>
+        <div class="shop-product-actions">
+          <button class="primary-button" data-buy-product="${product.slug}" type="button">Поддержать</button>
+        </div>
+      </div>
+    </article>
+  `).join("");
+  view.innerHTML = `
+    <section class="public-placeholder public-page shop-page support-page">
+      <p class="eyebrow">поддержка</p>
+      <h2>Поддержать проект</h2>
+      <p class="public-page-lead">Я делаю тренажёры и небольшие учебные игры так, как всегда хотелось бы мне самой: для удобства, для точечной проработки, для отслеживания прогресса и достижения классных результатов.</p>
+      <p>Если материалы оказались полезны Вам, Вашим ученикам или коллегам, можно поддержать развитие проекта. Эти деньги помогают оплачивать сайт, дорабатывать тренажёры, вычитывать базы заданий и создавать новые игровые механики.</p>
+      <p>В благодарность я отправлю небольшой подарок: полезный материал, заготовку или мини-комплект для урока. После оплаты ссылка придёт на указанную почту.</p>
+      <h3>Выберите удобный вариант поддержки:</h3>
+      <div class="shop-product-grid">${supportCards}</div>
+      <div class="landing-actions">
+        <button class="secondary-button" data-route="/" type="button">На главную</button>
+        <button class="secondary-button" data-route="/games" type="button">Перейти к играм</button>
+      </div>
+    </section>
+    ${publicFooter()}
+  `;
+  bindPublicNavigation(view);
+  bindShopPayment(view);
+}
+
 function renderShopPlaceholder() {
   renderPublicTopActions("/shop");
   const cards = shopProducts.map(shopProductCard).join("");
@@ -1066,7 +1111,7 @@ function renderShopPlaceholder() {
       <h2>Магазин материалов</h2>
       <p>Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
       <div class="shop-notice">
-        Игра «Фруктовый сад: суффиксы ИК-ЕК» доступна к покупке. Остальные материалы пока можно посмотреть в описании и попробовать в демо-версиях.
+        Игры доступны к покупке. После оплаты ссылка на материал придёт на указанную электронную почту.
       </div>
       <div class="shop-product-grid">${cards}</div>
     </section>
@@ -1077,12 +1122,11 @@ function renderShopPlaceholder() {
 }
 
 function shopProductCard(product) {
-  const canBuy = product.slug === "fruit-garden-ik-ek";
   return `
     <article class="shop-product-card">
       <div class="shop-product-cover">
         <img src="${product.image}" alt="${escapeHtml(product.title)}" />
-        <span>${canBuy ? "Доступно к покупке" : "Продажи скоро откроются"}</span>
+        <span>Доступно к покупке</span>
       </div>
       <div class="shop-product-body">
         <p class="eyebrow">цифровой материал</p>
@@ -1095,10 +1139,10 @@ function shopProductCard(product) {
         </div>
         <div class="shop-product-actions">
           <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
-          ${canBuy ? `<button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>` : ""}
+          <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
           <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
         </div>
-        <span class="shop-soon-badge">${canBuy ? "500 ₽" : "Скоро"}</span>
+        <span class="shop-soon-badge">${escapeHtml(product.price)}</span>
       </div>
     </article>
   `;
@@ -1124,7 +1168,6 @@ function renderShopProductPage(slug) {
     renderShopPlaceholder();
     return;
   }
-  const canBuy = product.slug === "fruit-garden-ik-ek";
   renderPublicTopActions("/shop");
   view.innerHTML = `
     <section class="public-placeholder public-page product-detail-page">
@@ -1138,13 +1181,11 @@ function renderShopProductPage(slug) {
           <p>${escapeHtml(product.shortDescription)}</p>
           <p>${escapeHtml(product.fullDescription)}</p>
           <div class="product-price">${escapeHtml(product.price)}</div>
-          <div class="shop-notice">${canBuy ? "После оплаты ссылка на материал придёт на указанную электронную почту." : "Продажи скоро откроются."}</div>
+          <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
             <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
-            ${canBuy
-              ? `<button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>`
-              : `<button class="secondary-button" type="button" disabled>Купить скоро</button>`}
+            <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
           </div>
         </div>
       </div>
@@ -1167,8 +1208,8 @@ function renderShopProductPage(slug) {
 }
 
 function bindShopPayment(root = document) {
-  root.querySelectorAll("[data-buy-product='fruit-garden-ik-ek']").forEach((button) => {
-    button.addEventListener("click", () => openBerrySeasonPaymentForm());
+  root.querySelectorAll("[data-buy-product]").forEach((button) => {
+    button.addEventListener("click", () => openPaymentForm(button.dataset.buyProduct));
   });
 }
 
@@ -1176,15 +1217,21 @@ function looksLikeEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
 
-function openBerrySeasonPaymentForm() {
+function paymentProductBySlug(slug) {
+  return [...shopProducts, ...supportProducts].find((product) => product.slug === slug);
+}
+
+function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
+  const product = paymentProductBySlug(productSlug) || shopProducts[0];
+  const isSupport = productSlug.startsWith("support-");
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
-    <form class="payment-modal" id="berrySeasonPaymentForm">
+    <form class="payment-modal" id="shopPaymentForm">
       <button class="modal-close" type="button" aria-label="Закрыть">×</button>
-      <p class="eyebrow">покупка материала</p>
-      <h2>Куда отправить материал?</h2>
-      <p>После успешной оплаты ссылка на «Ягодный сезон» придёт на эту почту.</p>
+      <p class="eyebrow">${isSupport ? "поддержка проекта" : "покупка материала"}</p>
+      <h2>Куда отправить письмо?</h2>
+      <p>${isSupport ? "Спасибо за вашу поддержку! Напишите здесь свою почту, чтобы получить небольшой подарок от меня." : `После успешной оплаты письмо по позиции «${escapeHtml(product.title)}» придёт на эту почту.`}</p>
       <label>
         Email
         <input name="email" type="email" autocomplete="email" required />
@@ -1195,7 +1242,7 @@ function openBerrySeasonPaymentForm() {
     </form>
   `;
   document.body.append(backdrop);
-  const form = backdrop.querySelector("#berrySeasonPaymentForm");
+  const form = backdrop.querySelector("#shopPaymentForm");
   const emailInput = form.querySelector("input[name='email']");
   const status = form.querySelector("[data-payment-status]");
   const error = form.querySelector("[data-payment-error]");
@@ -1224,9 +1271,9 @@ function openBerrySeasonPaymentForm() {
     submit.disabled = true;
     status.textContent = "Создаём платёж…";
     try {
-      const data = await api("/api/shop/berry-season/create-payment", {
+      const data = await api("/api/shop/create-payment", {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, product: productSlug }),
       });
       if (!data.confirmation_url) throw new Error("Не удалось получить ссылку на оплату.");
       window.location.href = data.confirmation_url;
@@ -1245,7 +1292,7 @@ function renderShopThanksPage() {
     <section class="public-placeholder public-page shop-thanks-page">
       <p class="eyebrow">магазин</p>
       <h2>Спасибо за покупку!</h2>
-      <p>Если платёж прошёл успешно, ссылка на материал «Ягодный сезон» придёт на указанную почту в течение нескольких минут.</p>
+      <p>Если платёж прошёл успешно, письмо со ссылкой придёт на указанную почту в течение нескольких минут.</p>
       <p>Если письмо не пришло, проверьте папку «Спам» или напишите мне.</p>
       <p class="muted" id="shopThanksStatus">${orderUid ? "Проверяем оплату и отправку письма..." : ""}</p>
       <form class="shop-resend-form" id="shopResendForm">
@@ -1287,7 +1334,7 @@ function setupShopResendForm() {
     submit.disabled = true;
     status.textContent = "Проверяем оплату...";
     try {
-      const data = await api("/api/shop/berry-season/resend-by-email", {
+      const data = await api("/api/shop/resend-by-email", {
         method: "POST",
         body: JSON.stringify({ email }),
       });
@@ -1310,7 +1357,7 @@ async function confirmReturnedShopOrder(orderUid) {
   const status = view.querySelector("#shopThanksStatus");
   if (!status) return;
   try {
-    const data = await api("/api/shop/berry-season/confirm-return", {
+    const data = await api("/api/shop/confirm-return", {
       method: "POST",
       body: JSON.stringify({ order_uid: orderUid }),
     });
@@ -1457,8 +1504,8 @@ async function restoreSession() {
     renderShopProductPage(window.location.pathname.split("/").filter(Boolean)[1]);
     return;
   }
-  if (window.location.pathname === "/support") {
-    await renderPublicTextPage("support");
+  if (window.location.pathname === "/donate" || window.location.pathname === "/support") {
+    renderDonatePage();
     return;
   }
   if (window.location.pathname === "/contacts") {
@@ -1526,7 +1573,7 @@ function renderDashboard() {
   renderSidebar();
   renderMode();
   document.querySelector("#progressButton").addEventListener("click", showProgress);
-  document.querySelector("#supportButton").addEventListener("click", () => navigate("/support"));
+  document.querySelector("#supportButton").addEventListener("click", () => navigate("/donate"));
   if (state.user.role === "teacher") {
     renderTeacherDashboardPreview();
   }
@@ -1556,7 +1603,7 @@ function renderCatalog() {
       <div class="catalog-head">
         <div>
           <p class="eyebrow">каталог активностей</p>
-          <h2>Выберите тренажер</h2>
+          <h2>Выберите тренажёр</h2>
         </div>
         <div class="catalog-user">
           <strong>${state.user.display_name}</strong>
@@ -1708,7 +1755,7 @@ function renderMiniActivity() {
     history.pushState(null, "", "/apps/mini");
     renderMiniActivity();
   });
-  view.querySelector("#supportFromMini").addEventListener("click", () => navigate("/support"));
+  view.querySelector("#supportFromMini").addEventListener("click", () => navigate("/donate"));
   view.querySelector("#backToCatalogFromMini").addEventListener("click", () => {
     state.currentActivity = null;
     state.currentMiniGame = null;
@@ -2565,6 +2612,16 @@ function formatAdminUser(row) {
   return `${escapeHtml(row.display_name || "Без имени")}<br><span class="muted">${escapeHtml(row.email || row.username || row.role || "")}</span>`;
 }
 
+function adminStudentSummary(student) {
+  const total = Number(student.attempts || 0);
+  if (!total) return "Пока нет попыток.";
+  const parts = (student.mode_summary || []).map((item) => {
+    const modeTitle = modes[item.mode]?.title || item.mode || "режим";
+    return `${item.attempts} в режиме «${escapeHtml(modeTitle)}»`;
+  });
+  return `Решил ${parts.join(", ")}. Верных ответов: ${student.correct || 0} из ${total}.`;
+}
+
 function renderAdminContent(data, closeButton = "") {
   const platform = data.platform;
   const online = data.online || [];
@@ -2572,6 +2629,7 @@ function renderAdminContent(data, closeButton = "") {
   const createdGames = data.created_games || [];
   const recentGameVisits = data.recent_game_visits || [];
   const gameStats = data.game_stats || {};
+  const paidEntities = data.paid_entities || [];
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
@@ -2593,7 +2651,7 @@ function renderAdminContent(data, closeButton = "") {
     </tr>
   `).join("") : `<tr><td colspan="6">Решений пока нет</td></tr>`;
   const gameRows = createdGames.length ? createdGames.map((game) => `
-    <tr>
+    <tr data-game-deleted="${game.is_deleted ? "1" : "0"}" class="${game.is_deleted ? "hidden" : ""}">
       <td>
         <b>${escapeHtml(game.title || "Без названия")}</b><br>
         <a href="${escapeHtml(game.url)}" target="_blank" rel="noopener">${escapeHtml(game.public_id)}</a>
@@ -2601,14 +2659,30 @@ function renderAdminContent(data, closeButton = "") {
       <td>${escapeHtml(game.teacher_name || "—")}<br><span class="muted">${escapeHtml(game.teacher_email || "")}</span></td>
       <td>${escapeHtml(game.mechanic || "")}<br><span class="muted">${escapeHtml(game.source_type || "")}</span></td>
       <td>${game.use_count || 0}<br><span class="muted">последний раз: ${formatAdminDate(game.last_used_at)}</span></td>
-      <td>${game.is_active ? `<span class="status-ok">активна</span>` : `<span class="status-bad">отключена</span>`}<br><span class="muted">${game.days_since_used ?? "—"} дн. без использования</span></td>
+      <td>${game.is_deleted ? `<span class="status-bad">удалена</span>` : game.is_active ? `<span class="status-ok">активна</span>` : `<span class="status-bad">отключена</span>`}<br><span class="muted">${game.days_since_used ?? "—"} дн. без использования</span></td>
       <td>
-        <button class="ghost-button toggle-game-active" data-public-id="${escapeHtml(game.public_id)}" data-next-active="${game.is_active ? "0" : "1"}" type="button">
+        <button class="ghost-button toggle-game-active" data-public-id="${escapeHtml(game.public_id)}" data-next-active="${game.is_active ? "0" : "1"}" type="button" ${game.is_deleted ? "disabled" : ""}>
           ${game.is_active ? "Деактивировать" : "Включить"}
         </button>
+        <button class="ghost-button delete-game" data-public-id="${escapeHtml(game.public_id)}" type="button" ${game.is_deleted ? "disabled" : ""}>Удалить</button>
       </td>
     </tr>
   `).join("") : `<tr><td colspan="6">Учителя ещё не создавали игры</td></tr>`;
+  const deliveryRows = paidEntities.length ? paidEntities.map((entity) => `
+    <tr>
+      <td>${escapeHtml(entity.product_id)}</td>
+      <td>${escapeHtml(entity.title)}</td>
+      <td>${entity.type === "donation" ? "донат" : "товар"}</td>
+      <td>${escapeHtml(entity.amount)} ${escapeHtml(entity.currency)}</td>
+      <td>
+        <form class="delivery-url-form" data-product-id="${escapeHtml(entity.product_id)}">
+          <input name="delivery_url" value="${escapeHtml(entity.delivery_url || "")}" placeholder="https://disk.yandex.ru/d/..." />
+          <button class="ghost-button" type="submit">Сохранить</button>
+        </form>
+      </td>
+      <td><span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "ссылка задана" : "ссылка не задана"}</span></td>
+    </tr>
+  `).join("") : `<tr><td colspan="6">Платные сущности не найдены</td></tr>`;
   const gameVisitRows = recentGameVisits.length ? recentGameVisits.map((visit) => `
     <tr>
       <td>${formatAdminDate(visit.opened_at)}</td>
@@ -2624,8 +2698,16 @@ function renderAdminContent(data, closeButton = "") {
         <tr>
           <td>${escapeHtml(student.display_name)}</td>
           <td>${escapeHtml(student.email || student.username)}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
-          <td>${student.attempts}</td>
-          <td>${pct(student.correct, student.attempts)}</td>
+          <td>
+            <span>${adminStudentSummary(student)}</span>
+            <button class="ghost-button admin-student-details-toggle" type="button">Подробнее</button>
+            <div class="admin-student-details hidden">
+              <div class="teacher-metrics">
+                <div class="stat"><b>${student.attempts}</b><span>ответов</span></div>
+                <div class="stat"><b>${pct(student.correct, student.attempts)}</b><span>точность</span></div>
+              </div>
+            </div>
+          </td>
           <td>
             <button class="ghost-button reset-password" data-user-id="${escapeHtml(student.user_id)}" data-username="${escapeHtml(student.email || student.username)}" type="button">
               ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
@@ -2651,7 +2733,7 @@ function renderAdminContent(data, closeButton = "") {
           <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
           <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>точность</span></div>
         </div>
-        <table class="table"><tr><th>Ученик</th><th>Email</th><th>Ответов</th><th>Точность</th><th>Пароль</th></tr>${students}</table>
+        <table class="table"><tr><th>Ученик</th><th>Email</th><th>Саммари</th><th>Пароль</th></tr>${students}</table>
       </article>
     `;
   }).join("");
@@ -2672,6 +2754,7 @@ function renderAdminContent(data, closeButton = "") {
       <button class="secondary-button admin-tab active" data-admin-section="online" type="button">Сейчас на сайте</button>
       <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
       <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>
+      <button class="secondary-button admin-tab" data-admin-section="delivery" type="button">Ссылки доставки</button>
       <button class="secondary-button admin-tab" data-admin-section="users" type="button">Пользователи</button>
       <button class="secondary-button admin-tab" data-admin-section="mail" type="button">Почта</button>
     </div>
@@ -2684,10 +2767,14 @@ function renderAdminContent(data, closeButton = "") {
       <table class="table admin-table"><tr><th>Время</th><th>Пользователь</th><th>Где</th><th>Задание</th><th>Ответ</th><th>Итог</th></tr>${attemptRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="games">
-      <div class="table-head"><h3>Ссылки на созданные игры</h3><span class="muted">старые игры можно отключать</span></div>
+      <div class="table-head"><h3>Ссылки на созданные игры</h3><label class="consent-check"><input type="checkbox" id="showDeletedGames" /><span>Показать удалённые</span></label></div>
       <table class="table admin-table"><tr><th>Игра</th><th>Автор</th><th>Механика</th><th>Открытия</th><th>Статус</th><th>Действие</th></tr>${gameRows}</table>
       <div class="table-head"><h3>Во что играли</h3><span class="muted">последние открытия игровых страниц</span></div>
       <table class="table admin-table"><tr><th>Время</th><th>Игра</th><th>Автор набора</th><th>Страница</th></tr>${gameVisitRows}</table>
+    </section>
+    <section class="admin-section hidden" data-admin-panel="delivery">
+      <div class="table-head"><h3>Ссылки для доставки</h3><span class="muted">если ссылка не задана, оплату начать нельзя</span></div>
+      <table class="table admin-table delivery-table"><tr><th>id</th><th>Название</th><th>Тип</th><th>Цена</th><th>delivery_url</th><th>Статус</th></tr>${deliveryRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="users">
       <div class="admin-list">${teacherCards}</div>
@@ -2760,6 +2847,40 @@ function bindAdminActions(root) {
       });
     });
   });
+  root.querySelector("#showDeletedGames")?.addEventListener("change", (event) => {
+    const showDeleted = event.currentTarget.checked;
+    root.querySelectorAll("[data-game-deleted='1']").forEach((row) => {
+      row.classList.toggle("hidden", !showDeleted);
+    });
+  });
+  root.querySelectorAll(".admin-student-details-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const details = button.parentElement.querySelector(".admin-student-details");
+      const willOpen = details?.classList.contains("hidden");
+      details?.classList.toggle("hidden", !willOpen);
+      button.textContent = willOpen ? "Свернуть" : "Подробнее";
+    });
+  });
+  root.querySelectorAll(".delivery-url-form").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = form.querySelector("button[type='submit']");
+      submit.disabled = true;
+      try {
+        await api("/api/admin/delivery-url", {
+          method: "POST",
+          body: JSON.stringify({
+            product_id: form.dataset.productId,
+            delivery_url: new FormData(form).get("delivery_url"),
+          }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        submit.disabled = false;
+      }
+    });
+  });
   root.querySelector("#smtpTestForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -2821,6 +2942,22 @@ function bindAdminActions(root) {
             public_id: button.dataset.publicId,
             is_active: nextActive,
           }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
+      }
+    });
+  });
+  root.querySelectorAll(".delete-game").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!confirm("Удалить эту созданную игру? Публичная ссылка станет недоступна.")) return;
+      button.disabled = true;
+      try {
+        await api("/api/admin/games/delete", {
+          method: "POST",
+          body: JSON.stringify({ public_id: button.dataset.publicId }),
         });
         await reloadAdminPanel();
       } catch (err) {
