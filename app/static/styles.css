@@ -1563,6 +1563,54 @@ button {
   min-height: 42px;
 }
 
+.shop-resend-form {
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+  margin-top: 12px;
+}
+
+.shop-resend-form label {
+  display: grid;
+  gap: 8px;
+  color: #253142;
+  font-weight: 800;
+}
+
+.shop-resend-form input {
+  width: 100%;
+}
+
+.shop-resend-form .secondary-button {
+  width: max-content;
+}
+
+.smtp-test-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.smtp-test-panel h3 {
+  margin: 0;
+  color: var(--green-dark);
+}
+
+.smtp-test-panel label {
+  display: grid;
+  gap: 8px;
+  color: #253142;
+  font-weight: 800;
+}
+
+.smtp-test-panel input {
+  width: 100%;
+}
+
+.smtp-test-panel .secondary-button {
+  width: max-content;
+}
+
 .shop-soon-badge {
   position: static;
   width: max-content;

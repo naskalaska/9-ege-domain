@@ -1235,12 +1235,23 @@ function openBerrySeasonPaymentForm() {
 
 function renderShopThanksPage() {
   renderPublicTopActions("/shop");
+  const orderUid = new URLSearchParams(window.location.search).get("order") || "";
   view.innerHTML = `
     <section class="public-placeholder public-page shop-thanks-page">
       <p class="eyebrow">магазин</p>
       <h2>Спасибо за покупку!</h2>
       <p>Если платёж прошёл успешно, ссылка на материал «Ягодный сезон» придёт на указанную почту в течение нескольких минут.</p>
       <p>Если письмо не пришло, проверьте папку «Спам» или напишите мне.</p>
+      <p class="muted" id="shopThanksStatus">${orderUid ? "Проверяем оплату и отправку письма..." : ""}</p>
+      <form class="shop-resend-form" id="shopResendForm">
+        <label>
+          Не пришло письмо?
+          <input name="email" type="email" autocomplete="email" placeholder="Email, указанный при оплате" required />
+        </label>
+        <button class="secondary-button" type="submit">Проверить и отправить</button>
+        <p class="muted" id="shopResendStatus"></p>
+        <p class="error" id="shopResendError"></p>
+      </form>
       <div class="landing-actions">
         <button class="primary-button" data-route="/shop" type="button">Вернуться в магазин</button>
         <button class="secondary-button" data-route="/" type="button">На главную</button>
@@ -1249,6 +1260,67 @@ function renderShopThanksPage() {
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  setupShopResendForm();
+  if (orderUid) confirmReturnedShopOrder(orderUid);
+}
+
+function setupShopResendForm() {
+  const form = view.querySelector("#shopResendForm");
+  if (!form) return;
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = String(new FormData(form).get("email") || "").trim();
+    const status = view.querySelector("#shopResendStatus");
+    const error = view.querySelector("#shopResendError");
+    const submit = form.querySelector("button[type='submit']");
+    status.textContent = "";
+    error.textContent = "";
+    if (!looksLikeEmail(email)) {
+      error.textContent = "Укажите корректный email.";
+      return;
+    }
+    submit.disabled = true;
+    status.textContent = "Проверяем оплату...";
+    try {
+      const data = await api("/api/shop/berry-season/resend-by-email", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      if (data.email_sent) {
+        status.textContent = "Письмо с материалом отправлено. Проверьте почту и папку «Спам».";
+      } else if (data.status === "pending" || data.status === "waiting_for_capture") {
+        status.textContent = "Платёж ещё обрабатывается. Попробуйте повторить через пару минут.";
+      } else {
+        status.textContent = "Проверка выполнена. Если письмо не пришло, напишите мне.";
+      }
+    } catch (err) {
+      error.textContent = err.message || "Не удалось проверить заказ.";
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+
+async function confirmReturnedShopOrder(orderUid) {
+  const status = view.querySelector("#shopThanksStatus");
+  if (!status) return;
+  try {
+    const data = await api("/api/shop/berry-season/confirm-return", {
+      method: "POST",
+      body: JSON.stringify({ order_uid: orderUid }),
+    });
+    if (data.email_sent) {
+      status.textContent = "Платёж подтверждён, письмо с материалом отправлено.";
+    } else if (data.status === "pending" || data.status === "waiting_for_capture") {
+      status.textContent = "Платёж ещё обрабатывается. Письмо придёт после подтверждения оплаты.";
+    } else if (data.status === "canceled") {
+      status.textContent = "Платёж не был завершён.";
+    } else {
+      status.textContent = "Проверка оплаты выполнена. Если письмо не пришло, напишите мне.";
+    }
+  } catch (err) {
+    status.textContent = "Не удалось автоматически проверить отправку письма. Если письмо не пришло, напишите мне.";
+  }
 }
 
 async function renderConsentGate() {
@@ -2526,6 +2598,19 @@ function renderAdminContent(data, closeButton = "") {
       <div><p class="eyebrow">админ</p><h2>Обзор платформы</h2></div>
       ${closeButton}
     </div>
+    <form class="admin-card smtp-test-panel" id="smtpTestForm">
+      <div>
+        <p class="eyebrow">почта</p>
+        <h3>Проверка SMTP</h3>
+      </div>
+      <label>
+        Email для тестового письма
+        <input name="email" type="email" autocomplete="email" placeholder="example@mail.ru" required />
+      </label>
+      <button class="secondary-button" type="submit">Отправить тест SMTP</button>
+      <p class="muted" id="smtpTestStatus"></p>
+      <p class="error" id="smtpTestError"></p>
+    </form>
     <div class="progress-grid">
       <div class="stat"><b>${platform.total}</b><span>ответов всего</span></div>
       <div class="stat"><b>${platform.active_users}</b><span>активных пользователей</span></div>
@@ -2568,6 +2653,35 @@ async function showAdmin() {
 }
 
 function bindAdminActions(root) {
+  root.querySelector("#smtpTestForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const email = String(new FormData(form).get("email") || "").trim();
+    const status = root.querySelector("#smtpTestStatus");
+    const error = root.querySelector("#smtpTestError");
+    const submit = form.querySelector("button[type='submit']");
+    status.textContent = "";
+    error.textContent = "";
+    if (!looksLikeEmail(email)) {
+      error.textContent = "Укажите корректный email.";
+      return;
+    }
+    submit.disabled = true;
+    status.textContent = "Отправляем тестовое письмо...";
+    try {
+      const data = await api("/api/admin/test-email", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      const smtp = data.smtp || {};
+      status.textContent = `${data.message} SMTP: host ${smtp.host_configured ? "есть" : "нет"}, from ${smtp.mail_from_configured ? "есть" : "нет"}, user ${smtp.user_configured ? "есть" : "нет"}, порт ${smtp.port}.`;
+    } catch (err) {
+      error.textContent = err.message;
+      status.textContent = "";
+    } finally {
+      submit.disabled = false;
+    }
+  });
   root.querySelectorAll(".reset-password").forEach((button) => {
     button.addEventListener("click", async () => {
       if (!confirm(`Сбросить пароль пользователю ${button.dataset.username}?`)) return;
