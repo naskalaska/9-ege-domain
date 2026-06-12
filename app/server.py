@@ -761,6 +761,13 @@ def validate_email(email: str) -> None:
         raise ValueError("Укажите корректный email с доменной частью.")
 
 
+def validate_registration_email(email: str) -> None:
+    validate_email(email)
+    domain = email.rsplit("@", 1)[1].strip(".")
+    if not domain.endswith(".ru"):
+        raise ValueError("Регистрация доступна только с email в доменной зоне .ru.")
+
+
 def ensure_fallback_teacher(con: sqlite3.Connection) -> None:
     row = con.execute(
         "SELECT * FROM users WHERE role = 'teacher' AND UPPER(teacher_code) = ?",
@@ -808,7 +815,7 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
         raise ValueError("Неизвестная роль.")
     if not consent_accepted:
         raise ValueError("Для регистрации необходимо принять Политику обработки персональных данных и дать согласие на обработку персональных данных.")
-    validate_email(email)
+    validate_registration_email(email)
     if len(password) < 6:
         raise ValueError("Пароль должен быть не короче 6 символов.")
     if role == "student" and not teacher_code:
@@ -1688,12 +1695,18 @@ def error_bank_words(user_id: str) -> list[dict[str, Any]]:
 def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any]:
     students = con.execute(
         """
-        SELECT user_id, display_name, username, email
+        SELECT u.user_id, u.display_name, u.username, u.email,
+               CASE WHEN c.id IS NULL THEN 0 ELSE 1 END AS consent_accepted
         FROM users
-        WHERE role = 'student' AND teacher_id = ?
-        ORDER BY display_name
+        u
+        LEFT JOIN user_consents c
+          ON c.user_id = u.user_id
+         AND c.consent_type = ?
+         AND c.document_version = ?
+        WHERE u.role = 'student' AND u.teacher_id = ?
+        ORDER BY u.display_name
         """,
-        (teacher_id,),
+        (CONSENT_TYPE_PERSONAL_DATA, CURRENT_CONSENT_VERSION, teacher_id),
     ).fetchall()
     result_students = []
     for student in students:
@@ -1740,6 +1753,30 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
             """,
             (user_id, scope_id_for("errors")),
         ).fetchall()
+        category_stats = con.execute(
+            """
+            SELECT COALESCE(category, mode) AS category,
+                   COUNT(*) AS total,
+                   COALESCE(SUM(is_correct), 0) AS correct
+            FROM attempts
+            WHERE user_id = ?
+            GROUP BY COALESCE(category, mode)
+            ORDER BY category
+            """,
+            (user_id,),
+        ).fetchall()
+        recent_attempts = con.execute(
+            """
+            SELECT created_at, COALESCE(category, mode) AS category,
+                   COALESCE(rule_name, mode) AS rule_name,
+                   prompt, given_answer, correct_answer, is_correct
+            FROM attempts
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 8
+            """,
+            (user_id,),
+        ).fetchall()
         touched = int(summary["touched"] or 0)
         result_students.append(
             {
@@ -1747,6 +1784,7 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
                 "display_name": student["display_name"],
                 "username": student["username"],
                 "email": student["email"],
+                "consent_accepted": bool(student["consent_accepted"]),
                 "total": int(summary["total"] or 0),
                 "correct": int(summary["correct"] or 0),
                 "untouched": max(len(WORDS) - touched, 0),
@@ -1761,6 +1799,8 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
                     if row["word_id"] in WORD_BY_ID
                 ],
                 "top_errors": [dict(row) for row in error_rules],
+                "category_stats": [dict(row) for row in category_stats],
+                "recent_attempts": [dict(row) for row in recent_attempts],
                 "error_bank": [
                     {
                         "word": WORD_BY_ID[row["word_id"]]["variant"],

@@ -921,6 +921,20 @@ button {
   font-size: 13px;
 }
 
+.student-details {
+  margin-top: 12px;
+}
+
+.student-details summary {
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--green-dark);
+}
+
+.student-details .table {
+  margin-top: 8px;
+}
+
 .activity-details {
   margin-top: 16px;
 }

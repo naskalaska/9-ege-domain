@@ -17,6 +17,7 @@ const state = {
   liveResults: [],
   currentActivity: null,
   currentMiniGame: null,
+  teacherStatsTimer: null,
 };
 
 const fallbackTeacherCode = "T-DDC378";
@@ -346,6 +347,7 @@ function setShellMode(mode = "app") {
 }
 
 function navigate(path) {
+  stopTeacherStatsRefresh();
   history.pushState(null, "", path);
   restoreSession();
   sendHeartbeat();
@@ -470,6 +472,11 @@ async function copyTextToClipboard(text) {
 function renderTopActions() {
   setShellMode("app");
   topActions.innerHTML = "";
+  const home = document.createElement("button");
+  home.className = "ghost-button";
+  home.textContent = "На главную";
+  home.addEventListener("click", () => navigate("/"));
+  topActions.append(home);
   if (!state.user) return;
   if (state.currentActivity) {
     const catalog = document.createElement("button");
@@ -490,6 +497,7 @@ function renderTopActions() {
   logout.className = "ghost-button";
   logout.textContent = "Выйти";
   logout.addEventListener("click", async () => {
+    stopTeacherStatsRefresh();
     await api("/api/logout", { method: "POST", body: "{}" }).catch(() => null);
     localStorage.removeItem("ege_token");
     state.token = null;
@@ -507,10 +515,17 @@ function renderTopActions() {
   topActions.append(logout);
 }
 
+function stopTeacherStatsRefresh() {
+  if (state.teacherStatsTimer) {
+    clearInterval(state.teacherStatsTimer);
+    state.teacherStatsTimer = null;
+  }
+}
+
 function renderPublicTopActions(active = "") {
   setShellMode("public");
   topActions.innerHTML = `
-    <button class="ghost-button public-nav-link" data-route="/" type="button">Главная</button>
+    <button class="ghost-button public-nav-link" data-route="/" type="button">На главную</button>
     <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажёры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
@@ -571,6 +586,7 @@ function renderLogin() {
       <label>
         Email
         <input name="email" type="email" autocomplete="email" required />
+        <span class="muted">Для регистрации нужна почта в доменной зоне .ru.</span>
       </label>
       <label>
         Пароль
@@ -588,9 +604,10 @@ function renderLogin() {
     <label class="consent-check">
       <input name="consent_accepted" type="checkbox" required />
       <span>
-      <a href="/privacy">Политика обработки персональных данных</a>
-      <a href="/consent">Согласие на обработку персональных данных</a>
-      <a href="/terms">Пользовательское соглашение</a>
+        Регистрируясь на сайте, я подтверждаю согласие с
+        <a href="/privacy">Политикой обработки персональных данных</a>,
+        <a href="/consent">Согласием на обработку персональных данных</a> и
+        <a href="/terms">Пользовательским соглашением</a>.
       </span>
     </label>
   `);
@@ -644,8 +661,13 @@ function renderLogin() {
     const form = new FormData(event.currentTarget);
     const error = document.querySelector("#registerError");
     const role = String(form.get("role") || "student");
+    const email = String(form.get("email") || "").trim();
     let teacherCode = String(form.get("teacher_code") || "").trim();
     error.textContent = "";
+    if (!isRuEmail(email)) {
+      error.textContent = "Регистрация доступна только с email в доменной зоне .ru.";
+      return;
+    }
     if (role === "student" && !teacherCode) {
       const ok = confirm("Вы уверены, что вам не нужен код учителя? Ваш педагог не сможет отслеживать прогресс.");
       if (!ok) return;
@@ -656,7 +678,7 @@ function renderLogin() {
         method: "POST",
         body: JSON.stringify({
           display_name: form.get("display_name"),
-          email: form.get("email"),
+          email,
           password: form.get("password"),
           role,
           teacher_code: teacherCode,
@@ -1217,6 +1239,12 @@ function looksLikeEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
 
+function isRuEmail(value) {
+  const email = String(value || "").trim().toLowerCase();
+  if (!looksLikeEmail(email)) return false;
+  return email.split("@").pop().replace(/\.+$/, "").endsWith(".ru");
+}
+
 function paymentProductBySlug(slug) {
   return [...shopProducts, ...supportProducts].find((product) => product.slug === slug);
 }
@@ -1559,6 +1587,7 @@ async function restoreSession() {
 
 function renderDashboard() {
   renderTopActions();
+  stopTeacherStatsRefresh();
   if (state.user.role === "admin") {
     renderAdminDashboard();
     return;
@@ -2401,6 +2430,27 @@ function renderTeacherStudentCards(students) {
     const errorBank = student.error_bank.length
       ? student.error_bank.slice(0, 6).map((item) => `<li>${item.correct_spelling || item.word}</li>`).join("")
       : "<li>копилка пуста</li>";
+    const categoryRows = (student.category_stats || []).length
+      ? student.category_stats.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.category || "")}</td>
+          <td>${row.total}</td>
+          <td>${pct(row.correct, row.total)}</td>
+        </tr>
+      `).join("")
+      : `<tr><td colspan="3">Пока нет решённых заданий.</td></tr>`;
+    const recentRows = (student.recent_attempts || []).length
+      ? student.recent_attempts.map((row) => `
+        <tr>
+          <td>${new Date(row.created_at).toLocaleString()}</td>
+          <td>${escapeHtml(row.category || "")}</td>
+          <td>${escapeHtml(row.rule_name || "")}</td>
+          <td>${escapeHtml(row.prompt || "")}</td>
+          <td>${escapeHtml(row.given_answer || "—")} / ${escapeHtml(row.correct_answer || "")}</td>
+          <td>${row.is_correct ? "да" : "нет"}</td>
+        </tr>
+      `).join("")
+      : `<tr><td colspan="6">Пока нет попыток.</td></tr>`;
     return `
       <article class="student-card">
         <div class="student-card-head">
@@ -2421,6 +2471,13 @@ function renderTeacherStudentCards(students) {
           <div><h4>Не отработано</h4><ul>${pending}</ul></div>
           <div><h4>Копилка</h4><ul>${errorBank}</ul></div>
         </div>
+        <details class="student-details">
+          <summary>Подробно по ученику</summary>
+          <div class="table-head"><h4>Группы этого ученика</h4></div>
+          <table class="table"><tr><th>Группа</th><th>Ответов</th><th>Точность</th></tr>${categoryRows}</table>
+          <div class="table-head"><h4>Последние ответы этого ученика</h4></div>
+          <table class="table"><tr><th>Дата</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th><th>Верно</th></tr>${recentRows}</table>
+        </details>
       </article>
     `;
   }).join("");
@@ -2435,15 +2492,33 @@ async function renderTeacherDashboardPreview() {
   panel.id = "teacherQuickPanel";
   panel.innerHTML = `<p class="muted">Загружаю быструю статистику...</p>`;
   main.insertBefore(panel, document.querySelector("#setupView"));
+  await refreshTeacherDashboardPreview(panel);
+  state.teacherStatsTimer = setInterval(() => {
+    const currentPanel = document.querySelector("#teacherQuickPanel");
+    if (!currentPanel || state.user?.role !== "teacher") {
+      stopTeacherStatsRefresh();
+      return;
+    }
+    refreshTeacherDashboardPreview(currentPanel, true);
+  }, 30000);
+}
+
+async function refreshTeacherDashboardPreview(panel, silent = false) {
+  if (!silent) {
+    panel.innerHTML = `<p class="muted">Загружаю быструю статистику...</p>`;
+  }
   try {
     const data = await api("/api/progress");
+    const updatedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     panel.innerHTML = `
       <div class="section-head">
         <div>
           <p class="eyebrow">быстрая статистика</p>
           <h3>Ученики и зоны отработки</h3>
+          <span class="muted">Обновлено: ${updatedAt}</span>
         </div>
         <div class="button-row">
+          <button class="secondary-button" id="refreshTeacherStats" type="button">Обновить</button>
           <button class="secondary-button" id="makeTestButton" type="button">Составить тест</button>
           <button class="secondary-button" id="downloadStudents" type="button">Скачать статистику</button>
           <button class="secondary-button" id="openFullProgress" type="button">Полная активность</button>
@@ -2454,6 +2529,7 @@ async function renderTeacherDashboardPreview() {
     panel.querySelector("#openFullProgress").addEventListener("click", showProgress);
     panel.querySelector("#makeTestButton").addEventListener("click", showTestComposer);
     panel.querySelector("#downloadStudents").addEventListener("click", () => downloadRequest("/api/progress/export?section=students", "ege_students.csv"));
+    panel.querySelector("#refreshTeacherStats").addEventListener("click", () => refreshTeacherDashboardPreview(panel));
   } catch (err) {
     panel.innerHTML = `<p class="error">${err.message}</p>`;
   }

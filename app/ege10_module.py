@@ -224,6 +224,16 @@ def make_teacher_code() -> str:
     return f"T-{secrets.token_hex(3).upper()}"
 
 
+def validate_registration_username(username: str) -> None:
+    if "@" not in username:
+        return
+    if username.count("@") != 1:
+        raise ValueError("Email должен содержать @.")
+    domain = username.rsplit("@", 1)[1].strip().lower().strip(".")
+    if not domain.endswith(".ru"):
+        raise ValueError("Регистрация доступна только с email в доменной зоне .ru.")
+
+
 def register_user(payload: dict[str, Any]) -> dict[str, Any]:
     username = str(payload.get("username") or "").strip()
     password = str(payload.get("password") or "")
@@ -235,6 +245,7 @@ def register_user(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Неизвестная роль.")
     if len(username) < 3:
         raise ValueError("Логин должен быть не короче 3 символов.")
+    validate_registration_username(username)
     if len(password) < 6:
         raise ValueError("Пароль должен быть не короче 6 символов.")
     if role == "student" and not teacher_code:
