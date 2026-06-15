@@ -604,6 +604,23 @@ button {
   line-height: 1.25;
 }
 
+.task-prompt {
+  line-height: 1.55;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.paronym-question .word-prompt {
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.paronym-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .choice-row {
   display: flex;
   flex-wrap: wrap;
@@ -1038,6 +1055,17 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+.activity-group {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.activity-group h3 {
+  margin: 0;
+  font-size: 18px;
 }
 
 .activity-card {

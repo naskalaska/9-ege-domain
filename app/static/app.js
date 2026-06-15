@@ -23,6 +23,12 @@ const state = {
 const fallbackTeacherCode = "T-DDC378";
 
 const activityMeta = {
+  ege5: {
+    title: "ЕГЭ. Задание 5: паронимы",
+    shortTitle: "Задание 5",
+    description: "Паронимы: выбор слова, формат ЕГЭ и верно/неверно.",
+    mark: "5",
+  },
   ege9: {
     title: "ЕГЭ. Задание 9",
     shortTitle: "Задание 9",
@@ -40,6 +46,12 @@ const activityMeta = {
     shortTitle: "Задание 11",
     description: "Правописание суффиксов слов разных частей речи.",
     mark: "11",
+  },
+  ege12: {
+    title: "ЕГЭ. Задание 12",
+    shortTitle: "Задание 12",
+    description: "Личные окончания глаголов и суффиксы причастий.",
+    mark: "12",
   },
   "html-games": {
     title: "Игры",
@@ -263,6 +275,33 @@ const modes = {
     eyebrow: "личное повторение",
   },
 };
+
+const paronymModes = {
+  paronym_choice: {
+    title: "Подставь слово",
+    hint: "Выберите пароним на место пропуска",
+    eyebrow: "паронимы",
+  },
+  paronym_exam: {
+    title: "Формат ЕГЭ",
+    hint: "5 предложений: найдите ошибку и исправьте слово",
+    eyebrow: "задание 5",
+  },
+  paronym_tf: {
+    title: "Верно/неверно",
+    hint: "Одна строка: оцените употребление паронима",
+    eyebrow: "быстрая проверка",
+  },
+  errors: {
+    title: "Копилка ошибок",
+    hint: "Повторение групп паронимов в режиме верно/неверно",
+    eyebrow: "личное повторение",
+  },
+};
+
+function activityModes() {
+  return state.currentActivity === "ege5" ? paronymModes : modes;
+}
 
 const view = document.querySelector("#view");
 const topActions = document.querySelector("#topActions");
@@ -1464,7 +1503,7 @@ async function loadActivity(slug, updateUrl = true) {
   }
   state.currentActivity = slug;
   state.bootstrap = await api(`/api/apps/${slug}/bootstrap`);
-  state.mode = "rule";
+  state.mode = slug === "ege5" ? "paronym_choice" : "rule";
   state.selectedCategory = null;
   state.selectedCategories = [];
   state.selectedRuleIds = [];
@@ -1478,9 +1517,11 @@ async function loadActivity(slug, updateUrl = true) {
 
 function activityFromPath() {
   const path = window.location.pathname;
+  if (path === "/apps/ege5") return "ege5";
   if (path === "/apps/ege9") return "ege9";
   if (path === "/apps/ege10") return "ege10";
   if (path === "/apps/ege11") return "ege11";
+  if (path === "/apps/ege12") return "ege12";
   if (path === "/apps/mini" || path.startsWith("/apps/mini/")) return "html-games";
   return null;
 }
@@ -1611,7 +1652,7 @@ function renderDashboard() {
 function renderCatalog() {
   renderTopActions();
   const activities = state.bootstrap.activities || Object.entries(activityMeta).map(([slug, meta]) => ({ slug, ...meta }));
-  const cards = activities.map((activity) => {
+  const cardFor = (activity) => {
     const meta = activityMeta[activity.slug] || activity;
     return `
       <article class="activity-card">
@@ -1626,7 +1667,21 @@ function renderCatalog() {
         </button>
       </article>
     `;
-  }).join("");
+  };
+  const groupedActivities = activities.reduce((groups, activity) => {
+    const group = activity.group || (activity.kind === "mini" ? "Орфография" : "Орфография");
+    (groups[group] ||= []).push(activity);
+    return groups;
+  }, {});
+  const groupOrder = ["Орфография", "орфоэпия, грамматика, речь"];
+  const groupsHtml = [...groupOrder, ...Object.keys(groupedActivities).filter((group) => !groupOrder.includes(group))]
+    .filter((group) => groupedActivities[group]?.length)
+    .map((group) => `
+      <section class="activity-group">
+        <h3>${escapeHtml(group)}</h3>
+        <div class="activity-grid">${groupedActivities[group].map(cardFor).join("")}</div>
+      </section>
+    `).join("");
   view.innerHTML = `
     <section class="catalog-page">
       <div class="catalog-head">
@@ -1639,7 +1694,7 @@ function renderCatalog() {
           <span class="muted">${state.user.role}</span>
         </div>
       </div>
-      <div class="activity-grid">${cards}</div>
+      ${groupsHtml}
       ${state.user.role === "teacher" ? `<div class="catalog-actions"><button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button></div>` : ""}
     </section>
   `;
@@ -1979,7 +2034,7 @@ function renderSidebar() {
   `;
   const list = document.querySelector("#modeList");
   list.innerHTML = "";
-  Object.entries(modes).forEach(([modeId, mode]) => {
+  Object.entries(activityModes()).forEach(([modeId, mode]) => {
     const button = document.createElement("button");
     button.className = `mode-button ${state.mode === modeId ? "active" : ""}`;
     button.innerHTML = `<b>${mode.title}</b><span>${mode.hint}</span>`;
@@ -1993,13 +2048,14 @@ function renderSidebar() {
     list.append(button);
   });
   document.querySelector("#quickStats").innerHTML = `
-    <div class="stat"><b>${state.bootstrap.word_count}</b><span>слов в базе</span></div>
-    <div class="stat"><b>${Object.values(state.bootstrap.rules).flat().length}</b><span>подправила</span></div>
+    <div class="stat"><b>${state.bootstrap.word_count}</b><span>${state.currentActivity === "ege5" ? "строк в базе" : "слов в базе"}</span></div>
+    <div class="stat"><b>${Object.values(state.bootstrap.rules).flat().length}</b><span>${state.currentActivity === "ege5" ? "групп паронимов" : "подправила"}</span></div>
   `;
 }
 
 function renderMode() {
-  const mode = modes[state.mode];
+  const mode = activityModes()[state.mode] || Object.values(activityModes())[0];
+  if (!activityModes()[state.mode]) state.mode = Object.keys(activityModes())[0];
   document.querySelector("#modeEyebrow").textContent = mode.eyebrow;
   document.querySelector("#modeTitle").textContent = mode.title;
   document.querySelector("#practiceView").classList.add("hidden");
@@ -2016,8 +2072,8 @@ function backToMenu() {
 
 function renderSetup() {
   const setup = document.querySelector("#setupView");
-  const ruleSelector = ["rule", "word_letter"].includes(state.mode) ? renderRuleSelector() : "";
-  const errorModeSelector = state.mode === "errors" ? `
+  const ruleSelector = ["rule", "word_letter", "paronym_choice"].includes(state.mode) ? renderRuleSelector() : "";
+  const errorModeSelector = state.mode === "errors" && state.currentActivity !== "ege5" ? `
     <label>
       Режим в копилке
       <select id="errorTrainingMode">
@@ -2035,10 +2091,10 @@ function renderSetup() {
       <button class="primary-button" id="startPractice" type="button">Начать</button>
     </div>
     ${errorModeSelector}
-    <label class="manual-toggle">
+    ${state.currentActivity === "ege5" ? "" : `<label class="manual-toggle">
       <input id="manualInput" type="checkbox" ${state.manualInput || state.mode === "word_letter" ? "checked" : ""} ${state.mode === "word_letter" ? "disabled" : ""} />
       <span>Самостоятельно вводить ответ с клавиатуры</span>
-    </label>
+    </label>`}
     <div class="practice-actions setup-actions">
       <button class="ghost-button" id="backToMenu" type="button">Назад к меню</button>
     </div>
@@ -2049,7 +2105,7 @@ function renderSetup() {
     state.questionCount = Number(event.target.value);
     setup.querySelector("#questionCountValue").textContent = state.questionCount;
   });
-  setup.querySelector("#manualInput").addEventListener("change", (event) => {
+  setup.querySelector("#manualInput")?.addEventListener("change", (event) => {
     state.manualInput = event.target.checked;
   });
   setup.querySelector("#errorTrainingMode")?.addEventListener("change", (event) => {
@@ -2155,7 +2211,7 @@ async function startPractice() {
   const count = state.questionCount;
   const payload = { mode: state.mode, count };
   if (state.mode === "errors") payload.error_training_mode = state.errorTrainingMode;
-  if (["rule", "word_letter"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
+  if (["rule", "word_letter", "paronym_choice"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
   const setup = document.querySelector("#setupView");
   try {
     const data = await api(activityApi("/practice/start"), {
@@ -2168,7 +2224,7 @@ async function startPractice() {
     state.currentQuestionIndex = 0;
     state.startedAt = Date.now();
     setup.innerHTML = "";
-    if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter")) {
+    if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter" && state.currentActivity !== "ege5")) {
       renderLiveQuestion();
     } else {
       renderQuestions();
@@ -2286,6 +2342,32 @@ function renderQuestions() {
         : normalizeLetter(input.value);
     });
   });
+  practice.querySelectorAll("[data-paronym-exam-row]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const current = state.answers[button.dataset.questionId] || {};
+      state.answers[button.dataset.questionId] = { ...current, row: button.dataset.paronymExamRow };
+      renderQuestions();
+    });
+  });
+  practice.querySelectorAll("[data-paronym-exam-word]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const current = state.answers[input.dataset.questionId] || {};
+      state.answers[input.dataset.questionId] = { ...current, word: input.value };
+    });
+  });
+  practice.querySelectorAll("[data-paronym-tf]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const current = state.answers[button.dataset.questionId] || {};
+      state.answers[button.dataset.questionId] = { ...current, verdict: button.dataset.paronymTf };
+      renderQuestions();
+    });
+  });
+  practice.querySelectorAll("[data-paronym-tf-word]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const current = state.answers[input.dataset.questionId] || {};
+      state.answers[input.dataset.questionId] = { ...current, word: input.value };
+    });
+  });
   practice.querySelectorAll("[data-answer]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.multi === "true") {
@@ -2305,6 +2387,50 @@ function renderQuestions() {
 }
 
 function renderQuestion(question, index) {
+  if (question.kind === "paronym_exam") {
+    const current = state.answers[question.question_id] || {};
+    return `
+      <article class="question paronym-question">
+        <div class="question-head"><span>Вопрос ${index + 1}</span><span>Формат ЕГЭ</span></div>
+        <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+        <div class="paronym-lines">
+          ${question.rows.map((row, rowIndex) => {
+            const answer = String(rowIndex + 1);
+            const selected = current.row === answer;
+            return `
+              <button class="line-row ${selected ? "selected" : ""}" data-paronym-exam-row="${answer}" data-question-id="${question.question_id}" type="button">
+                <b>${answer}</b>
+                <span>${escapeHtml(row.sentence)}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <label class="answer-input-label">
+          Исправленный пароним
+          <input data-paronym-exam-word data-question-id="${question.question_id}" autocomplete="off" value="${escapeHtml(current.word || "")}" />
+        </label>
+      </article>
+    `;
+  }
+  if (question.kind === "paronym_tf") {
+    const current = state.answers[question.question_id] || {};
+    return `
+      <article class="question paronym-question">
+        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div class="word-prompt">${escapeHtml(question.prompt)}</div>
+        <div class="choice-row">
+          <button class="choice ${current.verdict === "true" ? "selected" : ""}" data-paronym-tf="true" data-question-id="${question.question_id}" type="button">верно</button>
+          <button class="choice ${current.verdict === "false" ? "selected" : ""}" data-paronym-tf="false" data-question-id="${question.question_id}" type="button">неверно</button>
+        </div>
+        ${current.verdict === "false" ? `
+          <label class="answer-input-label">
+            Какой пароним нужен?
+            <input data-paronym-tf-word data-question-id="${question.question_id}" autocomplete="off" value="${escapeHtml(current.word || "")}" />
+          </label>
+        ` : ""}
+      </article>
+    `;
+  }
   if (question.kind === "line") {
     if (state.manualInput) {
       return `
@@ -2347,9 +2473,18 @@ function renderQuestion(question, index) {
   const choices = question.choices
     .map((choice) => {
       const selected = state.answers[question.question_id] === choice;
-      return `<button class="choice ${selected ? "selected" : ""}" data-question-id="${question.question_id}" data-answer="${choice}" type="button">${choice}</button>`;
+      return `<button class="choice ${selected ? "selected" : ""}" data-question-id="${question.question_id}" data-answer="${escapeHtml(choice)}" type="button">${escapeHtml(choice)}</button>`;
     })
     .join("");
+  if (question.kind === "paronym_choice") {
+    return `
+      <article class="question paronym-question">
+        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div class="word-prompt">${escapeHtml(question.prompt)}</div>
+        <div class="choice-row">${choices}</div>
+      </article>
+    `;
+  }
   if (state.manualInput) {
     return `
       <article class="question">
@@ -2371,10 +2506,21 @@ function renderQuestion(question, index) {
   `;
 }
 
+function answerIsComplete(question) {
+  const answer = state.answers[question.question_id];
+  if (question.kind === "paronym_exam") {
+    return Boolean(answer?.row && String(answer?.word || "").trim());
+  }
+  if (question.kind === "paronym_tf") {
+    return answer?.verdict === "true" || (answer?.verdict === "false" && String(answer?.word || "").trim());
+  }
+  return Boolean(String(answer || "").trim());
+}
+
 async function submitPractice() {
   const total = state.currentSession.questions.length;
-  const answered = state.currentSession.questions.every((question) => String(state.answers[question.question_id] || "").trim());
-  if (Object.keys(state.answers).length < total || !answered) {
+  const answered = state.currentSession.questions.every(answerIsComplete);
+  if (!answered) {
     alert("Ответьте на все вопросы перед проверкой.");
     return;
   }
@@ -2698,7 +2844,7 @@ function adminStudentSummary(student) {
   const total = Number(student.attempts || 0);
   if (!total) return "Пока нет попыток.";
   const parts = (student.mode_summary || []).map((item) => {
-    const modeTitle = modes[item.mode]?.title || item.mode || "режим";
+    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || item.mode || "режим";
     return `${item.attempts} в режиме «${escapeHtml(modeTitle)}»`;
   });
   return `Решил ${parts.join(", ")}. Верных ответов: ${student.correct || 0} из ${total}.`;

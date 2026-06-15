@@ -15,6 +15,8 @@ import sqlite3
 import sys
 import ege10_module
 import ege11_module
+import ege12_module
+import ege5_module
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from http import HTTPStatus
@@ -138,6 +140,8 @@ ACTIVE_VISITOR_WINDOW_SEC = 300
 
 _ege10_scope_id_for = ege10_module.scope_id_for
 _ege11_scope_id_for = ege11_module.scope_id_for
+_ege12_scope_id_for = ege12_module.scope_id_for
+_ege5_scope_id_for = ege5_module.scope_id_for
 
 
 def ege10_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
@@ -148,16 +152,35 @@ def ege11_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str
     return f"ege11:{_ege11_scope_id_for(mode, rule_id, rule_ids)}"
 
 
+def ege12_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
+    return f"ege12:{_ege12_scope_id_for(mode, rule_id, rule_ids)}"
+
+
+def ege5_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
+    return _ege5_scope_id_for(mode, rule_id, rule_ids)
+
+
 ege10_module.scope_id_for = ege10_scope_id_for
 ege11_module.scope_id_for = ege11_scope_id_for
+ege12_module.scope_id_for = ege12_scope_id_for
+ege5_module.scope_id_for = ege5_scope_id_for
 
 ACTIVITIES = [
+    {
+        "slug": "ege5",
+        "title": "ЕГЭ. Задание 5: паронимы",
+        "description": "Паронимы: выбор слова, формат ЕГЭ и верно/неверно.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "орфоэпия, грамматика, речь",
+    },
     {
         "slug": "ege9",
         "title": "ЕГЭ. Задание 9",
         "description": "Орфография: корни, гласные, строки с общей буквой.",
         "button": "Открыть тренажёр",
         "kind": "module",
+        "group": "Орфография",
     },
     {
         "slug": "ege10",
@@ -165,6 +188,7 @@ ACTIVITIES = [
         "description": "Приставки, Ь/Ъ, И/Ы и другие орфограммы задания 10.",
         "button": "Открыть тренажёр",
         "kind": "module",
+        "group": "Орфография",
     },
     {
         "slug": "ege11",
@@ -172,6 +196,15 @@ ACTIVITIES = [
         "description": "Правописание суффиксов слов разных частей речи.",
         "button": "Открыть тренажёр",
         "kind": "module",
+        "group": "Орфография",
+    },
+    {
+        "slug": "ege12",
+        "title": "ЕГЭ. Задание 12",
+        "description": "Личные окончания глаголов и суффиксы причастий.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Орфография",
     },
     {
         "slug": "html-games",
@@ -179,6 +212,7 @@ ACTIVITIES = [
         "description": "Небольшие HTML-игры для тренировки орфографии.",
         "button": "Выбрать игру",
         "kind": "mini",
+        "group": "Орфография",
     },
 ]
 
@@ -1026,12 +1060,16 @@ def bootstrap_for(
 
 def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[str, Any]:
     user_id = user["user_id"] if user else None
+    if slug == "ege5":
+        return bootstrap_for(ege5_module.RULES, len(ege5_module.ROWS), user_id, ege5_module.GROUPS_BY_RULE, ege5_module.scope_id_for)
     if slug == "ege9":
         return bootstrap_for(RULES, len(WORDS), user_id, WORDS_BY_RULE, scope_id_for)
     if slug == "ege10":
         return bootstrap_for(ege10_module.RULES, len(ege10_module.WORDS), user_id, ege10_module.WORDS_BY_RULE, ege10_module.scope_id_for)
     if slug == "ege11":
         return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS), user_id, ege11_module.WORDS_BY_RULE, ege11_module.scope_id_for)
+    if slug == "ege12":
+        return bootstrap_for(ege12_module.RULES, len(ege12_module.WORDS), user_id, ege12_module.WORDS_BY_RULE, ege12_module.scope_id_for)
     if slug == "html-games":
         return {
             "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
@@ -1041,6 +1079,13 @@ def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[st
 
 
 def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    if slug == "ege5":
+        if action == "start":
+            return ege5_module.start_practice(user, payload)
+        if action == "submit":
+            return ege5_module.submit_practice(user, payload)
+        if action == "check":
+            return ege5_module.check_practice_answer(user, payload)
     if slug == "ege9":
         if action == "start":
             return start_practice(user, payload)
@@ -1062,6 +1107,13 @@ def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[st
             return ege11_module.submit_practice(user, payload)
         if action == "check":
             return ege11_module.check_practice_answer(user, payload)
+    if slug == "ege12":
+        if action == "start":
+            return ege12_module.start_practice(user, payload)
+        if action == "submit":
+            return ege12_module.submit_practice(user, payload)
+        if action == "check":
+            return ege12_module.check_practice_answer(user, payload)
     raise ValueError("Действие активности не найдено.")
 
 
@@ -1818,15 +1870,22 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
 
 def activity_title_from_scope(scope_id: str | None) -> str:
     scope = scope_id or ""
+    if scope.startswith("ege5:"):
+        return "ЕГЭ-5"
     if scope.startswith("ege10:"):
         return "ЕГЭ-10"
     if scope.startswith("ege11:"):
         return "ЕГЭ-11"
+    if scope.startswith("ege12:"):
+        return "ЕГЭ-12"
     return "ЕГЭ-9"
 
 
 def mode_title(mode: str | None) -> str:
     return {
+        "paronym_choice": "Подставь слово",
+        "paronym_exam": "Формат ЕГЭ",
+        "paronym_tf": "Верно/неверно",
         "rule": "Правило",
         "word_letter": "Слово - буква",
         "mix": "Микс",
@@ -2297,6 +2356,12 @@ def game_source_config(source: str) -> dict[str, Any]:
             "words_by_rule": ege11_module.WORDS_BY_RULE,
             "letter_choices": ege11_module.letter_choices,
         },
+        "ege12": {
+            "title": "ЕГЭ-12",
+            "rules": ege12_module.RULES,
+            "words_by_rule": ege12_module.WORDS_BY_RULE,
+            "letter_choices": ege12_module.letter_choices,
+        },
     }
     if source not in sources:
         raise ValueError("Источник заданий не найден.")
@@ -2405,7 +2470,7 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
 
 def game_sources_for_teacher() -> dict[str, Any]:
     sources = []
-    for source_id in ("ege9", "ege10", "ege11"):
+    for source_id in ("ege9", "ege10", "ege11", "ege12"):
         config = game_source_config(source_id)
         grouped: dict[str, list[dict[str, Any]]] = {}
         for rule in config["rules"]:
