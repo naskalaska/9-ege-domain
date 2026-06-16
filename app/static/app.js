@@ -332,6 +332,15 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function escapeWordList(words) {
+  return (words || []).map((word) => `<span>${escapeHtml(word)}</span>`).join("");
+}
+
+function safeRelativeUrl(value, fallback = "#") {
+  const url = String(value || "").trim();
+  return url.startsWith("/") && !url.startsWith("//") ? url : fallback;
+}
+
 function api(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
@@ -631,6 +640,10 @@ function renderLogin() {
         Пароль
         <input name="password" type="password" autocomplete="new-password" required />
       </label>
+      <label class="hidden" aria-hidden="true" tabindex="-1">
+        Сайт
+        <input name="website" autocomplete="off" tabindex="-1" />
+      </label>
       <label id="teacherCodeLabel">
         Код учителя
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
@@ -722,6 +735,7 @@ function renderLogin() {
           role,
           teacher_code: teacherCode,
           consent_accepted: form.get("consent_accepted") === "on",
+          website: form.get("website"),
         }),
       });
       state.token = data.token;
@@ -853,14 +867,14 @@ async function renderDocumentPage(type) {
     panel.innerHTML = `
       <div class="panel-head">
         <div>
-          <p class="eyebrow">версия ${documentData.version}</p>
-          <h2>${documentData.title}</h2>
+          <p class="eyebrow">версия ${escapeHtml(documentData.version)}</p>
+          <h2>${escapeHtml(documentData.title)}</h2>
         </div>
         <button class="secondary-button" id="backFromDocument" type="button">Назад</button>
       </div>
       <p class="muted">Дата редакции: ${new Date(documentData.updated_at).toLocaleDateString()}</p>
       <div class="document-content">
-        ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${line}</p>` : "").join("")}
+        ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${escapeHtml(line)}</p>` : "").join("")}
       </div>
       <p class="muted">Текст является шаблоном и должен быть заменен на финальный юридически выверенный текст перед запуском регистрации реальных пользователей.</p>
       ${legalLinks()}
@@ -874,7 +888,7 @@ async function renderDocumentPage(type) {
       }
     });
   } catch (err) {
-    panel.innerHTML = `<p class="error">${err.message}</p>`;
+    panel.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
   }
 }
 
@@ -1021,10 +1035,10 @@ function renderPublicGames() {
     <article class="mini-game-card public-game-card">
       <div>
         <p class="eyebrow">мини-игра</p>
-        <h3>${game.title}</h3>
-        <p>${game.description}</p>
+        <h3>${escapeHtml(game.title)}</h3>
+        <p>${escapeHtml(game.description)}</p>
       </div>
-      <a class="primary-button public-play-link" href="/games/${game.slug}/index.html">Играть</a>
+      <a class="primary-button public-play-link" href="${escapeHtml(safeRelativeUrl(`/games/${game.slug}/index.html`))}">Играть</a>
     </article>
   `).join("");
   const teacherBuilder = state.user?.role === "teacher" ? `
@@ -1656,14 +1670,14 @@ function renderCatalog() {
     const meta = activityMeta[activity.slug] || activity;
     return `
       <article class="activity-card">
-        <div class="activity-mark">${meta.mark || "A"}</div>
+        <div class="activity-mark">${escapeHtml(meta.mark || "A")}</div>
         <div>
           <p class="eyebrow">${activity.kind === "mini" ? "мини-приложение" : "учебный модуль"}</p>
-          <h2>${activity.title || meta.title}</h2>
-          <p>${activity.description || meta.description}</p>
+          <h2>${escapeHtml(activity.title || meta.title)}</h2>
+          <p>${escapeHtml(activity.description || meta.description)}</p>
         </div>
-        <button class="primary-button open-activity" data-activity="${activity.slug}" type="button">
-          ${activity.button || "Открыть"}
+        <button class="primary-button open-activity" data-activity="${escapeHtml(activity.slug)}" type="button">
+          ${escapeHtml(activity.button || "Открыть")}
         </button>
       </article>
     `;
@@ -1690,8 +1704,8 @@ function renderCatalog() {
           <h2>Выберите тренажёр</h2>
         </div>
         <div class="catalog-user">
-          <strong>${state.user.display_name}</strong>
-          <span class="muted">${state.user.role}</span>
+          <strong>${escapeHtml(state.user.display_name)}</strong>
+          <span class="muted">${escapeHtml(state.user.role)}</span>
         </div>
       </div>
       ${groupsHtml}
@@ -1716,10 +1730,10 @@ function renderMiniActivity() {
     <article class="mini-game-card">
       <div>
         <p class="eyebrow">мини-игра</p>
-        <h3>${game.title}</h3>
-        <p>${game.description}</p>
+        <h3>${escapeHtml(game.title)}</h3>
+        <p>${escapeHtml(game.description)}</p>
       </div>
-      <button class="primary-button open-mini-game" data-game="${game.slug}" type="button">${game.button}</button>
+      <button class="primary-button open-mini-game" data-game="${escapeHtml(game.slug)}" type="button">${escapeHtml(game.button)}</button>
     </article>
   `).join("");
   const teacherBuilder = !selectedGame && state.user.role === "teacher" ? `
@@ -1813,7 +1827,7 @@ function renderMiniActivity() {
       <div class="panel-head">
         <div>
           <p class="eyebrow">игры</p>
-          <h2>${selectedGame ? selectedGame.title : "Выберите игру"}</h2>
+          <h2>${selectedGame ? escapeHtml(selectedGame.title) : "Выберите игру"}</h2>
         </div>
         <div class="button-row">
           ${selectedGame ? `<button class="secondary-button" id="backToMiniMenu" type="button">К списку игр</button>` : ""}
@@ -1822,7 +1836,7 @@ function renderMiniActivity() {
         </div>
       </div>
       ${selectedGame
-        ? `<iframe class="mini-frame" title="${selectedGame.title}" src="${selectedGame.path}"></iframe>`
+        ? `<iframe class="mini-frame" title="${escapeHtml(selectedGame.title)}" src="${escapeHtml(safeRelativeUrl(selectedGame.path))}"></iframe>`
         : `<div class="mini-game-grid">${gameCards}</div>`}
       ${teacherBuilder}
     </section>
@@ -2024,11 +2038,11 @@ async function setupGameBuilder() {
 function renderSidebar() {
   const activity = activityMeta[state.currentActivity] || activityMeta.ege9;
   const teacherCode = state.user.role === "teacher" && state.user.teacher_code
-    ? `<span class="muted">Код для учеников: <b>${state.user.teacher_code}</b></span>`
+    ? `<span class="muted">Код для учеников: <b>${escapeHtml(state.user.teacher_code)}</b></span>`
     : "";
   document.querySelector("#userBlock").innerHTML = `
-    <span class="activity-badge">${activity.shortTitle}</span>
-    <strong>${state.user.display_name}</strong>
+    <span class="activity-badge">${escapeHtml(activity.shortTitle)}</span>
+    <strong>${escapeHtml(state.user.display_name)}</strong>
     <span class="muted">${state.user.role === "admin" ? "Кабинет администратора" : state.user.role === "teacher" ? "Кабинет учителя" : "Кабинет ученика"}</span>
     ${teacherCode}
   `;
@@ -2124,8 +2138,8 @@ function renderRuleSelector() {
       const solved = Number(progress.solved || 0);
       const total = Number(progress.total || state.bootstrap.rules[category].reduce((sum, rule) => sum + rule.count, 0));
       return `
-      <button class="category-pill ${activeCategories.has(category) ? "active" : ""}" data-category="${category}" type="button">
-        <span>${category}</span>
+      <button class="category-pill ${activeCategories.has(category) ? "active" : ""}" data-category="${escapeHtml(category)}" type="button">
+        <span>${escapeHtml(category)}</span>
         <b>${state.bootstrap.rules[category].reduce((sum, rule) => sum + rule.count, 0)}</b>
         <small>${solved}/${total} · ${pct(solved, total)}</small>
       </button>
@@ -2142,8 +2156,8 @@ function renderRuleSelector() {
   const ruleOptions = rules
     .map((rule) => `
       <label class="rule-check">
-        <input type="checkbox" data-rule-id="${rule.rule_id}" ${selected.has(rule.rule_id) ? "checked" : ""} />
-        <span>${rule.rule_name}</span>
+        <input type="checkbox" data-rule-id="${escapeHtml(rule.rule_id)}" ${selected.has(rule.rule_id) ? "checked" : ""} />
+        <span>${escapeHtml(rule.rule_name)}</span>
         <b>${rule.count}</b>
       </label>
     `)
@@ -2230,7 +2244,7 @@ async function startPractice() {
       renderQuestions();
     }
   } catch (err) {
-    setup.insertAdjacentHTML("beforeend", `<p class="error">${err.message}</p>`);
+    setup.insertAdjacentHTML("beforeend", `<p class="error">${escapeHtml(err.message)}</p>`);
   }
 }
 
@@ -2256,9 +2270,9 @@ function renderLiveQuestion(feedback = null) {
     <article class="question live-question">
       <div class="question-head">
         <span>Слово ${state.currentQuestionIndex + 1} из ${state.currentSession.questions.length}</span>
-        <span>${question.rule_name}</span>
+        <span>${escapeHtml(question.rule_name)}</span>
       </div>
-      <div class="word-prompt">${question.prompt}</div>
+      <div class="word-prompt">${escapeHtml(question.prompt)}</div>
       <div class="letter-input-row">
         <input id="liveAnswer" maxlength="1" autocomplete="off" inputmode="text" aria-label="Введите букву" />
         <button class="primary-button" id="checkLiveAnswer" type="button">Проверить</button>
@@ -2294,9 +2308,9 @@ function renderLiveQuestion(feedback = null) {
     }
     renderLiveQuestion(`
       <div class="result-item bad">
-        <b>Неверно. Правильно: ${item.correct_answer}</b>
-        <p>${item.correct_spelling || ""}</p>
-        <p class="muted">${item.explanation || ""}</p>
+        <b>Неверно. Правильно: ${escapeHtml(item.correct_answer)}</b>
+        <p>${escapeHtml(item.correct_spelling || "")}</p>
+        <p class="muted">${escapeHtml(item.explanation || "")}</p>
         <button class="secondary-button" id="nextAfterRule" type="button">Дальше</button>
       </div>
     `);
@@ -2435,17 +2449,17 @@ function renderQuestion(question, index) {
     if (state.manualInput) {
       return `
         <article class="question">
-          <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
-          <div>${question.prompt}</div>
+          <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+          <div>${escapeHtml(question.prompt)}</div>
           ${question.rows.map((row, rowIndex) => `
             <div class="line-row static-line-row">
               <b>${rowIndex + 1}</b>
-              <span class="line-words">${row.map((word) => `<span>${word}</span>`).join("")}</span>
+              <span class="line-words">${escapeWordList(row)}</span>
             </div>
           `).join("")}
           <label class="answer-input-label">
             Ответ вручную
-            <input data-manual-answer="${question.question_id}" data-kind="line" placeholder="например, 135" value="${state.answers[question.question_id] || ""}" />
+            <input data-manual-answer="${escapeHtml(question.question_id)}" data-kind="line" placeholder="например, 135" value="${escapeHtml(state.answers[question.question_id] || "")}" />
           </label>
         </article>
       `;
@@ -2457,15 +2471,15 @@ function renderQuestion(question, index) {
         return `
           <button class="line-row ${selected ? "selected" : ""}" data-multi="true" data-question-id="${question.question_id}" data-answer="${answer}" type="button">
             <b>${answer}</b>
-            <span class="line-words">${row.map((word) => `<span>${word}</span>`).join("")}</span>
+            <span class="line-words">${escapeWordList(row)}</span>
           </button>
         `;
       })
       .join("");
     return `
       <article class="question">
-        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
-        <div>${question.prompt}</div>
+        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div>${escapeHtml(question.prompt)}</div>
         ${rows}
       </article>
     `;
@@ -2488,19 +2502,19 @@ function renderQuestion(question, index) {
   if (state.manualInput) {
     return `
       <article class="question">
-        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
-        <div class="word-prompt">${question.prompt}</div>
+        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div class="word-prompt">${escapeHtml(question.prompt)}</div>
         <label class="answer-input-label">
           Введите букву
-          <input data-manual-answer="${question.question_id}" maxlength="1" autocomplete="off" value="${state.answers[question.question_id] || ""}" />
+          <input data-manual-answer="${escapeHtml(question.question_id)}" maxlength="1" autocomplete="off" value="${escapeHtml(state.answers[question.question_id] || "")}" />
         </label>
       </article>
     `;
   }
   return `
     <article class="question">
-      <div class="question-head"><span>Вопрос ${index + 1}</span><span>${question.rule_name}</span></div>
-      <div class="word-prompt">${question.prompt}</div>
+      <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+      <div class="word-prompt">${escapeHtml(question.prompt)}</div>
       <div class="choice-row">${choices}</div>
     </article>
   `;
@@ -2546,9 +2560,9 @@ function renderResults(data) {
       ${data.results.map((item, index) => `
         <div class="result-item ${item.is_correct ? "ok" : "bad"}">
           <b>${index + 1}. ${item.is_correct ? "Верно" : "Повторим еще"}</b>
-          <p>Ответ: ${item.given_answer || "—"} · правильно: ${item.correct_answer}</p>
-          <p>${item.correct_spelling || ""}</p>
-          ${item.is_correct ? "" : `<p class="muted">${item.explanation || ""}</p>`}
+          <p>Ответ: ${escapeHtml(item.given_answer || "—")} · правильно: ${escapeHtml(item.correct_answer)}</p>
+          <p>${escapeHtml(item.correct_spelling || "")}</p>
+          ${item.is_correct ? "" : `<p class="muted">${escapeHtml(item.explanation || "")}</p>`}
         </div>
       `).join("")}
     </div>
@@ -2568,13 +2582,13 @@ function renderTeacherStudentCards(students) {
   return students.map((student) => {
     const teacher = { consent_accepted: student.consent_accepted };
     const topErrors = student.top_errors.length
-      ? student.top_errors.map((item) => `<li>${item.rule_name}: ${item.errors}</li>`).join("")
+      ? student.top_errors.map((item) => `<li>${escapeHtml(item.rule_name)}: ${escapeHtml(item.errors)}</li>`).join("")
       : "<li>ошибок пока нет</li>";
     const pending = student.not_worked_out.length
-      ? student.not_worked_out.slice(0, 5).map((item) => `<li>${item.correct_spelling || item.word}</li>`).join("")
+      ? student.not_worked_out.slice(0, 5).map((item) => `<li>${escapeHtml(item.correct_spelling || item.word)}</li>`).join("")
       : "<li>очередь повторения пуста</li>";
     const errorBank = student.error_bank.length
-      ? student.error_bank.slice(0, 6).map((item) => `<li>${item.correct_spelling || item.word}</li>`).join("")
+      ? student.error_bank.slice(0, 6).map((item) => `<li>${escapeHtml(item.correct_spelling || item.word)}</li>`).join("")
       : "<li>копилка пуста</li>";
     const categoryRows = (student.category_stats || []).length
       ? student.category_stats.map((row) => `
@@ -2601,8 +2615,8 @@ function renderTeacherStudentCards(students) {
       <article class="student-card">
         <div class="student-card-head">
           <div>
-            <b>${student.display_name}</b>
-            <span class="muted">${student.email || student.username}</span>
+            <b>${escapeHtml(student.display_name)}</b>
+            <span class="muted">${escapeHtml(student.email || student.username)}</span>
           </div>
           <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>точность</span></div>
         </div>
@@ -2677,12 +2691,12 @@ async function refreshTeacherDashboardPreview(panel, silent = false) {
     panel.querySelector("#downloadStudents").addEventListener("click", () => downloadRequest("/api/progress/export?section=students", "ege_students.csv"));
     panel.querySelector("#refreshTeacherStats").addEventListener("click", () => refreshTeacherDashboardPreview(panel));
   } catch (err) {
-    panel.innerHTML = `<p class="error">${err.message}</p>`;
+    panel.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
   }
 }
 
 function downloadButton(section, label) {
-  return `<button class="ghost-button download-stat" data-section="${section}" type="button">${label}</button>`;
+  return `<button class="ghost-button download-stat" data-section="${escapeHtml(section)}" type="button">${escapeHtml(label)}</button>`;
 }
 
 async function showProgress() {
@@ -2691,31 +2705,31 @@ async function showProgress() {
   backdrop.className = "modal-backdrop";
   const summary = data.summary;
   const studentRows = data.by_student.map((row) => `
-    <tr><td>${row.display_name}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
+    <tr><td>${escapeHtml(row.display_name)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
   `).join("");
   const ruleRows = data.by_rule.map((row) => `
-    <tr><td>${row.category}</td><td>${row.rule_name}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
+    <tr><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.rule_name)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
   `).join("");
   const categoryRows = data.by_category.map((row) => `
-    <tr><td>${row.category}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
+    <tr><td>${escapeHtml(row.category)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
   `).join("");
   const answerListRows = (rows) => rows.slice(0, 30).map((row) => `
     <tr>
-      <td>${row.display_name}</td>
-      <td>${row.category || ""}</td>
-      <td>${row.rule_name || ""}</td>
-      <td>${row.prompt}</td>
-      <td>${row.given_answer || "—"} / ${row.correct_answer}</td>
+      <td>${escapeHtml(row.display_name)}</td>
+      <td>${escapeHtml(row.category || "")}</td>
+      <td>${escapeHtml(row.rule_name || "")}</td>
+      <td>${escapeHtml(row.prompt)}</td>
+      <td>${escapeHtml(row.given_answer || "—")} / ${escapeHtml(row.correct_answer)}</td>
     </tr>
   `).join("");
   const recentRows = data.recent.map((row) => `
     <tr>
       <td>${new Date(row.created_at).toLocaleString()}</td>
-      <td>${row.display_name}</td>
-      <td>${row.category || ""}</td>
-      <td>${row.rule_name || ""}</td>
-      <td>${row.prompt}</td>
-      <td>${row.given_answer} / ${row.correct_answer}</td>
+      <td>${escapeHtml(row.display_name)}</td>
+      <td>${escapeHtml(row.category || "")}</td>
+      <td>${escapeHtml(row.rule_name || "")}</td>
+      <td>${escapeHtml(row.prompt)}</td>
+      <td>${escapeHtml(row.given_answer)} / ${escapeHtml(row.correct_answer)}</td>
       <td>${row.is_correct ? "да" : "нет"}</td>
     </tr>
   `).join("");
@@ -2859,6 +2873,7 @@ function renderAdminContent(data, closeButton = "") {
   const gameStats = data.game_stats || {};
   const paidEntities = data.paid_entities || [];
   const receiptOrders = data.receipt_orders || [];
+  const suspiciousUsers = data.suspicious_users || [];
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
@@ -3000,6 +3015,16 @@ function renderAdminContent(data, closeButton = "") {
       <td>${escapeHtml(visit.path || "")}</td>
     </tr>
   `).join("") : `<tr><td colspan="4">Открытий игр пока нет</td></tr>`;
+  const suspiciousRows = suspiciousUsers.length ? suspiciousUsers.map((user) => `
+    <tr>
+      <td>${escapeHtml(user.display_name || "Без имени")}<br><span class="muted">${escapeHtml(user.role || "")}</span></td>
+      <td>${escapeHtml(user.email || user.username || "—")}</td>
+      <td>${formatAdminDate(user.created_at)}</td>
+      <td>
+        <button class="ghost-button delete-user" data-user-id="${escapeHtml(user.user_id)}" data-username="${escapeHtml(user.email || user.username || user.display_name || "пользователь")}" type="button">Удалить</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="4">Подозрительных пользователей не найдено</td></tr>`;
   const teacherCards = data.teachers.map((teacher) => {
     const teacherEmail = teacher.email || teacher.username;
     const students = teacher.students_list.length
@@ -3021,6 +3046,7 @@ function renderAdminContent(data, closeButton = "") {
             <button class="ghost-button reset-password" data-user-id="${escapeHtml(student.user_id)}" data-username="${escapeHtml(student.email || student.username)}" type="button">
               ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
+            <button class="ghost-button delete-user" data-user-id="${escapeHtml(student.user_id)}" data-username="${escapeHtml(student.email || student.username || student.display_name)}" type="button">Удалить</button>
           </td>
         </tr>
       `).join("")
@@ -3036,6 +3062,7 @@ function renderAdminContent(data, closeButton = "") {
             <button class="ghost-button reset-password" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail)}" type="button">
               ${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
             </button>
+            <button class="ghost-button delete-user" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail || teacher.display_name)}" type="button">Удалить</button>
           </div>
         </div>
         <div class="teacher-metrics">
@@ -3105,6 +3132,11 @@ function renderAdminContent(data, closeButton = "") {
       </table>
     </section>
     <section class="admin-section hidden" data-admin-panel="users">
+      <div class="table-head">
+        <h3>Подозрительные пользователи</h3>
+        <button class="ghost-button" id="deleteSuspiciousUsers" type="button" ${suspiciousUsers.length ? "" : "disabled"}>Удалить подозрительных</button>
+      </div>
+      <table class="table admin-table" id="suspiciousUsersTable"><tr><th>Имя</th><th>Email</th><th>Создан</th><th>Действие</th></tr>${suspiciousRows}</table>
       <div class="admin-list">${teacherCards}</div>
     </section>
     <section class="admin-section hidden" data-admin-panel="mail">
@@ -3139,7 +3171,7 @@ async function renderAdminDashboard() {
     panel.innerHTML = renderAdminContent(data);
     bindAdminActions(panel);
   } catch (err) {
-    panel.innerHTML = `<p class="error">${err.message}</p>`;
+    panel.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
   }
 }
 
@@ -3299,6 +3331,44 @@ function bindAdminActions(root) {
         button.disabled = false;
       }
     });
+  });
+  root.querySelectorAll(".delete-user").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!confirm(`Удалить пользователя ${button.dataset.username}? Будут удалены его попытки, прогресс, токены восстановления и согласия.`)) return;
+      button.disabled = true;
+      try {
+        await api("/api/admin/users/delete", {
+          method: "POST",
+          body: JSON.stringify({ user_id: button.dataset.userId }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
+      }
+    });
+  });
+  root.querySelector("#deleteSuspiciousUsers")?.addEventListener("click", async (event) => {
+    const rows = [...root.querySelectorAll("#suspiciousUsersTable tr")].slice(1);
+    const names = rows
+      .map((row) => row.children[1]?.textContent?.trim())
+      .filter(Boolean);
+    if (!names.length) return;
+    const preview = names.slice(0, 12).join("\n");
+    const suffix = names.length > 12 ? `\n...и ещё ${names.length - 12}` : "";
+    if (!confirm(`Будут удалены подозрительные пользователи:\n${preview}${suffix}\n\nПродолжить?`)) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await api("/api/admin/users/delete-suspicious", {
+        method: "POST",
+        body: JSON.stringify({ confirm: true }),
+      });
+      await reloadAdminPanel();
+    } catch (err) {
+      alert(err.message);
+      button.disabled = false;
+    }
   });
   root.querySelectorAll(".toggle-game-active").forEach((button) => {
     button.addEventListener("click", async () => {

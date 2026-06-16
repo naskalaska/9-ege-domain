@@ -9,6 +9,7 @@ import json
 import mimetypes
 import os
 import random
+import re
 import secrets
 import smtplib
 import sqlite3
@@ -137,6 +138,9 @@ SESSIONS: dict[str, dict[str, Any]] = {}
 PRACTICE_SESSIONS: dict[str, dict[str, Any]] = {}
 ACTIVE_VISITORS: dict[str, dict[str, Any]] = {}
 ACTIVE_VISITOR_WINDOW_SEC = 300
+REGISTRATION_ATTEMPTS: dict[str, list[datetime]] = {}
+REGISTRATION_LIMIT_WINDOW_SEC = 600
+REGISTRATION_LIMIT_PER_IP = 8
 
 _ege10_scope_id_for = ege10_module.scope_id_for
 _ege11_scope_id_for = ege11_module.scope_id_for
@@ -788,11 +792,19 @@ def normalize_email(value: Any) -> str:
 def validate_email(email: str) -> None:
     if not email:
         raise ValueError("Укажите email.")
+    if len(email) > 254:
+        raise ValueError("Email слишком длинный.")
+    if not re.fullmatch(r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+", email):
+        raise ValueError("Укажите корректный email.")
     if email.count("@") != 1:
-        raise ValueError("Email должен содержать @.")
+        raise ValueError("Укажите корректный email.")
     local, domain = email.rsplit("@", 1)
-    if not local or not domain or "." not in domain.strip("."):
-        raise ValueError("Укажите корректный email с доменной частью.")
+    if not local or len(local) > 64 or not domain or "." not in domain.strip("."):
+        raise ValueError("Укажите корректный email.")
+    if local.startswith(".") or local.endswith(".") or ".." in local:
+        raise ValueError("Укажите корректный email.")
+    if any(part.startswith("-") or part.endswith("-") for part in domain.split(".")):
+        raise ValueError("Укажите корректный email.")
 
 
 def validate_registration_email(email: str) -> None:
@@ -800,6 +812,53 @@ def validate_registration_email(email: str) -> None:
     domain = email.rsplit("@", 1)[1].strip(".")
     if not domain.endswith(".ru"):
         raise ValueError("Регистрация доступна только с email в доменной зоне .ru.")
+    local = email.rsplit("@", 1)[0]
+    if domain == "test.ru" or domain.endswith(".test.ru"):
+        raise ValueError("Для регистрации укажите настоящий email, тестовые адреса не принимаются.")
+    if re.fullmatch(r"(bot|test|xss|audit)[._-]?\d*", local) or local.startswith(("bot", "xss_test", "audit_test_ege")):
+        raise ValueError("Для регистрации укажите настоящий email, тестовые адреса не принимаются.")
+
+
+def normalize_display_name(value: Any, fallback: str) -> str:
+    display_name = re.sub(r"\s+", " ", str(value or fallback).strip())
+    if not display_name:
+        display_name = fallback
+    if len(display_name) < 2:
+        raise ValueError("Имя должно быть не короче 2 символов.")
+    if len(display_name) > 80:
+        raise ValueError("Имя должно быть не длиннее 80 символов.")
+    if any(char in display_name for char in "<>\"'`{}[];"):
+        raise ValueError("Имя содержит недопустимые символы. Можно использовать буквы, пробел, дефис, точку и подчёркивание.")
+    if not re.fullmatch(r"[A-Za-zА-Яа-яЁё0-9 ._-]+", display_name):
+        raise ValueError("Имя содержит недопустимые символы. Можно использовать буквы, пробел, дефис, точку и подчёркивание.")
+    return display_name
+
+
+def log_suspicious_registration(reason: str, email: str, ip_address: str, user_agent: str) -> None:
+    print(
+        f"[security] suspicious registration: reason={reason}; email={email[:120]}; ip={ip_address[:80]}; ua={user_agent[:160]}",
+        file=sys.stderr,
+    )
+
+
+def check_registration_honeypot(payload: dict[str, Any], email: str, ip_address: str, user_agent: str) -> None:
+    for field in ("website", "homepage", "company_url"):
+        if str(payload.get(field) or "").strip():
+            log_suspicious_registration(f"honeypot:{field}", email, ip_address, user_agent)
+            raise ValueError("Регистрацию не удалось завершить. Проверьте данные и попробуйте ещё раз.")
+
+
+def check_registration_rate_limit(ip_address: str, email: str, user_agent: str) -> None:
+    key = (ip_address or "unknown").strip()[:80]
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=REGISTRATION_LIMIT_WINDOW_SEC)
+    attempts = [item for item in REGISTRATION_ATTEMPTS.get(key, []) if item >= cutoff]
+    if len(attempts) >= REGISTRATION_LIMIT_PER_IP:
+        log_suspicious_registration("rate_limit", email, key, user_agent)
+        REGISTRATION_ATTEMPTS[key] = attempts
+        raise ValueError("Слишком много регистраций с этого адреса. Попробуйте позже.")
+    attempts.append(now)
+    REGISTRATION_ATTEMPTS[key] = attempts
 
 
 def ensure_fallback_teacher(con: sqlite3.Connection) -> None:
@@ -840,7 +899,9 @@ def register_user(payload: dict[str, Any], ip_address: str = "", user_agent: str
     email = normalize_email(payload.get("email"))
     username = email
     password = str(payload.get("password") or "")
-    display_name = str(payload.get("display_name") or username).strip()
+    check_registration_honeypot(payload, email, ip_address, user_agent)
+    check_registration_rate_limit(ip_address, email, user_agent)
+    display_name = normalize_display_name(payload.get("display_name"), username.rsplit("@", 1)[0] or username)
     role = str(payload.get("role") or "student").strip()
     teacher_code = str(payload.get("teacher_code") or "").strip().upper()
     consent_accepted = bool(payload.get("consent_accepted"))
@@ -2085,6 +2146,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         recent_game_visits = recent_game_visits_for_admin(con)
         paid_entities = paid_entities_for_admin(con)
         receipt_orders = receipt_orders_for_admin(con)
+        suspicious_users = suspicious_users_for_admin(con)
         total_games = len(created_games)
         active_games = sum(1 for item in created_games if item["is_active"] and not item.get("is_deleted"))
         visible_games = sum(1 for item in created_games if not item.get("is_deleted"))
@@ -2104,6 +2166,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         },
         "paid_entities": paid_entities,
         "receipt_orders": receipt_orders,
+        "suspicious_users": suspicious_users,
         "teachers": [
             {
                 **dict(row),
@@ -2114,6 +2177,67 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             for row in teachers
         ],
     }
+
+
+def suspicious_users_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = con.execute(
+        """
+        SELECT user_id, display_name, username, email, role, created_at
+        FROM users
+        WHERE role != 'admin'
+          AND (
+            LOWER(COALESCE(email, username, '')) LIKE 'bot%@test.ru'
+            OR LOWER(COALESCE(email, username, '')) IN ('xss_test@test.ru', 'audit_test_ege@test.ru')
+            OR LOWER(COALESCE(email, username, '')) LIKE '%<script%'
+            OR LOWER(COALESCE(username, '')) LIKE '%<script%'
+            OR LOWER(COALESCE(email, username, '')) LIKE '%@test.ru'
+          )
+        ORDER BY created_at DESC
+        LIMIT 200
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
+    con.execute("DELETE FROM attempts WHERE user_id = ?", (user_id,))
+    con.execute("DELETE FROM word_progress WHERE user_id = ?", (user_id,))
+    con.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+    con.execute("DELETE FROM user_consents WHERE user_id = ?", (user_id,))
+    con.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+
+
+def delete_user_for_admin(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    user_id = str(payload.get("user_id") or "").strip()
+    if not user_id or user_id == admin["user_id"]:
+        raise ValueError("Нельзя удалить этого пользователя.")
+    with db() as con:
+        row = con.execute("SELECT user_id, username, email, display_name, role FROM users WHERE user_id = ?", (user_id,)).fetchone()
+        if not row:
+            raise ValueError("Пользователь не найден.")
+        if row["role"] == "admin":
+            raise ValueError("Администраторов нельзя удалить через эту кнопку.")
+        delete_user_records(con, user_id)
+    for token, session in list(SESSIONS.items()):
+        if session.get("user", {}).get("user_id") == user_id:
+            SESSIONS.pop(token, None)
+    return {"ok": True, "deleted": [dict(row)]}
+
+
+def delete_suspicious_users_for_admin(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    if payload.get("confirm") is not True:
+        raise ValueError("Подтвердите удаление подозрительных пользователей.")
+    with db() as con:
+        rows = suspicious_users_for_admin(con)
+        for row in rows:
+            delete_user_records(con, row["user_id"])
+    deleted_ids = {row["user_id"] for row in rows}
+    for token, session in list(SESSIONS.items()):
+        if session.get("user", {}).get("user_id") in deleted_ids:
+            SESSIONS.pop(token, None)
+    return {"ok": True, "deleted": rows, "count": len(rows)}
 
 
 def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -2382,7 +2506,8 @@ def make_game_public_id(con: sqlite3.Connection) -> str:
 
 
 def clean_game_string(value: Any, limit: int = GAME_SET_MAX_STRING) -> str:
-    text = str(value or "").strip()
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", str(value or "").strip())
+    text = text.replace("</script", "<\\/script")
     return text[:limit]
 
 
@@ -3837,6 +3962,10 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": str(error), "smtp": smtp_debug_info()}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/admin/reset-password":
                 self.send_json(reset_user_password(self.require_user(), payload))
+            elif parsed.path == "/api/admin/users/delete":
+                self.send_json(delete_user_for_admin(self.require_user(), payload))
+            elif parsed.path == "/api/admin/users/delete-suspicious":
+                self.send_json(delete_suspicious_users_for_admin(self.require_user(), payload))
             elif parsed.path == "/api/admin/delivery-url":
                 self.send_json(update_paid_entity_delivery(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/mark-receipt-sent":
