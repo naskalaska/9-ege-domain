@@ -2917,6 +2917,17 @@ def test_words_for_payload(user: dict[str, Any], payload: dict[str, Any], count:
 
 def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[bytes, str, str]:
     require_teacher(user)
+    activity = str(payload.get("activity") or "ege9")
+    if activity == "ege10":
+        return ege10_module.build_test_file(user, payload)
+    if activity == "ege11":
+        return ege11_module.build_test_file(user, payload)
+    if activity == "ege12":
+        return ege12_module.build_test_file(user, payload)
+    if activity == "ege5":
+        return build_ege5_test_file(user, payload)
+    if activity != "ege9":
+        raise ValueError("Для этого раздела составление теста недоступно.")
     count = max(1, min(int(payload.get("count") or 10), 60))
     mode = str(payload.get("mode") or "rule")
     lines = [f"Тест: {now_iso()}", ""]
@@ -2937,6 +2948,84 @@ def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[byte
             lines.append(f"{index}. {word['variant']}")
             answers.append(f"{index}. {word['correct_letter']} — {word['correct_spelling']} ({word['rule_name']})")
         filename = "ege_test.txt"
+    body = "\n".join(lines + ["", ""] + answers) + "\n"
+    return body.encode("utf-8"), filename, "text/plain; charset=utf-8"
+
+
+def ege5_teacher_error_rows(teacher_id: str) -> list[dict[str, Any]]:
+    with db() as con:
+        rows = con.execute(
+            """
+            SELECT wp.word_id
+            FROM word_progress wp
+            JOIN users u ON u.user_id = wp.user_id
+            WHERE u.teacher_id = ? AND wp.scope_id = ? AND wp.due_reviews > 0
+            GROUP BY wp.word_id
+            ORDER BY MAX(wp.due_reviews) DESC, MAX(wp.error_count) DESC, MAX(wp.last_seen_at) DESC
+            """,
+            (teacher_id, ege5_module.scope_id_for("errors")),
+        ).fetchall()
+    pool: list[dict[str, Any]] = []
+    for row in rows:
+        group_rows = ege5_module.ROWS_BY_GROUP.get(row["word_id"], [])
+        if group_rows:
+            pool.append(random.choice(group_rows))
+    return pool
+
+
+def ege5_test_rows_for_payload(user: dict[str, Any], payload: dict[str, Any], count: int) -> tuple[str, list[dict[str, Any]]]:
+    mode = str(payload.get("mode") or "paronym_exam")
+    pool: list[dict[str, Any]] = []
+    if mode == "paronym_choice":
+        rule_ids = [str(rule_id) for rule_id in payload.get("rule_ids", []) if str(rule_id) in ege5_module.ROWS_BY_GROUP]
+        for rule_id in dict.fromkeys(rule_ids):
+            pool.extend(ege5_module.ROWS_BY_GROUP[rule_id])
+        title = "Тест по выбранным группам паронимов"
+    elif mode == "errors":
+        pool = ege5_teacher_error_rows(user["user_id"])
+        title = "Тест по копилке ошибок: паронимы"
+    elif mode == "paronym_exam":
+        pool = list(ege5_module.ERROR_ROWS)
+        title = "ЕГЭ. Задание 5: паронимы"
+    else:
+        raise ValueError("Для паронимов выберите режим: формат ЕГЭ, выбранные группы или копилка ошибок.")
+    if bool(payload.get("include_errors")) and mode != "errors":
+        seen = {row["id"] for row in pool}
+        pool.extend(row for row in ege5_teacher_error_rows(user["user_id"]) if row["id"] not in seen)
+    if not pool:
+        raise ValueError("Нет строк для составления теста.")
+    random.shuffle(pool)
+    return title, pool[: min(count, len(pool))]
+
+
+def build_ege5_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[bytes, str, str]:
+    count = max(1, min(int(payload.get("count") or 10), 60))
+    mode = str(payload.get("mode") or "paronym_exam")
+    lines = [f"ЕГЭ. Задание 5: {now_iso()}", ""]
+    answers = ["Ответы", ""]
+    if mode == "paronym_exam":
+        lines[0] = f"ЕГЭ. Задание 5: паронимы: {now_iso()}"
+        for index in range(1, count + 1):
+            question = ege5_module.make_exam_question()
+            lines.append(f"{index}. {question['prompt']}")
+            for row_index, row in enumerate(question["rows"], start=1):
+                lines.append(f"   {row_index}) {row['sentence']}")
+            correct_row, _, correct_word = str(question["_correct_answer"]).partition("|")
+            lines.append("")
+            answers.append(f"{index}. строка {correct_row}, правильно: {correct_word}")
+        filename = "ege5_paronyms_exam.txt"
+    else:
+        title, rows = ege5_test_rows_for_payload(user, payload, count)
+        lines[0] = f"{title}: {now_iso()}"
+        for index, row in enumerate(rows, start=1):
+            prompt = ege5_module.sentence_with_blank(row)
+            choices = ege5_module.choices_for(row)
+            lines.append(f"{index}. {prompt}")
+            if choices:
+                lines.append(f"   Варианты: {', '.join(choices)}")
+            lines.append("")
+            answers.append(f"{index}. {row['correct_word']} ({row['rule_name']})")
+        filename = "ege5_paronyms_test.txt"
     body = "\n".join(lines + ["", ""] + answers) + "\n"
     return body.encode("utf-8"), filename, "text/plain; charset=utf-8"
 

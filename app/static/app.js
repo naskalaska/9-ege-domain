@@ -448,9 +448,11 @@ async function downloadRequest(path, filename, options = {}) {
     throw new Error(data.error || "Ошибка скачивания");
   }
   const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const headerName = disposition.match(/filename="?([^"]+)"?/i)?.[1];
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = filename;
+  link.download = headerName || filename;
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -2892,20 +2894,31 @@ function showTestComposer() {
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   const ruleSelector = renderRuleSelector();
+  const isParonyms = state.currentActivity === "ege5";
+  const defaultMode = isParonyms ? "paronym_exam" : "line";
+  const modeOptions = isParonyms
+    ? `
+            <option value="paronym_exam">Формат ЕГЭ</option>
+            <option value="paronym_choice">Выбранные группы</option>
+            <option value="errors">Копилка ошибок</option>
+      `
+    : `
+            <option value="line">Строки</option>
+            <option value="rule">Выбранные темы</option>
+            <option value="mix">Микс</option>
+            <option value="errors">Копилка ошибок</option>
+      `;
   backdrop.innerHTML = `
     <section class="progress-modal">
       <div class="panel-head">
-        <div><p class="eyebrow">тест</p><h2>Составить тест</h2></div>
+        <div><p class="eyebrow">тест</p><h2>Составить тест: ${escapeHtml(activityMeta[state.currentActivity]?.shortTitle || activityMeta[state.currentActivity]?.title || "тренажёр")}</h2></div>
         <button class="secondary-button" id="closeTestComposer" type="button">Закрыть</button>
       </div>
       <div class="setup-grid">
         <label>
           Режим
           <select id="testMode">
-            <option value="rule">Выбранные темы</option>
-            <option value="mix">Микс</option>
-            <option value="errors">Копилка ошибок</option>
-            <option value="line">Строки</option>
+            ${modeOptions}
           </select>
         </label>
         <label>
@@ -2931,9 +2944,11 @@ function showTestComposer() {
     refreshRules();
   };
   const refreshRules = () => {
-    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", backdrop.querySelector("#testMode").value !== "rule");
+    const mode = backdrop.querySelector("#testMode").value;
+    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice"));
   };
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
+  backdrop.querySelector("#testMode").value = defaultMode;
   backdrop.querySelector("#testMode").addEventListener("change", refreshRules);
   bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
   backdrop.querySelector("#downloadTest").addEventListener("click", async () => {
@@ -2943,6 +2958,7 @@ function showTestComposer() {
       await downloadRequest("/api/teacher/test", "ege_test.txt", {
         method: "POST",
         body: JSON.stringify({
+          activity: state.currentActivity,
           mode: backdrop.querySelector("#testMode").value,
           count: backdrop.querySelector("#testCount").value,
           include_errors: backdrop.querySelector("#testIncludeErrors").checked,
