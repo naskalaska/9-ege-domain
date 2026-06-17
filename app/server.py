@@ -91,6 +91,16 @@ SHOP_PRODUCTS = {
         "default_url": "https://disk.yandex.ru/d/o4evyJ1A1Flv4Q",
         "kind": "product",
     },
+    "paronyms-game": {
+        "id": "paronyms_game",
+        "title": "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
+        "short_title": "Паронимы",
+        "amount": "500.00",
+        "currency": "RUB",
+        "url_env": "PARONYMS_GAME_PRODUCT_URL",
+        "default_url": "",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -213,10 +223,10 @@ ACTIVITIES = [
     {
         "slug": "html-games",
         "title": "Игры",
-        "description": "Небольшие HTML-игры для тренировки орфографии.",
+        "description": "HTML-игры по русскому языку: орфография, пунктуация и культура речи.",
         "button": "Выбрать игру",
         "kind": "mini",
-        "group": "Орфография",
+        "group": "Игры",
     },
 ]
 
@@ -228,6 +238,7 @@ HTML_GAMES = {
     "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
+    "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
 }
 
 PUBLIC_GAMES = {
@@ -236,6 +247,7 @@ PUBLIC_GAMES = {
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
+    "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
 }
 
 GAME_SET_MAX_ITEMS = 200

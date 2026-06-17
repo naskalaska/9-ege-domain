@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Паронимы: подпиши картинки</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <div class="page-effect page-effect-left" aria-hidden="true"></div>
+    <div class="page-effect page-effect-right" aria-hidden="true"></div>
+    <div class="turn-effect" id="turnEffect" aria-hidden="true">
+      <span class="turn-feather turn-feather-one"></span>
+      <span class="turn-feather turn-feather-two"></span>
+      <span class="turn-feather turn-feather-three"></span>
+      <span class="turn-feather turn-feather-four"></span>
+      <span class="turn-feather turn-feather-five"></span>
+    </div>
+    <div class="success-burst" id="successBurst" aria-live="polite">
+      <span class="burst-dot burst-dot-one"></span>
+      <span class="burst-dot burst-dot-two"></span>
+      <span class="burst-dot burst-dot-three"></span>
+      <span class="burst-dot burst-dot-four"></span>
+      <span class="burst-dot burst-dot-five"></span>
+      <strong id="successText">Отлично!</strong>
+    </div>
+
+    <section class="start-screen" id="startScreen">
+      <div class="start-copy">
+        <p class="eyebrow">ЕГЭ. Задание 5</p>
+        <h1>Паронимы</h1>
+        <p class="lead">Соотнеси слово и изображение. Ошибочные группы вернутся позже.</p>
+      </div>
+
+      <div class="start-actions" role="group" aria-label="Режим игры">
+        <button class="mode-button selected" type="button" data-mode="fresh">
+          <span>Случайные 20 без повторов</span>
+        </button>
+        <button class="mode-button" type="button" data-mode="random">
+          <span>Случайные 20</span>
+        </button>
+        <button class="mode-button" type="button" data-mode="custom">
+          <span>Выбрать паронимы</span>
+        </button>
+      </div>
+
+      <div class="group-picker hidden" id="groupPicker">
+        <label class="search-label" for="groupSearch">Набор паронимов</label>
+        <input id="groupSearch" type="search" placeholder="Найти группу" autocomplete="off" />
+        <div class="picker-tools">
+          <span id="selectedCount">Выбрано: 0 из 20</span>
+          <button class="text-button" id="clearSelectionButton" type="button">Очистить</button>
+        </div>
+        <div class="letter-grid" id="letterGrid"></div>
+        <div class="group-list" id="groupList"></div>
+      </div>
+
+      <div class="button-row">
+        <button class="primary-button" id="startButton" type="button">Начать</button>
+        <button class="ghost-button" id="resetHistoryButton" type="button">Сбросить историю</button>
+      </div>
+
+      <p class="status-line" id="startStatus"></p>
+    </section>
+
+    <section class="play-screen hidden" id="playScreen" aria-live="polite">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Паронимы</p>
+          <h2 id="groupTitle">Группа</h2>
+        </div>
+        <div class="progress">
+          <span id="cardProgress">Карточка 1 из 20</span>
+          <span id="errorProgress">Ошибок: 0</span>
+          <span id="repeatProgress">На повторе: 0</span>
+        </div>
+      </header>
+
+      <div class="message" id="message"></div>
+      <div class="cards-grid" id="cardsGrid"></div>
+      <div class="words-row" id="wordsRow"></div>
+
+      <div class="button-row play-actions">
+        <button class="primary-button" id="checkButton" type="button">Проверить</button>
+        <button class="ghost-button" id="resetButton" type="button">Сбросить</button>
+        <button class="primary-button hidden" id="nextButton" type="button">Следующая карточка</button>
+      </div>
+    </section>
+
+    <section class="explanation-screen hidden" id="explanationScreen">
+      <div class="topbar explanation-top">
+        <div>
+          <p class="eyebrow">Разбор</p>
+          <h2 id="explanationTitle">Посмотри различие</h2>
+        </div>
+        <button class="primary-button" id="explanationNextButton" type="button">Следующая карточка</button>
+      </div>
+      <img id="explanationImage" alt="Карточка с объяснением" />
+    </section>
+
+    <section class="finish-screen hidden" id="finishScreen">
+      <p class="eyebrow">Готово</p>
+      <h2>Все группы решены верно</h2>
+      <div class="finish-stats">
+        <span id="finishGroups">Групп: 20</span>
+        <span id="finishErrors">Ошибок: 0</span>
+      </div>
+      <div class="button-row">
+        <button class="primary-button" id="againButton" type="button">Пройти ещё раз</button>
+        <button class="ghost-button" id="newSetButton" type="button">Выбрать новые 20</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="cards-manifest.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

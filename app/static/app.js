@@ -56,7 +56,7 @@ const activityMeta = {
   "html-games": {
     title: "Игры",
     shortTitle: "Игры",
-    description: "Небольшие HTML-игры для тренировки орфографии.",
+    description: "HTML-игры по русскому языку: орфография, пунктуация и культура речи.",
     mark: "GAME",
   },
 };
@@ -64,10 +64,12 @@ const activityMeta = {
 const miniGames = [
   {
     slug: "suffixes-nouns",
-    title: "Суффиксы существительных",
+    title: "Пушинки: суффиксы существительных",
     description: "Поймайте пушинки и выберите правильную букву в словах с суффиксами.",
     button: "Играть",
     path: "/html-games/suffixes-nouns/index.html",
+    category: "orthography",
+    categoryTitle: "Орфография",
   },
   {
     slug: "homogeneous-members-magic",
@@ -75,6 +77,8 @@ const miniGames = [
     description: "Раскройте грамматический фокус: выбирайте свитки с правильными цифрами для запятых.",
     button: "Играть",
     path: "/html-games/homogeneous-members-magic/index.html",
+    category: "syntax",
+    categoryTitle: "Синтаксис и пунктуация",
   },
   {
     slug: "berry-season-ik-ek",
@@ -82,8 +86,34 @@ const miniGames = [
     description: "Собирайте слова в корзинки Е и И, тренируя суффиксы -ек- и -ик-.",
     button: "Играть",
     path: "/html-games/berry-season-ik-ek/index.html",
+    category: "orthography",
+    categoryTitle: "Орфография",
+  },
+  {
+    slug: "paronyms",
+    title: "Паронимы",
+    description: "Подписывайте картинки точными паронимами и повторяйте группы с ошибками.",
+    button: "Играть",
+    path: "/html-games/paronyms/index.html",
+    category: "speech",
+    categoryTitle: "Культура речи",
   },
 ];
+
+const miniGameCategories = [
+  { id: "orthography", title: "Орфография" },
+  { id: "syntax", title: "Синтаксис и пунктуация" },
+  { id: "speech", title: "Культура речи" },
+];
+
+function groupedMiniGames() {
+  return miniGameCategories
+    .map((category) => ({
+      ...category,
+      games: miniGames.filter((game) => game.category === category.id),
+    }))
+    .filter((category) => category.games.length);
+}
 
 const shopProducts = [
   {
@@ -236,6 +266,59 @@ const shopProducts = [
     delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, необходимые изображения, видео-инструкция и промпт для редактирования игры.",
     important: [
       "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
+      "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
+    ],
+  },
+  {
+    slug: "paronyms-game",
+    title: "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
+    price: "500 ₽",
+    image: "/assets/shop/Kard_paronyms.png",
+    demoUrl: "/games/paronyms/index.html",
+    shortDescription: "Современная HTML-игра для отработки паронимов из списка Навигатора самостоятельной подготовки ЕГЭ. Ученики соотносят изображения и слова, а ошибочные группы возвращаются на повтор.",
+    fullDescription: "HTML-игра по культуре речи для подготовки к заданию 5 ЕГЭ. В комплект входят все группы паронимов из списка Навигатора самостоятельной подготовки ЕГЭ, визуальные карточки, объясняющие карточки и готовая игра, которая работает без интернета на любом устройстве.",
+    tryBefore: [
+      "Перед покупкой можно открыть онлайн-версию игры на сайте:",
+      "https://dimitrieva-av.ru/games/paronyms/index.html",
+      "Онлайн-версия позволяет посмотреть механику, визуальный стиль, режим случайных карточек и выбор конкретных групп паронимов.",
+    ],
+    suitableFor: [
+      "для подготовки к ЕГЭ по русскому языку",
+      "для отработки задания 5 «Паронимы»",
+      "для повторения культуры речи",
+      "для самостоятельной работы ученика",
+      "для урока, консультации или интерактивной панели",
+    ],
+    howItWorks: [
+      "Ученик видит группу паронимов и изображения к словам. Нужно выбрать слово и подписать им подходящую картинку. После проверки игра сразу показывает результат.",
+      "Если ответ верный, ученик переходит дальше. Если есть ошибка, открывается объясняющая карточка, а эта группа возвращается в конец очереди и повторяется позже.",
+      "В игре есть несколько режимов:",
+      "случайные 20 карточек без повторов",
+      "случайные 20 карточек",
+      "выбор определённой группы паронимов для точечной отработки",
+    ],
+    package: [
+      "Готовая HTML-игра, которая работает без интернета на компьютере, планшете, интерактивной панели или телефоне.",
+      "Весь комплект карточек и изображений для групп паронимов.",
+      "Все паронимы из списка Навигатора самостоятельной подготовки ЕГЭ.",
+      "Технические файлы игры: HTML, CSS, JavaScript, manifest и папка assets.",
+      "Возможность запускать игру локально через файл index.html или разместить её на сайте.",
+    ],
+    adaptation: [
+      "Комплект уже собран под список паронимов ЕГЭ и не требует ручного добавления базы.",
+      "Если нужно изменить оформление, добавить свои изображения или подготовить отдельную версию под курс, можно написать на почту: anastasia041191@rambler.ru",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "папка с HTML-файлом, manifest и изображениями из комплекта",
+      "интернет не требуется для локального запуска после скачивания",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, весь комплект карточек и изображения для работы игры.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
+      "Для локального запуска сохраните структуру папки: index.html, style.css, app.js, cards-manifest.js и assets должны лежать рядом так же, как в комплекте.",
       "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
     ],
   },
@@ -1031,15 +1114,26 @@ function bindPublicNavigation(root) {
 
 function renderPublicGames() {
   renderPublicTopActions("/games");
-  const cards = miniGames.map((game) => `
-    <article class="mini-game-card public-game-card">
-      <div>
-        <p class="eyebrow">мини-игра</p>
-        <h3>${escapeHtml(game.title)}</h3>
-        <p>${escapeHtml(game.description)}</p>
+  const gameGroups = groupedMiniGames();
+  const categorySections = gameGroups.map((category) => `
+    <section class="game-category" id="games-${escapeHtml(category.id)}">
+      <div class="game-category-head">
+        <p class="eyebrow">раздел</p>
+        <h3>${escapeHtml(category.title)}</h3>
       </div>
-      <a class="primary-button public-play-link" href="${escapeHtml(safeRelativeUrl(`/games/${game.slug}/index.html`))}">Играть</a>
-    </article>
+      <div class="mini-game-grid">
+        ${category.games.map((game) => `
+          <article class="mini-game-card public-game-card">
+            <div>
+              <p class="eyebrow">мини-игра</p>
+              <h3>${escapeHtml(game.title)}</h3>
+              <p>${escapeHtml(game.description)}</p>
+            </div>
+            <a class="primary-button public-play-link" href="${escapeHtml(safeRelativeUrl(`/games/${game.slug}/index.html`))}">Играть</a>
+          </article>
+        `).join("")}
+      </div>
+    </section>
   `).join("");
   const teacherBuilder = state.user?.role === "teacher" ? `
     <section class="game-builder" id="gameBuilder">
@@ -1103,7 +1197,10 @@ function renderPublicGames() {
         </div>
       </div>
       <p class="public-page-lead">Игры открываются без регистрации. Создание своих наборов доступно только авторизованным учителям.</p>
-      <div class="mini-game-grid">${cards}</div>
+      <nav class="game-submenu" aria-label="Разделы игр">
+        ${gameGroups.map((category) => `<a href="#games-${escapeHtml(category.id)}">${escapeHtml(category.title)}</a>`).join("")}
+      </nav>
+      ${categorySections}
       ${teacherBuilder}
     </section>
     ${publicFooter()}
@@ -1215,7 +1312,7 @@ function shopProductCard(product) {
         <div class="shop-product-actions">
           <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
           <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
-          <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
+          <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
         </div>
         <span class="shop-soon-badge">${escapeHtml(product.price)}</span>
       </div>
@@ -1258,7 +1355,7 @@ function renderShopProductPage(slug) {
           <div class="product-price">${escapeHtml(product.price)}</div>
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
-            <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">Попробовать демо</a>
+            <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
             <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
           </div>
@@ -1683,11 +1780,11 @@ function renderCatalog() {
     `;
   };
   const groupedActivities = activities.reduce((groups, activity) => {
-    const group = activity.group || (activity.kind === "mini" ? "Орфография" : "Орфография");
+    const group = activity.group || (activity.slug === "html-games" || activity.kind === "mini" ? "Игры" : "Орфография");
     (groups[group] ||= []).push(activity);
     return groups;
   }, {});
-  const groupOrder = ["Орфография", "орфоэпия, грамматика, речь"];
+  const groupOrder = ["Орфография", "орфоэпия, грамматика, речь", "Игры"];
   const groupsHtml = [...groupOrder, ...Object.keys(groupedActivities).filter((group) => !groupOrder.includes(group))]
     .filter((group) => groupedActivities[group]?.length)
     .map((group) => `
@@ -1726,15 +1823,25 @@ function renderMiniActivity() {
   renderTopActions();
   const gameSlug = state.currentMiniGame || miniGameFromPath();
   const selectedGame = miniGames.find((game) => game.slug === gameSlug);
-  const gameCards = miniGames.map((game) => `
-    <article class="mini-game-card">
-      <div>
-        <p class="eyebrow">мини-игра</p>
-        <h3>${escapeHtml(game.title)}</h3>
-        <p>${escapeHtml(game.description)}</p>
+  const gameCategorySections = groupedMiniGames().map((category) => `
+    <section class="game-category" id="cabinet-games-${escapeHtml(category.id)}">
+      <div class="game-category-head">
+        <p class="eyebrow">раздел</p>
+        <h3>${escapeHtml(category.title)}</h3>
       </div>
-      <button class="primary-button open-mini-game" data-game="${escapeHtml(game.slug)}" type="button">${escapeHtml(game.button)}</button>
-    </article>
+      <div class="mini-game-grid">
+        ${category.games.map((game) => `
+          <article class="mini-game-card">
+            <div>
+              <p class="eyebrow">мини-игра</p>
+              <h3>${escapeHtml(game.title)}</h3>
+              <p>${escapeHtml(game.description)}</p>
+            </div>
+            <button class="primary-button open-mini-game" data-game="${escapeHtml(game.slug)}" type="button">${escapeHtml(game.button)}</button>
+          </article>
+        `).join("")}
+      </div>
+    </section>
   `).join("");
   const teacherBuilder = !selectedGame && state.user.role === "teacher" ? `
     <section class="game-builder" id="gameBuilder">
@@ -1837,7 +1944,12 @@ function renderMiniActivity() {
       </div>
       ${selectedGame
         ? `<iframe class="mini-frame" title="${escapeHtml(selectedGame.title)}" src="${escapeHtml(safeRelativeUrl(selectedGame.path))}"></iframe>`
-        : `<div class="mini-game-grid">${gameCards}</div>`}
+        : `
+          <nav class="game-submenu" aria-label="Разделы игр">
+            ${groupedMiniGames().map((category) => `<a href="#cabinet-games-${escapeHtml(category.id)}">${escapeHtml(category.title)}</a>`).join("")}
+          </nav>
+          ${gameCategorySections}
+        `}
       ${teacherBuilder}
     </section>
   `;
