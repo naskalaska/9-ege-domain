@@ -95,7 +95,7 @@ SHOP_PRODUCTS = {
         "id": "paronyms_game",
         "title": "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
         "short_title": "Паронимы",
-        "amount": "500.00",
+        "amount": "800.00",
         "currency": "RUB",
         "url_env": "PARONYMS_GAME_PRODUCT_URL",
         "default_url": "",

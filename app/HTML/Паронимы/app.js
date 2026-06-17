@@ -37,6 +37,7 @@
     playScreen: document.querySelector("#playScreen"),
     explanationScreen: document.querySelector("#explanationScreen"),
     finishScreen: document.querySelector("#finishScreen"),
+    gameMenuLink: document.querySelector("#gameMenuLink"),
     turnEffect: document.querySelector("#turnEffect"),
     successBurst: document.querySelector("#successBurst"),
     successText: document.querySelector("#successText"),
@@ -93,6 +94,22 @@
     [el.startScreen, el.playScreen, el.explanationScreen, el.finishScreen].forEach((node) => {
       node.classList.toggle("hidden", node !== screen);
     });
+  }
+
+  function goToGamesMenu() {
+    if (window.location.protocol === "file:") {
+      if (window.history.length > 1) window.history.back();
+      return;
+    }
+    let target = "/games";
+    try {
+      if (window.top && window.top !== window.self && window.top.location.pathname.startsWith("/apps/mini")) {
+        target = "/apps/mini";
+      }
+      window.top.location.href = target;
+    } catch {
+      window.location.href = target;
+    }
   }
 
   function shuffle(items) {
@@ -452,6 +469,7 @@
     renderGroupPicker();
   });
 
+  el.gameMenuLink.addEventListener("click", goToGamesMenu);
   el.startButton.addEventListener("click", () => startGame(state.mode));
   el.resetHistoryButton.addEventListener("click", () => {
     localStorage.removeItem(HISTORY_KEY);

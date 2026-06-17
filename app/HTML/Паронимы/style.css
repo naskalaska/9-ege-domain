@@ -35,6 +35,22 @@ button {
   font: inherit;
 }
 
+.game-menu-link {
+  position: fixed;
+  z-index: 95;
+  top: 14px;
+  left: 14px;
+  min-height: 40px;
+  padding: 9px 13px;
+  border: 1px solid rgba(49, 67, 78, 0.18);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 24px rgba(43, 54, 61, 0.12);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .hidden {
   display: none !important;
 }

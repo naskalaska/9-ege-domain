@@ -20,6 +20,22 @@
       background-position: center;
     }
 
+    .game-menu-link {
+      position: absolute;
+      z-index: 300;
+      top: 10px;
+      right: 10px;
+      min-height: 40px;
+      padding: 9px 13px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 8px;
+      color: #222;
+      background: rgba(255,255,255,0.86);
+      box-shadow: 0 0 12px rgba(0,0,0,0.16);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .item {
       width: 200px;
       height: 200px;
@@ -169,6 +185,7 @@
 </head>
 <body>
 
+<button class="game-menu-link" type="button" onclick="goToGamesMenu()">Назад в меню</button>
 <div class="score" id="score">Счёт: 0</div>
 
 <div class="start-btn" id="startBtn">Начать игру</div>
@@ -187,6 +204,20 @@
 </div>
 
 <script>
+  function goToGamesMenu() {
+    if (window.location.protocol === "file:") {
+      if (window.history.length > 1) window.history.back();
+      return;
+    }
+    let target = "/games";
+    try {
+      if (window.top && window.top !== window.self && window.top.location.pathname.startsWith("/apps/mini")) target = "/apps/mini";
+      window.top.location.href = target;
+    } catch (error) {
+      window.location.href = target;
+    }
+  }
+
   let questions = [];
   let gameData = null;
   let score = 0;

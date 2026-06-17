@@ -47,6 +47,21 @@
     button, input{font:inherit}
     button{cursor:pointer}
 
+    .game-menu-link{
+      position:fixed;
+      z-index:2000;
+      top:14px;
+      left:14px;
+      min-height:40px;
+      padding:9px 13px;
+      border:1px solid rgba(74,50,18,.16);
+      border-radius:14px;
+      color:var(--ink);
+      background:rgba(255,255,255,.82);
+      box-shadow:var(--soft-shadow);
+      font-weight:800;
+    }
+
     .page{
       min-height:100svh;
       padding:18px;
@@ -835,6 +850,7 @@
   </style>
 </head>
 <body>
+  <button class="game-menu-link" type="button" onclick="goToGamesMenu()">Назад в меню</button>
   <div class="page">
     <header class="topbar">
       <div class="brand">
@@ -941,6 +957,20 @@
 
   <script id="gameData" type="application/json">[{"id": "ege11u_0013", "variant": "(мой) дружоч..к", "answer": "е", "correct_spelling": "(мой) дружочек", "explanation": "Пишется суффикс -ЕК-.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0173", "variant": "замоч..к", "answer": "е", "correct_spelling": "замочек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0215", "variant": "карандаш..к", "answer": "и", "correct_spelling": "карандашик", "explanation": "Пишется суффикс -ИК-: при изменении слова гласная сохраняется.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0219", "variant": "кирпич..к", "answer": "и", "correct_spelling": "кирпичик", "explanation": "Пишется суффикс -ИК-: при изменении слова гласная сохраняется.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0226", "variant": "ковш..к", "answer": "и", "correct_spelling": "ковшик", "explanation": "Пишется суффикс -ИК-.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0241", "variant": "краеш..к", "answer": "е", "correct_spelling": "краешек", "explanation": "Пишется суффикс -ЕК-.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0247", "variant": "кусоч..к", "answer": "е", "correct_spelling": "кусочек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0254", "variant": "лесоч..к", "answer": "е", "correct_spelling": "лесочек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0261", "variant": "лич..ко", "answer": "и", "correct_spelling": "личико", "explanation": "Пишется суффикс -ИК-.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0279", "variant": "мешоч..к", "answer": "е", "correct_spelling": "мешочек", "explanation": "Пишется суффикс -ЕК-.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0290", "variant": "мяч..к", "answer": "и", "correct_spelling": "мячик", "explanation": "Пишется суффикс -ИК-: при изменении слова гласная сохраняется.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0359", "variant": "ореш..к", "answer": "е", "correct_spelling": "орешек", "explanation": "Пишется суффикс -ЕК-.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0395", "variant": "платоч..к", "answer": "е", "correct_spelling": "платочек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0409", "variant": "половнич..к", "answer": "е", "correct_spelling": "половничек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0417", "variant": "поясоч..к", "answer": "е", "correct_spelling": "поясочек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0521", "variant": "словар..к", "answer": "и", "correct_spelling": "словарик", "explanation": "Пишется суффикс -ИК-.", "dependency": "суффикс -ик-"}, {"id": "ege11u_0632", "variant": "ящич..к", "answer": "е", "correct_spelling": "ящичек", "explanation": "Пишется суффикс -ЕК-: при изменении слова гласная выпадает.", "dependency": "суффикс -ек-"}, {"id": "ege11u_0140", "variant": "добытч..к", "answer": "и", "correct_spelling": "добытчик", "explanation": "В суффиксе -ЧИК- пишется И.", "dependency": "суффикс -чик-, пропуск гласной"}, {"id": "ege11u_0145", "variant": "докладч..к", "answer": "и", "correct_spelling": "докладчик", "explanation": "В суффиксе -ЧИК- пишется И.", "dependency": "суффикс -чик-, пропуск гласной"}, {"id": "ege11u_0230", "variant": "колокольч..к", "answer": "и", "correct_spelling": "колокольчик", "explanation": "Пишется суффикс -ЧИК-.", "dependency": "суффикс -чик-"}, {"id": "ege11u_0258", "variant": "лимонч..к", "answer": "и", "correct_spelling": "лимончик", "explanation": "В суффиксе -ЧИК- пишется И.", "dependency": "суффикс -чик-, пропуск гласной"}, {"id": "ege11u_0482", "variant": "режиссёр-постановщ..к", "answer": "и", "correct_spelling": "режиссёр-постановщик", "explanation": "В суффиксе -ЩИК- пишется И.", "dependency": "суффикс -щик-, пропуск гласной"}, {"id": "ege11u_0495", "variant": "садовн..к", "answer": "и", "correct_spelling": "садовник", "explanation": "Пишется суффикс -НИК-.", "dependency": "суффикс -ник-"}, {"id": "ege11u_0535", "variant": "спорщ..к", "answer": "и", "correct_spelling": "спорщик", "explanation": "В суффиксе -ЩИК- пишется И.", "dependency": "суффикс -щик-, пропуск гласной"}]</script>
   <script>
+    function goToGamesMenu(){
+      if (window.location.protocol === "file:") {
+        if (window.history.length > 1) window.history.back();
+        return;
+      }
+      let target = "/games";
+      try {
+        if (window.top && window.top !== window.self && window.top.location.pathname.startsWith("/apps/mini")) target = "/apps/mini";
+        window.top.location.href = target;
+      } catch (error) {
+        window.location.href = target;
+      }
+    }
+
     (() => {
       "use strict";
 

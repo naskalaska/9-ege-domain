@@ -34,6 +34,22 @@
       min-height: var(--h);
     }
 
+    .game-menu-link {
+      position: fixed;
+      z-index: 80;
+      top: 14px;
+      left: 14px;
+      min-height: 40px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 214, 112, 0.55);
+      border-radius: 14px;
+      color: var(--cream);
+      background: rgba(42, 18, 58, 0.78);
+      box-shadow: 0 12px 28px var(--shadow);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
     .game {
       position: relative;
       width: 100vw;
@@ -508,6 +524,7 @@
   </style>
 </head>
 <body>
+  <button class="game-menu-link" type="button" onclick="goToGamesMenu()">Назад в меню</button>
   <main class="game" id="game">
     <section class="top-panel" aria-live="polite">
       <div class="hud">
@@ -573,6 +590,20 @@
   </main>
 
   <script>
+    function goToGamesMenu() {
+      if (window.location.protocol === "file:") {
+        if (window.history.length > 1) window.history.back();
+        return;
+      }
+      let target = "/games";
+      try {
+        if (window.top && window.top !== window.self && window.top.location.pathname.startsWith("/apps/mini")) target = "/apps/mini";
+        window.top.location.href = target;
+      } catch (error) {
+        window.location.href = target;
+      }
+    }
+
     const tasks = [
       {
         sentence: "Волшебник раскрыл книгу(1) зажёг синюю свечу(2) и произнёс древнее заклинание(3) но портал не открылся.",

@@ -272,7 +272,7 @@ const shopProducts = [
   {
     slug: "paronyms-game",
     title: "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
-    price: "500 ₽",
+    price: "800 ₽",
     image: "/assets/shop/Kard_paronyms.png",
     demoUrl: "/games/paronyms/index.html",
     shortDescription: "Современная HTML-игра для отработки паронимов из списка Навигатора самостоятельной подготовки ЕГЭ. Ученики соотносят изображения и слова, а ошибочные группы возвращаются на повтор.",
