@@ -58,7 +58,7 @@ def load_data() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[s
                 "position_index": int(card.get("position_index") or 0),
                 "category": category,
                 "rule_id": rule_id,
-                "rule_name": spelling.capitalize(),
+                "rule_name": f"{category}: {spelling}",
                 "variant": str(card.get("target_normalized") or ""),
                 "context": str((card.get("context") or {}).get("line_text") or line.get("line_text") or ""),
                 "correct_letter": spelling,
@@ -86,11 +86,11 @@ def load_data() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[s
         lines.append(line_copy)
     counts: dict[tuple[str, str], int] = {}
     for word in words:
-        key = (word["category"], word["rule_name"])
+        key = (word["category"], word["answer"])
         counts[key] = counts.get(key, 0) + 1
     rules = [
-        {"rule_id": make_rule_id(category, name.lower()), "category": category, "rule_name": name, "count": count}
-        for (category, name), count in sorted(counts.items())
+        {"rule_id": make_rule_id(category, spelling), "category": category, "rule_name": f"{category}: {spelling}", "count": count}
+        for (category, spelling), count in sorted(counts.items())
     ]
     return words, lines, rules
 

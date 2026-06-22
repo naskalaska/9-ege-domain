@@ -459,6 +459,17 @@ button {
   gap: 14px;
 }
 
+.rule-warning {
+  padding: 12px 14px;
+  border: 1px solid #d99a32;
+  border-left: 5px solid #d07b00;
+  border-radius: 8px;
+  background: #fff4d8;
+  color: #714500;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
 .category-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

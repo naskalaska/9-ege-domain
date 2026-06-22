@@ -18,6 +18,7 @@ const state = {
   currentActivity: null,
   currentMiniGame: null,
   teacherStatsTimer: null,
+  activityLoadRequestId: 0,
 };
 
 const fallbackTeacherCode = "T-DDC378";
@@ -527,6 +528,7 @@ function setShellMode(mode = "app") {
 
 function navigate(path) {
   stopTeacherStatsRefresh();
+  state.activityLoadRequestId += 1;
   history.pushState(null, "", path);
   restoreSession();
   sendHeartbeat();
@@ -1659,6 +1661,7 @@ async function loadBootstrap() {
 }
 
 async function loadActivity(slug, updateUrl = true) {
+  const requestId = ++state.activityLoadRequestId;
   if (slug === "html-games") {
     state.currentActivity = slug;
     state.currentMiniGame = null;
@@ -1666,8 +1669,10 @@ async function loadActivity(slug, updateUrl = true) {
     renderMiniActivity();
     return;
   }
+  const bootstrap = await api(`/api/apps/${slug}/bootstrap`);
+  if (requestId !== state.activityLoadRequestId) return;
   state.currentActivity = slug;
-  state.bootstrap = await api(`/api/apps/${slug}/bootstrap`);
+  state.bootstrap = bootstrap;
   state.mode = slug === "ege5" ? "paronym_choice" : slug === "ege14" ? "word_context" : "rule";
   state.selectedCategory = null;
   state.selectedCategories = [];
@@ -2329,9 +2334,13 @@ function renderRuleSelector() {
       </label>
     `)
     .join("");
+  const ege14GroupWarning = state.currentActivity === "ege14"
+    ? `<div class="rule-warning" role="note">!!!В группе будут не только слова выбранной части речи, которые пишутся раздельно, но и омонимичные им конструкции, которые могут писаться по-разному</div>`
+    : "";
   return `
     <section class="rule-picker">
       <div class="category-grid">${categoryButtons}</div>
+      ${ege14GroupWarning}
       <div class="rule-select-row">
         <div class="rule-check-list">
           <label class="rule-check rule-check-all">
@@ -2591,7 +2600,7 @@ function renderQuestion(question, index) {
     const selected = state.answers[question.question_id] || "";
     return `
       <article class="question ege14-question">
-        <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.category)} · ${escapeHtml(question.rule_name)}</span></div>
+        <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
         <div class="task-prompt">Определите написание выделенного слова в контексте.</div>
         <div class="ege14-context">${highlightEge14Target(question.prompt, question.target)}</div>
         <div class="choice-row">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-question-id="${escapeHtml(question.question_id)}" data-answer="${escapeHtml(choice)}" type="button">${escapeHtml(choice)}</button>`).join("")}</div>
