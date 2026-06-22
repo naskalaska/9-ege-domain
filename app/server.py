@@ -17,6 +17,7 @@ import sys
 import ege10_module
 import ege11_module
 import ege12_module
+import ege14_module
 import ege5_module
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
@@ -155,6 +156,7 @@ REGISTRATION_LIMIT_PER_IP = 8
 _ege10_scope_id_for = ege10_module.scope_id_for
 _ege11_scope_id_for = ege11_module.scope_id_for
 _ege12_scope_id_for = ege12_module.scope_id_for
+_ege14_scope_id_for = ege14_module.scope_id_for
 _ege5_scope_id_for = ege5_module.scope_id_for
 
 
@@ -170,6 +172,10 @@ def ege12_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str
     return f"ege12:{_ege12_scope_id_for(mode, rule_id, rule_ids)}"
 
 
+def ege14_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
+    return f"ege14:{_ege14_scope_id_for(mode, rule_id, rule_ids)}"
+
+
 def ege5_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
     return _ege5_scope_id_for(mode, rule_id, rule_ids)
 
@@ -177,6 +183,7 @@ def ege5_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str]
 ege10_module.scope_id_for = ege10_scope_id_for
 ege11_module.scope_id_for = ege11_scope_id_for
 ege12_module.scope_id_for = ege12_scope_id_for
+ege14_module.scope_id_for = ege14_scope_id_for
 ege5_module.scope_id_for = ege5_scope_id_for
 
 ACTIVITIES = [
@@ -221,6 +228,14 @@ ACTIVITIES = [
         "group": "Орфография",
     },
     {
+        "slug": "ege14",
+        "title": "ЕГЭ. Задание 14",
+        "description": "Слитное, раздельное и дефисное написание слов разных частей речи.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Орфография",
+    },
+    {
         "slug": "html-games",
         "title": "Игры",
         "description": "HTML-игры по русскому языку: орфография, пунктуация и культура речи.",
@@ -239,6 +254,7 @@ HTML_GAMES = {
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
+    "mouse-space": HTML_DIR / "Мышонок в космосе",
 }
 
 PUBLIC_GAMES = {
@@ -248,12 +264,13 @@ PUBLIC_GAMES = {
     "berry-season": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
+    "mouse-space": HTML_DIR / "Мышонок в космосе",
 }
 
 GAME_SET_MAX_ITEMS = 200
 GAME_SET_MAX_STRING = 600
 GAME_SET_MAX_PAYLOAD_BYTES = 200_000
-GAME_MECHANICS = {"fluffs", "berry-season"}
+GAME_MECHANICS = {"fluffs", "berry-season", "mouse-space"}
 PUBLIC_DOC_FILES = {
     "contacts": "contacts.txt",
     "delivery": "delivery.txt",
@@ -1143,6 +1160,8 @@ def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[st
         return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS), user_id, ege11_module.WORDS_BY_RULE, ege11_module.scope_id_for)
     if slug == "ege12":
         return bootstrap_for(ege12_module.RULES, len(ege12_module.WORDS), user_id, ege12_module.WORDS_BY_RULE, ege12_module.scope_id_for)
+    if slug == "ege14":
+        return bootstrap_for(ege14_module.RULES, len(ege14_module.WORDS), user_id, ege14_module.WORDS_BY_RULE, ege14_module.scope_id_for)
     if slug == "html-games":
         return {
             "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
@@ -1187,6 +1206,13 @@ def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[st
             return ege12_module.submit_practice(user, payload)
         if action == "check":
             return ege12_module.check_practice_answer(user, payload)
+    if slug == "ege14":
+        if action == "start":
+            return ege14_module.start_practice(user, payload)
+        if action == "submit":
+            return ege14_module.submit_practice(user, payload)
+        if action == "check":
+            return ege14_module.check_practice_answer(user, payload)
     raise ValueError("Действие активности не найдено.")
 
 
@@ -1951,6 +1977,8 @@ def activity_title_from_scope(scope_id: str | None) -> str:
         return "ЕГЭ-11"
     if scope.startswith("ege12:"):
         return "ЕГЭ-12"
+    if scope.startswith("ege14:"):
+        return "ЕГЭ-14"
     return "ЕГЭ-9"
 
 
@@ -1964,6 +1992,9 @@ def mode_title(mode: str | None) -> str:
         "mix": "Микс",
         "line": "Строка",
         "errors": "Копилка ошибок",
+        "word_context": "Слово в контексте",
+        "line_spelling": "Строка",
+        "exam": "Формат ЕГЭ",
     }.get(mode or "", mode or "")
 
 
@@ -2623,6 +2654,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
         "mechanics": [
             {"id": "fluffs", "title": "Пушинки", "available": True},
             {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True},
+            {"id": "mouse-space", "title": "Мышонок в космосе: выбор буквы", "available": True},
             {"id": "focus", "title": "Фокус", "available": False},
         ],
         "sources": sources,
@@ -2709,7 +2741,10 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
         raise ValueError("В выбранных рубриках нет заданий для этой механики.")
     selected_rules = [item for item in config["rules"] if item["rule_id"] in set(rule_ids)]
     default_title = selected_rules[0]["rule_name"] if len(selected_rules) == 1 else f"{len(selected_rules)} рубрики"
-    mechanic_title = "Ягодный сезон" if mechanic == "berry-season" else "Пушинки"
+    mechanic_title = {
+        "berry-season": "Ягодный сезон",
+        "mouse-space": "Мышонок в космосе",
+    }.get(mechanic, "Пушинки")
     title = clean_game_string(payload.get("title"), 120) or f"{mechanic_title}: {default_title}"
     game_payload = normalize_game_payload(
         {
@@ -2924,6 +2959,8 @@ def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[byte
         return ege11_module.build_test_file(user, payload)
     if activity == "ege12":
         return ege12_module.build_test_file(user, payload)
+    if activity == "ege14":
+        return ege14_module.build_test_file(user, payload)
     if activity == "ege5":
         return build_ege5_test_file(user, payload)
     if activity != "ege9":

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Суффиксы прилагательных — звёздный подъём</title>
+<style>
+  :root{
+    --gold:#ffd978;
+    --gold2:#fff2c8;
+    --cream:#fff8ea;
+    --line:rgba(255,224,146,.34);
+    --shadow:0 14px 36px rgba(0,0,0,.34);
+    --text-shadow:0 2px 10px rgba(0,0,0,.75);
+    --panel1:rgba(10,22,44,.78);
+    --panel2:rgba(7,14,27,.56);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#050b16;color:var(--cream);font-family:"Segoe UI","Trebuchet MS",Arial,sans-serif}
+  button{font:inherit}
+  #app{position:relative;width:100vw;height:100vh;overflow:hidden;background:#050b16;isolation:isolate}
+
+  .bg{position:absolute;inset:-4%;background-size:cover;background-position:center center;transition:filter .6s ease, opacity .6s ease}
+  .bg.landscape{display:none}
+  .bg.landscape.one{animation:bgPanOne 38s linear infinite alternate}
+  .bg.landscape.two{opacity:.42;mix-blend-mode:screen;animation:bgPanTwo 46s linear infinite alternate}
+  .bg.portrait{display:block}
+  @media (orientation:landscape){.bg.landscape{display:block}.bg.portrait{display:none}}
+  @keyframes bgPanOne{0%{transform:translate3d(-1.2%,0,0) scale(1.07)}100%{transform:translate3d(1.2%,-8px,0) scale(1.09)}}
+  @keyframes bgPanTwo{0%{transform:translate3d(1.2%,6px,0) scale(1.08)}100%{transform:translate3d(-1.2%,-6px,0) scale(1.06)}}
+
+  #starCanvas,#starOverlay,.vignette{position:absolute;inset:0;pointer-events:none}
+  #starCanvas{z-index:2}
+  #starOverlay{z-index:3;object-fit:cover;width:100%;height:100%;mix-blend-mode:screen;opacity:.5;animation:starsFloat 18s ease-in-out infinite alternate}
+  @keyframes starsFloat{0%{transform:translate3d(-1.2%,.8%,0) scale(1.02)}100%{transform:translate3d(1.2%,-.8%,0) scale(1.05)}}
+  .vignette{z-index:4;background:radial-gradient(circle at center, transparent 35%, rgba(1,6,14,.1) 58%, rgba(1,6,14,.28) 80%, rgba(1,6,14,.58) 100%)}
+
+  .hud{position:absolute;left:0;right:0;top:0;z-index:30;padding:12px 14px;display:grid;grid-template-columns:1.4fr 1fr 1.4fr;gap:12px;align-items:start}
+  .card{background:linear-gradient(180deg, var(--panel1), var(--panel2));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+  .brand{padding:12px 16px}
+  .brand .title{font-size:clamp(18px,2.1vw,28px);font-weight:800;color:var(--gold2);text-shadow:var(--text-shadow)}
+  .brand .subtitle{margin-top:4px;color:#edf4ff;font-size:clamp(12px,1.25vw,15px);opacity:.92}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px}
+  .stat{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);text-align:center}
+  .stat .label{font-size:12px;color:#d8e6ff;opacity:.9;margin-bottom:5px}
+  .stat .value{font-size:clamp(20px,2vw,28px);font-weight:800;color:var(--gold2);text-shadow:var(--text-shadow)}
+  .controls{padding:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .control-btn,.start-btn,.close-hint{border:none;cursor:pointer}
+  .control-btn{min-height:44px;padding:11px 14px;border-radius:14px;color:var(--cream);background:linear-gradient(180deg, rgba(34,58,99,.9), rgba(18,34,65,.88));border:1px solid rgba(255,223,146,.36);box-shadow:0 8px 18px rgba(0,0,0,.2), inset 0 0 0 1px rgba(255,255,255,.04);text-shadow:var(--text-shadow);transition:transform .18s ease, filter .18s ease, opacity .18s ease}
+  .control-btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .control-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .count{color:var(--gold);font-weight:800;margin-left:4px}
+
+  .floor-panel{position:absolute;z-index:28;right:16px;top:110px;width:min(82px,22vw);padding:12px 10px 14px;border-radius:18px;background:linear-gradient(180deg, rgba(8,18,35,.76), rgba(7,12,25,.5));border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(10px);text-align:center}
+  .floor-caption{font-size:13px;color:#edf4ff;opacity:.92;margin-bottom:10px;text-shadow:var(--text-shadow)}
+  .floor-dots{display:flex;flex-direction:column-reverse;align-items:center;gap:6px}
+  .floor-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.14);position:relative;overflow:hidden}
+  .floor-dot::after{content:"✦";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;color:transparent;transition:all .25s ease}
+  .floor-dot.active{background:radial-gradient(circle at 35% 30%, #fff6d8, #ffdf8c 36%, #c8841d 95%);box-shadow:0 0 14px rgba(255,219,121,.44)}
+  .floor-dot.active::after{color:#fffdf1;text-shadow:0 0 10px rgba(255,255,255,.6)}
+
+  #scene{position:absolute;inset:0;z-index:15;pointer-events:auto}
+
+  .word-card{position:absolute;left:50%;width:min(520px,72vw);min-height:138px;padding:20px 24px 28px;background:linear-gradient(180deg, rgba(10,22,44,.8), rgba(7,14,27,.62));background-repeat:no-repeat;background-position:center;background-size:100% 100%;border-radius:28px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.34));text-align:center;transition:top 1.45s cubic-bezier(.2,.76,.2,1), opacity 1.15s ease, transform 1.45s cubic-bezier(.2,.76,.2,1);pointer-events:none;text-shadow:var(--text-shadow)}
+  .small-label{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#dbe8ff;opacity:.9;margin-bottom:8px}
+  .word-text{font-size:clamp(26px, 3vw, 44px);font-weight:800;line-height:1.08;color:var(--cream)}
+  .rule-tag{display:none}
+  #currentWord{top:18%;transform:translateX(-50%);opacity:1;z-index:20}
+  #previewWord{top:4%;transform:translateX(-50%) scale(.88);opacity:0;z-index:18}
+
+  .planet-wrap{position:absolute;width:clamp(150px,18vw,235px);aspect-ratio:1/1;transition:top 1.45s cubic-bezier(.2,.76,.2,1), left 1.45s cubic-bezier(.2,.76,.2,1), opacity 1.15s ease, transform 1.45s cubic-bezier(.2,.76,.2,1);z-index:20}
+  .planet-wrap.preview{z-index:18;opacity:0;transform:translate(-50%,-50%) scale(.82);pointer-events:none}
+  .planet-wrap.current-base{z-index:17}
+  .planet-btn,.planet-ghost{position:relative;width:100%;height:100%;display:block;background:none;border:none;padding:0;margin:0;cursor:pointer;touch-action:manipulation;pointer-events:auto;filter:drop-shadow(0 14px 28px rgba(0,0,0,.38)) drop-shadow(0 0 18px rgba(255,229,149,.12));transition:transform .18s ease, filter .18s ease, opacity .18s ease}
+  .planet-btn:hover{transform:translateY(-6px) scale(1.02)}
+  .planet-btn.locked{pointer-events:none}
+  .planet-btn.correct{filter:drop-shadow(0 0 28px rgba(145,247,193,.42))}
+  .planet-btn.wrong{filter:drop-shadow(0 0 24px rgba(255,148,127,.25))}
+  .planet-btn.assist-correct{filter:drop-shadow(0 0 34px rgba(255,231,154,.46));transform:translateY(-4px) scale(1.04)}
+  .planet-btn.assist-wrong{opacity:.38;filter:grayscale(.3) brightness(.72)}
+  .planet-btn.fading{opacity:.18}
+  .planet-img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+  .letter{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(34px,4vw,58px);font-weight:900;color:var(--cream);transform:translateY(-6%);text-shadow:0 2px 12px rgba(0,0,0,.72), 0 0 16px rgba(255,226,135,.26);pointer-events:none}
+  .current-base .letter{display:none}
+
+  #basePlanet{left:50%;top:78%;transform:translate(-50%,-50%)}
+  #leftChoice{left:25%;top:46%;transform:translate(-50%,-50%)}
+  #rightChoice{left:75%;top:46%;transform:translate(-50%,-50%)}
+  #previewLeft{left:25%;top:14%;transform:translate(-50%,-50%) scale(.84)}
+  #previewRight{left:75%;top:14%;transform:translate(-50%,-50%) scale(.84)}
+
+  #hero{position:absolute;left:50%;top:68%;width:clamp(92px,11vw,150px);transform:translate(-50%,-50%);transition:left .52s cubic-bezier(.21,.8,.24,1), top .52s cubic-bezier(.21,.8,.24,1), transform .52s cubic-bezier(.21,.8,.24,1), filter .25s ease;pointer-events:none;z-index:25;filter:drop-shadow(0 12px 24px rgba(0,0,0,.44)) drop-shadow(0 0 20px rgba(255,230,160,.14))}
+  #hero.jump{transform:translate(-50%,-58%) scale(1.02)}
+  #hero img{width:100%;display:block;-webkit-user-drag:none;user-select:none}
+
+  .fx{position:absolute;pointer-events:none;z-index:24;opacity:0;transition:opacity .2s ease;filter:drop-shadow(0 0 20px rgba(255,230,160,.22))}
+  .fx.show{opacity:1}
+  #rocketFx{width:clamp(70px,8vw,116px)}
+  #meteorFx{width:clamp(120px,16vw,220px)}
+  #rocketFx.fly{animation:rocketFly .75s ease-out forwards}
+  #meteorFx.fly{animation:meteorFly .8s ease-in forwards}
+  @keyframes rocketFly{
+    0%{opacity:0;transform:translate(-50%,42px) scale(.72) rotate(-10deg)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(-50%,-150px) scale(1.05) rotate(-10deg)}
+  }
+  @keyframes meteorFly{
+    0%{opacity:0;transform:translate(-50%,-130px) scale(.82) rotate(-18deg)}
+    15%{opacity:1}
+    100%{opacity:0;transform:translate(-50%,86px) scale(1.06) rotate(18deg)}
+  }
+
+  .advancing #currentWord{top:33%;opacity:0;transform:translateX(-50%) scale(.92)}
+  .advancing #basePlanet{top:92%;opacity:0;transform:translate(-50%,-50%) scale(.9)}
+  .advancing #previewWord{top:18%;opacity:1;transform:translateX(-50%) scale(1)}
+  .advancing.left-choice #leftChoice{left:50%;top:78%;opacity:1;transform:translate(-50%,-50%) scale(1);z-index:22}
+  .advancing.left-choice #rightChoice{top:60%;opacity:0;transform:translate(-50%,-50%) scale(.9)}
+  .advancing.right-choice #rightChoice{left:50%;top:78%;opacity:1;transform:translate(-50%,-50%) scale(1);z-index:22}
+  .advancing.right-choice #leftChoice{top:60%;opacity:0;transform:translate(-50%,-50%) scale(.9)}
+  .advancing #previewLeft{top:46%;opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .advancing #previewRight{top:46%;opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  .hint-panel{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;width:min(720px,94vw);min-height:140px;padding:20px 24px;background:linear-gradient(180deg, rgba(10,22,44,.86), rgba(7,14,27,.72));background-repeat:no-repeat;background-position:center;background-size:100% 100%;border-radius:28px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.38));transition:opacity .25s ease, transform .25s ease;text-shadow:var(--text-shadow)}
+  .hint-panel.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(12px)}
+  .hint-title{font-size:clamp(20px,2vw,28px);font-weight:800;color:var(--gold2);margin-bottom:6px;padding-right:32px}
+  .hint-body{font-size:clamp(14px,1.35vw,18px);line-height:1.42;color:#f5f9ff;max-width:96%}
+  .hint-body .accent{color:var(--gold);font-weight:800}
+  .close-hint{position:absolute;right:14px;top:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.08);color:#fff8e6;font-size:18px;line-height:1}
+
+  .toast{position:absolute;left:50%;bottom:172px;transform:translateX(-50%) translateY(16px);z-index:39;opacity:0;padding:10px 16px;border-radius:14px;background:rgba(5,12,23,.86);border:1px solid var(--line);box-shadow:var(--shadow);text-shadow:var(--text-shadow);transition:opacity .25s ease, transform .25s ease;max-width:min(90vw,520px);text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.good{color:#e8fff3}.toast.bad{color:#fff0ea}.toast.info{color:#f9f7ea}
+
+  .overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at center, rgba(5,10,20,.34), rgba(3,7,15,.72));transition:opacity .25s ease}
+  .overlay.hidden{opacity:0;pointer-events:none}
+  .modal-card{width:min(720px,96vw);padding:26px 26px 24px;border-radius:24px;background:linear-gradient(180deg, rgba(10,22,44,.92), rgba(7,14,28,.92));border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.38);backdrop-filter:blur(10px);text-align:center;color:var(--cream)}
+  .modal-card h1{margin:0 0 10px;font-size:clamp(26px,3vw,40px);color:var(--gold2);text-shadow:var(--text-shadow)}
+  .modal-card p{margin:8px auto 0;font-size:clamp(15px,1.5vw,19px);line-height:1.5;color:#eef5ff;max-width:58ch}
+  .modal-actions{margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .start-btn{border-radius:16px;padding:14px 22px;color:#08111e;background:linear-gradient(180deg, #fff0ba, #ffd777);font-size:18px;font-weight:800;box-shadow:0 14px 28px rgba(0,0,0,.28), 0 0 24px rgba(255,223,137,.24);transition:transform .18s ease, filter .18s ease}
+  .start-btn:hover{transform:translateY(-2px);filter:brightness(1.03)}
+
+  @media (max-width:960px){
+    .hud{grid-template-columns:1fr;gap:8px}
+    .controls{justify-content:flex-start}
+    .floor-panel{top:auto;bottom:18px;right:18px;left:18px;width:auto;padding:10px 12px}
+    .floor-dots{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:5px}
+    #currentWord{top:16%}
+    #previewWord{top:4%}
+    #basePlanet{top:79%}
+    #leftChoice{left:22%;top:44%}
+    #rightChoice{left:78%;top:44%}
+    #previewLeft{left:22%;top:10%}
+    #previewRight{left:78%;top:10%}
+    #hero{top:70%;width:clamp(84px,24vw,132px)}
+    .planet-wrap{width:clamp(126px,35vw,220px)}
+    .word-card{width:min(82vw,460px);min-height:128px;padding:18px 18px 24px}
+    .hint-panel{bottom:102px}
+    .toast{bottom:250px}
+    .advancing #currentWord{top:29%}
+    .advancing #previewWord{top:16%}
+    .advancing.left-choice #leftChoice,.advancing.right-choice #rightChoice{left:50%;top:79%}
+    .advancing.left-choice #rightChoice,.advancing.right-choice #leftChoice{top:56%}
+    .advancing #previewLeft,.advancing #previewRight{top:44%}
+  }
+  @media (max-width:560px){
+    .brand{padding:10px 12px}.stats{padding:8px}.controls{padding:8px}
+    .control-btn{padding:10px 12px;font-size:14px}
+    .word-text{font-size:clamp(24px,8vw,34px)}
+    .small-label{font-size:11px}
+    .rule-tag{display:none}
+    #currentWord{top:17%}
+    #leftChoice{left:21%;top:45%}
+    #rightChoice{left:79%;top:45%}
+    #previewLeft{left:21%;top:10%}
+    #previewRight{left:79%;top:10%}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bg landscape one" id="bgLandscape1"></div>
+  <div class="bg landscape two" id="bgLandscape2"></div>
+  <div class="bg portrait" id="bgPortrait"></div>
+  <canvas id="starCanvas"></canvas>
+  <img id="starOverlay" alt="" />
+  <div class="vignette"></div>
+
+  <div class="hud">
+    <div class="card brand">
+      <div class="title">Суффиксы прилагательных</div>
+      <div class="subtitle">Мышонок прыгает на следующую планету, а новые варианты мягко спускаются сверху</div>
+    </div>
+    <div class="card stats">
+      <div class="stat"><div class="label">Этаж</div><div class="value" id="floorValue">0 / 15</div></div>
+      <div class="stat"><div class="label">Вопрос</div><div class="value" id="questionValue">0 / 20</div></div>
+    </div>
+    <div class="card controls">
+      <button class="control-btn" id="hintBtn">Подсказка <span class="count" id="hintCount">3</span></button>
+      <button class="control-btn" id="compassBtn">Компас <span class="count" id="compassCount">2</span></button>
+      <button class="control-btn" id="soundBtn">Звуки: вкл</button>
+      <button class="control-btn" id="musicBtn">Мелодия: выкл</button>
+      <button class="control-btn" id="restartBtn">Заново</button>
+    </div>
+  </div>
+
+  <div class="floor-panel">
+    <div class="floor-caption">Звёздные этажи</div>
+    <div class="floor-dots" id="floorDots"></div>
+  </div>
+
+  <div id="scene">
+    <div class="word-card" id="currentWord">
+      <div class="small-label">Выберите букву</div>
+      <div class="word-text" id="currentWordText">Нажмите «Начать полёт»</div>
+      <div class="rule-tag" id="currentRuleTag">суффиксы прилагательных</div>
+    </div>
+
+    <div class="word-card" id="previewWord">
+      <div class="small-label">Следующее слово</div>
+      <div class="word-text" id="previewWordText">...</div>
+      <div class="rule-tag" id="previewRuleTag">...</div>
+    </div>
+
+    <div class="planet-wrap current-base" id="basePlanet">
+      <div class="planet-ghost">
+        <img class="planet-img" id="basePlanetImg" alt="" />
+        <span class="letter">•</span>
+      </div>
+    </div>
+
+    <div class="planet-wrap" id="leftChoice">
+      <button class="planet-btn" id="leftBtn" aria-label="Левая планета">
+        <img class="planet-img" id="leftImg" alt="" />
+        <span class="letter" id="leftLetter">А</span>
+      </button>
+    </div>
+
+    <div class="planet-wrap" id="rightChoice">
+      <button class="planet-btn" id="rightBtn" aria-label="Правая планета">
+        <img class="planet-img" id="rightImg" alt="" />
+        <span class="letter" id="rightLetter">Е</span>
+      </button>
+    </div>
+
+    <div class="planet-wrap preview" id="previewLeft">
+      <div class="planet-ghost">
+        <img class="planet-img" id="previewLeftImg" alt="" />
+        <span class="letter" id="previewLeftLetter">И</span>
+      </div>
+    </div>
+
+    <div class="planet-wrap preview" id="previewRight">
+      <div class="planet-ghost">
+        <img class="planet-img" id="previewRightImg" alt="" />
+        <span class="letter" id="previewRightLetter">Е</span>
+      </div>
+    </div>
+
+    <div id="hero"><img id="heroImg" alt="Мышонок" /></div>
+    <img class="fx" id="rocketFx" alt="" />
+    <img class="fx" id="meteorFx" alt="" />
+  </div>
+
+  <div class="hint-panel hidden" id="hintPanel">
+    <button class="close-hint" id="closeHintBtn" aria-label="Закрыть">×</button>
+    <div class="hint-title" id="hintTitle">Подсказка</div>
+    <div class="hint-body" id="hintBody"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <audio id="bgMusic" loop preload="auto"></audio>
+
+  <div class="overlay" id="modal">
+    <div class="modal-card">
+      <h1 id="modalTitle">Звёздный подъём</h1>
+      <p id="modalText">У мышонка есть своя нижняя планета. Выберите одну из двух планет выше: мышонок прыгнет на неё, а следующее слово и новые планеты мягко спустятся сверху.</p>
+      <div class="modal-actions"><button class="start-btn" id="startBtn">Начать полёт</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const gameBase = location.pathname.startsWith('/games/mouse-space')
+  ? '/games/mouse-space/'
+  : location.pathname.startsWith('/html-games/mouse-space')
+    ? '/html-games/mouse-space/'
+    : './';
+const asset = (name) => `${gameBase}assets/${encodeURI(name)}`;
+const ASSETS = {
+  stars: asset('звёзды_2_без_фона.png'),
+  meteors: asset('метеориты_без_фона.png'),
+  hero: asset('мышь_герой_без_фона.png'),
+  planet1: asset('планета_1_без_фона.png'),
+  planet2: asset('планета_2_без_фона.png'),
+  rocket: asset('ракета_без_фона.png'),
+  bgPortrait: asset('фон вертикальный.png'),
+  bgPortraitWin: asset('фон вертикальный победа.png'),
+  bgLandscape1: asset('фон горизонтальный (1).png'),
+  bgLandscape2: asset('фон горизонтальный (2).png'),
+  melody: asset('melody.mp3')
+};
+
+let QUESTIONS = [
+  { word:'аспирант..кий', correct:'с', wrong:'к', full:'аспирантский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'бедняц..ий', correct:'к', wrong:'с', full:'бедняцкий', rule:'Пишется суффикс -К-.', group:'К-СК' },
+  { word:'белорус..кий', correct:'с', wrong:'к', full:'белорусский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'богатыр..кий', correct:'с', wrong:'к', full:'богатырский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'брат..кий', correct:'с', wrong:'к', full:'братский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'волгоград..кий', correct:'с', wrong:'к', full:'волгоградский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'журналист..кий', correct:'с', wrong:'к', full:'журналистский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'запорож..кое (поселение)', correct:'с', wrong:'к', full:'запорожское (поселение)', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'кавказ..кий', correct:'с', wrong:'к', full:'кавказский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'камчат..кий', correct:'с', wrong:'к', full:'камчатский', rule:'Пишется суффикс -СК-.', group:'К-СК' },
+  { word:'берест..ной', correct:'я', wrong:'е', full:'берестяной', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'ветр..ная (мельница)', correct:'е', wrong:'я', full:'ветреная (мельница)', rule:'Пишется суффикс -ен-.', group:'ЯН-ЕН' },
+  { word:'ветр..ный (человек)', correct:'е', wrong:'я', full:'ветреный (человек)', rule:'Пишется суффикс -ен-.', group:'ЯН-ЕН' },
+  { word:'глин..ные (изделия)', correct:'я', wrong:'е', full:'глиняные (изделия)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'глин..ный (кувшин)', correct:'я', wrong:'е', full:'глиняный (кувшин)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'дров..ной (сарай)', correct:'я', wrong:'е', full:'дровяной (сарай)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'земл..ной (вал)', correct:'я', wrong:'е', full:'земляной (вал)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'кост..ная (нога)', correct:'я', wrong:'е', full:'костяная (нога)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'лед..ная (вода)', correct:'я', wrong:'е', full:'ледяная (вода)', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'лед..ной', correct:'я', wrong:'е', full:'ледяной', rule:'Пишется суффикс -ян-.', group:'ЯН-ЕН' },
+  { word:'старуш..чий', correct:'е', wrong:'а', full:'старушечий', rule:'В прилагательном пишется суффикс -ЕЧ-.', group:'ЕЧ-АЧ' },
+  { word:'алюмини..вый', correct:'е', wrong:'и', full:'алюминиевый', rule:'В относительном прилагательном пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'ансамбл..вый', correct:'е', wrong:'и', full:'ансамблевый', rule:'В относительном прилагательном пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'беж..вый', correct:'е', wrong:'и', full:'бежевый', rule:'Пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'бель..вой', correct:'е', wrong:'и', full:'бельевой', rule:'Пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'бол..вой', correct:'е', wrong:'и', full:'болевой', rule:'В относительном прилагательном пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'вермишел..вый', correct:'е', wrong:'и', full:'вермишелевый', rule:'В относительном прилагательном пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'веч..вой (колокол)', correct:'е', wrong:'и', full:'вечевой (колокол)', rule:'Пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'вещ..вой (мешок)', correct:'е', wrong:'и', full:'вещевой (мешок)', rule:'В относительном прилагательном пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'въедл..вый', correct:'и', wrong:'е', full:'въедливый', rule:'Пишется суффикс -ИВ-.', group:'ИВ-ЕВ' },
+  { word:'гел..вая (ручка)', correct:'е', wrong:'и', full:'гелевая (ручка)', rule:'Пишется суффикс -ЕВ-.', group:'ИВ-ЕВ' },
+  { word:'вежл..вый', correct:'и', wrong:'е', full:'вежливый', rule:'Пишется суффикс -ЛИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'вкрадч..вый', correct:'и', wrong:'е', full:'вкрадчивый', rule:'Пишется суффикс -ЧИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'влюбч..вый', correct:'и', wrong:'е', full:'влюбчивый', rule:'Пишется суффикс -ЧИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'доверч..вый', correct:'и', wrong:'е', full:'доверчивый', rule:'Пишется суффикс -ЧИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'догадл..вый', correct:'и', wrong:'е', full:'догадливый', rule:'Пишется суффикс -ЛИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'завистл..вый', correct:'и', wrong:'е', full:'завистливый', rule:'Пишется суффикс -ЛИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'задумч..вый', correct:'и', wrong:'е', full:'задумчивый', rule:'Пишется суффикс -ЧИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'заносч..вый', correct:'и', wrong:'е', full:'заносчивый', rule:'Пишется суффикс -ЧИВ-.', group:'ЧИВ-ЛИВ' },
+  { word:'глин..стый (грунт)', correct:'и', wrong:'е', full:'глинистый (грунт)', rule:'Пишется суффикс -ист-.', group:'ИСТ' },
+  { word:'залив..стый (смех)', correct:'и', wrong:'е', full:'заливистый (смех)', rule:'Пишется суффикс -ист-.', group:'ИСТ' },
+  { word:'ил..стая (почва)', correct:'и', wrong:'е', full:'илистая (почва)', rule:'Пишется суффикс -ист-.', group:'ИСТ' },
+  { word:'порыв..стый', correct:'и', wrong:'е', full:'порывистый', rule:'Пишется суффикс -ист-.', group:'ИСТ' },
+  { word:'бороздч..тый', correct:'а', wrong:'е', full:'бороздчатый', rule:'Пишется суффикс -ЧАТ-.', group:'ЧАТ' },
+  { word:'веснушч..тый', correct:'а', wrong:'е', full:'веснушчатый', rule:'Пишется суффикс -ЧАТ-.', group:'ЧАТ' },
+  { word:'взрывч..тые (вещества)', correct:'а', wrong:'е', full:'взрывчатые (вещества)', rule:'Пишется суффикс -ЧАТ-.', group:'ЧАТ' },
+  { word:'двухколенч..тый', correct:'а', wrong:'е', full:'двухколенчатый', rule:'Пишется суффикс -ЧАТ-.', group:'ЧАТ' },
+  { word:'дымч..тый', correct:'а', wrong:'е', full:'дымчатый', rule:'Пишется суффикс -ЧАТ-.', group:'ЧАТ' },
+  { word:'диков..нный', correct:'и', wrong:'е', full:'диковинный', rule:'Пишется суффикс -ИН-.', group:'НЕИЗМЕНЯЕМЫЕ' },
+  { word:'автоматич..ский', correct:'е', wrong:'и', full:'автоматический', rule:'Пишется суффикс -ЕСК-/-ИЧЕСК- в прилагательном.', group:'НЕИЗМЕНЯЕМЫЕ' }
+];
+
+const state = {
+  targetFloors:15, totalQuestions:20, deck:[], idx:0, floors:0, playing:false, locked:true,
+  hints:3, compasses:2, sound:true, music:false, musicReady:false, currentQ:null, previewQ:null, currentOptions:null, previewOptions:null, baseSkin:1
+};
+
+const $ = (id)=>document.getElementById(id);
+const app=$('app'), bgLandscape1=$('bgLandscape1'), bgLandscape2=$('bgLandscape2'), bgPortrait=$('bgPortrait'), starOverlay=$('starOverlay');
+const floorValue=$('floorValue'), questionValue=$('questionValue'), floorDots=$('floorDots');
+const currentWordText=$('currentWordText'), currentRuleTag=$('currentRuleTag'), previewWordText=$('previewWordText'), previewRuleTag=$('previewRuleTag');
+const basePlanetImg=$('basePlanetImg'), leftImg=$('leftImg'), rightImg=$('rightImg'), previewLeftImg=$('previewLeftImg'), previewRightImg=$('previewRightImg');
+const leftLetter=$('leftLetter'), rightLetter=$('rightLetter'), previewLeftLetter=$('previewLeftLetter'), previewRightLetter=$('previewRightLetter');
+const leftBtn=$('leftBtn'), rightBtn=$('rightBtn'), hero=$('hero'), heroImg=$('heroImg'), rocketFx=$('rocketFx'), meteorFx=$('meteorFx');
+const hintPanel=$('hintPanel'), hintTitle=$('hintTitle'), hintBody=$('hintBody'), closeHintBtn=$('closeHintBtn');
+const hintBtn=$('hintBtn'), compassBtn=$('compassBtn'), soundBtn=$('soundBtn'), musicBtn=$('musicBtn'), restartBtn=$('restartBtn'), hintCount=$('hintCount'), compassCount=$('compassCount');
+const toast=$('toast'), bgMusic=$('bgMusic'), modal=$('modal'), modalTitle=$('modalTitle'), modalText=$('modalText'), startBtn=$('startBtn');
+
+const audio={ctx:null,init(){ if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(C) this.ctx=new C();} if(this.ctx&&this.ctx.state==='suspended') this.ctx.resume();}, beep(freq=440,d=.12,type='sine',gain=.03,delay=0){ if(!state.sound) return; this.init(); if(!this.ctx) return; const t=this.ctx.currentTime+delay, osc=this.ctx.createOscillator(), g=this.ctx.createGain(); osc.type=type; osc.frequency.setValueAtTime(freq,t); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(gain,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d); osc.connect(g).connect(this.ctx.destination); osc.start(t); osc.stop(t+d+.02);}, click(){this.beep(620,.06,'triangle',.02)}, jump(){this.beep(520,.08,'triangle',.03);this.beep(760,.1,'sine',.02,.05)}, success(){this.beep(620,.08,'triangle',.03);this.beep(820,.1,'triangle',.03,.06);this.beep(1040,.15,'sine',.025,.12)}, fail(){this.beep(360,.11,'sawtooth',.02);this.beep(250,.14,'sawtooth',.018,.09)}, hint(){this.beep(700,.08,'sine',.02);this.beep(930,.08,'sine',.018,.06)}, win(){this.beep(523,.09,'triangle',.03);this.beep(659,.09,'triangle',.03,.08);this.beep(784,.11,'triangle',.03,.16);this.beep(1047,.16,'sine',.025,.26)}};
+
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function randomPlanetSkin(){ return Math.random() > .5 ? 1 : 2; }
+function getPlanetSrc(skin){ return skin === 1 ? ASSETS.planet1 : ASSETS.planet2; }
+function generateOptions(q){ const a=shuffle([{letter:q.correct,correct:true,side:'left'},{letter:q.wrong,correct:false,side:'right'}]); a[0].side='left'; a[1].side='right'; return {left:a.find(v=>v.side==='left'), right:a.find(v=>v.side==='right')}; }
+function preloadAssets(){ Object.values(ASSETS).forEach(src => { const img=new Image(); img.src=src; }); }
+function applyAssets(){ bgLandscape1.style.backgroundImage=`url("${ASSETS.bgLandscape1}")`; bgLandscape2.style.backgroundImage=`url("${ASSETS.bgLandscape2}")`; bgPortrait.style.backgroundImage=`url("${ASSETS.bgPortrait}")`; starOverlay.src=ASSETS.stars; heroImg.src=ASSETS.hero; rocketFx.src=ASSETS.rocket; meteorFx.src=ASSETS.meteors; bgMusic.src=ASSETS.melody; bgMusic.volume=.32; }
+function createFloorDots(){ floorDots.innerHTML=''; for(let i=1;i<=state.targetFloors;i++){ const d=document.createElement('div'); d.className='floor-dot'; floorDots.appendChild(d); } }
+function updateFloorDots(){ [...floorDots.children].forEach((dot,i)=>dot.classList.toggle('active', i < state.floors)); }
+function updateCounters(){ floorValue.textContent=`${state.floors} / ${state.targetFloors}`; questionValue.textContent=`${state.playing ? Math.min(state.idx+1,state.totalQuestions) : 0} / ${state.totalQuestions}`; hintCount.textContent=state.hints; compassCount.textContent=state.compasses; hintBtn.disabled=!state.playing||state.locked||state.hints<=0; compassBtn.disabled=!state.playing||state.locked||state.compasses<=0; soundBtn.textContent=`Звуки: ${state.sound?'вкл':'выкл'}`; musicBtn.textContent=`Мелодия: ${state.music?'вкл':'выкл'}`; }
+function showToast(message, kind='info', ms=1300){ toast.textContent=message; toast.className=`toast show ${kind}`; clearTimeout(showToast._timer); showToast._timer=setTimeout(()=>toast.className='toast',ms); }
+function showHint(title, html){ hintTitle.textContent=title; hintBody.innerHTML=html; hintPanel.classList.remove('hidden'); }
+function hideHint(){ hintPanel.classList.add('hidden'); }
+function lockChoices(v=true){ leftBtn.classList.toggle('locked',v); rightBtn.classList.toggle('locked',v); state.locked=v; updateCounters(); }
+function clearChoiceStates(){ leftBtn.className='planet-btn'; rightBtn.className='planet-btn'; }
+function setBackground(win=false){ bgPortrait.style.backgroundImage=`url("${win?ASSETS.bgPortraitWin:ASSETS.bgPortrait}")`; bgLandscape2.style.opacity=win?'.58':'.42'; bgLandscape1.style.filter=win?'saturate(1.1) brightness(1.02)':'saturate(1.06) brightness(.95)'; }
+function setHeroAt(position){ if(position==='base'){ hero.style.left='50%'; hero.style.top=window.matchMedia('(max-width: 960px)').matches?'70%':'68%'; }
+  if(position==='left'){ hero.style.left=window.matchMedia('(max-width: 960px)').matches?'22%':'25%'; hero.style.top=window.matchMedia('(max-width: 960px)').matches?'38%':'40%'; }
+  if(position==='right'){ hero.style.left=window.matchMedia('(max-width: 960px)').matches?'78%':'75%'; hero.style.top=window.matchMedia('(max-width: 960px)').matches?'38%':'40%'; }
+}
+function positionFx(el, pos){ el.style.left = pos==='left' ? (window.matchMedia('(max-width: 960px)').matches?'22%':'25%') : (window.matchMedia('(max-width: 960px)').matches?'78%':'75%'); el.style.top = pos==='left'||pos==='right' ? (window.matchMedia('(max-width: 960px)').matches?'41%':'43%') : '50%'; el.style.transform='translate(-50%,-50%)'; }
+function updateProgress(){ updateFloorDots(); updateCounters(); }
+
+function renderBoard(){
+  app.classList.remove('advancing','left-choice','right-choice');
+  clearChoiceStates();
+  hideHint();
+
+  const q = state.currentQ;
+  const pq = state.previewQ;
+  currentWordText.textContent = q ? q.word : '...';
+  currentRuleTag.textContent = q ? q.group : '...';
+  previewWordText.textContent = pq ? pq.word : '...';
+  previewRuleTag.textContent = pq ? pq.group : '...';
+
+  basePlanetImg.src = getPlanetSrc(state.baseSkin);
+
+  const leftSkin = randomPlanetSkin();
+  const rightSkin = randomPlanetSkin();
+  leftBtn.dataset.skin = leftSkin;
+  rightBtn.dataset.skin = rightSkin;
+  leftImg.src = getPlanetSrc(leftSkin);
+  rightImg.src = getPlanetSrc(rightSkin);
+  leftLetter.textContent = state.currentOptions.left.letter.toUpperCase();
+  rightLetter.textContent = state.currentOptions.right.letter.toUpperCase();
+
+  if(pq && state.previewOptions){
+    previewLeftImg.src = getPlanetSrc(randomPlanetSkin());
+    previewRightImg.src = getPlanetSrc(randomPlanetSkin());
+    previewLeftLetter.textContent = state.previewOptions.left.letter.toUpperCase();
+    previewRightLetter.textContent = state.previewOptions.right.letter.toUpperCase();
+  } else {
+    previewWordText.textContent = '...';
+    previewRuleTag.textContent = '...';
+    previewLeftLetter.textContent = '';
+    previewRightLetter.textContent = '';
+  }
+
+  hero.classList.remove('jump');
+  setHeroAt('base');
+  rocketFx.classList.remove('show','fly');
+  meteorFx.classList.remove('show','fly');
+  lockChoices(false);
+}
+
+function startGame(){
+  state.deck = shuffle(QUESTIONS).slice(0, state.totalQuestions);
+  state.idx = 0;
+  state.floors = 0;
+  state.hints = 3;
+  state.compasses = 2;
+  state.playing = true;
+  state.baseSkin = randomPlanetSkin();
+  state.currentQ = state.deck[0];
+  state.previewQ = state.deck[1] || null;
+  state.currentOptions = generateOptions(state.currentQ);
+  state.previewOptions = state.previewQ ? generateOptions(state.previewQ) : null;
+  setBackground(false);
+  updateProgress();
+  renderBoard();
+  if(state.music) playMusic();
+  modal.classList.add('hidden');
+}
+
+function endGame(win){
+  state.playing=false;
+  lockChoices(true);
+  if(win){ setBackground(true); audio.win(); modalTitle.innerHTML='Победа! Звёздная вершина покорена'; modalText.innerHTML=`Вы довели мышонка до <span style="color:#fff1c3;font-weight:800;">${state.targetFloors}-го этажа</span>.<br>Использовано слов: ${Math.min(state.idx, state.totalQuestions)} из ${state.totalQuestions}.`; startBtn.textContent='Играть снова'; }
+  else { setBackground(false); modalTitle.innerHTML='Полёт завершён'; modalText.innerHTML=`Вы дошли до <span style="color:#fff1c3;font-weight:800;">${state.floors}-го этажа</span> из ${state.targetFloors}.<br>Попробуйте ещё раз: выпадет новый набор из ${state.totalQuestions} слов.`; startBtn.textContent='Попробовать снова'; }
+  modal.classList.remove('hidden');
+}
+
+function useHint(){ if(!state.playing||state.locked||state.hints<=0) return; audio.hint(); state.hints--; updateCounters(); const q=state.currentQ; showHint('Подсказка', `Полное слово: <span class="accent">${q.full}</span><br>${q.rule}`); }
+function useCompass(){ if(!state.playing||state.locked||state.compasses<=0) return; audio.hint(); state.compasses--; updateCounters(); clearChoiceStates(); if(state.currentOptions.left.correct){ leftBtn.classList.add('assist-correct'); rightBtn.classList.add('assist-wrong'); } else { rightBtn.classList.add('assist-correct'); leftBtn.classList.add('assist-wrong'); } showToast('Компас подсветил верную планету', 'info', 1500); setTimeout(()=>{ leftBtn.classList.remove('assist-correct','assist-wrong'); rightBtn.classList.remove('assist-correct','assist-wrong'); }, 2500); }
+
+
+function playMusic(){
+  state.music = true;
+  bgMusic.play().then(()=>{
+    state.musicReady = true;
+    updateCounters();
+  }).catch(()=>{
+    state.music = false;
+    updateCounters();
+    showToast('Браузер не дал запустить мелодию. Нажмите кнопку ещё раз.', 'info', 1800);
+  });
+}
+function stopMusic(){
+  state.music = false;
+  bgMusic.pause();
+  updateCounters();
+}
+function toggleMusic(){
+  audio.init();
+  if(state.music) stopMusic();
+  else playMusic();
+}
+
+function answer(side){
+  if(!state.playing || state.locked) return;
+  const pick = state.currentOptions[side];
+  const selectedBtn = side==='left' ? leftBtn : rightBtn;
+  const selectedSkin = Number(selectedBtn.dataset.skin) || randomPlanetSkin();
+  lockChoices(true);
+  hideHint();
+  audio.jump();
+  hero.classList.add('jump');
+  setHeroAt(side);
+  positionFx(pick.correct ? rocketFx : meteorFx, side);
+
+  if(pick.correct){
+    state.floors = Math.min(state.targetFloors, state.floors + 1);
+    selectedBtn.classList.add('correct');
+    rocketFx.classList.add('show','fly');
+    audio.success();
+    showToast('Верно! Мышонок поднялся выше', 'good');
+  } else {
+    state.floors = Math.max(0, state.floors - 1);
+    selectedBtn.classList.add('wrong');
+    meteorFx.classList.add('show','fly');
+    audio.fail();
+    showToast('Ошибка. Мышонок потерял этаж', 'bad', 1600);
+    showHint(`Правильно: ${state.currentQ.full}`, `${state.currentQ.rule}<br>Нужная буква: <span class="accent">${state.currentQ.correct.toUpperCase()}</span>`);
+  }
+  updateProgress();
+
+  setTimeout(()=>{ app.classList.add('advancing', side === 'left' ? 'left-choice' : 'right-choice'); setHeroAt('base'); }, 320);
+
+  setTimeout(()=>{
+    state.baseSkin = selectedSkin;
+    state.idx += 1;
+    if(state.floors >= state.targetFloors){ rocketFx.classList.remove('show','fly'); meteorFx.classList.remove('show','fly'); hero.classList.remove('jump'); endGame(true); return; }
+    if(state.idx >= state.totalQuestions){ rocketFx.classList.remove('show','fly'); meteorFx.classList.remove('show','fly'); hero.classList.remove('jump'); endGame(false); return; }
+    state.currentQ = state.previewQ;
+    state.currentOptions = state.previewOptions;
+    state.previewQ = state.deck[state.idx + 1] || null;
+    state.previewOptions = state.previewQ ? generateOptions(state.previewQ) : null;
+    renderBoard();
+  }, 1650);
+}
+
+function bindPlanet(btn, side){
+  btn.addEventListener('pointerup', (e)=>{ e.preventDefault(); audio.click(); answer(side); });
+}
+
+bindPlanet(leftBtn,'left');
+bindPlanet(rightBtn,'right');
+hintBtn.addEventListener('click', useHint);
+compassBtn.addEventListener('click', useCompass);
+soundBtn.addEventListener('click', ()=>{ state.sound=!state.sound; audio.init(); updateCounters(); showToast(`Звуковые эффекты ${state.sound ? 'включены' : 'выключены'}`, 'info', 900); });
+musicBtn.addEventListener('click', toggleMusic);
+restartBtn.addEventListener('click', ()=>{ state.playing=false; lockChoices(true); modalTitle.textContent='Новый полёт'; modalText.innerHTML='Хотите начать заново? Будет собрана новая случайная двадцатка слов.'; startBtn.textContent='Начать заново'; modal.classList.remove('hidden'); });
+closeHintBtn.addEventListener('click', hideHint);
+startBtn.addEventListener('click', ()=>{ audio.init(); startGame(); });
+window.addEventListener('resize', ()=>{ if(state.playing) setHeroAt('base'); });
+document.addEventListener('keydown', (e)=>{ if(!state.playing||state.locked) return; if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a'||e.key==='ф') answer('left'); if(e.key==='ArrowRight'||e.key.toLowerCase()==='d'||e.key==='в') answer('right'); if(e.key.toLowerCase()==='h'||e.key==='р') useHint(); });
+
+function initStarCanvas(){
+  const canvas=$('starCanvas'); const ctx=canvas.getContext('2d'); const stars=[]; const COUNT=85;
+  function makeStar(){ return {x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:.8+Math.random()*2.8,alpha:.25+Math.random()*.75,twinkle:.004+Math.random()*.014,speedX:-.08+Math.random()*.16,speedY:-.05+Math.random()*.1,pulse:Math.random()*Math.PI*2,warm:Math.random()>.34}; }
+  function resize(){ const dpr=Math.min(window.devicePixelRatio||1,2); canvas.width=Math.floor(window.innerWidth*dpr); canvas.height=Math.floor(window.innerHeight*dpr); canvas.style.width=`${window.innerWidth}px`; canvas.style.height=`${window.innerHeight}px`; ctx.setTransform(dpr,0,0,dpr,0,0); stars.length=0; for(let i=0;i<COUNT;i++) stars.push(makeStar()); }
+  function drawStar(x,y,size,alpha,warm){ const color=warm?`rgba(255,214,116,${alpha})`:`rgba(202,228,255,${alpha})`; ctx.save(); ctx.translate(x,y); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(0,0,size*.5,0,Math.PI*2); ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=Math.max(.5,size*.12); ctx.beginPath(); ctx.moveTo(-size*2.8,0); ctx.lineTo(size*2.8,0); ctx.moveTo(0,-size*2.8); ctx.lineTo(0,size*2.8); if(size>1.8){ ctx.moveTo(-size*1.8,-size*1.8); ctx.lineTo(size*1.8,size*1.8); ctx.moveTo(size*1.8,-size*1.8); ctx.lineTo(-size*1.8,size*1.8);} ctx.stroke(); ctx.restore(); }
+  function loop(){ ctx.clearRect(0,0,window.innerWidth,window.innerHeight); for(const s of stars){ s.x+=s.speedX; s.y+=s.speedY; s.pulse+=s.twinkle*12; if(s.x<-30) s.x=window.innerWidth+30; if(s.x>window.innerWidth+30) s.x=-30; if(s.y<-30) s.y=window.innerHeight+30; if(s.y>window.innerHeight+30) s.y=-30; const a=s.alpha*(.62+Math.sin(s.pulse)*.38); drawStar(s.x,s.y,s.r,a,s.warm);} requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize); resize(); loop();
+}
+
+async function loadTeacherSet(){
+  const setId = new URLSearchParams(location.search).get('set');
+  if(!setId) return;
+  try {
+    const response = await fetch(`/api/games/sets/${encodeURIComponent(setId)}`);
+    if(!response.ok) throw new Error('Набор недоступен');
+    const data = await response.json();
+    const items = data.items || data.payload?.items || [];
+    const prepared = items.map((item) => {
+      const correct = String(item.answer || '').trim();
+      const wrong = (item.options || []).map(String).find((option) => option !== correct);
+      if(!item.variant || !correct || !wrong) return null;
+      return {
+        word: String(item.variant), correct, wrong,
+        full: String(item.correct_spelling || item.variant),
+        rule: String(item.explanation || 'Выберите правильную букву.'),
+        group: String(data.title || 'Игра учителя')
+      };
+    }).filter(Boolean);
+    if(prepared.length){
+      QUESTIONS = prepared;
+      state.totalQuestions = Math.min(20, QUESTIONS.length);
+      state.targetFloors = Math.min(15, Math.max(1, Math.ceil(state.totalQuestions * .75)));
+      document.querySelector('.brand .title').textContent = data.title || 'Мышонок в космосе';
+      document.querySelector('.brand .subtitle').textContent = data.description || 'Выберите правильную букву и помогите мышонку подняться выше.';
+    }
+  } catch(error) {
+    modalText.textContent = 'Не удалось загрузить набор учителя. Открыта встроенная игра по суффиксам прилагательных.';
+  }
+}
+
+async function init(){
+  await loadTeacherSet();
+  preloadAssets();
+  applyAssets();
+  createFloorDots();
+  setHeroAt('base');
+  updateProgress();
+  initStarCanvas();
+}
+init();
+</script>
+</body>
+</html>

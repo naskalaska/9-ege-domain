@@ -604,6 +604,46 @@ button {
   line-height: 1.25;
 }
 
+.ege14-context {
+  margin: 16px 0;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.ege14-target {
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: #ffe7a8;
+  color: inherit;
+  font-weight: 800;
+}
+
+.ege14-line-choices {
+  align-items: stretch;
+}
+
+.ege14-word-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) 2fr;
+  gap: 14px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.choice-row.compact .choice {
+  padding: 9px 12px;
+}
+
+@media (max-width: 680px) {
+  .ege14-word-row { grid-template-columns: 1fr; }
+}
+
 .task-prompt {
   line-height: 1.55;
   font-weight: 700;

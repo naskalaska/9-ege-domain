@@ -53,6 +53,12 @@ const activityMeta = {
     description: "Личные окончания глаголов и суффиксы причастий.",
     mark: "12",
   },
+  ege14: {
+    title: "ЕГЭ. Задание 14",
+    shortTitle: "Задание 14",
+    description: "Слитное, раздельное и дефисное написание слов разных частей речи.",
+    mark: "14",
+  },
   "html-games": {
     title: "Игры",
     shortTitle: "Игры",
@@ -97,6 +103,15 @@ const miniGames = [
     path: "/html-games/paronyms/index.html",
     category: "speech",
     categoryTitle: "Культура речи",
+  },
+  {
+    slug: "mouse-space",
+    title: "Мышонок в космосе: суффиксы прилагательных",
+    description: "Помогите мышонку подняться по планетам, выбирая правильную букву в суффиксах прилагательных.",
+    button: "Играть",
+    path: "/html-games/mouse-space/index.html",
+    category: "orthography",
+    categoryTitle: "Орфография",
   },
 ];
 
@@ -382,7 +397,31 @@ const paronymModes = {
   },
 };
 
+const ege14Modes = {
+  word_context: {
+    title: "Слово в контексте",
+    hint: "Выберите: слитно, раздельно или через дефис",
+    eyebrow: "точечная отработка",
+  },
+  line_spelling: {
+    title: "Строка",
+    hint: "Одинаковое или разное написание двух слов",
+    eyebrow: "работа со строкой",
+  },
+  exam: {
+    title: "Формат ЕГЭ",
+    hint: "5 строк, 2–4 правильных ответа",
+    eyebrow: "задание 14",
+  },
+  errors: {
+    title: "Копилка ошибок",
+    hint: "Повторите слова, в которых ошибались",
+    eyebrow: "личное повторение",
+  },
+};
+
 function activityModes() {
+  if (state.currentActivity === "ege14") return ege14Modes;
   return state.currentActivity === "ege5" ? paronymModes : modes;
 }
 
@@ -417,6 +456,13 @@ function escapeHtml(value) {
 
 function escapeWordList(words) {
   return (words || []).map((word) => `<span>${escapeHtml(word)}</span>`).join("");
+}
+
+function highlightEge14Target(context, target) {
+  const safeContext = escapeHtml(context);
+  const safeTarget = escapeHtml(target);
+  if (!safeTarget || !safeContext.includes(safeTarget)) return safeContext;
+  return safeContext.replace(safeTarget, `<mark class="ege14-target">${safeTarget}</mark>`);
 }
 
 function safeRelativeUrl(value, fallback = "#") {
@@ -622,6 +668,11 @@ function renderTopActions() {
     });
     topActions.append(catalog);
   }
+  const support = document.createElement("button");
+  support.className = "ghost-button";
+  support.textContent = "Поддержать проект";
+  support.addEventListener("click", () => navigate("/donate"));
+  topActions.append(support);
   const role = document.createElement("span");
   role.className = "muted";
   const roleNames = { admin: "администратор", teacher: "учитель", student: "ученик" };
@@ -1151,6 +1202,7 @@ function renderPublicGames() {
           <label>Механика
             <select name="mechanic">
               <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
+              <option value="mouse-space">Мышонок в космосе - для орфографии, выбор буквы</option>
               <option value="berry-season">Ягодный сезон: ИК-ЕК</option>
             </select>
           </label>
@@ -1616,7 +1668,7 @@ async function loadActivity(slug, updateUrl = true) {
   }
   state.currentActivity = slug;
   state.bootstrap = await api(`/api/apps/${slug}/bootstrap`);
-  state.mode = slug === "ege5" ? "paronym_choice" : "rule";
+  state.mode = slug === "ege5" ? "paronym_choice" : slug === "ege14" ? "word_context" : "rule";
   state.selectedCategory = null;
   state.selectedCategories = [];
   state.selectedRuleIds = [];
@@ -1635,6 +1687,7 @@ function activityFromPath() {
   if (path === "/apps/ege10") return "ege10";
   if (path === "/apps/ege11") return "ege11";
   if (path === "/apps/ege12") return "ege12";
+  if (path === "/apps/ege14") return "ege14";
   if (path === "/apps/mini" || path.startsWith("/apps/mini/")) return "html-games";
   return null;
 }
@@ -1756,7 +1809,6 @@ function renderDashboard() {
   renderSidebar();
   renderMode();
   document.querySelector("#progressButton").addEventListener("click", showProgress);
-  document.querySelector("#supportButton").addEventListener("click", () => navigate("/donate"));
   if (state.user.role === "teacher") {
     renderTeacherDashboardPreview();
   }
@@ -1859,6 +1911,7 @@ function renderMiniActivity() {
           <label>Механика
             <select name="mechanic">
               <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
+              <option value="mouse-space">Мышонок в космосе - для орфографии, выбор буквы</option>
               <option value="berry-season">Ягодный сезон: ИК-ЕК</option>
               <option value="focus" disabled>Фокус - скоро</option>
             </select>
@@ -2200,8 +2253,8 @@ function backToMenu() {
 
 function renderSetup() {
   const setup = document.querySelector("#setupView");
-  const ruleSelector = ["rule", "word_letter", "paronym_choice"].includes(state.mode) ? renderRuleSelector() : "";
-  const errorModeSelector = state.mode === "errors" && state.currentActivity !== "ege5" ? `
+  const ruleSelector = ["rule", "word_letter", "paronym_choice", "word_context"].includes(state.mode) ? renderRuleSelector() : "";
+  const errorModeSelector = state.mode === "errors" && !["ege5", "ege14"].includes(state.currentActivity) ? `
     <label>
       Режим в копилке
       <select id="errorTrainingMode">
@@ -2219,7 +2272,7 @@ function renderSetup() {
       <button class="primary-button" id="startPractice" type="button">Начать</button>
     </div>
     ${errorModeSelector}
-    ${state.currentActivity === "ege5" ? "" : `<label class="manual-toggle">
+    ${["ege5", "ege14"].includes(state.currentActivity) ? "" : `<label class="manual-toggle">
       <input id="manualInput" type="checkbox" ${state.manualInput || state.mode === "word_letter" ? "checked" : ""} ${state.mode === "word_letter" ? "disabled" : ""} />
       <span>Самостоятельно вводить ответ с клавиатуры</span>
     </label>`}
@@ -2339,7 +2392,7 @@ async function startPractice() {
   const count = state.questionCount;
   const payload = { mode: state.mode, count };
   if (state.mode === "errors") payload.error_training_mode = state.errorTrainingMode;
-  if (["rule", "word_letter", "paronym_choice"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
+  if (["rule", "word_letter", "paronym_choice", "word_context"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
   const setup = document.querySelector("#setupView");
   try {
     const data = await api(activityApi("/practice/start"), {
@@ -2352,7 +2405,7 @@ async function startPractice() {
     state.currentQuestionIndex = 0;
     state.startedAt = Date.now();
     setup.innerHTML = "";
-    if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter" && state.currentActivity !== "ege5")) {
+    if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter" && !["ege5", "ege14"].includes(state.currentActivity))) {
       renderLiveQuestion();
     } else {
       renderQuestions();
@@ -2496,6 +2549,25 @@ function renderQuestions() {
       state.answers[input.dataset.questionId] = { ...current, word: input.value };
     });
   });
+  practice.querySelectorAll("[data-ege14-line-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const questionId = button.dataset.questionId;
+      const current = state.answers[questionId] || { mode: "", words: {} };
+      state.answers[questionId] = { ...current, mode: button.dataset.ege14LineMode, words: current.words || {} };
+      renderQuestions();
+    });
+  });
+  practice.querySelectorAll("[data-ege14-word-answer]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const questionId = button.dataset.questionId;
+      const current = state.answers[questionId] || { mode: "разное", words: {} };
+      state.answers[questionId] = {
+        mode: "разное",
+        words: { ...(current.words || {}), [button.dataset.wordId]: button.dataset.ege14WordAnswer },
+      };
+      renderQuestions();
+    });
+  });
   practice.querySelectorAll("[data-answer]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.multi === "true") {
@@ -2515,6 +2587,45 @@ function renderQuestions() {
 }
 
 function renderQuestion(question, index) {
+  if (question.kind === "ege14_word") {
+    const selected = state.answers[question.question_id] || "";
+    return `
+      <article class="question ege14-question">
+        <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.category)} · ${escapeHtml(question.rule_name)}</span></div>
+        <div class="task-prompt">Определите написание выделенного слова в контексте.</div>
+        <div class="ege14-context">${highlightEge14Target(question.prompt, question.target)}</div>
+        <div class="choice-row">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-question-id="${escapeHtml(question.question_id)}" data-answer="${escapeHtml(choice)}" type="button">${escapeHtml(choice)}</button>`).join("")}</div>
+      </article>
+    `;
+  }
+  if (question.kind === "ege14_line") {
+    const current = state.answers[question.question_id] || { mode: "", words: {} };
+    const modes = question.choices.map((choice) => `<button class="choice ${current.mode === choice ? "selected" : ""}" data-ege14-line-mode="${escapeHtml(choice)}" data-question-id="${escapeHtml(question.question_id)}" type="button">${choice === "разное" ? "разное написание" : choice === "дефис" ? "оба через дефис" : `оба ${escapeHtml(choice)}`}</button>`).join("");
+    const details = current.mode === "разное" ? question.targets.map((target) => `
+      <div class="ege14-word-row">
+        <b>${escapeHtml(target.target)}</b>
+        <div class="choice-row compact">${["слитно", "раздельно", "дефис"].map((choice) => `<button class="choice ${(current.words || {})[target.id] === choice ? "selected" : ""}" data-ege14-word-answer="${choice}" data-word-id="${escapeHtml(target.id)}" data-question-id="${escapeHtml(question.question_id)}" type="button">${choice}</button>`).join("")}</div>
+      </div>
+    `).join("") : "";
+    return `
+      <article class="question ege14-question">
+        <div class="question-head"><span>Строка ${index + 1}</span><span>Задание 14</span></div>
+        <div class="ege14-context">${escapeHtml(question.prompt)}</div>
+        <div class="choice-row ege14-line-choices">${modes}</div>
+        ${details}
+      </article>
+    `;
+  }
+  if (question.kind === "ege14_exam") {
+    const current = state.answers[question.question_id] || "";
+    return `
+      <article class="question ege14-question">
+        <div class="question-head"><span>Задание ${index + 1}</span><span>Формат ЕГЭ</span></div>
+        <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+        ${question.rows.map((row, rowIndex) => { const answer = String(rowIndex + 1); return `<button class="line-row ${current.includes(answer) ? "selected" : ""}" data-multi="true" data-question-id="${escapeHtml(question.question_id)}" data-answer="${answer}" type="button"><b>${answer}</b><span>${escapeHtml(row)}</span></button>`; }).join("")}
+      </article>
+    `;
+  }
   if (question.kind === "paronym_exam") {
     const current = state.answers[question.question_id] || {};
     return `
@@ -2636,6 +2747,10 @@ function renderQuestion(question, index) {
 
 function answerIsComplete(question) {
   const answer = state.answers[question.question_id];
+  if (question.kind === "ege14_line") {
+    if (!answer?.mode) return false;
+    return answer.mode !== "разное" || question.targets.every((target) => answer.words?.[target.id]);
+  }
   if (question.kind === "paronym_exam") {
     return Boolean(answer?.row && String(answer?.word || "").trim());
   }
@@ -2895,14 +3010,20 @@ function showTestComposer() {
   backdrop.className = "modal-backdrop";
   const ruleSelector = renderRuleSelector();
   const isParonyms = state.currentActivity === "ege5";
-  const defaultMode = isParonyms ? "paronym_exam" : "line";
+  const isEge14 = state.currentActivity === "ege14";
+  const defaultMode = isParonyms ? "paronym_exam" : isEge14 ? "exam" : "line";
   const modeOptions = isParonyms
     ? `
             <option value="paronym_exam">Формат ЕГЭ</option>
             <option value="paronym_choice">Выбранные группы</option>
             <option value="errors">Копилка ошибок</option>
       `
-    : `
+    : isEge14 ? `
+            <option value="exam">Формат ЕГЭ</option>
+            <option value="line_spelling">Строки</option>
+            <option value="word_context">Выбранные части речи</option>
+            <option value="errors">Копилка ошибок</option>
+      ` : `
             <option value="line">Строки</option>
             <option value="rule">Выбранные темы</option>
             <option value="mix">Микс</option>
@@ -2945,7 +3066,7 @@ function showTestComposer() {
   };
   const refreshRules = () => {
     const mode = backdrop.querySelector("#testMode").value;
-    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice"));
+    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice" || mode === "word_context"));
   };
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#testMode").value = defaultMode;
@@ -2986,7 +3107,7 @@ function adminStudentSummary(student) {
   const total = Number(student.attempts || 0);
   if (!total) return "Пока нет попыток.";
   const parts = (student.mode_summary || []).map((item) => {
-    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || item.mode || "режим";
+    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || ege14Modes[item.mode]?.title || item.mode || "режим";
     return `${item.attempts} в режиме «${escapeHtml(modeTitle)}»`;
   });
   return `Решил ${parts.join(", ")}. Верных ответов: ${student.correct || 0} из ${total}.`;
