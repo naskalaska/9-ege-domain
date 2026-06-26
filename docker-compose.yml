@@ -1,3 +1,4 @@
+x-deploy-revision: "2026-06-26-portainer-refresh"
 services:
   app:
     build:
