@@ -1,4 +1,3 @@
-# redeploy refresh: 2026-06-26 portainer
 services:
   app:
     build:
@@ -33,6 +32,8 @@ services:
 
 volumes:
   ege_platform_data:
+    external: true
+    name: 9-ege-docker-compose_ege_platform_data
 
 networks:
   ege_platform_net:
