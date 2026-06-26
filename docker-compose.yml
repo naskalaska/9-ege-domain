@@ -1,4 +1,4 @@
-x-deploy-revision: "2026-06-26-portainer-refresh"
+# redeploy refresh: 2026-06-26 portainer
 services:
   app:
     build:
