@@ -36,6 +36,7 @@
   .vignette{z-index:4;background:radial-gradient(circle at center, transparent 35%, rgba(1,6,14,.1) 58%, rgba(1,6,14,.28) 80%, rgba(1,6,14,.58) 100%)}
 
   .hud{position:absolute;left:0;right:0;top:0;z-index:30;padding:12px 14px;display:grid;grid-template-columns:1.4fr 1fr 1.4fr;gap:12px;align-items:start}
+  .menu-toggle{display:none;min-height:42px;padding:10px 14px;border-radius:14px;color:var(--cream);background:linear-gradient(180deg, rgba(34,58,99,.95), rgba(18,34,65,.9));border:1px solid rgba(255,223,146,.44);box-shadow:0 8px 18px rgba(0,0,0,.24);text-shadow:var(--text-shadow);cursor:pointer}
   .card{background:linear-gradient(180deg, var(--panel1), var(--panel2));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px)}
   .brand{padding:12px 16px}
   .brand .title{font-size:clamp(18px,2.1vw,28px);font-weight:800;color:var(--gold2);text-shadow:var(--text-shadow)}
@@ -142,6 +143,7 @@
 
   @media (max-width:960px){
     .hud{grid-template-columns:1fr;gap:8px}
+    .menu-toggle{display:inline-flex;align-items:center;justify-content:center;justify-self:start}
     .controls{justify-content:flex-start}
     .floor-panel{top:auto;bottom:18px;right:18px;left:18px;width:auto;padding:10px 12px}
     .floor-dots{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:5px}
@@ -164,7 +166,17 @@
     .advancing #previewLeft,.advancing #previewRight{top:44%}
   }
   @media (max-width:560px){
-    .brand{padding:10px 12px}.stats{padding:8px}.controls{padding:8px}
+    .hud{padding:8px;gap:6px;pointer-events:none}
+    .hud > *{pointer-events:auto}
+    .brand{padding:10px 12px}.stats{padding:8px;grid-template-columns:repeat(2,minmax(0,1fr))}.controls{padding:8px}
+    .stat{padding:8px 7px}
+    .stat .label{font-size:11px}
+    .stat .value{font-size:20px}
+    #app.mobile-menu-collapsed .hud{right:auto}
+    #app.mobile-menu-collapsed .brand,
+    #app.mobile-menu-collapsed .stats,
+    #app.mobile-menu-collapsed .controls{display:none}
+    #app.mobile-menu-collapsed .menu-toggle{background:linear-gradient(180deg, rgba(255,240,186,.96), rgba(255,215,119,.92));color:#08111e;text-shadow:none;font-weight:800}
     .control-btn{padding:10px 12px;font-size:14px}
     .word-text{font-size:clamp(24px,8vw,34px)}
     .small-label{font-size:11px}
@@ -187,6 +199,7 @@
   <div class="vignette"></div>
 
   <div class="hud">
+    <button class="menu-toggle" id="menuToggle" aria-expanded="true">Свернуть меню</button>
     <div class="card brand">
       <div class="title">Суффиксы прилагательных</div>
       <div class="subtitle">Мышонок прыгает на следующую планету, а новые варианты мягко спускаются сверху</div>
@@ -194,6 +207,8 @@
     <div class="card stats">
       <div class="stat"><div class="label">Этаж</div><div class="value" id="floorValue">0 / 15</div></div>
       <div class="stat"><div class="label">Вопрос</div><div class="value" id="questionValue">0 / 20</div></div>
+      <div class="stat"><div class="label">Верно</div><div class="value" id="correctValue">0</div></div>
+      <div class="stat"><div class="label">Ошибки</div><div class="value" id="mistakeValue">0</div></div>
     </div>
     <div class="card controls">
       <button class="control-btn" id="hintBtn">Подсказка <span class="count" id="hintCount">3</span></button>
@@ -356,12 +371,14 @@ let QUESTIONS = [
 
 const state = {
   targetFloors:15, totalQuestions:20, deck:[], idx:0, floors:0, playing:false, locked:true,
-  hints:3, compasses:2, sound:true, music:false, musicReady:false, currentQ:null, previewQ:null, currentOptions:null, previewOptions:null, baseSkin:1
+  hints:3, compasses:2, sound:true, music:false, musicReady:false, currentQ:null, previewQ:null, currentOptions:null, previewOptions:null, baseSkin:1,
+  correct:0, mistakes:0, mistakeWords:[]
 };
 
 const $ = (id)=>document.getElementById(id);
 const app=$('app'), bgLandscape1=$('bgLandscape1'), bgLandscape2=$('bgLandscape2'), bgPortrait=$('bgPortrait'), starOverlay=$('starOverlay');
 const floorValue=$('floorValue'), questionValue=$('questionValue'), floorDots=$('floorDots');
+const correctValue=$('correctValue'), mistakeValue=$('mistakeValue'), menuToggle=$('menuToggle');
 const currentWordText=$('currentWordText'), currentRuleTag=$('currentRuleTag'), previewWordText=$('previewWordText'), previewRuleTag=$('previewRuleTag');
 const basePlanetImg=$('basePlanetImg'), leftImg=$('leftImg'), rightImg=$('rightImg'), previewLeftImg=$('previewLeftImg'), previewRightImg=$('previewRightImg');
 const leftLetter=$('leftLetter'), rightLetter=$('rightLetter'), previewLeftLetter=$('previewLeftLetter'), previewRightLetter=$('previewRightLetter');
@@ -380,7 +397,18 @@ function preloadAssets(){ Object.values(ASSETS).forEach(src => { const img=new I
 function applyAssets(){ bgLandscape1.style.backgroundImage=`url("${ASSETS.bgLandscape1}")`; bgLandscape2.style.backgroundImage=`url("${ASSETS.bgLandscape2}")`; bgPortrait.style.backgroundImage=`url("${ASSETS.bgPortrait}")`; starOverlay.src=ASSETS.stars; heroImg.src=ASSETS.hero; rocketFx.src=ASSETS.rocket; meteorFx.src=ASSETS.meteors; bgMusic.src=ASSETS.melody; bgMusic.volume=.32; }
 function createFloorDots(){ floorDots.innerHTML=''; for(let i=1;i<=state.targetFloors;i++){ const d=document.createElement('div'); d.className='floor-dot'; floorDots.appendChild(d); } }
 function updateFloorDots(){ [...floorDots.children].forEach((dot,i)=>dot.classList.toggle('active', i < state.floors)); }
-function updateCounters(){ floorValue.textContent=`${state.floors} / ${state.targetFloors}`; questionValue.textContent=`${state.playing ? Math.min(state.idx+1,state.totalQuestions) : 0} / ${state.totalQuestions}`; hintCount.textContent=state.hints; compassCount.textContent=state.compasses; hintBtn.disabled=!state.playing||state.locked||state.hints<=0; compassBtn.disabled=!state.playing||state.locked||state.compasses<=0; soundBtn.textContent=`Звуки: ${state.sound?'вкл':'выкл'}`; musicBtn.textContent=`Мелодия: ${state.music?'вкл':'выкл'}`; }
+function updateCounters(){ floorValue.textContent=`${state.floors} / ${state.targetFloors}`; questionValue.textContent=`${state.playing ? Math.min(state.idx+1,state.totalQuestions) : 0} / ${state.totalQuestions}`; correctValue.textContent=state.correct; mistakeValue.textContent=state.mistakes; hintCount.textContent=state.hints; compassCount.textContent=state.compasses; hintBtn.disabled=!state.playing||state.locked||state.hints<=0; compassBtn.disabled=!state.playing||state.locked||state.compasses<=0; soundBtn.textContent=`Звуки: ${state.sound?'вкл':'выкл'}`; musicBtn.textContent=`Мелодия: ${state.music?'вкл':'выкл'}`; }
+function setMobileMenuCollapsed(collapsed){ app.classList.toggle('mobile-menu-collapsed', collapsed); menuToggle.textContent=collapsed?'Меню':'Свернуть меню'; menuToggle.setAttribute('aria-expanded', String(!collapsed)); }
+function syncMobileMenu(){ if(window.matchMedia('(max-width: 560px)').matches) setMobileMenuCollapsed(true); else setMobileMenuCollapsed(false); }
+function escapeHtml(value){ return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function formatResults(){
+  const solved = Math.min(state.idx, state.totalQuestions);
+  const accuracy = solved ? Math.round((state.correct / solved) * 100) : 0;
+  const mistakes = state.mistakeWords.length
+    ? `<br><br><span style="color:#fff1c3;font-weight:800;">Слова с ошибками:</span><br>${state.mistakeWords.map(item => `${escapeHtml(item.word)} -> ${escapeHtml(item.full)}`).join('<br>')}`
+    : '<br><br>Ошибок нет. Ты просто космос!';
+  return `Верно: <span style="color:#fff1c3;font-weight:800;">${state.correct}</span>. Ошибок: <span style="color:#fff1c3;font-weight:800;">${state.mistakes}</span>. Точность: <span style="color:#fff1c3;font-weight:800;">${accuracy}%</span>.${mistakes}`;
+}
 function showToast(message, kind='info', ms=1300){ toast.textContent=message; toast.className=`toast show ${kind}`; clearTimeout(showToast._timer); showToast._timer=setTimeout(()=>toast.className='toast',ms); }
 function showHint(title, html){ hintTitle.textContent=title; hintBody.innerHTML=html; hintPanel.classList.remove('hidden'); }
 function hideHint(){ hintPanel.classList.add('hidden'); }
@@ -442,6 +470,9 @@ function startGame(){
   state.floors = 0;
   state.hints = 3;
   state.compasses = 2;
+  state.correct = 0;
+  state.mistakes = 0;
+  state.mistakeWords = [];
   state.playing = true;
   state.baseSkin = randomPlanetSkin();
   state.currentQ = state.deck[0];
@@ -458,8 +489,8 @@ function startGame(){
 function endGame(win){
   state.playing=false;
   lockChoices(true);
-  if(win){ setBackground(true); audio.win(); modalTitle.innerHTML='Победа! Звёздная вершина покорена'; modalText.innerHTML=`Вы довели мышонка до <span style="color:#fff1c3;font-weight:800;">${state.targetFloors}-го этажа</span>.<br>Использовано слов: ${Math.min(state.idx, state.totalQuestions)} из ${state.totalQuestions}.`; startBtn.textContent='Играть снова'; }
-  else { setBackground(false); modalTitle.innerHTML='Полёт завершён'; modalText.innerHTML=`Вы дошли до <span style="color:#fff1c3;font-weight:800;">${state.floors}-го этажа</span> из ${state.targetFloors}.<br>Попробуйте ещё раз: выпадет новый набор из ${state.totalQuestions} слов.`; startBtn.textContent='Попробовать снова'; }
+  if(win){ setBackground(true); audio.win(); modalTitle.innerHTML='Ты просто космос!'; modalText.innerHTML=`Вы довели мышонка до <span style="color:#fff1c3;font-weight:800;">${state.targetFloors}-го этажа</span>.<br>Использовано слов: ${Math.min(state.idx, state.totalQuestions)} из ${state.totalQuestions}.<br>${formatResults()}`; startBtn.textContent='Играть снова'; }
+  else { setBackground(false); modalTitle.innerHTML='Полёт завершён'; modalText.innerHTML=`Вы дошли до <span style="color:#fff1c3;font-weight:800;">${state.floors}-го этажа</span> из ${state.targetFloors}.<br>Попробуйте ещё раз: выпадет новый набор из ${state.totalQuestions} слов.<br>${formatResults()}`; startBtn.textContent='Попробовать снова'; }
   modal.classList.remove('hidden');
 }
 
@@ -502,12 +533,15 @@ function answer(side){
   positionFx(pick.correct ? rocketFx : meteorFx, side);
 
   if(pick.correct){
+    state.correct += 1;
     state.floors = Math.min(state.targetFloors, state.floors + 1);
     selectedBtn.classList.add('correct');
     rocketFx.classList.add('show','fly');
     audio.success();
     showToast('Верно! Мышонок поднялся выше', 'good');
   } else {
+    state.mistakes += 1;
+    state.mistakeWords.push({word:state.currentQ.word, full:state.currentQ.full});
     state.floors = Math.max(0, state.floors - 1);
     selectedBtn.classList.add('wrong');
     meteorFx.classList.add('show','fly');
@@ -543,9 +577,10 @@ compassBtn.addEventListener('click', useCompass);
 soundBtn.addEventListener('click', ()=>{ state.sound=!state.sound; audio.init(); updateCounters(); showToast(`Звуковые эффекты ${state.sound ? 'включены' : 'выключены'}`, 'info', 900); });
 musicBtn.addEventListener('click', toggleMusic);
 restartBtn.addEventListener('click', ()=>{ state.playing=false; lockChoices(true); modalTitle.textContent='Новый полёт'; modalText.innerHTML='Хотите начать заново? Будет собрана новая случайная двадцатка слов.'; startBtn.textContent='Начать заново'; modal.classList.remove('hidden'); });
+menuToggle.addEventListener('click', ()=>setMobileMenuCollapsed(!app.classList.contains('mobile-menu-collapsed')));
 closeHintBtn.addEventListener('click', hideHint);
 startBtn.addEventListener('click', ()=>{ audio.init(); startGame(); });
-window.addEventListener('resize', ()=>{ if(state.playing) setHeroAt('base'); });
+window.addEventListener('resize', ()=>{ syncMobileMenu(); if(state.playing) setHeroAt('base'); });
 document.addEventListener('keydown', (e)=>{ if(!state.playing||state.locked) return; if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a'||e.key==='ф') answer('left'); if(e.key==='ArrowRight'||e.key.toLowerCase()==='d'||e.key==='в') answer('right'); if(e.key.toLowerCase()==='h'||e.key==='р') useHint(); });
 
 function initStarCanvas(){
@@ -593,6 +628,7 @@ async function init(){
   preloadAssets();
   applyAssets();
   createFloorDots();
+  syncMobileMenu();
   setHeroAt('base');
   updateProgress();
   initStarCanvas();
