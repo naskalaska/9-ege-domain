@@ -3244,27 +3244,37 @@ function renderAdminContent(data, closeButton = "") {
       <td><span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "ссылка задана" : "ссылка не задана"}</span></td>
     </tr>
   `).join("") : `<tr><td colspan="6">Платные сущности не найдены</td></tr>`;
-  const receiptRows = receiptOrders.length ? receiptOrders.map((order) => `
-    <tr data-receipt-sent="${order.receipt_sent ? "1" : "0"}" class="${order.receipt_sent ? "hidden" : ""}">
-      <td>${formatAdminDate(order.paid_at || order.created_at)}</td>
-      <td><a href="mailto:${escapeHtml(order.buyer_email || "")}">${escapeHtml(order.buyer_email || "—")}</a></td>
-      <td>${escapeHtml(order.product_title || order.product_id || "—")}</td>
-      <td>${escapeHtml(order.amount || "0.00")} ${escapeHtml(order.currency || "RUB")}</td>
-      <td>${order.entity_type === "donation" ? "донат" : "товар"}</td>
-      <td>Материал отправлен: ${order.email_sent ? "да" : "нет"}</td>
-      <td>
-        <span class="${order.receipt_sent ? "status-ok" : "status-bad"}">Чек отправлен: ${order.receipt_sent ? "да" : "нет"}</span>
-        ${order.receipt_sent_at ? `<br><span class="muted">${formatAdminDate(order.receipt_sent_at)}</span>` : ""}
-        ${order.receipt_note ? `<br><span class="muted">${escapeHtml(order.receipt_note)}</span>` : ""}
-      </td>
-      <td>
+  const receiptRows = receiptOrders.length ? receiptOrders.map((order) => {
+    const isPaid = order.status === "paid";
+    const paymentLabel = isPaid
+      ? `<span class="status-ok">оплачено</span>`
+      : `<span class="status-bad">требует проверки</span><br><span class="muted">${escapeHtml(order.status || "pending")}</span>`;
+    const receiptAction = isPaid
+      ? `
         <form class="receipt-form" data-order-uid="${escapeHtml(order.order_uid)}" data-next-sent="${order.receipt_sent ? "0" : "1"}">
           <input name="receipt_note" placeholder="Комментарий" value="${escapeHtml(order.receipt_note || "")}" />
           <button class="ghost-button" type="submit">${order.receipt_sent ? "Снять отметку" : "Отметить чек отправленным"}</button>
         </form>
-      </td>
-    </tr>
-  `).join("") : `<tr><td colspan="8">Оплаченных заказов пока нет</td></tr>`;
+      `
+      : `<button class="ghost-button payment-sync" data-order-uid="${escapeHtml(order.order_uid)}" type="button">Проверить оплату</button>`;
+    return `
+      <tr data-receipt-sent="${order.receipt_sent ? "1" : "0"}" class="${order.receipt_sent ? "hidden" : ""}">
+        <td>${formatAdminDate(order.paid_at || order.created_at)}</td>
+        <td>${paymentLabel}</td>
+        <td><a href="mailto:${escapeHtml(order.buyer_email || "")}">${escapeHtml(order.buyer_email || "—")}</a></td>
+        <td>${escapeHtml(order.product_title || order.product_id || "—")}</td>
+        <td>${escapeHtml(order.amount || "0.00")} ${escapeHtml(order.currency || "RUB")}</td>
+        <td>${order.entity_type === "donation" ? "донат" : "товар"}</td>
+        <td>Материал отправлен: ${order.email_sent ? "да" : "нет"}</td>
+        <td>
+          <span class="${order.receipt_sent ? "status-ok" : "status-bad"}">Чек отправлен: ${order.receipt_sent ? "да" : "нет"}</span>
+          ${order.receipt_sent_at ? `<br><span class="muted">${formatAdminDate(order.receipt_sent_at)}</span>` : ""}
+          ${order.receipt_note ? `<br><span class="muted">${escapeHtml(order.receipt_note)}</span>` : ""}
+        </td>
+        <td>${receiptAction}</td>
+      </tr>
+    `;
+  }).join("") : `<tr><td colspan="9">Заказов для чеков пока нет</td></tr>`;
   const gameVisitRows = recentGameVisits.length ? recentGameVisits.map((visit) => `
     <tr>
       <td>${formatAdminDate(visit.opened_at)}</td>
@@ -3385,7 +3395,7 @@ function renderAdminContent(data, closeButton = "") {
         </div>
       </div>
       <table class="table admin-table receipt-table">
-        <tr><th>Оплата</th><th>Email</th><th>Товар / донат</th><th>Сумма</th><th>Тип</th><th>Материал</th><th>Чек</th><th>Действие</th></tr>
+        <tr><th>Дата</th><th>Оплата</th><th>Email</th><th>Товар / донат</th><th>Сумма</th><th>Тип</th><th>Материал</th><th>Чек</th><th>Действие</th></tr>
         ${receiptRows}
       </table>
     </section>
@@ -3539,6 +3549,21 @@ function bindAdminActions(root) {
       } catch (err) {
         alert(err.message);
         submit.disabled = false;
+      }
+    });
+  });
+  root.querySelectorAll(".payment-sync").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        await api("/api/admin/orders/sync-payment", {
+          method: "POST",
+          body: JSON.stringify({ order_uid: button.dataset.orderUid }),
+        });
+        await reloadAdminPanel();
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
       }
     });
   });

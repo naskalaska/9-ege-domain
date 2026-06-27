@@ -3119,6 +3119,11 @@ def receipt_orders_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
         FROM shop_orders so
         LEFT JOIN paid_entities pe ON pe.product_id = so.product_id
         WHERE so.status = 'paid'
+           OR (
+                so.status <> 'canceled'
+                AND so.yookassa_payment_id IS NOT NULL
+                AND so.yookassa_payment_id <> ''
+              )
         ORDER BY COALESCE(so.paid_at, so.created_at) DESC
         """
     ).fetchall()
@@ -3179,6 +3184,34 @@ def mark_order_receipt_sent(admin: dict[str, Any], payload: dict[str, Any]) -> d
             """,
             (order_uid,),
         ).fetchone()
+    item = dict(updated)
+    item["email_sent"] = bool(updated["email_sent"])
+    item["receipt_sent"] = bool(updated["receipt_sent"])
+    item["entity_type"] = updated["entity_type"] or "product"
+    return {"ok": True, "order": item}
+
+
+def sync_order_payment_for_admin(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    order_uid = trim_for_admin(payload.get("order_uid"), 120)
+    if not order_uid:
+        raise ValueError("Не указан заказ.")
+    confirm_order_return({"order_uid": order_uid})
+    with db() as con:
+        updated = con.execute(
+            """
+            SELECT so.order_uid, so.product_id, so.product_title, so.amount, so.currency,
+                   so.buyer_email, so.status, so.email_sent, so.paid_at, so.created_at,
+                   so.receipt_sent, so.receipt_sent_at, so.receipt_note,
+                   pe.type AS entity_type
+            FROM shop_orders so
+            LEFT JOIN paid_entities pe ON pe.product_id = so.product_id
+            WHERE so.order_uid = ?
+            """,
+            (order_uid,),
+        ).fetchone()
+    if not updated:
+        raise LookupError("Заказ не найден.")
     item = dict(updated)
     item["email_sent"] = bool(updated["email_sent"])
     item["receipt_sent"] = bool(updated["receipt_sent"])
@@ -3365,6 +3398,11 @@ def product_delivery_url(product: dict[str, str]) -> str:
     delivery_url = str(product.get("delivery_url") or "").strip()
     if delivery_url:
         return delivery_url
+    env_name = str(product.get("url_env") or "").strip()
+    if env_name:
+        env_url = os.getenv(env_name, "").strip()
+        if env_url:
+            return env_url
     if product.get("id") == PRODUCT_BERRY_SEASON["id"] or product.get("product_id") == PRODUCT_BERRY_SEASON["id"]:
         return os.getenv("BERRY_SEASON_PRODUCT_URL", "").strip()
     return ""
@@ -4108,6 +4146,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(update_paid_entity_delivery(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/mark-receipt-sent":
                 self.send_json(mark_order_receipt_sent(self.require_user(), payload))
+            elif parsed.path == "/api/admin/orders/sync-payment":
+                self.send_json(sync_order_payment_for_admin(self.require_user(), payload))
             elif parsed.path == "/api/admin/games/toggle":
                 self.send_json(toggle_admin_game(self.require_user(), payload))
             elif parsed.path in {"/api/admin/games/delete", "/api/games/sets/delete"}:
