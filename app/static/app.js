@@ -54,11 +54,29 @@ const activityMeta = {
     description: "Личные окончания глаголов и суффиксы причастий.",
     mark: "12",
   },
+  ege13: {
+    title: "ЕГЭ. Задание 13",
+    shortTitle: "Задание 13",
+    description: "Правописание НЕ с разными частями речи.",
+    mark: "13",
+  },
   ege14: {
     title: "ЕГЭ. Задание 14",
     shortTitle: "Задание 14",
     description: "Слитное, раздельное и дефисное написание слов разных частей речи.",
     mark: "14",
+  },
+  ege15: {
+    title: "ЕГЭ. Задание 15",
+    shortTitle: "Задание 15",
+    description: "Правописание Н и НН в словах разных частей речи.",
+    mark: "15",
+  },
+  "orthography-ege": {
+    title: "Орфография. Режимы ЕГЭ",
+    shortTitle: "Орфография",
+    description: "Сборная тренировка по заданиям 9–15.",
+    mark: "ЕГЭ",
   },
   "html-games": {
     title: "Игры",
@@ -416,13 +434,70 @@ const ege14Modes = {
   },
   errors: {
     title: "Копилка ошибок",
+    hint: "Повторение до 3 правильных ответов подряд",
+    eyebrow: "личное повторение",
+  },
+};
+
+const ege13Modes = {
+  word_ne: {
+    title: "Слово",
+    hint: "Выберите: слитно или раздельно",
+    eyebrow: "точечная отработка",
+  },
+  line_ne: {
+    title: "Строки",
+    hint: "Формат ЕГЭ по строкам",
+    eyebrow: "задание 13",
+  },
+  errors: {
+    title: "Копилка ошибок",
+    hint: "Повторение до 3 правильных ответов подряд",
+    eyebrow: "личное повторение",
+  },
+};
+
+const ege15Modes = {
+  word_nn: {
+    title: "Слово",
+    hint: "Выберите: Н или НН",
+    eyebrow: "точечная отработка",
+  },
+  sentence_nn: {
+    title: "Предложение",
+    hint: "Формат ЕГЭ: Н/НН в каждом слове",
+    eyebrow: "задание 15",
+  },
+  errors: {
+    title: "Копилка ошибок",
     hint: "Повторите слова, в которых ошибались",
     eyebrow: "личное повторение",
   },
 };
 
+const orthographyEgeModes = {
+  ege_exam_mix: {
+    title: "Сборная тренировка",
+    hint: "Выберите задания ЕГЭ и количество по каждому",
+    eyebrow: "орфография",
+  },
+};
+
+const orthographyEgeTasks = [
+  { id: "ege9", title: "Задание 9", hint: "Корни, строки с общей буквой" },
+  { id: "ege10", title: "Задание 10", hint: "Приставки, Ь/Ъ, И/Ы" },
+  { id: "ege11", title: "Задание 11", hint: "Суффиксы разных частей речи" },
+  { id: "ege12", title: "Задание 12", hint: "Окончания глаголов и суффиксы причастий" },
+  { id: "ege13", title: "Задание 13", hint: "НЕ с разными частями речи" },
+  { id: "ege14", title: "Задание 14", hint: "Слитно, раздельно, дефис" },
+  { id: "ege15", title: "Задание 15", hint: "Н и НН" },
+];
+
 function activityModes() {
+  if (state.currentActivity === "ege13") return ege13Modes;
   if (state.currentActivity === "ege14") return ege14Modes;
+  if (state.currentActivity === "ege15") return ege15Modes;
+  if (state.currentActivity === "orthography-ege") return orthographyEgeModes;
   return state.currentActivity === "ege5" ? paronymModes : modes;
 }
 
@@ -1673,13 +1748,24 @@ async function loadActivity(slug, updateUrl = true) {
   if (requestId !== state.activityLoadRequestId) return;
   state.currentActivity = slug;
   state.bootstrap = bootstrap;
-  state.mode = slug === "ege5" ? "paronym_choice" : slug === "ege14" ? "word_context" : "rule";
+  state.mode = slug === "ege5"
+    ? "paronym_choice"
+    : slug === "ege13"
+      ? "word_ne"
+      : slug === "ege14"
+        ? "word_context"
+        : slug === "ege15"
+          ? "word_nn"
+          : slug === "orthography-ege"
+            ? "ege_exam_mix"
+            : "rule";
   state.selectedCategory = null;
   state.selectedCategories = [];
   state.selectedRuleIds = [];
   state.ruleSelectionTouched = false;
   state.currentSession = null;
   state.answers = {};
+  state.orthographyTaskCounts = { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 };
   ensureRuleSelection();
   if (updateUrl) history.pushState(null, "", `/apps/${slug}`);
   renderDashboard();
@@ -1692,7 +1778,10 @@ function activityFromPath() {
   if (path === "/apps/ege10") return "ege10";
   if (path === "/apps/ege11") return "ege11";
   if (path === "/apps/ege12") return "ege12";
+  if (path === "/apps/ege13") return "ege13";
   if (path === "/apps/ege14") return "ege14";
+  if (path === "/apps/ege15") return "ege15";
+  if (path === "/apps/orthography-ege") return "orthography-ege";
   if (path === "/apps/mini" || path.startsWith("/apps/mini/")) return "html-games";
   return null;
 }
@@ -2235,7 +2324,7 @@ function renderSidebar() {
   });
   document.querySelector("#quickStats").innerHTML = `
     <div class="stat"><b>${state.bootstrap.word_count}</b><span>${state.currentActivity === "ege5" ? "строк в базе" : "слов в базе"}</span></div>
-    <div class="stat"><b>${Object.values(state.bootstrap.rules).flat().length}</b><span>${state.currentActivity === "ege5" ? "групп паронимов" : "подправила"}</span></div>
+    <div class="stat"><b>${state.currentActivity === "orthography-ege" ? orthographyEgeTasks.length : Object.values(state.bootstrap.rules).flat().length}</b><span>${state.currentActivity === "orthography-ege" ? "типов заданий" : ["ege13", "ege15"].includes(state.currentActivity) ? "части речи" : state.currentActivity === "ege5" ? "групп паронимов" : "подправила"}</span></div>
   `;
 }
 
@@ -2258,8 +2347,44 @@ function backToMenu() {
 
 function renderSetup() {
   const setup = document.querySelector("#setupView");
-  const ruleSelector = ["rule", "word_letter", "paronym_choice", "word_context"].includes(state.mode) ? renderRuleSelector() : "";
-  const errorModeSelector = state.mode === "errors" && !["ege5", "ege14"].includes(state.currentActivity) ? `
+  if (state.currentActivity === "orthography-ege") {
+    const counts = state.orthographyTaskCounts || {};
+    const total = orthographyEgeTasks.reduce((sum, task) => sum + Number(counts[task.id] || 0), 0);
+    setup.innerHTML = `
+      <section class="rule-picker">
+        <div class="rule-warning" role="note">Ошибки из сборной тренировки попадут в копилку того задания, где была ошибка.</div>
+        <div class="orthography-task-grid">
+          ${orthographyEgeTasks.map((task) => `
+            <label class="orthography-task-row">
+              <span><b>${escapeHtml(task.title)}</b><small>${escapeHtml(task.hint)}</small></span>
+              <input data-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="30" value="${Number(counts[task.id] || 0)}" />
+            </label>
+          `).join("")}
+        </div>
+        <div class="selected-rule">
+          <b data-orthography-total>${total}</b>
+          <span>вопросов в сборной тренировке</span>
+        </div>
+      </section>
+      <div class="practice-actions setup-actions">
+        <button class="primary-button" id="startPractice" type="button">Начать</button>
+        <button class="ghost-button" id="backToMenu" type="button">Назад к меню</button>
+      </div>
+    `;
+    setup.querySelectorAll("[data-orthography-count]").forEach((input) => {
+      input.addEventListener("input", () => {
+        state.orthographyTaskCounts = state.orthographyTaskCounts || {};
+        state.orthographyTaskCounts[input.dataset.orthographyCount] = Math.max(0, Math.min(30, Number(input.value || 0)));
+        setup.querySelector("[data-orthography-total]").textContent = orthographyEgeTasks.reduce((sum, task) => sum + Number(state.orthographyTaskCounts[task.id] || 0), 0);
+      });
+    });
+    setup.querySelector("#startPractice").addEventListener("click", startPractice);
+    setup.querySelector("#backToMenu").addEventListener("click", backToMenu);
+    return;
+  }
+  const ruleSelector = ["rule", "word_letter", "paronym_choice", "word_context", "word_ne", "word_nn"].includes(state.mode) ? renderRuleSelector() : "";
+  const specialActivity = ["ege5", "ege13", "ege14", "ege15"].includes(state.currentActivity);
+  const errorModeSelector = state.mode === "errors" && !specialActivity ? `
     <label>
       Режим в копилке
       <select id="errorTrainingMode">
@@ -2277,7 +2402,7 @@ function renderSetup() {
       <button class="primary-button" id="startPractice" type="button">Начать</button>
     </div>
     ${errorModeSelector}
-    ${["ege5", "ege14"].includes(state.currentActivity) ? "" : `<label class="manual-toggle">
+    ${specialActivity ? "" : `<label class="manual-toggle">
       <input id="manualInput" type="checkbox" ${state.manualInput || state.mode === "word_letter" ? "checked" : ""} ${state.mode === "word_letter" ? "disabled" : ""} />
       <span>Самостоятельно вводить ответ с клавиатуры</span>
     </label>`}
@@ -2337,6 +2462,8 @@ function renderRuleSelector() {
   const ege14GroupWarning = state.currentActivity === "ege14"
     ? `<div class="rule-warning" role="note">!!!В группе будут не только слова выбранной части речи, которые пишутся раздельно, но и омонимичные им конструкции, которые могут писаться по-разному</div>`
     : "";
+  const ruleNoun = ["ege13", "ege15"].includes(state.currentActivity) ? "части речи" : "подгруппы";
+  const selectedNoun = ["ege13", "ege15"].includes(state.currentActivity) ? "слов в выбранных частях речи" : "слов в выбранных подгруппах";
   return `
     <section class="rule-picker">
       <div class="category-grid">${categoryButtons}</div>
@@ -2345,14 +2472,14 @@ function renderRuleSelector() {
         <div class="rule-check-list">
           <label class="rule-check rule-check-all">
             <input id="allRules" type="checkbox" ${allSelected ? "checked" : ""} />
-            <span>Все подгруппы в выбранных разделах</span>
+            <span>Все ${ruleNoun} в выбранных разделах</span>
             <b>${rules.reduce((sum, rule) => sum + rule.count, 0)}</b>
           </label>
           ${ruleOptions}
         </div>
         <div class="selected-rule">
           <b data-selected-word-count>${selectedCount}</b>
-          <span>слов в выбранных подгруппах</span>
+          <span>${selectedNoun}</span>
         </div>
       </div>
     </section>
@@ -2400,8 +2527,11 @@ function bindRuleSelector(root, rerenderCategories) {
 async function startPractice() {
   const count = state.questionCount;
   const payload = { mode: state.mode, count };
+  if (state.currentActivity === "orthography-ege") {
+    payload.task_counts = state.orthographyTaskCounts || {};
+  }
   if (state.mode === "errors") payload.error_training_mode = state.errorTrainingMode;
-  if (["rule", "word_letter", "paronym_choice", "word_context"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
+  if (["rule", "word_letter", "paronym_choice", "word_context", "word_ne", "word_nn"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
   const setup = document.querySelector("#setupView");
   try {
     const data = await api(activityApi("/practice/start"), {
@@ -2577,6 +2707,26 @@ function renderQuestions() {
       renderQuestions();
     });
   });
+  practice.querySelectorAll("[data-ege15-target-answer]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const questionId = button.dataset.questionId;
+      const current = state.answers[questionId] || {};
+      state.answers[questionId] = {
+        ...current,
+        [button.dataset.wordId]: button.dataset.ege15TargetAnswer,
+      };
+      state.ege15OpenTarget = "";
+      renderQuestions();
+    });
+  });
+  practice.querySelectorAll("[data-ege15-gap]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const questionId = button.dataset.questionId;
+      const key = `${questionId}:${button.dataset.wordId}`;
+      state.ege15OpenTarget = state.ege15OpenTarget === key ? "" : key;
+      renderQuestions();
+    });
+  });
   practice.querySelectorAll("[data-answer]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.multi === "true") {
@@ -2596,6 +2746,55 @@ function renderQuestions() {
 }
 
 function renderQuestion(question, index) {
+  if (question.kind === "ege13_word") {
+    const selected = state.answers[question.question_id] || "";
+    return `
+      <article class="question ege14-question">
+        <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div class="task-prompt">Определите написание выделенного слова.</div>
+        <div class="ege14-context">${highlightEge14Target(question.prompt, question.target)}</div>
+        <div class="choice-row">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-question-id="${escapeHtml(question.question_id)}" data-answer="${escapeHtml(choice)}" type="button">${escapeHtml(choice)}</button>`).join("")}</div>
+      </article>
+    `;
+  }
+  if (question.kind === "ege13_line") {
+    const current = state.answers[question.question_id] || "";
+    return `
+      <article class="question ege14-question">
+        <div class="question-head"><span>Задание ${index + 1}</span><span>Формат ЕГЭ</span></div>
+        <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+        ${question.rows.map((row, rowIndex) => { const answer = String(rowIndex + 1); return `<button class="line-row ${current.includes(answer) ? "selected" : ""}" data-multi="true" data-question-id="${escapeHtml(question.question_id)}" data-answer="${answer}" type="button"><b>${answer}</b><span>${escapeHtml(row)}</span></button>`; }).join("")}
+      </article>
+    `;
+  }
+  if (question.kind === "ege15_word") {
+    const selected = state.answers[question.question_id] || "";
+    return `
+      <article class="question ege15-question">
+        <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+        <div class="word-prompt">${escapeHtml(question.prompt)}</div>
+        <div class="choice-row">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-question-id="${escapeHtml(question.question_id)}" data-answer="${escapeHtml(choice)}" type="button">${escapeHtml(choice)}</button>`).join("")}</div>
+      </article>
+    `;
+  }
+  if (question.kind === "ege15_sentence") {
+    const current = state.answers[question.question_id] || {};
+    const sentence = question.parts.map((part) => {
+      if (part.text !== undefined) return escapeHtml(part.text);
+      const target = part.target;
+      const selected = current[target.id];
+      const open = state.ege15OpenTarget === `${question.question_id}:${target.id}`;
+      const [beforeGap, afterGap = ""] = String(target.label || "").split("..");
+      return `<span class="ege15-target-wrap"><span class="ege15-gap-word">${escapeHtml(beforeGap)}<button class="ege15-gap ${selected ? "answered" : ""}" data-ege15-gap="true" data-word-id="${escapeHtml(target.id)}" data-question-id="${escapeHtml(question.question_id)}" type="button">${selected ? escapeHtml(selected) : ".."}</button>${escapeHtml(afterGap)}</span>${open ? `<span class="ege15-popover">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-ege15-target-answer="${escapeHtml(choice)}" data-word-id="${escapeHtml(target.id)}" data-question-id="${escapeHtml(question.question_id)}" type="button">${escapeHtml(choice)}</button>`).join("")}</span>` : ""}</span>`;
+    }).join("");
+    return `
+      <article class="question ege15-question">
+        <div class="question-head"><span>Предложение ${index + 1}</span><span>Формат ЕГЭ</span></div>
+        <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+        <div class="ege15-sentence">${sentence}</div>
+      </article>
+    `;
+  }
   if (question.kind === "ege14_word") {
     const selected = state.answers[question.question_id] || "";
     return `
@@ -2759,6 +2958,11 @@ function answerIsComplete(question) {
   if (question.kind === "ege14_line") {
     if (!answer?.mode) return false;
     return answer.mode !== "разное" || question.targets.every((target) => answer.words?.[target.id]);
+  }
+  if (question.kind === "ege15_sentence") {
+    return question.parts
+      .filter((part) => part.target)
+      .every((part) => answer?.[part.target.id]);
   }
   if (question.kind === "paronym_exam") {
     return Boolean(answer?.row && String(answer?.word || "").trim());
@@ -3019,18 +3223,77 @@ function showTestComposer() {
   backdrop.className = "modal-backdrop";
   const ruleSelector = renderRuleSelector();
   const isParonyms = state.currentActivity === "ege5";
+  if (state.currentActivity === "orthography-ege") {
+    const counts = state.orthographyTaskCounts || { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 };
+    backdrop.innerHTML = `
+      <section class="progress-modal">
+        <div class="panel-head">
+          <div><p class="eyebrow">тест</p><h2>Составить тест: Орфография. Режимы ЕГЭ</h2></div>
+          <button class="secondary-button" id="closeTestComposer" type="button">Закрыть</button>
+        </div>
+        <section class="rule-picker">
+          <div class="rule-warning" role="note">Выберите типы заданий и количество. Ошибки учеников после тренировки уйдут в копилки соответствующих заданий.</div>
+          <div class="orthography-task-grid">
+            ${orthographyEgeTasks.map((task) => `
+              <label class="orthography-task-row">
+                <span><b>${escapeHtml(task.title)}</b><small>${escapeHtml(task.hint)}</small></span>
+                <input data-test-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="60" value="${Number(counts[task.id] || 0)}" />
+              </label>
+            `).join("")}
+          </div>
+        </section>
+        <p class="error" id="testComposerError"></p>
+        <div class="practice-actions">
+          <button class="primary-button" id="downloadTest" type="button">Скачать .txt</button>
+        </div>
+      </section>
+    `;
+    document.body.append(backdrop);
+    backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
+    backdrop.querySelector("#downloadTest").addEventListener("click", async () => {
+      const error = backdrop.querySelector("#testComposerError");
+      error.textContent = "";
+      const taskCounts = {};
+      backdrop.querySelectorAll("[data-test-orthography-count]").forEach((input) => {
+        taskCounts[input.dataset.testOrthographyCount] = Math.max(0, Math.min(60, Number(input.value || 0)));
+      });
+      try {
+        await downloadRequest("/api/teacher/test", "orthography_ege_test.txt", {
+          method: "POST",
+          body: JSON.stringify({
+            activity: "orthography-ege",
+            task_counts: taskCounts,
+          }),
+        });
+      } catch (err) {
+        error.textContent = err.message;
+      }
+    });
+    return;
+  }
+  const isEge13 = state.currentActivity === "ege13";
   const isEge14 = state.currentActivity === "ege14";
-  const defaultMode = isParonyms ? "paronym_exam" : isEge14 ? "exam" : "line";
+  const isEge15 = state.currentActivity === "ege15";
+  const defaultMode = isParonyms ? "paronym_exam" : isEge13 ? "line_ne" : isEge14 ? "exam" : isEge15 ? "sentence_nn" : "line";
   const modeOptions = isParonyms
     ? `
             <option value="paronym_exam">Формат ЕГЭ</option>
             <option value="paronym_choice">Выбранные группы</option>
             <option value="errors">Копилка ошибок</option>
       `
+    : isEge13 ? `
+            <option value="line_ne">Строки</option>
+            <option value="word_ne">Выбранные части речи</option>
+            <option value="errors">Копилка ошибок</option>
+      `
     : isEge14 ? `
             <option value="exam">Формат ЕГЭ</option>
             <option value="line_spelling">Строки</option>
             <option value="word_context">Выбранные части речи</option>
+            <option value="errors">Копилка ошибок</option>
+      ` : isEge15 ? `
+            <option value="sentence_nn">Предложение</option>
+            <option value="word_nn">Выбранные части речи</option>
             <option value="errors">Копилка ошибок</option>
       ` : `
             <option value="line">Строки</option>
@@ -3075,7 +3338,7 @@ function showTestComposer() {
   };
   const refreshRules = () => {
     const mode = backdrop.querySelector("#testMode").value;
-    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice" || mode === "word_context"));
+    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice" || mode === "word_context" || mode === "word_ne" || mode === "word_nn"));
   };
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#testMode").value = defaultMode;
@@ -3116,7 +3379,7 @@ function adminStudentSummary(student) {
   const total = Number(student.attempts || 0);
   if (!total) return "Пока нет попыток.";
   const parts = (student.mode_summary || []).map((item) => {
-    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || ege14Modes[item.mode]?.title || item.mode || "режим";
+    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || ege13Modes[item.mode]?.title || ege14Modes[item.mode]?.title || ege15Modes[item.mode]?.title || item.mode || "режим";
     return `${item.attempts} в режиме «${escapeHtml(modeTitle)}»`;
   });
   return `Решил ${parts.join(", ")}. Верных ответов: ${student.correct || 0} из ${total}.`;
@@ -3458,7 +3721,21 @@ async function showAdmin() {
 }
 
 function bindAdminActions(root) {
-  const reloadAdminPanel = async () => {
+  function activateAdminSection(section = "online") {
+    const selected = root.querySelector(`.admin-tab[data-admin-section="${section}"]`) || root.querySelector(".admin-tab");
+    if (!selected) return;
+    root.querySelectorAll(".admin-tab").forEach((item) => item.classList.toggle("active", item === selected));
+    root.querySelectorAll("[data-admin-panel]").forEach((panel) => {
+      panel.classList.toggle("hidden", panel.dataset.adminPanel !== selected.dataset.adminSection);
+    });
+  }
+  function activeAdminSection() {
+    return root.querySelector(".admin-tab.active")?.dataset.adminSection || "online";
+  }
+  function activeReceiptFilter() {
+    return root.querySelector("[data-receipt-filter].active")?.dataset.receiptFilter || "pending";
+  }
+  const reloadAdminPanel = async (section = activeAdminSection(), receiptFilter = activeReceiptFilter()) => {
     const data = await api("/api/admin");
     const modalPanel = root.querySelector?.(".admin-modal");
     const panel = modalPanel || root;
@@ -3466,13 +3743,15 @@ function bindAdminActions(root) {
     panel.innerHTML = renderAdminContent(data, closeButton);
     panel.querySelector("#closeAdmin")?.addEventListener("click", () => root.remove());
     bindAdminActions(root);
+    activateAdminSection(section);
+    root.querySelectorAll("[data-receipt-filter]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.receiptFilter === receiptFilter);
+    });
+    applyReceiptFilter(receiptFilter);
   };
   root.querySelectorAll(".admin-tab").forEach((button) => {
     button.addEventListener("click", () => {
-      root.querySelectorAll(".admin-tab").forEach((item) => item.classList.toggle("active", item === button));
-      root.querySelectorAll("[data-admin-panel]").forEach((panel) => {
-        panel.classList.toggle("hidden", panel.dataset.adminPanel !== button.dataset.adminSection);
-      });
+      activateAdminSection(button.dataset.adminSection);
     });
   });
   root.querySelector("#showDeletedGames")?.addEventListener("change", (event) => {
@@ -3510,7 +3789,7 @@ function bindAdminActions(root) {
             delivery_url: new FormData(form).get("delivery_url"),
           }),
         });
-        await reloadAdminPanel();
+        await reloadAdminPanel("delivery");
       } catch (err) {
         alert(err.message);
         submit.disabled = false;
@@ -3545,7 +3824,7 @@ function bindAdminActions(root) {
             receipt_note: new FormData(form).get("receipt_note"),
           }),
         });
-        await reloadAdminPanel();
+        await reloadAdminPanel("receipts", activeReceiptFilter());
       } catch (err) {
         alert(err.message);
         submit.disabled = false;
@@ -3560,7 +3839,7 @@ function bindAdminActions(root) {
           method: "POST",
           body: JSON.stringify({ order_uid: button.dataset.orderUid }),
         });
-        await reloadAdminPanel();
+        await reloadAdminPanel("receipts", activeReceiptFilter());
       } catch (err) {
         alert(err.message);
         button.disabled = false;

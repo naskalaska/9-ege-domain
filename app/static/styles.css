@@ -551,6 +551,39 @@ button {
   font-size: 13px;
 }
 
+.orthography-task-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.orthography-task-row {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.orthography-task-row span {
+  display: grid;
+  gap: 4px;
+}
+
+.orthography-task-row small {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.orthography-task-row input {
+  height: 44px;
+  text-align: center;
+  font-weight: 900;
+}
+
 .selected-rule {
   min-height: 66px;
   padding: 12px;
@@ -630,6 +663,84 @@ button {
   background: #ffe7a8;
   color: inherit;
   font-weight: 800;
+}
+
+.ege15-sentence {
+  margin: 16px 0;
+  padding: 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 1.08rem;
+  line-height: 2.05;
+}
+
+.ege15-target-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 0 3px;
+  vertical-align: middle;
+}
+
+.ege15-gap-word {
+  padding: 3px 5px;
+  border-radius: 7px;
+  background: #fff6cf;
+  font-weight: 850;
+}
+
+.ege15-gap {
+  min-width: 34px;
+  min-height: 30px;
+  height: 30px;
+  margin: 0 2px;
+  padding: 0 7px;
+  border: 1px solid #e2c36f;
+  border-radius: 7px;
+  background: #fff2bd;
+  color: var(--ink);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ege15-gap.answered {
+  border-color: var(--blue);
+  background: #eef4ff;
+  color: var(--blue);
+}
+
+.ege15-popover {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: calc(100% + 6px);
+  display: flex;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(32, 33, 36, 0.16);
+  transform: translateX(-50%);
+}
+
+.ege15-popover::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  background: #fff;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.ege15-popover .choice {
+  min-width: 42px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 10px;
 }
 
 .ege14-line-choices {

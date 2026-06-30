@@ -14,10 +14,13 @@ import secrets
 import smtplib
 import sqlite3
 import sys
+import ege13_module
 import ege10_module
 import ege11_module
 import ege12_module
 import ege14_module
+import ege15_module
+import ege_orthography_module
 import ege5_module
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
@@ -156,7 +159,9 @@ REGISTRATION_LIMIT_PER_IP = 8
 _ege10_scope_id_for = ege10_module.scope_id_for
 _ege11_scope_id_for = ege11_module.scope_id_for
 _ege12_scope_id_for = ege12_module.scope_id_for
+_ege13_scope_id_for = ege13_module.scope_id_for
 _ege14_scope_id_for = ege14_module.scope_id_for
+_ege15_scope_id_for = ege15_module.scope_id_for
 _ege5_scope_id_for = ege5_module.scope_id_for
 
 
@@ -172,8 +177,16 @@ def ege12_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str
     return f"ege12:{_ege12_scope_id_for(mode, rule_id, rule_ids)}"
 
 
+def ege13_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
+    return f"ege13:{_ege13_scope_id_for(mode, rule_id, rule_ids)}"
+
+
 def ege14_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
     return f"ege14:{_ege14_scope_id_for(mode, rule_id, rule_ids)}"
+
+
+def ege15_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
+    return f"ege15:{_ege15_scope_id_for(mode, rule_id, rule_ids)}"
 
 
 def ege5_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str] | None = None) -> str:
@@ -183,7 +196,9 @@ def ege5_scope_id_for(mode: str, rule_id: str | None = None, rule_ids: list[str]
 ege10_module.scope_id_for = ege10_scope_id_for
 ege11_module.scope_id_for = ege11_scope_id_for
 ege12_module.scope_id_for = ege12_scope_id_for
+ege13_module.scope_id_for = ege13_scope_id_for
 ege14_module.scope_id_for = ege14_scope_id_for
+ege15_module.scope_id_for = ege15_scope_id_for
 ege5_module.scope_id_for = ege5_scope_id_for
 
 ACTIVITIES = [
@@ -228,10 +243,34 @@ ACTIVITIES = [
         "group": "Орфография",
     },
     {
+        "slug": "ege13",
+        "title": "ЕГЭ. Задание 13",
+        "description": "Правописание НЕ с разными частями речи.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Орфография",
+    },
+    {
         "slug": "ege14",
         "title": "ЕГЭ. Задание 14",
         "description": "Слитное, раздельное и дефисное написание слов разных частей речи.",
         "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Орфография",
+    },
+    {
+        "slug": "ege15",
+        "title": "ЕГЭ. Задание 15",
+        "description": "Правописание Н и НН в словах разных частей речи.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Орфография",
+    },
+    {
+        "slug": "orthography-ege",
+        "title": "Орфография. Режимы ЕГЭ",
+        "description": "Сборная тренировка по заданиям 9–15: выберите типы заданий и количество.",
+        "button": "Собрать тренировку",
         "kind": "module",
         "group": "Орфография",
     },
@@ -1160,8 +1199,28 @@ def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[st
         return bootstrap_for(ege11_module.RULES, len(ege11_module.WORDS), user_id, ege11_module.WORDS_BY_RULE, ege11_module.scope_id_for)
     if slug == "ege12":
         return bootstrap_for(ege12_module.RULES, len(ege12_module.WORDS), user_id, ege12_module.WORDS_BY_RULE, ege12_module.scope_id_for)
+    if slug == "ege13":
+        return bootstrap_for(ege13_module.RULES, len(ege13_module.WORDS), user_id, ege13_module.WORDS_BY_RULE, ege13_module.scope_id_for)
     if slug == "ege14":
         return bootstrap_for(ege14_module.RULES, len(ege14_module.WORDS), user_id, ege14_module.WORDS_BY_RULE, ege14_module.scope_id_for)
+    if slug == "ege15":
+        return bootstrap_for(ege15_module.RULES, len(ege15_module.WORDS), user_id, ege15_module.WORDS_BY_RULE, ege15_module.scope_id_for)
+    if slug == "orthography-ege":
+        return {
+            "activity": next(item for item in ACTIVITIES if item["slug"] == "orthography-ege"),
+            "rules": {},
+            "word_count": (
+                len(WORDS)
+                + len(ege10_module.WORDS)
+                + len(ege11_module.WORDS)
+                + len(ege12_module.WORDS)
+                + len(ege13_module.WORDS)
+                + len(ege14_module.WORDS)
+                + len(ege15_module.WORDS)
+            ),
+            "activities": ACTIVITIES,
+            "category_progress": {},
+        }
     if slug == "html-games":
         return {
             "activity": next(item for item in ACTIVITIES if item["slug"] == "html-games"),
@@ -1206,6 +1265,13 @@ def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[st
             return ege12_module.submit_practice(user, payload)
         if action == "check":
             return ege12_module.check_practice_answer(user, payload)
+    if slug == "ege13":
+        if action == "start":
+            return ege13_module.start_practice(user, payload)
+        if action == "submit":
+            return ege13_module.submit_practice(user, payload)
+        if action == "check":
+            return ege13_module.check_practice_answer(user, payload)
     if slug == "ege14":
         if action == "start":
             return ege14_module.start_practice(user, payload)
@@ -1213,6 +1279,20 @@ def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[st
             return ege14_module.submit_practice(user, payload)
         if action == "check":
             return ege14_module.check_practice_answer(user, payload)
+    if slug == "ege15":
+        if action == "start":
+            return ege15_module.start_practice(user, payload)
+        if action == "submit":
+            return ege15_module.submit_practice(user, payload)
+        if action == "check":
+            return ege15_module.check_practice_answer(user, payload)
+    if slug == "orthography-ege":
+        if action == "start":
+            return ege_orthography_module.start_practice(user, payload)
+        if action == "submit":
+            return ege_orthography_module.submit_practice(user, payload)
+        if action == "check":
+            return ege_orthography_module.check_practice_answer(user, payload)
     raise ValueError("Действие активности не найдено.")
 
 
@@ -2959,8 +3039,14 @@ def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[byte
         return ege11_module.build_test_file(user, payload)
     if activity == "ege12":
         return ege12_module.build_test_file(user, payload)
+    if activity == "ege13":
+        return ege13_module.build_test_file(user, payload)
     if activity == "ege14":
         return ege14_module.build_test_file(user, payload)
+    if activity == "ege15":
+        return ege15_module.build_test_file(user, payload)
+    if activity == "orthography-ege":
+        return ege_orthography_module.build_test_file(user, payload)
     if activity == "ege5":
         return build_ege5_test_file(user, payload)
     if activity != "ege9":
@@ -2987,6 +3073,16 @@ def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[byte
         filename = "ege_test.txt"
     body = "\n".join(lines + ["", ""] + answers) + "\n"
     return body.encode("utf-8"), filename, "text/plain; charset=utf-8"
+
+
+class Ege9OrthographyHandler:
+    start_practice = staticmethod(start_practice)
+    submit_practice = staticmethod(submit_practice)
+    check_practice_answer = staticmethod(check_practice_answer)
+    build_test_file = staticmethod(build_test_file)
+
+
+ege_orthography_module.set_ege9_handler(Ege9OrthographyHandler)
 
 
 def ege5_teacher_error_rows(teacher_id: str) -> list[dict[str, Any]]:

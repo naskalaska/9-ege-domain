@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Предпросмотр заданий 13 и 15</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">ЕГЭ</div>
+        <div>
+          <h1>ЕГЭ: платформа активностей</h1>
+          <p>Предпросмотр тренажёров 13 и 15</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="ghost-button" type="button" data-activity="ege13">Задание 13</button>
+        <button class="ghost-button" type="button" data-activity="ege15">Задание 15</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="side-panel">
+        <div class="user-block" id="userBlock"></div>
+        <div class="mode-list" id="modeList"></div>
+        <div class="stats-strip" id="quickStats"></div>
+      </aside>
+
+      <section class="main-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow" id="modeEyebrow"></p>
+            <h2 id="modeTitle"></h2>
+          </div>
+          <button class="secondary-button" type="button" id="switchActivity">Сменить задание</button>
+        </div>
+        <div id="setupView"></div>
+        <div id="practiceView"></div>
+        <div id="resultView" class="hidden"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const preview = {
+      activity: "ege13",
+      mode: "word_ne",
+      selectedCategories: [],
+      selectedRuleIds: [],
+      answers: {},
+      data: {
+        ege13: {
+          meta: {
+            title: "ЕГЭ. Задание 13",
+            shortTitle: "Задание 13",
+            mark: "13",
+            wordCount: 431,
+          },
+          modes: {
+            word_ne: { title: "Слово", hint: "Выберите: слитно или раздельно", eyebrow: "точечная отработка" },
+            line_ne: { title: "Строки", hint: "Формат ЕГЭ по строкам", eyebrow: "задание 13" },
+            errors: { title: "Копилка ошибок", hint: "Повторение до 3 правильных ответов подряд", eyebrow: "личное повторение" },
+          },
+          rules: {
+            "прилагательные": [{ rule_id: "ege13_adj", rule_name: "прилагательные", count: 98 }],
+            "деепричастия": [{ rule_id: "ege13_participle_adverb", rule_name: "деепричастия", count: 42 }],
+            "причастия": [{ rule_id: "ege13_participle", rule_name: "причастия", count: 112 }],
+            "наречия": [{ rule_id: "ege13_adverb", rule_name: "наречия", count: 48 }],
+          },
+          questions: {
+            word_ne: [
+              {
+                question_id: "e13w1",
+                kind: "ege13_word",
+                rule_name: "прилагательные",
+                prompt: "Процедура абсолютно (НЕ)СЛОЖНАЯ, но в ней важна каждая мелочь.",
+                target: "(НЕ)СЛОЖНАЯ",
+                choices: ["слитно", "раздельно"],
+                correct_answer: "слитно",
+                correct_spelling: "несложная",
+                explanation: "Пишется слитно: слово можно заменить синонимом без НЕ.",
+              },
+              {
+                question_id: "e13w2",
+                kind: "ege13_word",
+                rule_name: "деепричастия",
+                prompt: "(НЕ)СПЕША, он спустился к реке.",
+                target: "(НЕ)СПЕША",
+                choices: ["слитно", "раздельно"],
+                correct_answer: "раздельно",
+                correct_spelling: "не спеша",
+                explanation: "НЕ с деепричастием обычно пишется раздельно.",
+              },
+            ],
+            line_ne: [
+              {
+                question_id: "e13l1",
+                kind: "ege13_line",
+                prompt: "Укажите варианты ответов, в которых НЕ со словом пишется СЛИТНО.",
+                rows: [
+                  "Процедура абсолютно (НЕ)СЛОЖНАЯ, но в ней важна каждая мелочь.",
+                  "Он ушёл, (НЕ)ГОДУЯ от несправедливости.",
+                  "До сих пор (НЕ)РЕШЁННЫЕ задачи лежали на столе.",
+                  "Чай оказался вовсе (НЕ)СЛАДКОЙ.",
+                  "Окна были плотно (НЕ)ЗАНАВЕШЕННЫЕ.",
+                ],
+                correct_answer: "125",
+                correct_spelling: "несложная; негодуя; незанавешенные",
+                explanation: "Правильные строки: 1, 2, 5.",
+              },
+            ],
+            errors: [
+              {
+                question_id: "e13err1",
+                kind: "ege13_word",
+                rule_name: "слово из копилки",
+                prompt: "Чай оказался вовсе (НЕ)СЛАДКОЙ.",
+                target: "(НЕ)СЛАДКОЙ",
+                choices: ["слитно", "раздельно"],
+                correct_answer: "раздельно",
+                correct_spelling: "не сладкой",
+                explanation: "После ошибки слово повторяется, пока не будет решено 3 раза подряд без ошибок.",
+              },
+            ],
+          },
+        },
+        ege15: {
+          meta: {
+            title: "ЕГЭ. Задание 15",
+            shortTitle: "Задание 15",
+            mark: "15",
+            wordCount: 443,
+          },
+          modes: {
+            word_nn: { title: "Слово", hint: "Выберите: Н или НН", eyebrow: "точечная отработка" },
+            sentence_nn: { title: "Предложение", hint: "Формат ЕГЭ: Н/НН в каждом слове", eyebrow: "задание 15" },
+            errors: { title: "Копилка ошибок", hint: "Повторение до 3 правильных ответов подряд", eyebrow: "личное повторение" },
+          },
+          rules: {
+            "прилагательное": [{ rule_id: "ege15_adj", rule_name: "прилагательное", count: 186 }],
+            "причастие": [{ rule_id: "ege15_participle", rule_name: "причастие", count: 173 }],
+            "наречие": [{ rule_id: "ege15_adverb", rule_name: "наречие", count: 43 }],
+            "существительное": [{ rule_id: "ege15_noun", rule_name: "существительное", count: 39 }],
+          },
+          questions: {
+            word_nn: [
+              {
+                question_id: "e15w1",
+                kind: "ege15_word",
+                rule_name: "наречие",
+                prompt: "дома необыкнове..о приплюснуты",
+                choices: ["Н", "НН"],
+                correct_answer: "НН",
+                correct_spelling: "необыкновенно",
+                explanation: "Наречие на -о/-е сохраняет НН производящего слова.",
+              },
+              {
+                question_id: "e15w2",
+                kind: "ege15_word",
+                rule_name: "причастие",
+                prompt: "дома давно не штукатуре..ы",
+                choices: ["Н", "НН"],
+                correct_answer: "Н",
+                correct_spelling: "штукатурены",
+                explanation: "В кратких страдательных причастиях пишется одна Н.",
+              },
+            ],
+            sentence_nn: [
+              {
+                question_id: "e15s1",
+                kind: "ege15_sentence",
+                prompt: "Укажите Н или НН для каждого слова с пропуском.",
+                choices: ["Н", "НН"],
+                parts: [
+                  { text: "Все дома " },
+                  { target: { id: "a", label: "необыкнове..о" } },
+                  { text: " приплюснуты, давно не " },
+                  { target: { id: "b", label: "штукатуре..ы" } },
+                  { text: ", крыши не " },
+                  { target: { id: "c", label: "краше..ы" } },
+                  { text: ", ставни " },
+                  { target: { id: "d", label: "затворе..ы" } },
+                  { text: "." },
+                ],
+                correct_answer: { a: "НН", b: "Н", c: "Н", d: "Н" },
+                correct_spelling: "необыкновенно; штукатурены; крашены; затворены",
+                explanation: "Наречие сохраняет НН, в кратких причастиях пишется одна Н.",
+              },
+            ],
+            errors: [
+              {
+                question_id: "e15err1",
+                kind: "ege15_word",
+                rule_name: "слово из копилки",
+                prompt: "дома давно не штукатуре..ы",
+                choices: ["Н", "НН"],
+                correct_answer: "Н",
+                correct_spelling: "штукатурены",
+                explanation: "После ошибки слово повторяется, пока не будет решено 3 раза подряд без ошибок.",
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[char]));
+    }
+
+    function activeData() {
+      return preview.data[preview.activity];
+    }
+
+    function activeModes() {
+      return activeData().modes;
+    }
+
+    function setActivity(activity) {
+      preview.activity = activity;
+      preview.mode = activity === "ege13" ? "word_ne" : "word_nn";
+      preview.selectedCategories = [];
+      preview.selectedRuleIds = [];
+      preview.answers = {};
+      ensureSelection();
+      render();
+    }
+
+    function ensureSelection() {
+      const categories = Object.keys(activeData().rules);
+      if (!preview.selectedCategories.length) preview.selectedCategories = [categories[0]];
+      const rules = preview.selectedCategories.flatMap((category) => activeData().rules[category] || []);
+      preview.selectedRuleIds = rules.map((rule) => rule.rule_id);
+    }
+
+    function selectedRules() {
+      return preview.selectedCategories.flatMap((category) => activeData().rules[category] || []);
+    }
+
+    function render() {
+      const data = activeData();
+      const mode = activeModes()[preview.mode];
+      document.querySelector("#userBlock").innerHTML = `
+        <span class="activity-badge">${escapeHtml(data.meta.shortTitle)}</span>
+        <strong>Предпросмотр</strong>
+        <span class="muted">Так задание будет выглядеть на платформе</span>
+      `;
+      document.querySelector("#modeEyebrow").textContent = mode.eyebrow;
+      document.querySelector("#modeTitle").textContent = mode.title;
+      document.querySelector("#modeList").innerHTML = Object.entries(activeModes()).map(([modeId, item]) => `
+        <button class="mode-button ${preview.mode === modeId ? "active" : ""}" data-mode="${escapeHtml(modeId)}" type="button">
+          <b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.hint)}</span>
+        </button>
+      `).join("");
+      document.querySelector("#quickStats").innerHTML = `
+        <div class="stat"><b>${data.meta.wordCount}</b><span>слов в базе</span></div>
+        <div class="stat"><b>${Object.keys(data.rules).length}</b><span>части речи</span></div>
+      `;
+      renderSetup();
+      renderQuestions();
+      bind();
+    }
+
+    function renderSetup() {
+      const data = activeData();
+      const selected = new Set(preview.selectedRuleIds);
+      const categoryButtons = Object.entries(data.rules).map(([category, rules]) => {
+        const count = rules.reduce((sum, rule) => sum + rule.count, 0);
+        return `
+          <button class="category-pill ${preview.selectedCategories.includes(category) ? "active" : ""}" data-category="${escapeHtml(category)}" type="button">
+            <span>${escapeHtml(category)}</span>
+            <b>${count}</b>
+            <small>0/${count} · 0%</small>
+          </button>
+        `;
+      }).join("");
+      const rules = selectedRules();
+      const ruleOptions = rules.map((rule) => `
+        <label class="rule-check">
+          <input type="checkbox" checked disabled />
+          <span>${escapeHtml(rule.rule_name)}</span>
+          <b>${rule.count}</b>
+        </label>
+      `).join("");
+      const selectedCount = rules.filter((rule) => selected.has(rule.rule_id)).reduce((sum, rule) => sum + rule.count, 0);
+      const needsRules = preview.mode === "word_ne" || preview.mode === "word_nn";
+      document.querySelector("#setupView").innerHTML = `
+        <div class="setup-grid">
+          <label>
+            Количество вопросов: <b>2</b>
+            <input type="range" min="1" max="30" value="2" disabled />
+          </label>
+          <button class="primary-button" type="button">Начать</button>
+        </div>
+        ${needsRules ? `
+          <section class="rule-picker">
+            <div class="category-grid">${categoryButtons}</div>
+            <div class="rule-select-row">
+              <div class="rule-check-list">
+                <label class="rule-check rule-check-all">
+                  <input type="checkbox" checked disabled />
+                  <span>Все части речи в выбранных разделах</span>
+                  <b>${selectedCount}</b>
+                </label>
+                ${ruleOptions}
+              </div>
+              <div class="selected-rule">
+                <b>${selectedCount}</b>
+                <span>слов в выбранных частях речи</span>
+              </div>
+            </div>
+          </section>
+        ` : ""}
+      `;
+    }
+
+    function renderQuestions() {
+      const questions = activeData().questions[preview.mode] || [];
+      document.querySelector("#practiceView").innerHTML = `
+        <div class="question-stack">
+          ${questions.map(renderQuestion).join("")}
+        </div>
+        <div class="practice-actions">
+          <button class="ghost-button" type="button">Назад</button>
+          <button class="ghost-button" type="button">Сбросить</button>
+          <button class="primary-button" type="button" id="checkPreview">Проверить</button>
+        </div>
+      `;
+    }
+
+    function highlightTarget(context, target) {
+      return escapeHtml(context).replace(escapeHtml(target), `<mark class="ege14-target">${escapeHtml(target)}</mark>`);
+    }
+
+    function renderQuestion(question, index) {
+      const current = preview.answers[question.question_id] || "";
+      if (question.kind === "ege13_word") {
+        return `
+          <article class="question ege14-question">
+            <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+            <div class="task-prompt">Определите написание выделенного слова.</div>
+            <div class="ege14-context">${highlightTarget(question.prompt, question.target)}</div>
+            <div class="choice-row">${question.choices.map((choice) => choiceButton(question.question_id, choice, current === choice)).join("")}</div>
+          </article>
+        `;
+      }
+      if (question.kind === "ege13_line") {
+        return `
+          <article class="question ege14-question">
+            <div class="question-head"><span>Задание ${index + 1}</span><span>Формат ЕГЭ</span></div>
+            <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+            ${question.rows.map((row, rowIndex) => {
+              const answer = String(rowIndex + 1);
+              return `<button class="line-row ${String(current).includes(answer) ? "selected" : ""}" data-multi-answer="${answer}" data-question-id="${question.question_id}" type="button"><b>${answer}</b><span>${escapeHtml(row)}</span></button>`;
+            }).join("")}
+          </article>
+        `;
+      }
+      if (question.kind === "ege15_word") {
+        return `
+          <article class="question ege15-question">
+            <div class="question-head"><span>Слово ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
+            <div class="word-prompt">${escapeHtml(question.prompt)}</div>
+            <div class="choice-row">${question.choices.map((choice) => choiceButton(question.question_id, choice, current === choice)).join("")}</div>
+          </article>
+        `;
+      }
+      const sentenceAnswer = preview.answers[question.question_id] || {};
+      const sentence = question.parts.map((part) => {
+        if (part.text !== undefined) return escapeHtml(part.text);
+        const selected = sentenceAnswer[part.target.id];
+        const open = preview.openTarget === `${question.question_id}:${part.target.id}`;
+        const [beforeGap, afterGap = ""] = String(part.target.label || "").split("..");
+        return `<span class="ege15-target-wrap"><span class="ege15-gap-word">${escapeHtml(beforeGap)}<button class="ege15-gap ${selected ? "answered" : ""}" data-cycle-word="${part.target.id}" data-question-id="${question.question_id}" type="button">${selected || ".."}</button>${escapeHtml(afterGap)}</span>${open ? `<span class="ege15-popover">${question.choices.map((choice) => `<button class="choice ${selected === choice ? "selected" : ""}" data-sentence-answer="${choice}" data-word-id="${part.target.id}" data-question-id="${question.question_id}" type="button">${choice}</button>`).join("")}</span>` : ""}</span>`;
+      }).join("");
+      return `
+        <article class="question ege15-question">
+          <div class="question-head"><span>Предложение ${index + 1}</span><span>Формат ЕГЭ</span></div>
+          <div class="task-prompt">${escapeHtml(question.prompt)}</div>
+          <div class="ege15-sentence">${sentence}</div>
+        </article>
+      `;
+    }
+
+    function choiceButton(questionId, choice, selected) {
+      return `<button class="choice ${selected ? "selected" : ""}" data-answer="${escapeHtml(choice)}" data-question-id="${escapeHtml(questionId)}" type="button">${escapeHtml(choice)}</button>`;
+    }
+
+    function bind() {
+      document.querySelectorAll("[data-activity]").forEach((button) => {
+        button.onclick = () => setActivity(button.dataset.activity);
+      });
+      document.querySelector("#switchActivity").onclick = () => setActivity(preview.activity === "ege13" ? "ege15" : "ege13");
+      document.querySelectorAll("[data-mode]").forEach((button) => {
+        button.onclick = () => {
+          preview.mode = button.dataset.mode;
+          preview.answers = {};
+          render();
+        };
+      });
+      document.querySelectorAll("[data-category]").forEach((button) => {
+        button.onclick = () => {
+          preview.selectedCategories = [button.dataset.category];
+          ensureSelection();
+          render();
+        };
+      });
+      document.querySelectorAll("[data-answer]").forEach((button) => {
+        button.onclick = () => {
+          preview.answers[button.dataset.questionId] = button.dataset.answer;
+          render();
+        };
+      });
+      document.querySelectorAll("[data-multi-answer]").forEach((button) => {
+        button.onclick = () => {
+          const current = new Set(String(preview.answers[button.dataset.questionId] || "").split("").filter(Boolean));
+          current.has(button.dataset.multiAnswer) ? current.delete(button.dataset.multiAnswer) : current.add(button.dataset.multiAnswer);
+          preview.answers[button.dataset.questionId] = [...current].sort().join("");
+          render();
+        };
+      });
+      document.querySelectorAll("[data-sentence-answer]").forEach((button) => {
+        button.onclick = () => {
+          const current = preview.answers[button.dataset.questionId] || {};
+          preview.answers[button.dataset.questionId] = { ...current, [button.dataset.wordId]: button.dataset.sentenceAnswer };
+          preview.openTarget = "";
+          render();
+        };
+      });
+      document.querySelectorAll("[data-cycle-word]").forEach((button) => {
+        button.onclick = () => {
+          const key = `${button.dataset.questionId}:${button.dataset.cycleWord}`;
+          preview.openTarget = preview.openTarget === key ? "" : key;
+          render();
+        };
+      });
+      document.querySelector("#checkPreview").onclick = renderResult;
+    }
+
+    function renderResult() {
+      const questions = activeData().questions[preview.mode] || [];
+      const results = questions.map((question) => {
+        const given = preview.answers[question.question_id];
+        const correct = question.correct_answer;
+        const isCorrect = typeof correct === "object"
+          ? Object.keys(correct).every((key) => given && given[key] === correct[key])
+          : String(given || "") === String(correct);
+        return { question, given, correct, isCorrect };
+      });
+      document.querySelector("#resultView").classList.remove("hidden");
+      document.querySelector("#resultView").innerHTML = `
+        <div class="result-list">
+          ${results.map((item, index) => `
+            <div class="result-item ${item.isCorrect ? "ok" : "bad"}">
+              <b>${index + 1}. ${item.isCorrect ? "Верно" : "Повторим еще"}</b>
+              <p>Ответ: ${escapeHtml(formatAnswer(item.given)) || "—"} · правильно: ${escapeHtml(formatAnswer(item.correct))}</p>
+              <p>${escapeHtml(item.question.correct_spelling || "")}</p>
+              ${item.isCorrect ? "" : `<p class="muted">${escapeHtml(item.question.explanation || "")}</p>`}
+            </div>
+          `).join("")}
+        </div>
+      `;
+      document.querySelector("#resultView").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function formatAnswer(value) {
+      if (!value || typeof value !== "object") return value || "";
+      return Object.entries(value).map(([key, answer]) => `${key}: ${answer}`).join(", ");
+    }
+
+    ensureSelection();
+    render();
+  </script>
+</body>
+</html>
