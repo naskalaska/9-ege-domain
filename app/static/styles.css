@@ -1142,14 +1142,22 @@ button {
   min-width: 760px;
 }
 
-.delivery-url-form,
+.paid-entity-form,
 .receipt-form {
   display: grid;
   gap: 6px;
   min-width: 220px;
 }
 
-.delivery-url-form input,
+.paid-entity-form label {
+  display: grid;
+  gap: 4px;
+  color: #526071;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.paid-entity-form input,
 .receipt-form input {
   width: 100%;
 }
@@ -1863,6 +1871,18 @@ button {
   font-weight: 900;
 }
 
+.old-price {
+  color: #7b7280;
+  font-weight: 800;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.shop-promo-note {
+  color: #7a3e00;
+  font-weight: 800;
+}
+
 .shop-product-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1873,6 +1893,19 @@ button {
 .shop-product-actions .primary-button,
 .shop-product-actions .secondary-button {
   min-height: 42px;
+}
+
+.teacher-games-list {
+  display: grid;
+  gap: 22px;
+}
+
+.teacher-game-section h3 {
+  margin: 0 0 12px;
+}
+
+.teacher-game-card {
+  min-height: 220px;
 }
 
 .shop-resend-form {

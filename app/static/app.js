@@ -132,6 +132,33 @@ const miniGames = [
     category: "orthography",
     categoryTitle: "Орфография",
   },
+  {
+    slug: "verb-conjugation-quest",
+    title: "Спряжение глагола",
+    description: "Квест по определению спряжения глаголов без загрузки своих материалов.",
+    button: "Играть",
+    path: "/html-games/verb-conjugation-quest/index.html",
+    category: "orthography",
+    categoryTitle: "Орфография",
+  },
+  {
+    slug: "truth-action-oge",
+    title: "Правда, действие, ОГЭ",
+    description: "Демо-версия командной игры: 20 действий и переход к покупке полного комплекта.",
+    button: "Демо",
+    path: "/html-games/truth-action-oge/index.html",
+    category: "speech",
+    categoryTitle: "Культура речи",
+  },
+  {
+    slug: "grammar-zoo",
+    title: "Зоопарк: грамматические основы",
+    description: "Демо-версия тренажёра по грамматическим основам: 20 заданий и предложение купить полный комплект.",
+    button: "Демо",
+    path: "/html-games/grammar-zoo/grammar_zoo_engine.html",
+    category: "syntax",
+    categoryTitle: "Синтаксис и пунктуация",
+  },
 ];
 
 const miniGameCategories = [
@@ -153,7 +180,7 @@ const shopProducts = [
   {
     slug: "fruit-garden-ik-ek",
     title: "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
-    price: "500 ₽",
+    price: "300 ₽",
     image: "/assets/shop/kard_fruktovyisad.png",
     demoUrl: "https://dimitrieva-av.ru/games/berry-season-ik-ek/index.html",
     shortDescription: "Редактируемая игра по русскому языку для тренировки суффиксов -ик- и -ек-. Ученики сортируют фрукты со словами по корзинкам Е и И, закрепляя правило в игровой форме.",
@@ -204,7 +231,7 @@ const shopProducts = [
   {
     slug: "dandelion-suffixes",
     title: "HTML-игра «Одуванчик: суффиксы существительных»",
-    price: "500 ₽",
+    price: "300 ₽",
     image: "/assets/shop/Kard_oduvanchik.png",
     demoUrl: "https://dimitrieva-av.ru/games/suffixes-nouns/index.html",
     shortDescription: "Редактируемая игра по русскому языку для тренировки суффиксов существительных. Ученики ловят одуванчики и выбирают пропущенную букву в слове, закрепляя орфографию в игровой форме.",
@@ -250,6 +277,50 @@ const shopProducts = [
     important: [
       "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
       "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
+    ],
+  },
+  {
+    slug: "mouse-space-game",
+    title: "HTML-игра «Мышонок в космосе: суффиксы прилагательных»",
+    price: "300 ₽",
+    image: "/assets/shop/cover_mouse_space.png",
+    demoUrl: "/games/mouse-space/index.html",
+    shortDescription: "HTML-игра по суффиксам прилагательных. Ученик помогает мышонку пройти космический маршрут, выбирая правильную букву в словах.",
+    fullDescription: "Готовая HTML-игра «Мышонок в космосе» помогает отработать написание суффиксов прилагательных в игровом формате. Игра запускается в браузере и подходит для урока, самостоятельной тренировки и интерактивной панели.",
+    tryBefore: [
+      "Перед покупкой можно открыть онлайн-версию игры на сайте:",
+      "https://dimitrieva-av.ru/games/mouse-space/index.html",
+      "Онлайн-версия позволяет посмотреть механику, оформление и принцип проверки ответов.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения суффиксов прилагательных",
+      "для игровой тренировки",
+      "для самостоятельной работы ученика",
+    ],
+    howItWorks: [
+      "Ученик видит слово с пропущенной буквой и выбирает правильный вариант. За верные ответы мышонок продвигается по космическому маршруту.",
+      "В игре есть визуальная сцена, мгновенная проверка и игровой прогресс.",
+    ],
+    package: [
+      "Готовая HTML-игра с файлами и изображениями.",
+      "Полная оффлайн-версия для запуска без интернета.",
+      "Онлайн-ссылка на полную версию игры.",
+    ],
+    adaptation: [
+      "Игра поставляется как готовый комплект.",
+      "Если нужна адаптация под другой список слов, можно написать на почту: anastasia041191@rambler.ru",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "для оффлайн-запуска: папка с HTML-файлом и assets",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на материал.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты.",
+      "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции».",
     ],
   },
   {
@@ -356,6 +427,145 @@ const shopProducts = [
       "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
     ],
   },
+  {
+    slug: "verb-conjugation-quest",
+    title: "HTML-игра «Спряжение глагола»",
+    price: "Бесплатно до 03.07",
+    oldPrice: "300 ₽",
+    image: "/assets/shop/cover_verb_conjugation.png",
+    demoUrl: "/games/verb-conjugation-quest/index.html",
+    demoLabel: "Играть онлайн",
+    buyLabel: "Получить в MAX",
+    maxOnly: true,
+    promoNote: "300 ₽ зачёркнуто: бесплатно в течение 03.07 в канале MAX.",
+    shortDescription: "Готовая игра-квест для отработки спряжения глаголов. В общем разделе доступна как обычная игра без конструктора и без добавления своего материала.",
+    fullDescription: "HTML-игра «Спряжение глагола» помогает ученикам пройти игровой квест и закрепить алгоритм определения спряжения. Материал поставляется как готовый комплект для запуска и ручного расширения списка глаголов.",
+    tryBefore: [
+      "Онлайн-версия открывается в разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/verb-conjugation-quest/index.html",
+      "Игра размещена без функции добавления своего материала на сайте.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения темы «Спряжение глаголов»",
+      "для игровой тренировки",
+      "для самостоятельной работы ученика",
+    ],
+    howItWorks: [
+      "Ученик проходит игровые этапы, применяет алгоритм определения спряжения и получает мгновенную обратную связь.",
+      "Игра работает как готовый HTML-комплект и открывается в браузере.",
+    ],
+    package: [
+      "Готовая HTML-игра.",
+      "Инструкция по запуску.",
+      "Инструкция по добавлению новых глаголов в комплекте игры.",
+    ],
+    adaptation: [
+      "На сайте игра размещена без конструктора пользовательских материалов.",
+      "Новые глаголы можно добавлять в полученном комплекте по инструкции.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "папка с HTML-файлом и файлами игры",
+    ],
+    delivery: "До конца 03.07 комплект доступен бесплатно в канале MAX. После акции материал может продаваться как цифровой комплект.",
+    important: [
+      "В разделе «Игры» на сайте доступна готовая онлайн-версия без добавления своего материала.",
+      "Для изменения списка глаголов используйте инструкцию из комплекта.",
+    ],
+  },
+  {
+    slug: "truth-action-oge",
+    title: "HTML-игра «Правда, действие, ОГЭ»",
+    price: "500 ₽",
+    image: "/assets/shop/cover_truth_action_oge.png",
+    demoUrl: "/games/truth-action-oge/index.html",
+    demoLabel: "Открыть демо",
+    shortDescription: "Командная игра по материалам ОГЭ. В общем разделе доступна демо-версия на 20 действий, полный комплект открывается после покупки.",
+    fullDescription: "Игра «Правда, действие, ОГЭ» подходит для знакомства, повторения и активной работы с заданиями ОГЭ. После покупки учитель получает офлайн-версию, онлайн-ссылку на полную версию и код для встройки на другие платформы.",
+    tryBefore: [
+      "Демо-версия доступна в общем разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/truth-action-oge/index.html",
+      "В демо ограничение: 20 действий, затем появляется предложение купить полный комплект.",
+    ],
+    suitableFor: [
+      "для подготовки к ОГЭ",
+      "для урока или внеурочного занятия",
+      "для групповой работы",
+      "для повторения тем русского языка в игровом формате",
+    ],
+    howItWorks: [
+      "Игроки выбирают персонажей, двигаются по полю и получают карточки «Правда», «Действие» или «Сюрприз».",
+      "В полной версии доступны все действия комплекта без демо-ограничения.",
+    ],
+    package: [
+      "Полная оффлайн-версия игры.",
+      "Ссылка на онлайн-версию полной игры.",
+      "Код для встройки игры на другие платформы.",
+    ],
+    adaptation: [
+      "Комплект поставляется как готовая игра.",
+      "Онлайн-ссылку из личного кабинета учитель может отправить ученикам.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "для оффлайн-запуска: папка с файлами игры",
+    ],
+    delivery: "После оплаты ссылка придёт на почту. Если почта совпадает с учительским аккаунтом, полная онлайн-версия появится в разделе «Мои игры» личного кабинета.",
+    important: [
+      "Перед оплатой проверьте email: по нему личный кабинет определяет купленные игры.",
+      "Полная версия не показывается в общем разделе «Игры»; там остаётся только демо.",
+    ],
+  },
+  {
+    slug: "grammar-zoo",
+    title: "HTML-игра «Зоопарк: грамматические основы»",
+    price: "500 ₽",
+    image: "/assets/shop/cover_grammar_zoo.png",
+    demoUrl: "/games/grammar-zoo/grammar_zoo_engine.html",
+    demoLabel: "Открыть демо",
+    shortDescription: "Большая игра-тренажёр по грамматическим основам. В общем разделе доступна демо-версия на 20 заданий, полный комплект открывается после покупки.",
+    fullDescription: "«Зоопарк: грамматические основы» помогает отрабатывать подлежащее, сказуемое, типы сказуемых и виды односоставных предложений. После покупки учитель получает оффлайн-игру, онлайн-ссылку на полную версию и код для вставки на другие платформы.",
+    tryBefore: [
+      "Демо-версия доступна в общем разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/grammar-zoo/grammar_zoo_engine.html",
+      "В демо ограничение: 20 заданий, затем появляется предложение купить полный комплект.",
+    ],
+    suitableFor: [
+      "для изучения грамматической основы",
+      "для подготовки к ОГЭ и ЕГЭ",
+      "для урока, консультации или интерактивной панели",
+      "для самостоятельной тренировки",
+    ],
+    howItWorks: [
+      "Ученик выбирает зону зоопарка, проходит задания разных механик и видит прогресс по разделам.",
+      "В полной версии доступны все задания комплекта без демо-ограничения.",
+    ],
+    package: [
+      "Полная оффлайн-игра.",
+      "Ссылка на онлайн-версию полной игры.",
+      "Код для вставки игры на другие платформы.",
+    ],
+    adaptation: [
+      "Комплект поставляется как готовая игра.",
+      "Онлайн-ссылку из личного кабинета учитель может отправить ученикам.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "для оффлайн-запуска: папка с HTML-файлом, JSON-базой и assets",
+    ],
+    delivery: "После оплаты ссылка придёт на почту. Если почта совпадает с учительским аккаунтом, полная онлайн-версия появится в разделе «Мои игры» личного кабинета.",
+    important: [
+      "Перед оплатой проверьте email: по нему личный кабинет определяет купленные игры.",
+      "Полная версия не показывается в общем разделе «Игры»; там остаётся только демо.",
+    ],
+  },
 ];
 
 const supportProducts = [
@@ -364,6 +574,38 @@ const supportProducts = [
   { slug: "support-500", id: "support_500", title: "На новые игры", price: "500 ₽", description: "Поддержка разработки учебных HTML-игр, которые можно запускать прямо из браузера и использовать на уроке." },
   { slug: "support-1000", id: "support_1000", title: "Большая поддержка", price: "1000 ₽", description: "Помогает быстрее развивать платформу, оплачивать технические расходы и выпускать новые материалы." },
 ];
+
+let shopProductOverrides = null;
+
+async function loadShopProductOverrides() {
+  if (shopProductOverrides) return shopProductOverrides;
+  try {
+    const data = await api("/api/shop/products");
+    shopProductOverrides = new Map((data.products || []).map((item) => [item.slug, item]));
+  } catch (error) {
+    shopProductOverrides = new Map();
+  }
+  return shopProductOverrides;
+}
+
+function applyShopProductOverride(product) {
+  const override = shopProductOverrides?.get(product.slug);
+  if (!override) return product;
+  return {
+    ...product,
+    title: override.title || product.title,
+    price: override.price || product.price,
+    image: override.cover_url || product.image,
+  };
+}
+
+function currentShopProducts() {
+  return shopProducts.map(applyShopProductOverride);
+}
+
+function currentSupportProducts() {
+  return supportProducts.map(applyShopProductOverride);
+}
 
 const modes = {
   rule: {
@@ -1367,9 +1609,10 @@ async function renderPublicTextPage(slug) {
   }
 }
 
-function renderDonatePage() {
+async function renderDonatePage() {
+  await loadShopProductOverrides();
   renderPublicTopActions("/donate");
-  const supportCards = supportProducts.map((product) => `
+  const supportCards = currentSupportProducts().map((product) => `
     <article class="shop-product-card support-card">
       <div class="shop-product-body">
         <p class="eyebrow">поддержка проекта</p>
@@ -1405,9 +1648,10 @@ function renderDonatePage() {
   bindShopPayment(view);
 }
 
-function renderShopPlaceholder() {
+async function renderShopPlaceholder() {
+  await loadShopProductOverrides();
   renderPublicTopActions("/shop");
-  const cards = shopProducts.map(shopProductCard).join("");
+  const cards = currentShopProducts().map(shopProductCard).join("");
   view.innerHTML = `
     <section class="public-placeholder public-page shop-page">
       <p class="eyebrow">магазин</p>
@@ -1425,6 +1669,9 @@ function renderShopPlaceholder() {
 }
 
 function shopProductCard(product) {
+  const price = product.oldPrice
+    ? `<strong><span class="old-price">${escapeHtml(product.oldPrice)}</span> ${escapeHtml(product.price)}</strong>`
+    : `<strong>${escapeHtml(product.price)}</strong>`;
   return `
     <article class="shop-product-card">
       <div class="shop-product-cover">
@@ -1435,17 +1682,20 @@ function shopProductCard(product) {
         <p class="eyebrow">цифровой материал</p>
         <h3>${escapeHtml(product.title)}</h3>
         <p>${escapeHtml(product.shortDescription)}</p>
+        ${product.promoNote ? `<p class="shop-promo-note">${escapeHtml(product.promoNote)}</p>` : ""}
         <div class="shop-product-meta">
-          <strong>${escapeHtml(product.price)}</strong>
+          ${price}
           <span>Формат: Цифровой материал</span>
           <span>Получение: Ссылка на папку после оплаты</span>
         </div>
         <div class="shop-product-actions">
           <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
-          <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
+          ${product.maxOnly
+            ? `<button class="secondary-button" data-route="/shop/${product.slug}" type="button">${escapeHtml(product.buyLabel || "Подробнее")}</button>`
+            : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить")}</button>`}
           <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
         </div>
-        <span class="shop-soon-badge">${escapeHtml(product.price)}</span>
+        <span class="shop-soon-badge">${product.oldPrice ? `<span class="old-price">${escapeHtml(product.oldPrice)}</span> ` : ""}${escapeHtml(product.price)}</span>
       </div>
     </article>
   `;
@@ -1465,13 +1715,17 @@ function renderProductBlock(title, content) {
   `;
 }
 
-function renderShopProductPage(slug) {
-  const product = shopProducts.find((item) => item.slug === slug);
+async function renderShopProductPage(slug) {
+  await loadShopProductOverrides();
+  const product = currentShopProducts().find((item) => item.slug === slug);
   if (!product) {
     renderShopPlaceholder();
     return;
   }
   renderPublicTopActions("/shop");
+  const price = product.oldPrice
+    ? `<span class="old-price">${escapeHtml(product.oldPrice)}</span> ${escapeHtml(product.price)}`
+    : escapeHtml(product.price);
   view.innerHTML = `
     <section class="public-placeholder public-page product-detail-page">
       <div class="product-detail-hero">
@@ -1483,12 +1737,15 @@ function renderShopProductPage(slug) {
           <h2>${escapeHtml(product.title)}</h2>
           <p>${escapeHtml(product.shortDescription)}</p>
           <p>${escapeHtml(product.fullDescription)}</p>
-          <div class="product-price">${escapeHtml(product.price)}</div>
+          <div class="product-price">${price}</div>
+          ${product.promoNote ? `<div class="shop-notice">${escapeHtml(product.promoNote)}</div>` : ""}
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
             <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
-            <button class="secondary-button" data-buy-product="${product.slug}" type="button">Купить</button>
+            ${product.maxOnly
+              ? `<a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
+              : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить")}</button>`}
           </div>
         </div>
       </div>
@@ -1527,7 +1784,7 @@ function isRuEmail(value) {
 }
 
 function paymentProductBySlug(slug) {
-  return [...shopProducts, ...supportProducts].find((product) => product.slug === slug);
+  return [...currentShopProducts(), ...currentSupportProducts()].find((product) => product.slug === slug);
 }
 
 function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
@@ -1822,7 +2079,7 @@ async function restoreSession() {
     return;
   }
   if (window.location.pathname === "/shop") {
-    renderShopPlaceholder();
+    await renderShopPlaceholder();
     return;
   }
   if (window.location.pathname === "/shop/thanks") {
@@ -1830,11 +2087,11 @@ async function restoreSession() {
     return;
   }
   if (window.location.pathname.startsWith("/shop/")) {
-    renderShopProductPage(window.location.pathname.split("/").filter(Boolean)[1]);
+    await renderShopProductPage(window.location.pathname.split("/").filter(Boolean)[1]);
     return;
   }
   if (window.location.pathname === "/donate" || window.location.pathname === "/support") {
-    renderDonatePage();
+    await renderDonatePage();
     return;
   }
   if (window.location.pathname === "/contacts") {
@@ -1954,7 +2211,12 @@ function renderCatalog() {
         </div>
       </div>
       ${groupsHtml}
-      ${state.user.role === "teacher" ? `<div class="catalog-actions"><button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button></div>` : ""}
+      ${state.user.role === "teacher" ? `
+        <div class="catalog-actions">
+          <button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button>
+          <button class="secondary-button" id="teacherGames" type="button">Мои игры</button>
+        </div>
+      ` : ""}
     </section>
   `;
   view.querySelector(".catalog-page").insertAdjacentHTML("beforeend", legalLinks("legal-links catalog-legal"));
@@ -1965,6 +2227,77 @@ function renderCatalog() {
     await loadActivity("ege9");
     showProgress();
   });
+  view.querySelector("#teacherGames")?.addEventListener("click", renderTeacherGamesPage);
+}
+
+async function renderTeacherGamesPage() {
+  renderTopActions();
+  view.innerHTML = `
+    <section class="catalog-page">
+      <div class="catalog-head">
+        <div>
+          <p class="eyebrow">кабинет учителя</p>
+          <h2>Мои игры</h2>
+        </div>
+        <div class="catalog-actions">
+          <button class="secondary-button" id="backToCatalogFromGames" type="button">Назад в каталог</button>
+        </div>
+      </div>
+      <p class="muted">Здесь собираются полные версии купленных игр и ссылки на игры, созданные через конструктор.</p>
+      <div class="teacher-games-list"><p class="muted">Загрузка...</p></div>
+    </section>
+  `;
+  view.querySelector("#backToCatalogFromGames").addEventListener("click", renderCatalog);
+  const list = view.querySelector(".teacher-games-list");
+  try {
+    const data = await api("/api/teacher/games");
+    const purchased = data.purchased || [];
+    const created = data.created || [];
+    const purchasedHtml = purchased.length
+      ? purchased.map((game) => teacherGameCard(game, "Купленная игра", "Полная версия")).join("")
+      : `<p class="muted">Пока нет купленных игр для email этого учительского аккаунта.</p>`;
+    const createdHtml = created.length
+      ? created.map((game) => teacherGameCard(game, "Создана на сайте", game.is_active ? "Активна" : "Отключена")).join("")
+      : `<p class="muted">Пока нет игр, созданных через конструктор.</p>`;
+    list.innerHTML = `
+      <section class="teacher-game-section">
+        <h3>Купленные игры</h3>
+        <div class="mini-game-grid">${purchasedHtml}</div>
+      </section>
+      <section class="teacher-game-section">
+        <h3>Созданные через конструктор</h3>
+        <div class="mini-game-grid">${createdHtml}</div>
+      </section>
+    `;
+    list.querySelectorAll("[data-copy-url]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const copied = await copyTextToClipboard(button.dataset.copyUrl);
+        button.textContent = copied ? "Ссылка скопирована" : "Не удалось скопировать";
+        setTimeout(() => {
+          button.textContent = "Скопировать";
+        }, 1800);
+      });
+    });
+  } catch (error) {
+    list.innerHTML = `<p class="error">${escapeHtml(error.message || "Не удалось загрузить игры.")}</p>`;
+  }
+}
+
+function teacherGameCard(game, eyebrow, status) {
+  const url = game.url || "";
+  return `
+    <article class="mini-game-card teacher-game-card">
+      <div>
+        <p class="eyebrow">${escapeHtml(eyebrow)}</p>
+        <h3>${escapeHtml(game.title || "Игра")}</h3>
+        <p>${escapeHtml(game.description || status || "")}</p>
+      </div>
+      ${url ? `
+        <a class="primary-button public-play-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Открыть</a>
+        <button class="secondary-button" data-copy-url="${escapeHtml(url)}" type="button">Скопировать</button>
+      ` : `<span class="muted">Ссылка не настроена</span>`}
+    </article>
+  `;
 }
 
 function renderMiniActivity() {
@@ -3495,18 +3828,30 @@ function renderAdminContent(data, closeButton = "") {
   const deliveryRows = paidEntities.length ? paidEntities.map((entity) => `
     <tr>
       <td>${escapeHtml(entity.product_id)}</td>
-      <td>${escapeHtml(entity.title)}</td>
       <td>${entity.type === "donation" ? "донат" : "товар"}</td>
-      <td>${escapeHtml(entity.amount)} ${escapeHtml(entity.currency)}</td>
       <td>
-        <form class="delivery-url-form" data-product-id="${escapeHtml(entity.product_id)}">
-          <input name="delivery_url" value="${escapeHtml(entity.delivery_url || "")}" placeholder="https://disk.yandex.ru/d/..." />
+        <form class="paid-entity-form" data-product-id="${escapeHtml(entity.product_id)}">
+          <label>Название
+            <input name="title" value="${escapeHtml(entity.title || "")}" />
+          </label>
+          <label>Цена, ₽
+            <input name="amount" value="${escapeHtml(entity.amount || "0.00")}" inputmode="decimal" />
+          </label>
+          <label>Обложка
+            <input name="cover_url" value="${escapeHtml(entity.cover_url || "")}" placeholder="/assets/shop/cover.png" />
+          </label>
+          <label>Ссылка выдачи
+            <input name="delivery_url" value="${escapeHtml(entity.delivery_url || "")}" placeholder="https://disk.yandex.ru/d/..." />
+          </label>
           <button class="ghost-button" type="submit">Сохранить</button>
         </form>
       </td>
-      <td><span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "ссылка задана" : "ссылка не задана"}</span></td>
+      <td>
+        <span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "выдача задана" : "выдача не задана"}</span><br>
+        <span class="${entity.has_cover_url ? "status-ok" : "status-bad"}">${entity.has_cover_url ? "обложка задана" : "обложка не задана"}</span>
+      </td>
     </tr>
-  `).join("") : `<tr><td colspan="6">Платные сущности не найдены</td></tr>`;
+  `).join("") : `<tr><td colspan="4">Платные сущности не найдены</td></tr>`;
   const receiptRows = receiptOrders.length ? receiptOrders.map((order) => {
     const isPaid = order.status === "paid";
     const paymentLabel = isPaid
@@ -3621,7 +3966,7 @@ function renderAdminContent(data, closeButton = "") {
       <button class="secondary-button admin-tab active" data-admin-section="online" type="button">Сейчас на сайте</button>
       <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
       <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>
-      <button class="secondary-button admin-tab" data-admin-section="delivery" type="button">Ссылки доставки</button>
+      <button class="secondary-button admin-tab" data-admin-section="delivery" type="button">Товары магазина</button>
       <button class="secondary-button admin-tab" data-admin-section="receipts" type="button">Чеки самозанятого</button>
       <button class="secondary-button admin-tab" data-admin-section="users" type="button">Пользователи</button>
       <button class="secondary-button admin-tab" data-admin-section="mail" type="button">Почта</button>
@@ -3645,8 +3990,8 @@ function renderAdminContent(data, closeButton = "") {
       <table class="table admin-table"><tr><th>Время</th><th>Игра</th><th>Автор набора</th><th>Страница</th></tr>${gameVisitRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="delivery">
-      <div class="table-head"><h3>Ссылки для доставки</h3><span class="muted">если ссылка не задана, оплату начать нельзя</span></div>
-      <table class="table admin-table delivery-table"><tr><th>id</th><th>Название</th><th>Тип</th><th>Цена</th><th>delivery_url</th><th>Статус</th></tr>${deliveryRows}</table>
+      <div class="table-head"><h3>Товары магазина</h3><span class="muted">цена и обложка видны на витрине; без ссылки выдачи оплату начать нельзя</span></div>
+      <table class="table admin-table delivery-table"><tr><th>id</th><th>Тип</th><th>Карточка товара</th><th>Статус</th></tr>${deliveryRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="receipts">
       <div class="table-head">
@@ -3776,19 +4121,25 @@ function bindAdminActions(root) {
       button.textContent = willOpen ? "Свернуть" : "Подробнее";
     });
   });
-  root.querySelectorAll(".delivery-url-form").forEach((form) => {
+  root.querySelectorAll(".paid-entity-form").forEach((form) => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = form.querySelector("button[type='submit']");
       submit.disabled = true;
+      const formData = new FormData(form);
       try {
-        await api("/api/admin/delivery-url", {
+        await api("/api/admin/paid-entity", {
           method: "POST",
           body: JSON.stringify({
             product_id: form.dataset.productId,
-            delivery_url: new FormData(form).get("delivery_url"),
+            title: formData.get("title"),
+            amount: formData.get("amount"),
+            currency: "RUB",
+            cover_url: formData.get("cover_url"),
+            delivery_url: formData.get("delivery_url"),
           }),
         });
+        shopProductOverrides = null;
         await reloadAdminPanel("delivery");
       } catch (err) {
         alert(err.message);

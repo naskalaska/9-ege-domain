@@ -22,7 +22,8 @@ import ege14_module
 import ege15_module
 import ege_orthography_module
 import ege5_module
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -69,20 +70,33 @@ SHOP_PRODUCTS = {
         "id": "berry_season",
         "title": "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
         "short_title": "Ягодный сезон",
-        "amount": "500.00",
+        "amount": "300.00",
         "currency": "RUB",
+        "cover_url": "/assets/shop/kard_fruktovyisad.png",
         "url_env": "BERRY_SEASON_PRODUCT_URL",
-        "default_url": "",
+        "default_url": f"{APP_BASE_URL}/full-games/berry-season-ik-ek/index.html",
         "kind": "product",
     },
     "dandelion-suffixes": {
         "id": "dandelion_suffixes",
         "title": "HTML-игра «Одуванчик: суффиксы существительных»",
         "short_title": "Одуванчик",
-        "amount": "500.00",
+        "amount": "300.00",
         "currency": "RUB",
+        "cover_url": "/assets/shop/Kard_oduvanchik.png",
         "url_env": "DANDELION_SUFFIXES_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/IHgUFHcgkK8fAw",
+        "kind": "product",
+    },
+    "mouse-space-game": {
+        "id": "mouse_space_game",
+        "title": "HTML-игра «Мышонок в космосе: суффиксы прилагательных»",
+        "short_title": "Мышонок в космосе",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/assets/shop/cover_mouse_space.png",
+        "url_env": "MOUSE_SPACE_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/mouse-space/index.html",
         "kind": "product",
     },
     "homogeneous-members-magic": {
@@ -91,6 +105,7 @@ SHOP_PRODUCTS = {
         "short_title": "Фокус: однородные члены предложения",
         "amount": "500.00",
         "currency": "RUB",
+        "cover_url": "/assets/shop/Kard_focus.png",
         "url_env": "HOMOGENEOUS_MEMBERS_MAGIC_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/o4evyJ1A1Flv4Q",
         "kind": "product",
@@ -101,8 +116,42 @@ SHOP_PRODUCTS = {
         "short_title": "Паронимы",
         "amount": "800.00",
         "currency": "RUB",
+        "cover_url": "/assets/shop/Kard_paronyms.png",
         "url_env": "PARONYMS_GAME_PRODUCT_URL",
         "default_url": "",
+        "kind": "product",
+    },
+    "verb-conjugation-quest": {
+        "id": "verb_conjugation_quest",
+        "title": "HTML-игра «Спряжение глагола»",
+        "short_title": "Спряжение глагола",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/assets/shop/cover_verb_conjugation.png",
+        "url_env": "VERB_CONJUGATION_QUEST_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/verb-conjugation-quest/index.html",
+        "kind": "product",
+    },
+    "truth-action-oge": {
+        "id": "truth_action_oge",
+        "title": "HTML-игра «Правда, действие, ОГЭ»",
+        "short_title": "Правда, действие, ОГЭ",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/assets/shop/cover_truth_action_oge.png",
+        "url_env": "TRUTH_ACTION_OGE_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/truth-action-oge/index.html",
+        "kind": "product",
+    },
+    "grammar-zoo": {
+        "id": "grammar_zoo",
+        "title": "HTML-игра «Зоопарк: грамматические основы»",
+        "short_title": "Зоопарк: грамматические основы",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/assets/shop/cover_grammar_zoo.png",
+        "url_env": "GRAMMAR_ZOO_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/grammar-zoo/grammar_zoo_engine.html",
         "kind": "product",
     },
     "support-100": {
@@ -111,6 +160,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "100.00",
         "currency": "RUB",
+        "cover_url": "",
         "url_env": "SUPPORT_100_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/M3avG3To68fHMw",
         "kind": "donation",
@@ -121,6 +171,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "300.00",
         "currency": "RUB",
+        "cover_url": "",
         "url_env": "SUPPORT_300_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/VfpRyCwgn2vkFA",
         "kind": "donation",
@@ -131,6 +182,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "500.00",
         "currency": "RUB",
+        "cover_url": "",
         "url_env": "SUPPORT_500_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/F7r4stcTO4saIw",
         "kind": "donation",
@@ -141,6 +193,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "1000.00",
         "currency": "RUB",
+        "cover_url": "",
         "url_env": "SUPPORT_1000_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/z_guLJ0-kWCIJg",
         "kind": "donation",
@@ -294,6 +347,9 @@ HTML_GAMES = {
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
     "mouse-space": HTML_DIR / "Мышонок в космосе",
+    "verb-conjugation-quest": HTML_DIR / "спряжение квест",
+    "truth-action-oge": HTML_DIR / "Игра-знакомство",
+    "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
 }
 
 PUBLIC_GAMES = {
@@ -304,6 +360,9 @@ PUBLIC_GAMES = {
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
     "mouse-space": HTML_DIR / "Мышонок в космосе",
+    "verb-conjugation-quest": HTML_DIR / "спряжение квест",
+    "truth-action-oge": HTML_DIR / "Игра-знакомство",
+    "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -441,7 +500,13 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
             con.execute(
                 """
                 UPDATE paid_entities
-                SET product_id = ?, slug = ?, title = ?, type = ?, amount = ?, currency = ?,
+                SET product_id = ?, slug = ?,
+                    title = COALESCE(NULLIF(title, ''), ?),
+                    type = ?,
+                    amount = COALESCE(NULLIF(amount, ''), ?),
+                    currency = COALESCE(NULLIF(currency, ''), ?),
+                    delivery_url = COALESCE(NULLIF(delivery_url, ''), ?),
+                    cover_url = COALESCE(NULLIF(cover_url, ''), ?),
                     url_env = ?, is_active = COALESCE(is_active, 1), updated_at = ?
                 WHERE product_id = ?
                 """,
@@ -452,6 +517,8 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
                     product["kind"],
                     product["amount"],
                     product["currency"],
+                    product.get("default_url") or "",
+                    product.get("cover_url") or "",
                     product["url_env"],
                     now,
                     existing["product_id"],
@@ -462,9 +529,9 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
             """
             INSERT INTO paid_entities (
                 product_id, slug, title, type, amount, currency,
-                delivery_url, url_env, is_active, created_at, updated_at
+                delivery_url, cover_url, url_env, is_active, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
             """,
             (
                 product["id"],
@@ -474,6 +541,7 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
                 product["amount"],
                 product["currency"],
                 product.get("default_url") or "",
+                product.get("cover_url") or "",
                 product["url_env"],
                 now,
                 now,
@@ -704,6 +772,7 @@ def ensure_app_db() -> None:
                 amount TEXT NOT NULL,
                 currency TEXT DEFAULT 'RUB',
                 delivery_url TEXT,
+                cover_url TEXT,
                 url_env TEXT,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL,
@@ -761,6 +830,7 @@ def ensure_app_db() -> None:
         ensure_column(con, "shop_orders", "receipt_sent", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "shop_orders", "receipt_sent_at", "TEXT")
         ensure_column(con, "shop_orders", "receipt_note", "TEXT")
+        ensure_column(con, "paid_entities", "cover_url", "TEXT")
         seed_paid_entities(con)
         seed_documents(con)
         ensure_service_admin(con)
@@ -3189,7 +3259,7 @@ def reset_user_password(admin: dict[str, Any], payload: dict[str, Any]) -> dict[
 def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = con.execute(
         """
-        SELECT product_id, slug, title, type, amount, currency, delivery_url,
+        SELECT product_id, slug, title, type, amount, currency, delivery_url, cover_url,
                is_active, updated_at
         FROM paid_entities
         ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
@@ -3200,9 +3270,48 @@ def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
             **dict(row),
             "is_active": bool(row["is_active"]),
             "has_delivery_url": bool(str(row["delivery_url"] or "").strip()),
+            "has_cover_url": bool(str(row["cover_url"] or "").strip()),
         }
         for row in rows
     ]
+
+
+def shop_products_public() -> dict[str, Any]:
+    with db() as con:
+        rows = con.execute(
+            """
+            SELECT slug, title, type, amount, currency, cover_url, is_active
+            FROM paid_entities
+            WHERE is_active = 1
+            ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
+            """
+        ).fetchall()
+    return {
+        "products": [
+            {
+                "slug": row["slug"],
+                "title": row["title"],
+                "type": row["type"],
+                "amount": row["amount"],
+                "currency": row["currency"],
+                "price": format_amount_label(row["amount"], row["currency"]),
+                "cover_url": row["cover_url"] or "",
+                "is_active": bool(row["is_active"]),
+            }
+            for row in rows
+        ]
+    }
+
+
+def format_amount_label(amount: str, currency: str = "RUB") -> str:
+    try:
+        value = Decimal(str(amount))
+    except InvalidOperation:
+        return f"{amount} {currency}".strip()
+    if currency == "RUB":
+        rubles = int(value) if value == value.to_integral_value() else value.normalize()
+        return f"{rubles} ₽"
+    return f"{value.normalize()} {currency}"
 
 
 def receipt_orders_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
@@ -3315,12 +3424,31 @@ def sync_order_payment_for_admin(admin: dict[str, Any], payload: dict[str, Any])
     return {"ok": True, "order": item}
 
 
-def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def normalize_amount(value: Any) -> str:
+    raw = str(value or "").strip().replace(",", ".")
+    try:
+        amount = Decimal(raw)
+    except InvalidOperation as error:
+        raise ValueError("Цена должна быть числом.") from error
+    if amount < 0:
+        raise ValueError("Цена не может быть отрицательной.")
+    return f"{amount.quantize(Decimal('0.01'))}"
+
+
+def update_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     require_admin(admin)
     product_id = trim_for_admin(payload.get("product_id"), 80)
+    title = trim_for_admin(payload.get("title"), 180)
+    amount = normalize_amount(payload.get("amount")) if "amount" in payload else None
+    currency = trim_for_admin(payload.get("currency") or "RUB", 12).upper()
+    cover_url = str(payload.get("cover_url") or "").strip()
     delivery_url = str(payload.get("delivery_url") or "").strip()
     if not product_id:
         raise ValueError("Не указана платная сущность.")
+    if not title:
+        raise ValueError("Название не может быть пустым.")
+    if currency != "RUB":
+        raise ValueError("Сейчас поддерживается только валюта RUB.")
     with db() as con:
         row = con.execute("SELECT product_id FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
         if not row:
@@ -3328,13 +3456,29 @@ def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) 
         con.execute(
             """
             UPDATE paid_entities
-            SET delivery_url = ?, updated_at = ?
+            SET title = ?,
+                amount = COALESCE(?, amount),
+                currency = ?,
+                delivery_url = ?,
+                cover_url = ?,
+                updated_at = ?
             WHERE product_id = ?
             """,
-            (delivery_url, now_iso(), product_id),
+            (title, amount, currency, delivery_url, cover_url, now_iso(), product_id),
         )
         updated = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
     return {"ok": True, "entity": paid_entity_row(updated)}
+
+
+def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    product_id = trim_for_admin(payload.get("product_id"), 80)
+    with db() as con:
+        row = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+    if not row:
+        raise LookupError("Платная сущность не найдена.")
+    merged = dict(row)
+    merged.update(payload)
+    return update_paid_entity(admin, merged)
 
 
 def reset_token_hash(token: str) -> str:
@@ -3504,6 +3648,88 @@ def product_delivery_url(product: dict[str, str]) -> str:
     return ""
 
 
+def game_entry_file(slug: str, relative_path: str) -> str:
+    clean_path = relative_path or "index.html"
+    if clean_path in {"", "index.html"} and slug == "grammar-zoo":
+        return "grammar_zoo_engine.html"
+    return clean_path
+
+
+def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
+    require_teacher(user)
+    teacher_email = normalize_email(user.get("email") or user.get("username"))
+    with db() as con:
+        purchased_rows = con.execute(
+            """
+            SELECT pe.slug, pe.product_id, pe.title, pe.delivery_url, pe.url_env,
+                   so.order_uid, so.paid_at, so.created_at
+            FROM shop_orders so
+            JOIN paid_entities pe ON pe.product_id = so.product_id
+            WHERE so.status = 'paid'
+              AND pe.type = 'product'
+              AND LOWER(so.buyer_email) = ?
+            ORDER BY COALESCE(so.paid_at, so.created_at) DESC
+            """,
+            (teacher_email,),
+        ).fetchall()
+        created_rows = con.execute(
+            """
+            SELECT public_id, title, description, mechanic, created_at, updated_at,
+                   is_active, is_deleted, use_count
+            FROM game_sets
+            WHERE teacher_id = ? AND is_deleted = 0
+            ORDER BY created_at DESC
+            """,
+            (user["user_id"],),
+        ).fetchall()
+
+    purchased = []
+    seen_products: set[str] = set()
+    for row in purchased_rows:
+        if row["product_id"] in seen_products:
+            continue
+        seen_products.add(row["product_id"])
+        product = {
+            "id": row["product_id"],
+            "product_id": row["product_id"],
+            "slug": row["slug"],
+            "title": row["title"],
+            "delivery_url": row["delivery_url"],
+            "url_env": row["url_env"],
+        }
+        url = product_delivery_url(product)
+        if not url and row["slug"] in HTML_GAMES:
+            url = f"{APP_BASE_URL}/full-games/{row['slug']}/{game_entry_file(row['slug'], 'index.html')}"
+        purchased.append(
+            {
+                "kind": "purchased",
+                "slug": row["slug"],
+                "title": row["title"],
+                "url": url,
+                "order_uid": row["order_uid"],
+                "paid_at": row["paid_at"],
+                "created_at": row["created_at"],
+            }
+        )
+
+    created = [
+        {
+            "kind": "created",
+            "public_id": row["public_id"],
+            "title": row["title"],
+            "description": row["description"],
+            "mechanic": row["mechanic"],
+            "url": public_game_url(row["mechanic"], row["public_id"]),
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+            "is_active": bool(row["is_active"]),
+            "use_count": int(row["use_count"] or 0),
+        }
+        for row in created_rows
+    ]
+    return {"purchased": purchased, "created": created}
+
+
 def yookassa_env(product: dict[str, str] | None = None) -> tuple[str, str, str]:
     shop_id = os.getenv("YOOKASSA_SHOP_ID", "").strip()
     secret_key = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
@@ -3591,6 +3817,8 @@ def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-g
     email = normalize_email(payload.get("email"))
     validate_email(email)
     product = product_by_slug(str(payload.get("product") or default_slug))
+    if product["id"] == "verb_conjugation_quest" and datetime.now().date() <= date(2026, 7, 3):
+        raise RuntimeError("До конца 03.07.2026 игра доступна бесплатно в канале MAX.")
     if not product.get("is_active", True):
         raise RuntimeError("Материал временно недоступен. Попробуйте позже.")
     shop_id, secret_key, _product_url = yookassa_env(product)
@@ -3930,7 +4158,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        relative_path = unquote(relative_path).lstrip("/") or "index.html"
+        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
@@ -3955,7 +4183,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        relative_path = unquote(relative_path).lstrip("/") or "index.html"
+        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
@@ -3969,6 +4197,29 @@ class Handler(SimpleHTTPRequestHandler):
         if relative_path in {"index.html", ""}:
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
+        body = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", self.guess_type(str(file_path)))
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_full_game_file(self, slug: str, relative_path: str) -> None:
+        game_dir = HTML_GAMES.get(slug)
+        if not game_dir:
+            self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+            return
+        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
+        file_path = (game_dir / relative_path).resolve()
+        game_root = game_dir.resolve()
+        try:
+            file_path.relative_to(game_root)
+        except ValueError:
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
+        if not file_path.is_file():
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
         body = file_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
@@ -4037,9 +4288,13 @@ class Handler(SimpleHTTPRequestHandler):
                 query = parse_qs(parsed.query)
                 body, filename, content_type = progress_export(self.require_user(), query.get("section", ["recent"])[0])
                 self.send_download(body, filename, content_type)
+            elif parsed.path == "/api/shop/products":
+                self.send_json(shop_products_public())
             elif parsed.path == "/api/games/sources":
                 require_teacher_or_admin(self.require_user_with_consents())
                 self.send_json(game_sources_for_teacher())
+            elif parsed.path == "/api/teacher/games":
+                self.send_json(teacher_games(self.require_user_with_consents()))
             elif parsed.path.startswith("/api/games/sets/"):
                 public_id = parsed.path.rsplit("/", 1)[-1]
                 self.send_json(public_game_set(public_id))
@@ -4063,6 +4318,15 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
                     return
                 self.send_public_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
+            elif parsed.path == "/full-games/":
+                self.path = "/index.html"
+                super().do_GET()
+            elif parsed.path.startswith("/full-games/"):
+                parts = parsed.path.strip("/").split("/", 2)
+                if len(parts) < 2:
+                    self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+                    return
+                self.send_full_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
             elif parsed.path.startswith("/images/"):
                 image_name = Path(parsed.path).name
                 image_path = (IMAGES_DIR / image_name).resolve()
@@ -4240,6 +4504,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(delete_suspicious_users_for_admin(self.require_user(), payload))
             elif parsed.path == "/api/admin/delivery-url":
                 self.send_json(update_paid_entity_delivery(self.require_user(), payload))
+            elif parsed.path == "/api/admin/paid-entity":
+                self.send_json(update_paid_entity(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/mark-receipt-sent":
                 self.send_json(mark_order_receipt_sent(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/sync-payment":
