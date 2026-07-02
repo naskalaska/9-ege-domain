@@ -147,6 +147,8 @@ const miniGames = [
     description: "Демо-версия командной игры: 20 действий и переход к покупке полного комплекта.",
     button: "Демо",
     path: "/html-games/truth-action-oge/index.html",
+    demo: true,
+    demoNotice: "В демо можно спокойно попробовать игру: доступно 20 действий, затем появится предложение купить полный комплект.",
     category: "speech",
     categoryTitle: "Культура речи",
   },
@@ -155,7 +157,9 @@ const miniGames = [
     title: "Зоопарк: грамматические основы",
     description: "Демо-версия тренажёра по грамматическим основам: 20 заданий и предложение купить полный комплект.",
     button: "Демо",
-    path: "/html-games/grammar-zoo/grammar_zoo_engine.html",
+    path: "/html-games/grammar-zoo/index.html",
+    demo: true,
+    demoNotice: "В демо можно спокойно познакомиться с игрой: доступно 20 заданий, затем появится предложение купить полный комплект.",
     category: "syntax",
     categoryTitle: "Синтаксис и пунктуация",
   },
@@ -283,7 +287,7 @@ const shopProducts = [
     slug: "mouse-space-game",
     title: "HTML-игра «Мышонок в космосе: суффиксы прилагательных»",
     price: "300 ₽",
-    image: "/assets/shop/cover_mouse_space.png",
+    image: "/shop-media/Обложка мышонок.png",
     demoUrl: "/games/mouse-space/index.html",
     shortDescription: "HTML-игра по суффиксам прилагательных. Ученик помогает мышонку пройти космический маршрут, выбирая правильную букву в словах.",
     fullDescription: "Готовая HTML-игра «Мышонок в космосе» помогает отработать написание суффиксов прилагательных в игровом формате. Игра запускается в браузере и подходит для урока, самостоятельной тренировки и интерактивной панели.",
@@ -430,14 +434,16 @@ const shopProducts = [
   {
     slug: "verb-conjugation-quest",
     title: "HTML-игра «Спряжение глагола»",
-    price: "Бесплатно до 03.07",
-    oldPrice: "300 ₽",
-    image: "/assets/shop/cover_verb_conjugation.png",
+    price: "300 ₽",
+    image: "/shop-media/Спряжение глагола (1).png",
+    images: [
+      "/shop-media/Спряжение глагола (1).png",
+      "/shop-media/Спряжение глагола (2).png",
+      "/shop-media/Спряжение глагола (3).png",
+      "/shop-media/Спряжение глагола (4).png",
+    ],
     demoUrl: "/games/verb-conjugation-quest/index.html",
     demoLabel: "Играть онлайн",
-    buyLabel: "Получить в MAX",
-    maxOnly: true,
-    promoNote: "300 ₽ зачёркнуто: бесплатно в течение 03.07 в канале MAX.",
     shortDescription: "Готовая игра-квест для отработки спряжения глаголов. В общем разделе доступна как обычная игра без конструктора и без добавления своего материала.",
     fullDescription: "HTML-игра «Спряжение глагола» помогает ученикам пройти игровой квест и закрепить алгоритм определения спряжения. Материал поставляется как готовый комплект для запуска и ручного расширения списка глаголов.",
     tryBefore: [
@@ -470,7 +476,7 @@ const shopProducts = [
       "любой современный браузер",
       "папка с HTML-файлом и файлами игры",
     ],
-    delivery: "До конца 03.07 комплект доступен бесплатно в канале MAX. После акции материал может продаваться как цифровой комплект.",
+    delivery: "После оплаты ссылка на комплект придёт на почту. В комплекте — игра, инструкция по запуску и инструкция по добавлению новых глаголов.",
     important: [
       "В разделе «Игры» на сайте доступна готовая онлайн-версия без добавления своего материала.",
       "Для изменения списка глаголов используйте инструкцию из комплекта.",
@@ -480,7 +486,13 @@ const shopProducts = [
     slug: "truth-action-oge",
     title: "HTML-игра «Правда, действие, ОГЭ»",
     price: "500 ₽",
-    image: "/assets/shop/cover_truth_action_oge.png",
+    image: "/shop-media/Обложка Правда, действие, ОГЭ (1).png",
+    images: [
+      "/shop-media/Обложка Правда, действие, ОГЭ (1).png",
+      "/shop-media/Обложка Правда, действие, ОГЭ (2).png",
+      "/shop-media/Обложка Правда, действие, ОГЭ (3).png",
+      "/shop-media/Обложка Правда, действие, ОГЭ (4).png",
+    ],
     demoUrl: "/games/truth-action-oge/index.html",
     demoLabel: "Открыть демо",
     shortDescription: "Командная игра по материалам ОГЭ. В общем разделе доступна демо-версия на 20 действий, полный комплект открывается после покупки.",
@@ -525,14 +537,20 @@ const shopProducts = [
     slug: "grammar-zoo",
     title: "HTML-игра «Зоопарк: грамматические основы»",
     price: "500 ₽",
-    image: "/assets/shop/cover_grammar_zoo.png",
-    demoUrl: "/games/grammar-zoo/grammar_zoo_engine.html",
+    image: "/shop-media/Зоопарк (1).png",
+    images: [
+      "/shop-media/Зоопарк (1).png",
+      "/shop-media/Зоопарк (2).png",
+      "/shop-media/Зоопарк (3).png",
+      "/shop-media/Зоопарк (4).png",
+    ],
+    demoUrl: "/games/grammar-zoo/index.html",
     demoLabel: "Открыть демо",
     shortDescription: "Большая игра-тренажёр по грамматическим основам. В общем разделе доступна демо-версия на 20 заданий, полный комплект открывается после покупки.",
     fullDescription: "«Зоопарк: грамматические основы» помогает отрабатывать подлежащее, сказуемое, типы сказуемых и виды односоставных предложений. После покупки учитель получает оффлайн-игру, онлайн-ссылку на полную версию и код для вставки на другие платформы.",
     tryBefore: [
       "Демо-версия доступна в общем разделе «Игры»:",
-      "https://dimitrieva-av.ru/games/grammar-zoo/grammar_zoo_engine.html",
+      "https://dimitrieva-av.ru/games/grammar-zoo/index.html",
       "В демо ограничение: 20 заданий, затем появляется предложение купить полный комплект.",
     ],
     suitableFor: [
@@ -591,11 +609,16 @@ async function loadShopProductOverrides() {
 function applyShopProductOverride(product) {
   const override = shopProductOverrides?.get(product.slug);
   if (!override) return product;
+  const image = override.cover_url || product.image;
+  const images = [image, ...(product.images || []).filter((item) => item && item !== image)];
   return {
     ...product,
+    product_id: override.product_id || product.product_id,
     title: override.title || product.title,
     price: override.price || product.price,
-    image: override.cover_url || product.image,
+    image,
+    images,
+    ...(override.description || {}),
   };
 }
 
@@ -1498,10 +1521,12 @@ function renderPublicGames() {
           <article class="mini-game-card public-game-card">
             <div>
               <p class="eyebrow">мини-игра</p>
+              ${game.demo ? `<span class="demo-badge">Демо</span>` : ""}
               <h3>${escapeHtml(game.title)}</h3>
               <p>${escapeHtml(game.description)}</p>
+              ${game.demoNotice ? `<p class="demo-note">${escapeHtml(game.demoNotice)}</p>` : ""}
             </div>
-            <a class="primary-button public-play-link" href="${escapeHtml(safeRelativeUrl(`/games/${game.slug}/index.html`))}">Играть</a>
+            <a class="primary-button public-play-link" href="${escapeHtml(safeRelativeUrl(`/games/${game.slug}/index.html`))}">${escapeHtml(game.button || "Играть")}</a>
           </article>
         `).join("")}
       </div>
@@ -1672,10 +1697,11 @@ function shopProductCard(product) {
   const price = product.oldPrice
     ? `<strong><span class="old-price">${escapeHtml(product.oldPrice)}</span> ${escapeHtml(product.price)}</strong>`
     : `<strong>${escapeHtml(product.price)}</strong>`;
+  const image = shopMediaUrl(product.image);
   return `
     <article class="shop-product-card">
       <div class="shop-product-cover">
-        <img src="${product.image}" alt="${escapeHtml(product.title)}" />
+        <img src="${escapeHtml(image)}" alt="${escapeHtml(product.title)}" />
         <span>Доступно к покупке</span>
       </div>
       <div class="shop-product-body">
@@ -1715,6 +1741,88 @@ function renderProductBlock(title, content) {
   `;
 }
 
+function shopMediaUrl(value) {
+  const url = String(value || "").trim();
+  if (!url) return "";
+  if (url.startsWith("/") && !url.startsWith("//")) return encodeURI(url);
+  if (/^https?:\/\//i.test(url)) return encodeURI(url);
+  return "";
+}
+
+function productGalleryImages(product) {
+  const images = (product.images && product.images.length ? product.images : [product.image])
+    .map(shopMediaUrl)
+    .filter(Boolean);
+  return [...new Set(images)];
+}
+
+function renderProductGallery(product) {
+  const images = productGalleryImages(product);
+  if (!images.length) return "";
+  const controls = images.length > 1
+    ? `
+      <button class="product-gallery-nav product-gallery-prev" data-gallery-prev type="button" aria-label="Предыдущее изображение">‹</button>
+      <button class="product-gallery-nav product-gallery-next" data-gallery-next type="button" aria-label="Следующее изображение">›</button>
+      <div class="product-gallery-count"><span data-gallery-current>1</span> / ${images.length}</div>
+    `
+    : "";
+  const thumbs = images.length > 1
+    ? `<div class="product-gallery-thumbs">${images.map((image, index) => `
+        <button class="product-gallery-thumb ${index === 0 ? "active" : ""}" data-gallery-index="${index}" type="button" aria-label="Показать изображение ${index + 1}">
+          <img src="${escapeHtml(image)}" alt="" loading="lazy" />
+        </button>
+      `).join("")}</div>`
+    : "";
+  return `
+    <div class="product-detail-gallery" data-product-gallery>
+      <div class="product-detail-cover">
+        <img data-gallery-main src="${escapeHtml(images[0])}" alt="${escapeHtml(product.title)}" />
+        ${controls}
+      </div>
+      ${thumbs}
+    </div>
+  `;
+}
+
+const productDescriptionFields = [
+  ["shortDescription", "Короткое описание", "text"],
+  ["fullDescription", "Полное описание", "text"],
+  ["tryBefore", "Попробовать перед покупкой", "list"],
+  ["package", "Что входит в комплект", "list"],
+  ["suitableFor", "Для чего подойдёт", "list"],
+  ["howItWorks", "Как работает игра", "list"],
+  ["format", "Формат", "text"],
+  ["requirements", "Что понадобится", "list"],
+  ["delivery", "Как получить после оплаты", "text"],
+  ["adaptation", "Помощь с адаптацией", "list"],
+  ["important", "Важно", "list"],
+];
+
+function productFieldValue(product, key, kind) {
+  const value = product[key];
+  return kind === "list" ? (Array.isArray(value) ? value : []).join("\n") : String(value || "");
+}
+
+function renderProductAdminEditor(product) {
+  if (state.user?.role !== "admin" || !product.product_id) return "";
+  return `
+    <div class="product-admin-editor">
+      <button class="ghost-button product-edit-toggle" type="button" data-product-edit-toggle>✎ Редактировать описание</button>
+      <form class="product-description-form hidden" data-product-id="${escapeHtml(product.product_id)}">
+        ${productDescriptionFields.map(([key, label, kind]) => `
+          <label>${escapeHtml(label)}
+            <textarea name="${escapeHtml(key)}" rows="${kind === "list" ? 5 : 3}">${escapeHtml(productFieldValue(product, key, kind))}</textarea>
+          </label>
+        `).join("")}
+        <div class="shop-product-actions">
+          <button class="secondary-button" type="submit">Сохранить описание</button>
+          <span class="muted" data-product-edit-status></span>
+        </div>
+      </form>
+    </div>
+  `;
+}
+
 async function renderShopProductPage(slug) {
   await loadShopProductOverrides();
   const product = currentShopProducts().find((item) => item.slug === slug);
@@ -1729,14 +1837,13 @@ async function renderShopProductPage(slug) {
   view.innerHTML = `
     <section class="public-placeholder public-page product-detail-page">
       <div class="product-detail-hero">
-        <div class="product-detail-cover">
-          <img src="${product.image}" alt="${escapeHtml(product.title)}" />
-        </div>
+        ${renderProductGallery(product)}
         <div class="product-detail-summary">
           <p class="eyebrow">цифровой материал</p>
           <h2>${escapeHtml(product.title)}</h2>
           <p>${escapeHtml(product.shortDescription)}</p>
           <p>${escapeHtml(product.fullDescription)}</p>
+          ${renderProductAdminEditor(product)}
           <div class="product-price">${price}</div>
           ${product.promoNote ? `<div class="shop-notice">${escapeHtml(product.promoNote)}</div>` : ""}
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
@@ -1764,7 +1871,67 @@ async function renderShopProductPage(slug) {
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  bindProductGallery(view);
+  bindProductAdminEditor(view, product);
   bindShopPayment(view);
+}
+
+function bindProductAdminEditor(root = document, product) {
+  const form = root.querySelector(".product-description-form");
+  const toggle = root.querySelector("[data-product-edit-toggle]");
+  if (!form || !toggle || !product) return;
+  toggle.addEventListener("click", () => {
+    form.classList.toggle("hidden");
+  });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector("button[type='submit']");
+    const status = form.querySelector("[data-product-edit-status]");
+    const formData = new FormData(form);
+    const description = {};
+    productDescriptionFields.forEach(([key, _label, kind]) => {
+      const value = String(formData.get(key) || "").trim();
+      description[key] = kind === "list"
+        ? value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+        : value;
+    });
+    submit.disabled = true;
+    if (status) status.textContent = "Сохраняю...";
+    try {
+      await api("/api/admin/paid-entity-description", {
+        method: "POST",
+        body: JSON.stringify({
+          product_id: product.product_id,
+          description,
+        }),
+      });
+      shopProductOverrides = null;
+      await renderShopProductPage(product.slug);
+    } catch (error) {
+      if (status) status.textContent = error.message || "Не удалось сохранить.";
+      submit.disabled = false;
+    }
+  });
+}
+
+function bindProductGallery(root = document) {
+  root.querySelectorAll("[data-product-gallery]").forEach((gallery) => {
+    const thumbs = Array.from(gallery.querySelectorAll("[data-gallery-index]"));
+    const images = thumbs.map((thumb) => thumb.querySelector("img")?.getAttribute("src")).filter(Boolean);
+    const main = gallery.querySelector("[data-gallery-main]");
+    const current = gallery.querySelector("[data-gallery-current]");
+    if (!main || !images.length) return;
+    let activeIndex = 0;
+    const show = (nextIndex) => {
+      activeIndex = (nextIndex + images.length) % images.length;
+      main.src = images[activeIndex];
+      thumbs.forEach((thumb, index) => thumb.classList.toggle("active", index === activeIndex));
+      if (current) current.textContent = String(activeIndex + 1);
+    };
+    gallery.querySelector("[data-gallery-prev]")?.addEventListener("click", () => show(activeIndex - 1));
+    gallery.querySelector("[data-gallery-next]")?.addEventListener("click", () => show(activeIndex + 1));
+    thumbs.forEach((thumb, index) => thumb.addEventListener("click", () => show(index)));
+  });
 }
 
 function bindShopPayment(root = document) {
@@ -2285,6 +2452,7 @@ async function renderTeacherGamesPage() {
 
 function teacherGameCard(game, eyebrow, status) {
   const url = game.url || "";
+  const offlineUrl = game.offline_url && game.offline_url !== url ? game.offline_url : "";
   return `
     <article class="mini-game-card teacher-game-card">
       <div>
@@ -2293,8 +2461,9 @@ function teacherGameCard(game, eyebrow, status) {
         <p>${escapeHtml(game.description || status || "")}</p>
       </div>
       ${url ? `
-        <a class="primary-button public-play-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Открыть</a>
+        <a class="primary-button public-play-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Открыть онлайн</a>
         <button class="secondary-button" data-copy-url="${escapeHtml(url)}" type="button">Скопировать</button>
+        ${offlineUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(offlineUrl)}" target="_blank" rel="noopener">Оффлайн-комплект</a>` : ""}
       ` : `<span class="muted">Ссылка не настроена</span>`}
     </article>
   `;
@@ -2315,8 +2484,10 @@ function renderMiniActivity() {
           <article class="mini-game-card">
             <div>
               <p class="eyebrow">мини-игра</p>
+              ${game.demo ? `<span class="demo-badge">Демо</span>` : ""}
               <h3>${escapeHtml(game.title)}</h3>
               <p>${escapeHtml(game.description)}</p>
+              ${game.demoNotice ? `<p class="demo-note">${escapeHtml(game.demoNotice)}</p>` : ""}
             </div>
             <button class="primary-button open-mini-game" data-game="${escapeHtml(game.slug)}" type="button">${escapeHtml(game.button)}</button>
           </article>
@@ -3840,14 +4011,18 @@ function renderAdminContent(data, closeButton = "") {
           <label>Обложка
             <input name="cover_url" value="${escapeHtml(entity.cover_url || "")}" placeholder="/assets/shop/cover.png" />
           </label>
-          <label>Ссылка выдачи
+          <label>Оффлайн-комплект
             <input name="delivery_url" value="${escapeHtml(entity.delivery_url || "")}" placeholder="https://disk.yandex.ru/d/..." />
+          </label>
+          <label>Онлайн-версия
+            <input name="online_url" value="${escapeHtml(entity.online_url || "")}" placeholder="https://dimitrieva-av.ru/full-games/..." />
           </label>
           <button class="ghost-button" type="submit">Сохранить</button>
         </form>
       </td>
       <td>
-        <span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "выдача задана" : "выдача не задана"}</span><br>
+        <span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "оффлайн задан" : "оффлайн не задан"}</span><br>
+        <span class="${entity.has_online_url ? "status-ok" : "status-bad"}">${entity.has_online_url ? "онлайн задан" : "онлайн не задан"}</span><br>
         <span class="${entity.has_cover_url ? "status-ok" : "status-bad"}">${entity.has_cover_url ? "обложка задана" : "обложка не задана"}</span>
       </td>
     </tr>
@@ -4137,6 +4312,7 @@ function bindAdminActions(root) {
             currency: "RUB",
             cover_url: formData.get("cover_url"),
             delivery_url: formData.get("delivery_url"),
+            online_url: formData.get("online_url"),
           }),
         });
         shopProductOverrides = null;

@@ -260,7 +260,10 @@ const el = {
 };
 
 function assetUrl(file) {
-  return file;
+  if (!file || /^(?:[a-z]+:|\/|#)/i.test(file)) return file;
+  const cleanFile = String(file).replace(/\\/g, "/").replace(/^\.?\//, "");
+  const assetPath = cleanFile.startsWith("assets/") ? cleanFile : `assets/${cleanFile}`;
+  return new URL(assetPath, window.location.href).href;
 }
 
 function hydrateAssetImages(root = document) {
