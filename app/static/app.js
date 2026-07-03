@@ -1010,6 +1010,13 @@ function renderTopActions() {
     });
     topActions.append(catalog);
   }
+  if (state.user.role === "teacher") {
+    const teacherGames = document.createElement("button");
+    teacherGames.className = window.location.pathname === "/apps/my-games" ? "primary-button" : "ghost-button";
+    teacherGames.textContent = "Мои игры";
+    teacherGames.addEventListener("click", () => renderTeacherGamesPage());
+    topActions.append(teacherGames);
+  }
   const support = document.createElement("button");
   support.className = "ghost-button";
   support.textContent = "Поддержать проект";
@@ -1050,12 +1057,16 @@ function stopTeacherStatsRefresh() {
 
 function renderPublicTopActions(active = "") {
   setShellMode("public");
+  const teacherGamesButton = state.user?.role === "teacher"
+    ? `<button class="primary-button public-nav-my-games" data-route="/apps/my-games" type="button">Мои игры</button>`
+    : "";
   topActions.innerHTML = `
     <button class="ghost-button public-nav-link" data-route="/" type="button">На главную</button>
     <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажёры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
     <button class="ghost-button public-nav-link" data-route="/donate" type="button">Поддержать</button>
+    ${teacherGamesButton}
     <button class="primary-button public-nav-login" data-route="${state.user ? "/apps" : "/login"}" type="button">
       ${state.user ? "Кабинет" : "Вход"}
     </button>
@@ -2299,6 +2310,17 @@ async function restoreSession() {
     await renderConsentGate();
     return;
   }
+  if (window.location.pathname === "/apps/my-games") {
+    state.currentActivity = null;
+    state.currentMiniGame = null;
+    if (state.user.role !== "teacher") {
+      history.replaceState(null, "", "/apps");
+      renderDashboard();
+      return;
+    }
+    await renderTeacherGamesPage(false);
+    return;
+  }
   const pathActivity = activityFromPath();
   if (pathActivity) {
     await loadActivity(pathActivity, false);
@@ -2397,7 +2419,17 @@ function renderCatalog() {
   view.querySelector("#teacherGames")?.addEventListener("click", renderTeacherGamesPage);
 }
 
-async function renderTeacherGamesPage() {
+async function renderTeacherGamesPage(updateUrl = true) {
+  if (state.user?.role !== "teacher") {
+    history.replaceState(null, "", "/apps");
+    renderDashboard();
+    return;
+  }
+  if (updateUrl && window.location.pathname !== "/apps/my-games") {
+    history.pushState(null, "", "/apps/my-games");
+  }
+  state.currentActivity = null;
+  state.currentMiniGame = null;
   renderTopActions();
   view.innerHTML = `
     <section class="catalog-page">
@@ -2414,7 +2446,10 @@ async function renderTeacherGamesPage() {
       <div class="teacher-games-list"><p class="muted">Загрузка...</p></div>
     </section>
   `;
-  view.querySelector("#backToCatalogFromGames").addEventListener("click", renderCatalog);
+  view.querySelector("#backToCatalogFromGames").addEventListener("click", () => {
+    history.pushState(null, "", "/apps");
+    renderCatalog();
+  });
   const list = view.querySelector(".teacher-games-list");
   try {
     const data = await api("/api/teacher/games");

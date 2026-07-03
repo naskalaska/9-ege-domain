@@ -8512,7 +8512,7 @@
       if(task.type==='classify') return task.answer || '';
       if(task.type==='highlight'){
         const marking=expectedMarking(task), labels={subject:'подлежащее',predicate:'сказуемое',main:'главный член'};
-        return ['subject','predicate','main'].filter(role=>(marking[role]||[]).length).map(role=>`${labels[role]}: ${(marking[role]||[]).join(' / ')}`).join('; ');
+        return ['subject','predicate','main'].filter(role=>(marking[role]||[]).length).map(role=>`${labels[role]}: ${formatMarkingValues(marking[role])}`).join('; ');
       }
       if(task.type==='sort') return (task.items||[]).map(item=>`${item.text}: ${item.answer}`).join('; ');
       if(task.type==='match') return (task.pairs||[]).map(pair=>`${pair.left}: ${pairAnswer(pair)}`).join('; ');
@@ -8599,12 +8599,20 @@
     function selectableWords(text){ return String(text||'').split(/\s+/).map(clean).filter(Boolean); }
     function answerWords(answers){ return (answers||[]).flatMap(part=>String(part).split(/\s+/).map(clean).filter(Boolean)); }
     function sameWords(a,b){ const left=[...a].sort(), right=[...b].sort(); return left.length===right.length && left.every((v,i)=>v===right[i]); }
+    function hasSharedAnswerWords(values){
+      const sets=values.map(value=>new Set(answerWords([value])));
+      return sets.some((set,i)=>sets.slice(i+1).some(next=>[...set].some(word=>next.has(word))));
+    }
+    function formatMarkingValues(answers){
+      const values=Array.isArray(answers) ? answers : (answers ? [answers] : []);
+      return values.join(hasSharedAnswerWords(values) ? ' / ' : ', ');
+    }
     function answerVariants(answers){
       const values=Array.isArray(answers) ? answers : (answers ? [answers] : []);
       if(!values.length) return [[]];
       const variants=values.map(value=>answerWords([value]));
-      if(values.length>1) variants.push(answerWords(values));
-      return variants;
+      if(values.length===1 || hasSharedAnswerWords(values)) return variants;
+      return [answerWords(values)];
     }
     function checkHighlight(){
       const t=currentTask(), entries=Object.entries(state.highlightMarks);
@@ -8615,7 +8623,7 @@
         return answerVariants(marking[role]).some(variant=>sameWords(selected,variant));
       });
       const labels={subject:'подлежащее',predicate:'сказуемое',main:'главный член'};
-      const right=roles.filter(role=>(marking[role]||[]).length).map(role=>`${labels[role]}: ${(marking[role]||[]).join(' / ')}`).join('; ');
+      const right=roles.filter(role=>(marking[role]||[]).length).map(role=>`${labels[role]}: ${formatMarkingValues(marking[role])}`).join('; ');
       finish(ok,ok?'Разметка верна!':'Проверьте слова и типы линий.',right);
     }
     function checkClassify(){
