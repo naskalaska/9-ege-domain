@@ -21,7 +21,7 @@
       position:fixed;
       inset:0;
       pointer-events:none;
-      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,247,232,.74));
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,247,232,.42));
       z-index:-1;
     }
     .shell{max-width:1180px;padding:clamp(12px,2.4vw,28px)}
@@ -33,15 +33,11 @@
     .hero-card{
       min-height:260px;
       border:1px solid rgba(255,255,255,.58);
-      background:
-        linear-gradient(115deg, rgba(255,253,248,.96), rgba(255,248,223,.86)),
-        url("assets/концерт.png") right bottom/220px auto no-repeat;
+      background:linear-gradient(115deg, rgba(255,253,248,.64), rgba(255,248,223,.34));
     }
     .hero-card:after{content:""}
     .score-card{
-      background:
-        linear-gradient(160deg, rgba(255,255,255,.94), rgba(246,238,255,.92)),
-        url("assets/иконка рейтинг.png") right 18px bottom 18px/96px auto no-repeat;
+      background:linear-gradient(160deg, rgba(255,255,255,.70), rgba(246,238,255,.52));
     }
     .score-controls{display:grid;gap:10px;margin-top:auto}
     .btn{
@@ -56,16 +52,26 @@
     }
     .btn:hover{transform:translateY(-1px)}
     .btn:active{transform:translateY(0)}
-    .btn.icon-check:before,.btn.icon-next:before,.btn.icon-music:before{
+    .btn.icon-music:before{
       content:"";
       width:24px;
       height:24px;
       flex:0 0 auto;
       background:center/contain no-repeat;
     }
-    .btn.icon-check:before{background-image:url("assets/проверить.png")}
-    .btn.icon-next:before{background-image:url("assets/дальше.png")}
     .btn.icon-music:before{background-image:url("assets/иконка наушники.png")}
+    .btn.icon-check,.btn.icon-next{
+      min-height:56px;
+      background:center/100% 100% no-repeat;
+      border:0;
+      box-shadow:none;
+      color:transparent;
+      text-shadow:none;
+      overflow:hidden;
+    }
+    .btn.icon-check{width:206px;background-image:url("assets/проверить.png")}
+    .btn.icon-next{width:190px;background-image:url("assets/дальше.png")}
+    .btn.icon-check:disabled,.btn.icon-next:disabled{filter:grayscale(.35);opacity:.45}
     .music-button.is-on{
       background:#fff8df;
       color:#3b2600;
@@ -74,31 +80,52 @@
     }
     .map{grid-template-columns:repeat(5,minmax(0,1fr))}
     .location-card{
-      min-height:210px;
-      border-color:rgba(255,255,255,.62);
-      background:
-        linear-gradient(180deg, rgba(255,253,248,.94), rgba(247,241,255,.90));
+      min-height:0;
+      aspect-ratio:308/394;
+      padding:0;
+      border:0;
+      border-radius:26px;
+      background:transparent;
+      box-shadow:none;
+      overflow:visible;
+      display:block;
     }
     .location-card:focus-visible,.btn:focus-visible,.option:focus-within,.answer-row input:focus{
       outline:3px solid rgba(255,184,77,.72);
       outline-offset:3px;
     }
-    .location-card.done{
-      outline:0;
-      border-color:rgba(30,159,104,.55);
-      box-shadow:0 16px 36px rgba(30,159,104,.16);
+    .location-card.done{outline:0}
+    .stage-card-img{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter:drop-shadow(0 18px 28px rgba(70,42,117,.18));
+      transition:transform .18s ease, filter .18s ease;
     }
+    .location-card:hover .stage-card-img{transform:translateY(-4px);filter:drop-shadow(0 24px 34px rgba(70,42,117,.24))}
+    .location-card.done .stage-card-img{filter:drop-shadow(0 18px 28px rgba(30,159,104,.22)) saturate(1.05)}
     .loc-icon{
-      width:72px;
-      height:72px;
-      border-radius:20px;
-      background:rgba(255,255,255,.78);
-      box-shadow:inset 0 0 0 1px var(--line),0 12px 22px rgba(70,42,117,.16);
+      display:none;
+      position:absolute;
+      right:8px;
+      top:8px;
+      width:54px;
+      height:54px;
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 10px 18px rgba(70,42,117,.14);
       overflow:hidden;
     }
-    .loc-icon img{width:100%;height:100%;object-fit:contain;padding:8px}
+    .loc-icon img{width:100%;height:100%;object-fit:contain;padding:7px}
+    .location-card.done .loc-icon{
+      display:block;
+      background:rgba(255,248,223,.9);
+      box-shadow:inset 0 0 0 1px rgba(255,184,77,.55),0 12px 20px rgba(255,184,77,.18);
+    }
+    .location-card .badge,.location-card h3,.location-card p,.location-card .small{display:none}
     .panel{
-      background:rgba(255,253,248,.94);
+      background:rgba(255,253,248,.46);
       border-color:rgba(255,255,255,.65);
     }
     .stage-screen{
@@ -159,9 +186,14 @@
     .task-card{
       position:relative;
       overflow:hidden;
-      background:
-        linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)),
-        url("assets/подложка задания.png") center/cover no-repeat;
+      background:rgba(255,255,255,.46);
+      backdrop-filter:blur(4px);
+    }
+    .fact{
+      background:rgba(250,247,255,.58);
+    }
+    .broken{
+      background:rgba(255,250,240,.58);
     }
     .option{
       min-height:54px;
@@ -245,6 +277,23 @@
         url("assets/Награды.png") right 18px bottom 18px/118px auto no-repeat;
       padding-right:150px;
     }
+    .stage-prize{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      margin:8px 0 14px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.74);
+      border:1px solid rgba(255,184,77,.42);
+      font-weight:900;
+      color:#3b2600;
+    }
+    .stage-prize img{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+    }
     @media (max-width:980px){
       body{background-attachment:scroll}
       .hero{grid-template-columns:1fr}
@@ -260,19 +309,19 @@
       .hero,.score-card,.hero-card,.panel,.location-card,.task-card{min-width:0;width:100%;max-width:100%}
       .hero-card *,.panel *,.location-card *,.task-card *{min-width:0}
       .hero-card,.panel{border-radius:18px}
-      .hero-card{min-height:0;background:rgba(255,253,248,.95)}
+      .hero-card{min-height:0;background:rgba(255,253,248,.68)}
       h1{font-size:30px;line-height:1.05;overflow-wrap:anywhere}
       h2{font-size:21px}
       .hero p{font-size:15px}
       .chips{gap:7px}
       .chip{max-width:100%;white-space:normal;font-size:12px;padding:7px 10px}
       .map{display:block;width:100%;min-width:0}
-      .location-card{min-height:132px;display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;margin-bottom:10px}
+      .location-card{display:block;margin-bottom:10px;aspect-ratio:308/394}
       .location-card .badge{right:10px;top:10px}
-      .location-card h3,.location-card p,.location-card .small{grid-column:2}
-      .loc-icon{grid-row:1/4}
+      .loc-icon{width:48px;height:48px}
       .stage-head,.stage-actions,.answer-row,.nav-row{flex-direction:column;align-items:stretch}
-      .stage-actions .btn,.nav-row .btn{width:100%}
+      .stage-actions .btn{width:100%}
+      .nav-row .btn.icon-check,.answer-row .btn.icon-check,.nav-row .btn.icon-next{width:100%;max-width:260px;margin-inline:auto}
       .memo-modal{padding:10px}
       .memo-dialog{max-height:92vh;border-radius:16px;padding:14px}
       .memo-dialog-head{display:block}
@@ -283,6 +332,7 @@
       .option{align-items:flex-start}
       .option.correct:after,.option.wrong:after{font-size:12px}
       .unlock{padding-right:18px;background:linear-gradient(135deg, rgba(255,248,223,.95), rgba(244,236,255,.94))}
+      .stage-prize{width:100%;justify-content:center}
     }
   </style>
 </head>
@@ -348,7 +398,7 @@
 <script>
 const STAGES = [
   {
-    id:'simple', icon:'🏟️', iconImg:'assets/концерт.png', title:'Стадион 40–90–100', lead:'Редактор готовит короткие новости о фестивалях и итогах года: в этих числительных меняется только окончание.', memo:'У числительных 40, 90, 100 две формы: И./В. — сорок, девяносто, сто; остальные падежи — сорока, девяноста, ста.', img:'assets/Памятка 40,90,100.png', unlock:'Карточка открыта: в новостях о музыке формы «сорока», «девяноста», «ста» чаще всего появляются после предлогов к, о, с, после, около.',
+    id:'simple', icon:'🎟️', cardImg:'assets/студия.png', iconImg:'assets/иконка билет.png', title:'Студия 40–90–100', lead:'Редактор готовит короткие новости о фестивалях и итогах года: в этих числительных меняется только окончание.', memo:'У числительных 40, 90, 100 две формы: И./В. — сорок, девяносто, сто; остальные падежи — сорока, девяноста, ста.', img:'assets/Памятка 40,90,100.png', unlock:'Карточка открыта: в новостях о музыке формы «сорока», «девяноста», «ста» чаще всего появляются после предлогов к, о, с, после, около.',
     tasks:[
       {type:'choose', skill:'40/90/100', fact:'VK Fest 2025 прошёл в пяти городах и собрал 205 тысяч гостей; трансляция из Москвы в официальном сообществе набрала 30 миллионов просмотров.', question:'Выберите грамотный вариант для новостной карточки.', broken:'Редакция пишет: «Трансляция фестиваля приблизилась к ___ миллионам просмотров».', options:['тридцать','тридцати','тридцатью'], answer:1, note:'После предлога «к» нужен дательный падеж: к тридцати миллионам.'},
       {type:'fix', skill:'сто', fact:'По итогам VK Музыки 2024 Баста был отмечен как артист с самой большой аудиторией: более 20 миллионов уникальных слушателей.', question:'Исправьте ошибку в фразе.', broken:'Редактор написал: «Новость разошлась среди сто музыкальных пабликов».', answers:['среди ста музыкальных пабликов'], note:'После «среди» нужен родительный падеж: среди ста пабликов.'},
@@ -361,7 +411,7 @@ const STAGES = [
     ]
   },
   {
-    id:'complex', icon:'📊', iconImg:'assets/чарты.png', title:'Чарт-центр', lead:'Работаем с большими числами: у составных числительных склоняется каждое слово.', memo:'В составных количественных числительных изменяется каждая часть: о двухстах пяти тысячах, с тремястами пятьюдесятью семью артистами, к девятистам пятидесяти миллионам.', img:'assets/памятка сложные.png', unlock:'Карточка открыта: большие числа в музыкальных новостях — идеальный материал для задания, потому что ошибка в одном слове ломает весь факт.',
+    id:'complex', icon:'📊', cardImg:'assets/чарты.png', iconImg:'assets/иконка рейтинг.png', title:'Чарты', lead:'Работаем с большими числами: у составных числительных склоняется каждое слово.', memo:'В составных количественных числительных изменяется каждая часть: о двухстах пяти тысячах, с тремястами пятьюдесятью семью артистами, к девятистам пятидесяти миллионам.', img:'assets/памятка сложные.png', unlock:'Карточка открыта: большие числа в музыкальных новостях — идеальный материал для задания, потому что ошибка в одном слове ломает весь факт.',
     tasks:[
       {type:'input', skill:'800 000 000', fact:'В итогах VK Музыки 2025 артистом года назвали MACAN: он набрал 800 миллионов прослушиваний.', question:'Впишите форму числительного.', broken:'В новости сообщили о более чем ___ прослушиваний MACAN за 2025 год.', answers:['восьмистах миллионах'], note:'О более чем восьмистах миллионах: предложный падеж.'},
       {type:'choose', skill:'175 000 000', fact:'Альбом BRATLAND в VK Музыке назвали альбомом года; релиз прослушали 175 миллионов раз.', question:'Выберите грамотный вариант.', broken:'Карточка альбома говорит о более чем ___ прослушиваний.', options:['ста семидесяти пяти миллионах','сто семидесяти пяти миллионах','стами семьюдесятью пятью миллионами'], answer:0, note:'О более чем ста семидесяти пяти миллионах.'},
@@ -375,7 +425,7 @@ const STAGES = [
     ]
   },
   {
-    id:'half', icon:'🎧', iconImg:'assets/иконка наушники.png', title:'Бэкстейдж: полтора часа до выхода', lead:'Саундчеки, туры, фестивали: тренируем полтора, полторы, полутора и полтораста.', memo:'Полтора — муж. и ср. род, полторы — жен. род. Во всех косвенных падежах: полутора. Полтораста в И./В.; в остальных падежах — полутораста.', img:'assets/памятка полтора, полтораста.png', unlock:'Карточка открыта: «за полтора месяца» — готовая живая формула из фестивальных отчётов, но после предлогов часто потребуется «полутора».',
+    id:'half', icon:'🎧', cardImg:'assets/концерт.png', iconImg:'assets/иконка наушники.png', title:'Концерт: полтора часа до выхода', lead:'Саундчеки, туры, фестивали: тренируем полтора, полторы, полутора и полтораста.', memo:'Полтора — муж. и ср. род, полторы — жен. род. Во всех косвенных падежах: полутора. Полтораста в И./В.; в остальных падежах — полутораста.', img:'assets/памятка полтора, полтораста.png', unlock:'Карточка открыта: «за полтора месяца» — готовая живая формула из фестивальных отчётов, но после предлогов часто потребуется «полутора».',
     tasks:[
       {type:'choose', skill:'полтора', fact:'VK Fest 2025 за полтора месяца посетили 205 тысяч человек.', question:'Выберите верный вариант.', broken:'___ месяца фестивальный тур шёл по пяти городам.', options:['Полтора','Полторы','Полутора'], answer:0, note:'Месяц — мужской род: полтора месяца.'},
       {type:'input', skill:'полтора', fact:'VK Fest 2025 длился полтора месяца и завершился московскими концертами 19–20 июля.', question:'Впишите форму числительного.', broken:'Итоговый отчёт вышел после ___ месяцев фестивального тура.', answers:['полутора'], note:'После — родительный падеж: после полутора месяцев.'},
@@ -388,7 +438,7 @@ const STAGES = [
     ]
   },
   {
-    id:'collective', icon:'🎤', iconImg:'assets/иконка микрофон.png', title:'Фан-зона и составы', lead:'Собирательные числительные: где уместны двое, трое, пятеро, а где нужны обычные два, три, пять.', memo:'Собирательные числительные употребляются с лицами мужского пола, детьми, детёнышами, pluralia tantum. С существительными женского рода обычно нужны количественные: две артистки, три певицы.', img:'assets/памятка собирательные.png', unlock:'Карточка открыта: собирательные числительные хорошо работают в описаниях дуэтов, команд, фан-групп и бэкстейджа, но не подходят к словам «артистка», «певица», «солистка».',
+    id:'collective', icon:'🎤', cardImg:'assets/плейлист.png', iconImg:'assets/иконка микрофон.png', title:'Плейлист и составы', lead:'Собирательные числительные: где уместны двое, трое, пятеро, а где нужны обычные два, три, пять.', memo:'Собирательные числительные употребляются с лицами мужского пола, детьми, детёнышами, pluralia tantum. С существительными женского рода обычно нужны количественные: две артистки, три певицы.', img:'assets/памятка собирательные.png', unlock:'Карточка открыта: собирательные числительные хорошо работают в описаниях дуэтов, команд, фан-групп и бэкстейджа, но не подходят к словам «артистка», «певица», «солистка».',
     tasks:[
       {type:'choose', skill:'двое/два', fact:'Miyagi & Эндшпиль — дуэт; в музыкальных итогах VK Музыки 2025 он был назван группой года.', question:'Выберите грамотно оформленную фразу.', broken:'В новости о дуэте нужно написать:', options:['двое участников дуэта получили звание группы года','два участников дуэта получили звание группы года','двое участниц дуэта получили звание группы года'], answer:0, note:'С лицами мужского пола возможно собирательное: двое участников.'},
       {type:'choose', skill:'две/двое', fact:'ANNA ASTI и Клава Кока часто появляются в музыкальных новостях как отдельные артистки, а не как участники одного мужского коллектива.', question:'Выберите грамотный вариант.', broken:'В обзоре сравнили ___ артисток по динамике прослушиваний.', options:['двух','двоих','обоих'], answer:0, note:'С существительными женского рода в родительном падеже: двух артисток.'},
@@ -401,7 +451,7 @@ const STAGES = [
     ]
   },
   {
-    id:'final', icon:'📡', iconImg:'assets/студия.png', title:'Финальный эфир', lead:'Смешанный выпуск: исправляем музыкальную новость целиком.', memo:'В финале смешаны все правила. Проверяйте предлог, падеж, род существительного и каждую часть составного числительного.', img:'assets/памятка финал.png', unlock:'Финальный бейдж открыт: выпуск можно публиковать, если каждая цифра согласована с падежом и смыслом.',
+    id:'final', icon:'🏆', cardImg:'assets/Награды.png', iconImg:'assets/иконка звезда.png', title:'Награды: финальный эфир', lead:'Смешанный выпуск: исправляем музыкальную новость целиком.', memo:'В финале смешаны все правила. Проверяйте предлог, падеж, род существительного и каждую часть составного числительного.', img:'assets/памятка финал.png', unlock:'Финальный бейдж открыт: выпуск можно публиковать, если каждая цифра согласована с падежом и смыслом.',
     tasks:[
       {type:'fix', fullOnly:true, skill:'микс', fact:'VK Fest 2025 собрал 205 тысяч гостей и 295 артистов в пяти городах.', question:'Исправьте фразу полностью.', broken:'В отчёте рассказали о двести пяти тысячах гостей и двухсот девяноста пяти артистах.', answers:['в отчёте рассказали о двухстах пяти тысячах гостей и двухстах девяноста пяти артистах'], note:'О двухстах пяти тысячах; о двухстах девяноста пяти артистах.'},
       {type:'choose', skill:'микс', fact:'Трансляция московской части VK Fest 2025 собрала 30 миллионов просмотров.', question:'Выберите грамотный вариант.', broken:'Редактор пишет о трансляции:', options:['с тридцатью миллионами просмотров','с тридцати миллионами просмотров','с тридцать миллионами просмотров'], answer:0, note:'Творительный падеж: с тридцатью миллионами.'},
@@ -436,7 +486,7 @@ function toggleMusic(){state.music=!state.music; if(state.music){bgMusic.play().
 function openMemo(large=false){if(state.stage===null)return;const st=STAGES[state.stage];els.memoModalTitle.textContent=st.title;els.memoImg.src=st.img;els.memoText.textContent=st.memo;els.memoDialog.classList.toggle('is-large',large);els.memoZoomBtn.textContent=large?'Уменьшить':'Увеличить';els.memoModal.classList.remove('hidden')}
 function closeMemo(){els.memoModal.classList.add('hidden')}
 function toggleMemoZoom(){const large=!els.memoDialog.classList.contains('is-large');els.memoDialog.classList.toggle('is-large',large);els.memoZoomBtn.textContent=large?'Уменьшить':'Увеличить'}
-function renderMap(){els.map.innerHTML='';STAGES.forEach((st,i)=>{const done=state.done[st.id];const card=document.createElement('article');card.className='location-card'+(done?' done':'');card.tabIndex=0;card.innerHTML=`<span class="badge">${done?'пройдено':'открыто'}</span><div class="loc-icon">${st.iconImg?`<img src="${st.iconImg}" alt="">`:st.icon}</div><h3>${st.title}</h3><p>${st.lead}</p><span class="small">${st.tasks.length} заданий</span>`;card.onclick=()=>openStage(i);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openStage(i)}};els.map.appendChild(card)});updateScore()}
+function renderMap(){els.map.innerHTML='';STAGES.forEach((st,i)=>{const done=state.done[st.id];const card=document.createElement('article');card.className='location-card'+(done?' done':'');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`${st.title}. ${done?'Локация пройдена':'Открыть локацию'}`);card.innerHTML=`<img class="stage-card-img" src="${st.cardImg}" alt="${st.title}"><span class="badge">${done?'пройдено':'открыто'}</span><div class="loc-icon" aria-hidden="true">${st.iconImg?`<img src="${st.iconImg}" alt="">`:st.icon}</div><h3>${st.title}</h3><p>${st.lead}</p><span class="small">${st.tasks.length} заданий</span>`;card.onclick=()=>openStage(i);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openStage(i)}};els.map.appendChild(card)});updateScore()}
 function updateScore(){const score=scoreTotal();els.scoreBig.textContent=`${score}/${state.total}`;const doneCount=Object.keys(state.done).length;els.scoreText.textContent=`Пройдено локаций: ${doneCount}/${STAGES.length}. Правильных ответов: ${score}.`;if(doneCount===STAGES.length) renderFinal()}
 function openStage(i){state.stage=i;state.index=0;state.answered=false;state.selected=new Set();const st=STAGES[i];els.home.classList.add('hidden');els.final.classList.add('hidden');els.panel.classList.remove('hidden');els.title.textContent=st.title;els.lead.textContent=st.lead;els.eyebrow.textContent=`локация ${i+1}`;els.memoImg.src=st.img;els.memoText.textContent=st.memo;renderTask();window.scrollTo({top:0,behavior:'smooth'});}
 function renderTask(){const st=STAGES[state.stage];const t=st.tasks[state.index];state.answered=false;state.selected=new Set();const meta=`<div class="task-meta"><span class="tag">${t.skill}</span><span class="tag">${state.index+1}/${st.tasks.length}</span><span class="tag">${typeLabel(t)}</span></div>`;let body=`${meta}<p class="question">${t.question}</p><div class="fact"><b>Факт для редакции.</b> ${t.fact}</div>${t.broken?`<div class="broken">${t.broken}</div>`:''}`;
@@ -448,7 +498,7 @@ function typeLabel(t){if(t.type==='choose')return 'выбор'; if(t.type==='fin
 function feedback(ok, text){playTone(ok);const f=document.getElementById('feedback');f.className='feedback '+(ok?'good':'bad');f.innerHTML=`<b>${ok?'Верно.':'Есть ошибка.'}</b>${text}${ok?'':'<br><span class="small">Можно исправить ответ и проверить ещё раз или перейти дальше без балла.</span>'}`;document.getElementById('nextBtn').disabled=false;if(ok){state.correct[taskKey()]=true;state.answered=true;updateScore()}}
 function checkChoice(){const st=STAGES[state.stage];const t=st.tasks[state.index];const checked=[...document.querySelectorAll('.option input:checked')].map(x=>Number(x.value));let ok=false;if(t.multi){ok=checked.length===t.answers.length && t.answers.every(x=>checked.includes(x))}else{ok=checked.length===1 && checked[0]===t.answer}document.querySelectorAll('.option').forEach(el=>{const i=Number(el.dataset.i);el.classList.remove('correct','wrong');const good=t.multi?t.answers.includes(i):i===t.answer;if(good)el.classList.add('correct'); if(checked.includes(i)&&!good)el.classList.add('wrong')});const given=checked.length?checked.map(i=>t.options[i]).join('; '):'нет ответа';const correct=correctAnswerText(t);recordAttempt(ok,given,correct);let extra=t.fix?`<br><b>Правка:</b> ${t.fix}`:''; if(t.overrideCorrect) extra+=`<br><b>Правильно:</b> ${t.overrideCorrect}`; feedback(ok,`${t.note}${extra}`)}
 function checkInput(){const st=STAGES[state.stage];const t=st.tasks[state.index];const input=document.getElementById('answerInput');const val=input.value;const ok=answerMatches(t,val);input.classList.remove('correct','wrong');input.classList.add(ok?'correct':'wrong');recordAttempt(ok,val,correctAnswerText(t));feedback(ok,`${t.note}<br><b>Ответ:</b> ${t.answers[0]}`)}
-function nextTask(){const st=STAGES[state.stage];if(state.index<st.tasks.length-1){state.index++;renderTask()}else{state.done[st.id]=true;const got=stageScore(state.stage);els.task.innerHTML=`<div class="unlock"><h3>${st.icon} Локация пройдена: ${got}/${st.tasks.length}</h3><p>${st.unlock}</p><button class="btn icon-next" onclick="backToMap()">Вернуться к карте</button></div>${stageReview(state.stage)}`;renderMap();updateScore()}}
+function nextTask(){const st=STAGES[state.stage];if(state.index<st.tasks.length-1){state.index++;renderTask()}else{state.done[st.id]=true;const got=stageScore(state.stage);els.task.innerHTML=`<div class="unlock"><h3>${st.icon} Локация пройдена: ${got}/${st.tasks.length}</h3><p>${st.unlock}</p><div class="stage-prize">${st.iconImg?`<img src="${st.iconImg}" alt="">`:st.icon}<span>Награда получена</span></div><button class="btn icon-next" onclick="backToMap()">Вернуться к карте</button></div>${stageReview(state.stage)}`;renderMap();updateScore()}}
 function backToMap(){els.panel.classList.add('hidden');els.home.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function renderFinal(){els.final.classList.remove('hidden');const score=scoreTotal();const byStage=STAGES.map((st,i)=>`<div class="result-card"><b>${stageScore(i)}/${st.tasks.length}</b><p>${st.title}</p></div>`).join('');document.getElementById('finalStats').innerHTML=byStage+`<div class="result-card"><b>${score}</b><p>правильных ответов из ${state.total}</p></div>`}
 document.getElementById('toMapBtn').onclick=backToMap;document.getElementById('restartStageBtn').onclick=()=>openStage(state.stage);els.memoBtn.onclick=()=>openMemo(false);els.memoLargeBtn.onclick=()=>openMemo(true);els.memoZoomBtn.onclick=toggleMemoZoom;els.memoCloseBtn.onclick=closeMemo;els.memoModal.addEventListener('click',(event)=>{if(event.target===els.memoModal)closeMemo()});document.addEventListener('keydown',(event)=>{if(event.key==='Escape')closeMemo()});document.getElementById('resetBtn').onclick=()=>{state.stage=null;state.index=0;state.correct={};state.attempts={};state.done={};els.panel.classList.add('hidden');els.final.classList.add('hidden');els.home.classList.remove('hidden');closeMemo();renderMap()};els.musicToggle.onclick=toggleMusic;updateMusicButton();renderMap();
