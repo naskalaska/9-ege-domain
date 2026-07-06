@@ -124,6 +124,15 @@ const miniGames = [
     categoryTitle: "Культура речи",
   },
   {
+    slug: "numerals-hit-parade",
+    title: "Хит-парад числительных",
+    description: "Музыкальный квест по склонению числительных: ученик редактирует факты, ищет ошибки и собирает выпуск без грамматических промахов.",
+    button: "Играть",
+    path: "/html-games/numerals-hit-parade/index.html",
+    category: "speech",
+    categoryTitle: "Культура речи",
+  },
+  {
     slug: "mouse-space",
     title: "Мышонок в космосе: суффиксы прилагательных",
     description: "Помогите мышонку подняться по планетам, выбирая правильную букву в суффиксах прилагательных.",
@@ -2456,7 +2465,7 @@ async function renderTeacherGamesPage(updateUrl = true) {
     const purchased = data.purchased || [];
     const created = data.created || [];
     const purchasedHtml = purchased.length
-      ? purchased.map((game) => teacherGameCard(game, "Купленная игра", "Полная версия")).join("")
+      ? purchased.map((game) => teacherGameCard(game, game.kind === "gifted" ? "Подарок" : "Купленная игра", game.kind === "gifted" ? "Подаренная игра" : "Полная версия")).join("")
       : `<p class="muted">Пока нет купленных игр для email этого учительского аккаунта.</p>`;
     const createdHtml = created.length
       ? created.map((game) => teacherGameCard(game, "Создана на сайте", game.is_active ? "Активна" : "Отключена")).join("")
@@ -2494,6 +2503,7 @@ function teacherGameCard(game, eyebrow, status) {
         <p class="eyebrow">${escapeHtml(eyebrow)}</p>
         <h3>${escapeHtml(game.title || "Игра")}</h3>
         <p>${escapeHtml(game.description || status || "")}</p>
+        ${game.note ? `<p class="muted">${escapeHtml(game.note)}</p>` : ""}
       </div>
       ${url ? `
         <a class="primary-button public-play-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Открыть онлайн</a>
@@ -3934,6 +3944,10 @@ function renderAdminContent(data, closeButton = "") {
   const paidEntities = data.paid_entities || [];
   const receiptOrders = data.receipt_orders || [];
   const suspiciousUsers = data.suspicious_users || [];
+  const giftProducts = paidEntities.filter((entity) => entity.type === "product");
+  const giftProductOptions = giftProducts.map((entity) => `
+    <option value="${escapeHtml(entity.product_id)}">${escapeHtml(entity.title || entity.product_id)}</option>
+  `).join("");
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
     : "нет";
@@ -4113,6 +4127,29 @@ function renderAdminContent(data, closeButton = "") {
   `).join("") : `<tr><td colspan="4">Подозрительных пользователей не найдено</td></tr>`;
   const teacherCards = data.teachers.map((teacher) => {
     const teacherEmail = teacher.email || teacher.username;
+    const gifts = teacher.gifts || [];
+    const giftRows = gifts.length ? gifts.map((gift) => `
+      <li>
+        <span>
+          <b>${escapeHtml(gift.title || "Игра")}</b>
+          ${gift.note ? `<small>${escapeHtml(gift.note)}</small>` : ""}
+        </span>
+        <button class="ghost-button revoke-teacher-gift" data-teacher-id="${escapeHtml(teacher.user_id)}" data-product-id="${escapeHtml(gift.product_id)}" type="button">Убрать</button>
+      </li>
+    `).join("") : `<li class="muted">Подарков пока нет</li>`;
+    const giftForm = giftProducts.length ? `
+      <form class="teacher-gift-form" data-teacher-id="${escapeHtml(teacher.user_id)}">
+        <label>
+          Подарить игру
+          <select name="product_id" required>
+            <option value="">Выберите товар</option>
+            ${giftProductOptions}
+          </select>
+        </label>
+        <input name="note" placeholder="Комментарий для себя" />
+        <button class="ghost-button" type="submit">Прикрепить</button>
+      </form>
+    ` : `<p class="muted">В магазине пока нет товаров-игр для подарков.</p>`;
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
@@ -4154,6 +4191,13 @@ function renderAdminContent(data, closeButton = "") {
         <div class="teacher-metrics">
           <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
           <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>точность</span></div>
+        </div>
+        <div class="teacher-gifts-panel">
+          <div>
+            <b>Подарки в кабинете</b>
+            <ul>${giftRows}</ul>
+          </div>
+          ${giftForm}
         </div>
         <table class="table"><tr><th>Ученик</th><th>Email</th><th>Саммари</th><th>Пароль</th></tr>${students}</table>
       </article>
@@ -4355,6 +4399,51 @@ function bindAdminActions(root) {
       } catch (err) {
         alert(err.message);
         submit.disabled = false;
+      }
+    });
+  });
+  root.querySelectorAll(".teacher-gift-form").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = form.querySelector("button[type='submit']");
+      const formData = new FormData(form);
+      const productId = String(formData.get("product_id") || "").trim();
+      if (!productId) return;
+      submit.disabled = true;
+      try {
+        await api("/api/admin/teacher-gift", {
+          method: "POST",
+          body: JSON.stringify({
+            teacher_id: form.dataset.teacherId,
+            product_id: productId,
+            note: formData.get("note"),
+            granted: true,
+          }),
+        });
+        await reloadAdminPanel("users");
+      } catch (err) {
+        alert(err.message);
+        submit.disabled = false;
+      }
+    });
+  });
+  root.querySelectorAll(".revoke-teacher-gift").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!confirm("Убрать этот подарок из кабинета учителя?")) return;
+      button.disabled = true;
+      try {
+        await api("/api/admin/teacher-gift", {
+          method: "POST",
+          body: JSON.stringify({
+            teacher_id: button.dataset.teacherId,
+            product_id: button.dataset.productId,
+            granted: false,
+          }),
+        });
+        await reloadAdminPanel("users");
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
       }
     });
   });

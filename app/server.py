@@ -373,6 +373,7 @@ HTML_GAMES = {
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
+    "numerals-hit-parade": HTML_DIR / "Хит-парад числительных",
     "mouse-space": HTML_DIR / "Мышонок в космосе",
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
@@ -386,6 +387,7 @@ PUBLIC_GAMES = {
     "berry-season": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
+    "numerals-hit-parade": HTML_DIR / "Хит-парад числительных",
     "mouse-space": HTML_DIR / "Мышонок в космосе",
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
@@ -821,6 +823,18 @@ def ensure_app_db() -> None:
                 opened_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS teacher_product_gifts (
+                teacher_id TEXT NOT NULL,
+                product_id TEXT NOT NULL,
+                note TEXT,
+                created_by TEXT,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY(teacher_id, product_id),
+                FOREIGN KEY(teacher_id) REFERENCES users(user_id),
+                FOREIGN KEY(product_id) REFERENCES paid_entities(product_id),
+                FOREIGN KEY(created_by) REFERENCES users(user_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON attempts(user_id);
             CREATE INDEX IF NOT EXISTS idx_attempts_mode ON attempts(mode);
             CREATE INDEX IF NOT EXISTS idx_attempts_created_at ON attempts(created_at);
@@ -833,6 +847,7 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(yookassa_payment_id);
             CREATE INDEX IF NOT EXISTS idx_game_visits_opened_at ON game_visits(opened_at);
             CREATE INDEX IF NOT EXISTS idx_paid_entities_slug ON paid_entities(slug);
+            CREATE INDEX IF NOT EXISTS idx_teacher_product_gifts_teacher ON teacher_product_gifts(teacher_id, created_at);
             CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_code
                 ON users(teacher_code)
                 WHERE teacher_code IS NOT NULL;
@@ -2370,6 +2385,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             ).fetchall()
             item["mode_summary"] = [dict(mode_row) for mode_row in mode_rows]
             students_by_teacher.setdefault(row["teacher_id"], []).append(item)
+        gifts_by_teacher = teacher_gifts_for_admin(con, teacher_ids)
         recent_attempts = recent_attempts_for_admin(con)
         created_games = created_games_for_admin(con)
         recent_game_visits = recent_game_visits_for_admin(con)
@@ -2402,6 +2418,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                 "consent_accepted": bool(row["consent_accepted_at"]),
                 "consent_version": CURRENT_CONSENT_VERSION,
                 "students_list": students_by_teacher.get(row["user_id"], []),
+                "gifts": gifts_by_teacher.get(row["user_id"], []),
             }
             for row in teachers
         ],
@@ -2433,6 +2450,7 @@ def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
     con.execute("DELETE FROM word_progress WHERE user_id = ?", (user_id,))
     con.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
     con.execute("DELETE FROM user_consents WHERE user_id = ?", (user_id,))
+    con.execute("DELETE FROM teacher_product_gifts WHERE teacher_id = ? OR created_by = ?", (user_id, user_id))
     con.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
 
 
@@ -3346,6 +3364,40 @@ def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     ]
 
 
+def teacher_gifts_for_admin(con: sqlite3.Connection, teacher_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    if not teacher_ids:
+        return {}
+    placeholders = ",".join("?" for _ in teacher_ids)
+    rows = con.execute(
+        f"""
+        SELECT g.teacher_id, g.product_id, g.note, g.created_at,
+               pe.slug, pe.title, pe.delivery_url, pe.online_url, pe.url_env
+        FROM teacher_product_gifts g
+        JOIN paid_entities pe ON pe.product_id = g.product_id
+        WHERE g.teacher_id IN ({placeholders})
+        ORDER BY g.created_at DESC
+        """,
+        tuple(teacher_ids),
+    ).fetchall()
+    result: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        product = dict(row)
+        result.setdefault(row["teacher_id"], []).append(
+            {
+                "kind": "gifted",
+                "product_id": row["product_id"],
+                "slug": row["slug"],
+                "title": row["title"],
+                "url": product_online_url(product) or product_delivery_url(product),
+                "offline_url": product_delivery_url(product),
+                "online_url": product_online_url(product),
+                "note": row["note"] or "",
+                "created_at": row["created_at"],
+            }
+        )
+    return result
+
+
 def shop_products_public() -> dict[str, Any]:
     with db() as con:
         rows = con.execute(
@@ -3578,6 +3630,50 @@ def update_paid_entity_description(admin: dict[str, Any], payload: dict[str, Any
         )
         updated = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
     return {"ok": True, "entity": paid_entity_row(updated)}
+
+
+def update_teacher_product_gift(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    teacher_id = trim_for_admin(payload.get("teacher_id"), 120)
+    product_id = trim_for_admin(payload.get("product_id"), 80)
+    granted = bool(payload.get("granted"))
+    note = trim_for_admin(payload.get("note"), 240)
+    if not teacher_id:
+        raise ValueError("Не указан учитель.")
+    if not product_id:
+        raise ValueError("Не указан товар.")
+    with db() as con:
+        teacher = con.execute(
+            "SELECT user_id, display_name FROM users WHERE user_id = ? AND role = 'teacher'",
+            (teacher_id,),
+        ).fetchone()
+        if not teacher:
+            raise LookupError("Учитель не найден.")
+        product = con.execute(
+            "SELECT * FROM paid_entities WHERE product_id = ? AND type = 'product'",
+            (product_id,),
+        ).fetchone()
+        if not product:
+            raise LookupError("Товар не найден.")
+        if granted:
+            con.execute(
+                """
+                INSERT INTO teacher_product_gifts (teacher_id, product_id, note, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(teacher_id, product_id) DO UPDATE SET
+                    note = excluded.note,
+                    created_by = excluded.created_by,
+                    created_at = excluded.created_at
+                """,
+                (teacher_id, product_id, note, admin["user_id"], now_iso()),
+            )
+        else:
+            con.execute(
+                "DELETE FROM teacher_product_gifts WHERE teacher_id = ? AND product_id = ?",
+                (teacher_id, product_id),
+            )
+        gifts = teacher_gifts_for_admin(con, [teacher_id]).get(teacher_id, [])
+    return {"ok": True, "teacher_id": teacher_id, "gifts": gifts}
 
 
 def reset_token_hash(token: str) -> str:
@@ -3858,6 +3954,19 @@ def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
             """,
             (teacher_email,),
         ).fetchall()
+        gifted_rows = con.execute(
+            """
+            SELECT g.product_id, g.note, g.created_at,
+                   pe.slug, pe.title, pe.delivery_url, pe.online_url, pe.url_env
+            FROM teacher_product_gifts g
+            JOIN paid_entities pe ON pe.product_id = g.product_id
+            WHERE g.teacher_id = ?
+              AND pe.type = 'product'
+              AND pe.is_active = 1
+            ORDER BY g.created_at DESC
+            """,
+            (user["user_id"],),
+        ).fetchall()
         created_rows = con.execute(
             """
             SELECT public_id, title, description, mechanic, created_at, updated_at,
@@ -3899,6 +4008,34 @@ def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
+    for row in gifted_rows:
+        if row["product_id"] in seen_products:
+            continue
+        seen_products.add(row["product_id"])
+        product = {
+            "id": row["product_id"],
+            "product_id": row["product_id"],
+            "slug": row["slug"],
+            "title": row["title"],
+            "delivery_url": row["delivery_url"],
+            "online_url": row["online_url"],
+            "url_env": row["url_env"],
+        }
+        url = product_online_url(product) or product_delivery_url(product)
+        purchased.append(
+            {
+                "kind": "gifted",
+                "slug": row["slug"],
+                "product_id": row["product_id"],
+                "title": row["title"],
+                "url": url,
+                "offline_url": product_delivery_url(product),
+                "online_url": product_online_url(product),
+                "note": row["note"] or "",
+                "created_at": row["created_at"],
+            }
+        )
+
     created = [
         {
             "kind": "created",
@@ -3914,7 +4051,7 @@ def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
         }
         for row in created_rows
     ]
-    return {"purchased": purchased, "created": created}
+    return {"purchased": purchased, "gifted": [], "created": created}
 
 
 def yookassa_env(product: dict[str, str] | None = None) -> tuple[str, str, str]:
@@ -4718,6 +4855,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(update_paid_entity(self.require_user(), payload))
             elif parsed.path == "/api/admin/paid-entity-description":
                 self.send_json(update_paid_entity_description(self.require_user(), payload))
+            elif parsed.path == "/api/admin/teacher-gift":
+                self.send_json(update_teacher_product_gift(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/mark-receipt-sent":
                 self.send_json(mark_order_receipt_sent(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/sync-payment":
