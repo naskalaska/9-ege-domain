@@ -95,6 +95,7 @@ const miniGames = [
     path: "/html-games/suffixes-nouns/index.html",
     category: "orthography",
     categoryTitle: "Орфография",
+    kindLabel: "мини-игра",
   },
   {
     slug: "homogeneous-members-magic",
@@ -104,6 +105,7 @@ const miniGames = [
     path: "/html-games/homogeneous-members-magic/index.html",
     category: "syntax",
     categoryTitle: "Синтаксис и пунктуация",
+    kindLabel: "мини-игра",
   },
   {
     slug: "berry-season-ik-ek",
@@ -113,15 +115,19 @@ const miniGames = [
     path: "/html-games/berry-season-ik-ek/index.html",
     category: "orthography",
     categoryTitle: "Орфография",
+    kindLabel: "мини-игра",
   },
   {
     slug: "paronyms",
     title: "Паронимы",
-    description: "Подписывайте картинки точными паронимами и повторяйте группы с ошибками.",
-    button: "Играть",
+    description: "Демо-версия большой игры по паронимам: можно попробовать механику на ограниченном наборе групп.",
+    button: "Демо",
     path: "/html-games/paronyms/index.html",
+    demo: true,
+    demoNotice: "В демо доступна часть групп. Полная версия остаётся в кабинете у тех, кто уже приобрёл игру.",
     category: "speech",
     categoryTitle: "Культура речи",
+    kindLabel: "большая игра",
   },
   {
     slug: "numerals-hit-parade",
@@ -131,6 +137,7 @@ const miniGames = [
     path: "/html-games/numerals-hit-parade/index.html",
     category: "speech",
     categoryTitle: "Культура речи",
+    kindLabel: "мини-игра",
   },
   {
     slug: "mouse-space",
@@ -140,6 +147,7 @@ const miniGames = [
     path: "/html-games/mouse-space/index.html",
     category: "orthography",
     categoryTitle: "Орфография",
+    kindLabel: "мини-игра",
   },
   {
     slug: "verb-conjugation-quest",
@@ -149,6 +157,7 @@ const miniGames = [
     path: "/html-games/verb-conjugation-quest/index.html",
     category: "orthography",
     categoryTitle: "Орфография",
+    kindLabel: "игра",
   },
   {
     slug: "truth-action-oge",
@@ -160,6 +169,7 @@ const miniGames = [
     demoNotice: "В демо можно спокойно попробовать игру: доступно 20 действий, затем появится предложение купить полный комплект.",
     category: "speech",
     categoryTitle: "Культура речи",
+    kindLabel: "игра",
   },
   {
     slug: "grammar-zoo",
@@ -171,11 +181,25 @@ const miniGames = [
     demoNotice: "В демо можно спокойно познакомиться с игрой: доступно 20 заданий, затем появится предложение купить полный комплект.",
     category: "syntax",
     categoryTitle: "Синтаксис и пунктуация",
+    kindLabel: "большая игра",
+  },
+  {
+    slug: "parts-of-speech-kingdom",
+    title: "Королевство трёх частей речи",
+    description: "Демо-версия игры по морфологии: распределяйте слова по королевствам частей речи.",
+    button: "Демо",
+    path: "/html-games/parts-of-speech-kingdom/index.html",
+    demo: true,
+    demoNotice: "В общем разделе доступна демо-версия. Полная онлайн-версия открывается после покупки.",
+    category: "morphology",
+    categoryTitle: "Морфология",
+    kindLabel: "игра",
   },
 ];
 
 const miniGameCategories = [
   { id: "orthography", title: "Орфография" },
+  { id: "morphology", title: "Морфология" },
   { id: "syntax", title: "Синтаксис и пунктуация" },
   { id: "speech", title: "Культура речи" },
 ];
@@ -393,12 +417,12 @@ const shopProducts = [
     price: "800 ₽",
     image: "/assets/shop/Kard_paronyms.png",
     demoUrl: "/games/paronyms/index.html",
-    shortDescription: "Современная HTML-игра для отработки паронимов из списка Навигатора самостоятельной подготовки ЕГЭ. Ученики соотносят изображения и слова, а ошибочные группы возвращаются на повтор.",
+    shortDescription: "Большая HTML-игра для отработки паронимов из списка Навигатора самостоятельной подготовки ЕГЭ. В общем разделе доступна демо-версия, полный комплект открывается после покупки.",
     fullDescription: "HTML-игра по культуре речи для подготовки к заданию 5 ЕГЭ. В комплект входят все группы паронимов из списка Навигатора самостоятельной подготовки ЕГЭ, визуальные карточки, объясняющие карточки и готовая игра, которая работает без интернета на любом устройстве.",
     tryBefore: [
-      "Перед покупкой можно открыть онлайн-версию игры на сайте:",
+      "Перед покупкой можно открыть демо-версию игры на сайте:",
       "https://dimitrieva-av.ru/games/paronyms/index.html",
-      "Онлайн-версия позволяет посмотреть механику, визуальный стиль, режим случайных карточек и выбор конкретных групп паронимов.",
+      "Демо-версия позволяет посмотреть механику и визуальный стиль на ограниченном наборе групп. Полная версия после покупки открывается в кабинете и по отдельной ссылке.",
     ],
     suitableFor: [
       "для подготовки к ЕГЭ по русскому языку",
@@ -410,7 +434,7 @@ const shopProducts = [
     howItWorks: [
       "Ученик видит группу паронимов и изображения к словам. Нужно выбрать слово и подписать им подходящую картинку. После проверки игра сразу показывает результат.",
       "Если ответ верный, ученик переходит дальше. Если есть ошибка, открывается объясняющая карточка, а эта группа возвращается в конец очереди и повторяется позже.",
-      "В игре есть несколько режимов:",
+      "В полной версии есть несколько режимов:",
       "случайные 20 карточек без повторов",
       "случайные 20 карточек",
       "выбор определённой группы паронимов для точечной отработки",
@@ -433,10 +457,11 @@ const shopProducts = [
       "папка с HTML-файлом, manifest и изображениями из комплекта",
       "интернет не требуется для локального запуска после скачивания",
     ],
-    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. В папке будут размещены HTML-игра, весь комплект карточек и изображения для работы игры.",
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на папку с материалом. Если почта совпадает с учительским аккаунтом, полная онлайн-версия появится в разделе «Мои игры» личного кабинета.",
     important: [
       "Перед оплатой проверьте правильность электронной почты. Именно на неё будет отправлена ссылка на папку с материалом.",
       "Для локального запуска сохраните структуру папки: index.html, style.css, app.js, cards-manifest.js и assets должны лежать рядом так же, как в комплекте.",
+      "Полная версия для покупателей открывается отдельно; в общем разделе «Игры» остаётся только демо.",
       "Если письмо не пришло, проверьте папки «Спам», «Рассылки» или «Промоакции». Если ссылки нет, напишите на email поддержки, указав дату оплаты, название материала и почту, которую вводили при покупке.",
     ],
   },
@@ -586,6 +611,60 @@ const shopProducts = [
       "компьютер, планшет, интерактивная панель или телефон",
       "любой современный браузер",
       "для оффлайн-запуска: папка с HTML-файлом, JSON-базой и assets",
+    ],
+    delivery: "После оплаты ссылка придёт на почту. Если почта совпадает с учительским аккаунтом, полная онлайн-версия появится в разделе «Мои игры» личного кабинета.",
+    important: [
+      "Перед оплатой проверьте email: по нему личный кабинет определяет купленные игры.",
+      "Полная версия не показывается в общем разделе «Игры»; там остаётся только демо.",
+    ],
+  },
+  {
+    slug: "parts-of-speech-kingdom",
+    title: "HTML-игра «Королевство трёх частей речи»",
+    price: "500 ₽",
+    image: "/shop-media/Королевство трёх частей речи (1).png",
+    images: [
+      "/shop-media/Королевство трёх частей речи (1).png",
+      "/shop-media/Королевство трёх частей речи (2).png",
+      "/shop-media/Королевство трёх частей речи (3).png",
+      "/shop-media/Королевство трёх частей речи (4).png",
+      "/shop-media/Королевство трёх частей речи (5).png",
+    ],
+    demoUrl: "/games/parts-of-speech-kingdom/index.html",
+    demoLabel: "Открыть демо",
+    shortDescription: "Игра по морфологии: ученики распределяют слова и формы по королевствам частей речи. В общем разделе доступна демо-версия, полный комплект открывается после покупки.",
+    fullDescription: "«Королевство трёх частей речи» помогает различать самостоятельные части речи, служебные слова и особые формы в игровом формате. После покупки учитель получает оффлайн-версию, онлайн-ссылку на полную версию и код для встройки на другие платформы.",
+    tryBefore: [
+      "Демо-версия доступна в общем разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/parts-of-speech-kingdom/index.html",
+      "В демо доступен сокращённый раунд, чтобы посмотреть механику, оформление и формат заданий.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения морфологии",
+      "для различения частей речи и особых форм",
+      "для самостоятельной тренировки",
+      "для интерактивной панели или групповой работы",
+    ],
+    howItWorks: [
+      "Ученик выбирает режим и распределяет монетки со словами по королевствам.",
+      "Игра сразу показывает ошибки, ведёт счёт и подводит итоги раунда.",
+      "В полной версии доступны все режимы и полный объём заданий без демо-ограничения.",
+    ],
+    package: [
+      "Полная оффлайн-версия игры.",
+      "Ссылка на онлайн-версию полной игры.",
+      "Код для встройки игры на другие платформы.",
+    ],
+    adaptation: [
+      "Комплект поставляется как готовая игра.",
+      "Онлайн-ссылку из личного кабинета учитель может отправить ученикам.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "для оффлайн-запуска: папка с HTML-файлом и assets",
     ],
     delivery: "После оплаты ссылка придёт на почту. Если почта совпадает с учительским аккаунтом, полная онлайн-версия появится в разделе «Мои игры» личного кабинета.",
     important: [
@@ -1540,7 +1619,7 @@ function renderPublicGames() {
         ${category.games.map((game) => `
           <article class="mini-game-card public-game-card">
             <div>
-              <p class="eyebrow">мини-игра</p>
+              <p class="eyebrow">${escapeHtml(game.kindLabel || "игра")}</p>
               ${game.demo ? `<span class="demo-badge">Демо</span>` : ""}
               <h3>${escapeHtml(game.title)}</h3>
               <p>${escapeHtml(game.description)}</p>
@@ -2528,7 +2607,7 @@ function renderMiniActivity() {
         ${category.games.map((game) => `
           <article class="mini-game-card">
             <div>
-              <p class="eyebrow">мини-игра</p>
+              <p class="eyebrow">${escapeHtml(game.kindLabel || "игра")}</p>
               ${game.demo ? `<span class="demo-badge">Демо</span>` : ""}
               <h3>${escapeHtml(game.title)}</h3>
               <p>${escapeHtml(game.description)}</p>
@@ -4128,6 +4207,7 @@ function renderAdminContent(data, closeButton = "") {
   const teacherCards = data.teachers.map((teacher) => {
     const teacherEmail = teacher.email || teacher.username;
     const gifts = teacher.gifts || [];
+    const connectedGames = teacher.connected_games || [];
     const giftRows = gifts.length ? gifts.map((gift) => `
       <li>
         <span>
@@ -4150,6 +4230,15 @@ function renderAdminContent(data, closeButton = "") {
         <button class="ghost-button" type="submit">Прикрепить</button>
       </form>
     ` : `<p class="muted">В магазине пока нет товаров-игр для подарков.</p>`;
+    const connectedGameRows = connectedGames.length ? connectedGames.map((game) => `
+      <tr>
+        <td>${escapeHtml(game.title || "Игра")}<br><span class="muted">${escapeHtml(game.product_id || game.slug || "")}</span></td>
+        <td>${game.kind === "gifted" ? "подарок" : "покупка"}</td>
+        <td>${game.online_url ? `<a href="${escapeHtml(game.online_url)}" target="_blank" rel="noopener">онлайн</a>` : "—"}</td>
+        <td>${game.offline_url ? `<a href="${escapeHtml(game.offline_url)}" target="_blank" rel="noopener">комплект</a>` : "—"}</td>
+        <td>${formatAdminDate(game.created_at)}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="5">Подключённых игр пока нет</td></tr>`;
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
@@ -4187,6 +4276,10 @@ function renderAdminContent(data, closeButton = "") {
             </button>
             <button class="ghost-button delete-user" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail || teacher.display_name)}" type="button">Удалить</button>
           </div>
+        </div>
+        <button class="ghost-button admin-connected-games-toggle" data-closed-label="Игры пользователя (${connectedGames.length})" type="button">Игры пользователя (${connectedGames.length})</button>
+        <div class="admin-connected-games hidden">
+          <table class="table"><tr><th>Игра</th><th>Источник</th><th>Онлайн</th><th>Комплект</th><th>Дата</th></tr>${connectedGameRows}</table>
         </div>
         <div class="teacher-metrics">
           <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
@@ -4365,6 +4458,14 @@ function bindAdminActions(root) {
       const willOpen = details?.classList.contains("hidden");
       details?.classList.toggle("hidden", !willOpen);
       button.textContent = willOpen ? "Свернуть" : "Подробнее";
+    });
+  });
+  root.querySelectorAll(".admin-connected-games-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const details = button.closest(".admin-card")?.querySelector(".admin-connected-games");
+      const willOpen = details?.classList.contains("hidden");
+      details?.classList.toggle("hidden", !willOpen);
+      button.textContent = willOpen ? "Свернуть игры пользователя" : button.dataset.closedLabel;
     });
   });
   root.querySelectorAll(".admin-activity-toggle").forEach((button) => {

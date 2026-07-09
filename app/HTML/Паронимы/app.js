@@ -2,6 +2,8 @@
   "use strict";
 
   const MAX_CARDS = 20;
+  const DEMO_MODE = !window.location.pathname.startsWith("/full-games/");
+  const DEMO_CARD_LIMIT = 20;
   const HISTORY_KEY = "paronyms-picture-game-issued-v1";
   const TURN_EFFECT_MS = 1080;
   const PRAISES = [
@@ -13,7 +15,8 @@
   ];
 
   const cards = Array.isArray(window.PARONIMS_ASSETS) ? window.PARONIMS_ASSETS : [];
-  const playableCards = cards.filter((card) => card && card.words && card.words.length >= 2 && card.images);
+  const allPlayableCards = cards.filter((card) => card && card.words && card.words.length >= 2 && card.images);
+  const playableCards = DEMO_MODE ? allPlayableCards.slice(0, DEMO_CARD_LIMIT) : allPlayableCards;
   const letters = Array.from(new Set(playableCards.map((card) => firstLetter(card)).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
   const state = {
     mode: "fresh",
@@ -362,6 +365,15 @@
   function finishGame() {
     el.finishGroups.textContent = `Групп: ${state.totalGroups}`;
     el.finishErrors.textContent = `Ошибок: ${state.errors}`;
+    if (DEMO_MODE && !el.finishScreen.querySelector(".demo-offer")) {
+      const offer = document.createElement("div");
+      offer.className = "demo-offer";
+      offer.innerHTML = `
+        <p><b>Демо-версия завершена.</b> В полной версии доступны все группы паронимов.</p>
+        <a class="primary-button" href="/shop/paronyms-game">Купить полный комплект</a>
+      `;
+      el.finishScreen.append(offer);
+    }
     showOnly(el.finishScreen);
   }
 
@@ -504,5 +516,7 @@
   });
 
   renderGroupPicker();
-  el.startStatus.textContent = playableCards.length ? `Доступно групп: ${playableCards.length}.` : "Manifest не найден.";
+  el.startStatus.textContent = playableCards.length
+    ? `Доступно групп: ${playableCards.length}${DEMO_MODE ? " из демо-набора" : ""}.`
+    : "Manifest не найден.";
 }());

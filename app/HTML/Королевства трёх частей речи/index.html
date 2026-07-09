@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Казна королевств</title>
+<style>
+  :root{--ink:#261b16;--muted:#6f6259;--paper:#fff7e7;--line:rgba(72,52,35,.22);--gold:#f2c660;--rose:#b43d60;--night:#191918;--shadow:0 18px 46px rgba(0,0,0,.28);}
+  *{box-sizing:border-box}
+  html,body{min-height:100%;margin:0}
+  body{font-family:Inter,Arial,"Segoe UI",sans-serif;color:var(--ink);background:#161513;overflow-x:hidden;}
+  button,select{font:inherit}
+  button{cursor:pointer}
+  .app{height:100vh;display:grid;grid-template-rows:auto 1fr;position:relative;background:#161513;overflow:hidden;}
+  .app::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.04) 28%,rgba(0,0,0,.22));pointer-events:none;}
+  .topbar{position:relative;z-index:30;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;min-width:0;padding:8px clamp(10px,1.6vw,20px);background:linear-gradient(180deg,rgba(20,17,14,.84),rgba(20,17,14,.56));backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.18);}
+  .brand{color:#fff7df;font-size:clamp(18px,2vw,27px);font-weight:900;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.55);white-space:nowrap;}
+  .modeMenu{position:relative;justify-self:start;}
+  .modeMenuBtn,.uiBtn{border:0;border-radius:16px;padding:14px 34px;background:url("assets/buttom1 (1).png") center/100% 100% no-repeat;color:#2f1d10;font-weight:900;box-shadow:0 10px 20px rgba(0,0,0,.24);display:flex;align-items:center;justify-content:center;line-height:1.05;text-align:center;}
+  .modeMenuBtn{width:min(560px,42vw);min-height:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff4d4;text-shadow:0 2px 4px rgba(0,0,0,.65);font-size:clamp(15px,1.2vw,20px);}
+  .modePills{position:absolute;top:calc(100% + 8px);left:0;display:none;grid-template-columns:1fr;gap:8px;width:min(390px,86vw);padding:12px;border-radius:18px;background:rgba(21,17,15,.94);border:1px solid rgba(236,198,105,.38);box-shadow:0 18px 40px rgba(0,0,0,.38);}
+  .modeMenu.open .modePills{display:grid;}
+  .modePills::-webkit-scrollbar{display:none;}
+  .pill{min-height:48px;border:1px solid rgba(239,205,127,.5);border-radius:14px;padding:10px 18px;background:linear-gradient(180deg,rgba(255,248,226,.96),rgba(226,214,184,.94));color:#2f2118;box-shadow:0 8px 18px rgba(0,0,0,.2), inset 0 0 0 1px rgba(255,255,255,.28);font-size:14px;font-weight:900;text-align:center;line-height:1.12;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .pill:hover{filter:brightness(1.04);}
+  .pill.active{background:linear-gradient(180deg,rgba(43,34,28,.98),rgba(23,19,17,.98));color:#ffe7a4;border-color:rgba(242,198,96,.8);text-shadow:0 2px 4px rgba(0,0,0,.72);}
+  .controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;}
+  select{display:none}
+  select,.toggle,.primary,.hintBtn,.ghost,.merchantBtn,.memoBtn,.close{border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:10px 18px;box-shadow:0 8px 18px rgba(0,0,0,.18);}
+  .primary,.hintBtn,.toggle{position:relative;width:clamp(190px,11.8vw,230px);height:60px;border:0;padding:0 34px;background:url("assets/buttom.png") center/100% 100% no-repeat;color:#f7e8bd;font-family:Georgia,"Times New Roman",serif;font-weight:900;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;line-height:1;font-size:clamp(16px,1.1vw,20px);text-shadow:0 2px 4px rgba(0,0,0,.84),0 0 10px rgba(255,232,170,.34);}
+  .primary:hover,.hintBtn:hover,.toggle:hover{color:#fff5d6;filter:brightness(1.08);}
+  .hintBtn{width:clamp(170px,10.6vw,210px);}
+  .ghost,.merchantBtn{background:url("assets/buttom1 (3).png") center/100% 100% no-repeat;color:var(--ink);font-weight:800;}
+  .toggle{gap:8px;padding:0 24px;color:#fff4d4;cursor:pointer;}
+  .toggle input{position:absolute;opacity:0;pointer-events:none;}
+  .toggle::after{content:"выкл";min-width:44px;padding:4px 8px;border-radius:999px;background:rgba(22,18,15,.76);border:1px solid rgba(231,197,125,.42);color:#b8a27c;font-family:Inter,Arial,"Segoe UI",sans-serif;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;text-shadow:none;}
+  .toggle:has(input:checked)::after{content:"вкл";background:rgba(74,58,33,.78);color:#ffe7a0;border-color:rgba(255,222,140,.75);}
+  .stage{position:relative;height:100%;padding:0;overflow:hidden;}
+  .kingdomMap{position:relative;width:100%;height:100%;margin:0 auto;overflow:hidden;border-radius:0;box-shadow:none;background:url("assets/background.png") center 43%/cover no-repeat;}
+  .kingdomMap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,0) 46%,rgba(0,0,0,.24));pointer-events:none;}
+  .boardGrid{position:absolute;inset:0;z-index:2;}
+  .slotA,.slotB,.slotC,.merchantSlot{position:absolute;}
+  .slotA{left:5%;top:18.5%;width:28%;}
+  .slotB{left:35.5%;top:3.5%;width:29%;}
+  .slotC{right:4.2%;top:18.8%;width:29%;}
+  .merchantSlot{left:50%;bottom:0;width:min(1120px,82%);transform:translateX(-50%);z-index:5;}
+  .castle{position:relative;height:315px;filter:drop-shadow(0 24px 24px rgba(0,0,0,.42));}
+  .castleArt{position:absolute;left:50%;bottom:0;width:clamp(250px,23vw,345px);display:block;transform:translateX(-50%);transition:transform .18s ease;}
+  .slotB .castleArt{width:clamp(270px,24vw,360px);}
+  .slotC .castleArt{width:clamp(250px,23vw,350px);}
+  .castle:hover .castleArt,.castle:focus-within .castleArt{transform:translateX(-50%) translateY(-4px) scale(1.02);}
+  .castle.over .castleArt{animation:castleWiggle .42s ease-in-out infinite alternate;filter:drop-shadow(0 0 18px rgba(255,225,120,.82)) drop-shadow(0 18px 18px rgba(0,0,0,.35));}
+  .castleTop{position:absolute;left:50%;top:70%;transform:translateX(-50%);display:grid;justify-items:center;gap:6px;width:min(390px,104%);z-index:6;pointer-events:none;}
+  .castleName{width:min(270px,92%);min-height:52px;border:1px solid rgba(95,55,25,.28);border-radius:999px;padding:11px 28px;background:linear-gradient(180deg,rgba(255,251,235,.96),rgba(244,226,187,.94));box-shadow:0 10px 22px rgba(0,0,0,.26), inset 0 0 0 2px rgba(255,255,255,.28);font-weight:900;font-size:clamp(14px,1.35vw,18px);line-height:1.02;text-align:center;color:#34200e;display:flex;align-items:center;justify-content:center;overflow:hidden;overflow-wrap:anywhere;}
+  .castleCount{border-radius:999px;padding:6px 10px;background:rgba(25,20,16,.78);color:#ffe49c;font-size:13px;font-weight:900;box-shadow:0 8px 15px rgba(0,0,0,.24);}
+  .castleName,.castleCount{pointer-events:auto;}
+  .memoBtn{position:absolute;right:15%;top:17%;z-index:4;width:34px;height:34px;border-radius:50%;padding:0;background:rgba(255,248,227,.94);color:#392515;font-size:0;font-weight:900;display:grid;place-items:center;}
+  .memoBtn::before{content:"i";font-family:Georgia,serif;font-size:21px;font-weight:900;line-height:1;}
+  .dropzone{position:absolute;inset:5% 6% 13%;border:0;border-radius:30px;display:flex;align-items:flex-end;justify-content:center;gap:4px;padding:0 12px 15px;cursor:pointer;}
+  .dropzone.over{background:transparent;box-shadow:none;}
+  .hud{position:absolute;z-index:10;right:clamp(10px,1.6vw,22px);top:178px;width:min(280px,22vw);display:grid;gap:8px;}
+  .panel{position:relative;background:rgba(255,246,224,.88);border:1px solid rgba(255,236,184,.5);border-radius:18px;padding:14px 15px 13px;box-shadow:0 14px 28px rgba(0,0,0,.22);}
+  .panel::before{content:"";position:absolute;inset:-7px;background:url("assets/подложка горизонтальная.png") center/100% 100% no-repeat;opacity:.42;pointer-events:none;z-index:-1;}
+  .infoCard,.infoCard h2,.motivation,.tiny,.roundBox{display:none;}
+  .hintBox{background:rgba(255,251,238,.78);border:1px solid rgba(97,71,38,.16);border-radius:10px;padding:8px 10px;line-height:1.24;font-size:12px;}
+  .roundMeta{display:grid;gap:6px;}
+  .metaLine{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:10px;background:rgba(255,251,238,.72);font-size:13px;}
+  .mistakeMini{margin-top:7px;padding:9px 10px;border-radius:12px;background:rgba(255,239,229,.78);min-height:48px;font-size:13px;line-height:1.28;}
+  .mistakeMini b{color:#a32243;}
+  .stats{position:absolute;z-index:11;right:clamp(10px,1.6vw,22px);top:clamp(10px,1.6vw,22px);display:grid;grid-template-columns:repeat(2,minmax(78px,1fr));gap:7px;width:min(225px,20vw);}
+  .stat{background:rgba(255,248,227,.9);border:1px solid rgba(255,255,255,.34);border-radius:14px;padding:9px 10px;text-align:center;box-shadow:0 10px 20px rgba(0,0,0,.2);}
+  .stat b{display:block;font-size:clamp(21px,2.3vw,32px);line-height:1;}
+  .stat span{display:block;margin-top:3px;color:#67533f;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:900;}
+  .merchant{position:relative;text-align:center;min-height:285px;pointer-events:none;}
+  .merchantTitle,.merchant h3,.merchantSub,.legend{display:none;}
+  .coinWrap{position:relative;height:285px;pointer-events:auto;}
+  .coinPile{position:absolute;inset:0;}
+  .pileCoin{position:absolute;left:50%;bottom:18px;width:clamp(92px,7.8vw,126px);aspect-ratio:1;background:url("assets/coin_gold.png") center/contain no-repeat;filter:drop-shadow(0 10px 9px rgba(0,0,0,.32));transform:translateX(calc(-50% + var(--x))) translateY(var(--y)) rotate(var(--r));opacity:.97;display:grid;place-items:center;padding:14px;cursor:grab;}
+  .pileCoin.active{width:clamp(108px,9vw,142px);z-index:90;transform:translateX(calc(-50% + var(--x))) translateY(calc(var(--y) - 12px)) rotate(var(--r)) scale(1.06);}
+  .pileCoin.active::after{content:"";position:absolute;inset:8%;border:3px solid rgba(255,246,187,.9);border-radius:50%;pointer-events:none;filter:drop-shadow(0 0 8px rgba(255,210,88,.8));}
+  .pileCoin.dragging{opacity:.72;}
+  .coinText{max-width:94%;border-radius:10px;padding:4px 7px;background:rgba(255,248,224,.92);border:1px solid rgba(116,79,23,.24);box-shadow:0 5px 12px rgba(126,82,18,.18);font-size:clamp(9px,.68vw,12px);font-weight:900;line-height:.98;text-align:center;color:#9b233f;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;}
+  .pileCoin.active .coinText{font-size:clamp(10px,.78vw,13px);padding:5px 8px;border-radius:12px;}
+  .coin{position:absolute;left:50%;bottom:38px;width:clamp(190px,22vw,290px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:url("assets/coin_gold.png") center/contain no-repeat;display:grid;place-items:center;padding:18%;cursor:grab;filter:drop-shadow(0 18px 20px rgba(0,0,0,.35));z-index:4;}
+  .coin:active{cursor:grabbing}
+  .coin.dragging{opacity:.72;transform:translateX(-50%) scale(.97)}
+  .coin .snippet{width:78%;min-height:30%;display:grid;place-items:center;border-radius:16px;padding:8px 10px;background:rgba(255,250,231,.92);border:1px solid rgba(116,79,23,.24);box-shadow:0 8px 15px rgba(126,82,18,.2);font-size:clamp(17px,1.85vw,24px);font-weight:900;line-height:1.12;text-align:center;}
+  .target{display:inline-block;padding:0 .22em;border-radius:.4em;background:#ffe0ad;color:#9b233f;font-weight:900;}
+  .emptyCoin{position:absolute;left:50%;bottom:65px;transform:translateX(-50%);width:min(350px,84%);padding:16px 18px;border-radius:18px;background:rgba(255,248,227,.92);box-shadow:0 12px 24px rgba(0,0,0,.22);font-weight:900;}
+  .merchantActions{display:none;}
+  .merchantBtn{padding:9px 12px;font-size:14px;}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);max-width:min(720px,92vw);padding:13px 16px;border-radius:16px;background:rgba(27,21,18,.94);color:#fff5dd;display:none;box-shadow:var(--shadow);z-index:30;text-align:center;}
+  .toast.show{display:block;animation:pop .18s ease;}
+  dialog{border:0;border-radius:20px;padding:0;max-width:min(780px,92vw);box-shadow:0 30px 80px rgba(0,0,0,.42);background:transparent;color:var(--ink);}
+  dialog::backdrop{background:rgba(18,15,14,.54);backdrop-filter:blur(3px);}
+  .modal{background:url("assets/подложка горизонтальная.png") center/100% 100% no-repeat;padding:34px 38px 30px;}
+  .modal h2{margin:0 0 10px;}
+  .close{float:right;background:rgba(255,248,227,.92);font-weight:900;}
+  #memoDialog{max-width:none;width:100vw;height:100vh;border-radius:0;box-shadow:none;background:transparent;overflow:hidden;}
+  #memoDialog::backdrop{background:rgba(10,8,7,.68);backdrop-filter:blur(5px);}
+  #memoDialog .modal{width:100%;height:100%;padding:0;background:none;display:grid;place-items:center;}
+  #memoDialog h2{display:none;}
+  #memoDialog .close{position:fixed;right:clamp(18px,4vw,58px);top:clamp(16px,4vh,42px);z-index:2;float:none;width:clamp(120px,12vw,168px);height:54px;border:0;padding:0;background:url("assets/buttom.png") center/100% 100% no-repeat;color:#f7e8bd;font-family:Georgia,"Times New Roman",serif;font-size:18px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.84);box-shadow:none;}
+  #memoBody{display:grid;place-items:center;width:100%;height:100%;padding:clamp(20px,4vw,54px);}
+  .memoImage{display:block;width:auto;max-width:min(92vw,980px);max-height:92vh;object-fit:contain;border-radius:0;box-shadow:0 22px 52px rgba(0,0,0,.34);}
+  .resultItem{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,251,238,.78);margin-top:8px;line-height:1.35;}
+  .footerActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  #resultDialog{width:min(680px,92vw);max-width:none;max-height:min(720px,90vh);overflow:hidden;}
+  #resultDialog .modal{height:min(720px,90vh);padding:0;background-size:100% 100%;font-size:18px;line-height:1.35;display:grid;grid-template-rows:1fr auto;}
+  .resultScroll{margin:98px 72px 28px;padding:14px 16px 14px 18px;overflow:auto;min-height:0;border:1px solid rgba(88,64,37,.22);border-radius:14px;background:rgba(255,251,238,.58);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24);scrollbar-color:rgba(74,58,33,.68) rgba(255,248,227,.28);scrollbar-width:thin;}
+  .resultScroll::-webkit-scrollbar{width:9px;}
+  .resultScroll::-webkit-scrollbar-track{background:rgba(255,248,227,.32);border-radius:999px;}
+  .resultScroll::-webkit-scrollbar-thumb{background:rgba(74,58,33,.72);border-radius:999px;}
+  #resultDialog h2{margin:0 0 16px;font-size:clamp(24px,2.2vw,34px);line-height:1;color:#2a1a12;}
+  .resultSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 18px;}
+  .resultSummary span{display:grid;gap:3px;padding:10px 12px;border-radius:12px;background:rgba(42,31,23,.08);border:1px solid rgba(72,52,35,.16);font-size:13px;font-weight:900;text-transform:uppercase;color:#6b5745;}
+  .resultSummary b{font-size:22px;line-height:1;color:#261b16;}
+  #resultBody h3{margin:18px 0 12px;font-size:22px;line-height:1.15;}
+  #resultDialog .resultItem{padding:13px 16px;margin-top:10px;border-radius:12px;background:rgba(255,251,238,.86);font-size:18px;}
+  #resultDialog .footerActions{justify-content:center;gap:14px;margin:0 68px 54px;}
+  #resultDialog .footerActions .primary,#resultDialog .footerActions .ghost{width:190px;height:56px;border:0;padding:0 24px;background:url("assets/buttom.png") center/100% 100% no-repeat;color:#f7e8bd;font-family:Georgia,"Times New Roman",serif;font-size:18px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.84);box-shadow:none;}
+  @keyframes pop{from{transform:translateX(-50%) translateY(10px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+  @keyframes castleWiggle{from{transform:translateX(-50%) translateY(-8px) rotate(-1deg) scale(1.03)}to{transform:translateX(-50%) translateY(-14px) rotate(1deg) scale(1.05)}}
+  @media (max-width:980px){
+    .topbar{grid-template-columns:auto 1fr auto}.brand{font-size:20px}.modeMenuBtn{width:260px}.controls{gap:8px;overflow-x:auto}.primary,.hintBtn,.toggle{width:176px;height:54px;font-size:15px}.hintBtn{width:158px}.toggle{padding:0 20px}.toggle::after{min-width:38px;font-size:10px}
+    .kingdomMap{background-position:center 45%;}
+    .hud{display:none;}
+    .stats{right:10px;top:10px;width:205px;grid-template-columns:repeat(2,minmax(0,1fr));}
+    .slotA{left:2%;top:21%;width:33%}.slotB{left:31%;top:6%;width:38%}.slotC{right:1%;top:21.5%;width:36%}
+    .castleArt{width:clamp(200px,26vw,285px)}.slotB .castleArt{width:clamp(215px,28vw,305px)}.castle{height:250px}.castleTop{top:69%}.memoBtn{right:9%;top:15%}
+    .merchantSlot{width:98%;bottom:0}.coinWrap{height:255px}.pileCoin{width:clamp(76px,8.8vw,98px)}.pileCoin.active{width:clamp(96px,12vw,124px)}
+  }
+  @media (max-width:640px){
+    .app{height:100svh}.topbar{grid-template-columns:1fr auto;gap:7px;padding:7px}.brand{grid-column:1/-1;font-size:18px}.modeMenu{justify-self:stretch}.modeMenuBtn{max-width:100%;width:100%;padding:10px 18px}.controls{justify-content:flex-start;overflow-x:auto;grid-column:1/-1}.primary,.hintBtn,.toggle{flex:0 0 148px;width:148px;height:48px;font-size:13px}.hintBtn{flex-basis:136px;width:136px}.toggle{padding:0 14px}.toggle::after{min-width:34px;padding:3px 6px;font-size:9px}
+    .stage{width:100vw;overflow:hidden}.kingdomMap{width:100vw;max-width:100vw;height:100%;background-position:center 42%;}
+    .hud{display:none}.panel{padding:8px 9px;border-radius:12px}.panel::before{inset:-4px}.hintBox{max-height:86px;overflow:auto;font-size:11px;line-height:1.2}
+    .stats{left:8px;right:auto;top:96px;width:166px;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.stat{padding:7px 2px;border-radius:11px}.stat b{font-size:18px}.stat span{font-size:8px}
+    .slotA{left:-2%;top:23%;width:42%}.slotB{left:25%;top:12%;width:50%}.slotC{right:-5%;top:24%;width:46%}
+    .castle{height:165px}.castleArt{width:clamp(120px,37vw,158px)}.slotB .castleArt{width:clamp(132px,40vw,172px)}.castleName{width:min(128px,92%);min-height:34px;font-size:10px;padding:6px 14px}.castleCount{font-size:10px;padding:4px 7px}.memoBtn{width:28px;height:28px;right:8%;top:12%}.memoBtn::before{font-size:17px}
+    .dropzone{inset:0 0 8%}.merchantSlot{bottom:38px;width:100%}.coinWrap{height:210px}.pileCoin{width:min(92px,24vw);padding:12px}.pileCoin.active{width:min(118px,31vw);bottom:18px;padding:14px;transform:translateX(calc(-50% + var(--x))) translateY(calc(var(--y) - 10px)) rotate(var(--r)) scale(1.04)}.pileCoin .coinText{font-size:10px}.pileCoin.active .coinText{font-size:12px}.toast{bottom:10px;font-size:14px}
+    .modal{padding:28px 24px 24px;background-image:url("assets/подложка вертикальная.png")}
+    #resultDialog .modal{height:min(680px,90vh);font-size:15px}.resultScroll{margin:76px 34px 18px;padding:12px}.resultSummary{grid-template-columns:1fr;gap:6px}.resultSummary b{font-size:19px}#resultDialog .resultItem{font-size:15px;padding:10px 12px}#resultDialog .footerActions{margin:0 34px 38px}#resultDialog .footerActions .primary,#resultDialog .footerActions .ghost{width:150px;height:48px;font-size:15px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Казна королевств</div>
+    <div class="modeMenu" id="modeMenu">
+      <button class="modeMenuBtn" id="modeMenuBtn" type="button">Режим</button>
+      <nav class="modePills" id="modePills" aria-label="Режимы"></nav>
+    </div>
+    <section class="controls" aria-label="Настройки раунда">
+      <select id="modeSelect"></select>
+      <button id="startBtn" class="primary">Новый раунд</button>
+      <button id="hintBtn" class="hintBtn" type="button">Подсказка</button>
+      <label class="toggle"><span>Музыка</span><input type="checkbox" id="musicToggle"></label>
+      <label class="toggle"><span>Звуки</span><input type="checkbox" id="soundToggle" checked></label>
+    </section>
+  </header>
+
+  <main class="stage">
+    <section class="kingdomMap" aria-label="Карта королевств">
+      <aside class="hud">
+        <section class="infoCard panel">
+          <h2 id="modeTitle"></h2>
+          <div class="hintBox" id="generalHint"></div>
+          <div class="motivation" id="motivation"></div>
+          <div class="tiny">Откройте памятку у замка, если нужно быстро вспомнить правило. Для омонимов смотрите на контекст на монетке.</div>
+        </section>
+        <section class="roundBox panel">
+          <h3>Ход раунда</h3>
+          <div class="roundMeta">
+            <div class="metaLine"><span>Монетка</span><b id="queuePos">1/30</b></div>
+            <div class="metaLine"><span>Осталось</span><b id="queueLeft">30</b></div>
+            <div class="metaLine"><span>Ошибка</span><b id="lastMistakeLabel">—</b></div>
+          </div>
+          <div class="mistakeMini" id="mistakeMini">Пока без ошибок. Королевский торговец доволен.</div>
+        </section>
+      </aside>
+
+      <section class="stats" aria-label="Счёт">
+        <div class="stat"><b id="score">0</b><span>Баллы</span></div>
+        <div class="stat"><b id="done">0/30</b><span>Собрано</span></div>
+        <div class="stat"><b id="errors">0</b><span>Ошибки</span></div>
+        <div class="stat"><b id="streak">0</b><span>Серия</span></div>
+      </section>
+
+      <div class="boardGrid">
+        <div class="slotA" id="slotA"></div>
+        <div class="slotB" id="slotB"></div>
+        <div class="merchantSlot">
+          <section class="merchant" id="merchant">
+            <div class="merchantTitle">Кучка монет</div>
+            <h3 id="merchantTitle">Новое сокровище</h3>
+            <div class="merchantSub" id="merchantSub">Смотрите на форму слова и короткий контекст.</div>
+            <div class="coinWrap" id="coinWrap"></div>
+            <div class="merchantActions">
+              <button class="merchantBtn ghost" id="showHintBtn">Напомнить правило</button>
+            </div>
+            <div class="legend"><span>Розовым выделено слово для сортировки</span><span>В каждом замке свои сокровища</span></div>
+          </section>
+        </div>
+        <div class="slotC" id="slotC"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<dialog id="memoDialog"><div class="modal"><button class="close" onclick="memoDialog.close()">Закрыть</button><h2 id="memoTitle"></h2><div id="memoBody"></div></div></dialog>
+<dialog id="resultDialog"><div class="modal"><div class="resultScroll"><h2>Итоги раунда</h2><div id="resultBody"></div></div><div class="footerActions"><button class="primary" onclick="startRound()">Ещё раунд</button><button class="ghost" onclick="resultDialog.close()">Закрыть</button></div></div></dialog>
+<script>
+const DEMO_MODE = !window.location.pathname.startsWith('/full-games/');
+const CARDS_PER_CATEGORY = DEMO_MODE ? 4 : 10;
+const MOTIVATION = ['Отличное начало: торговец уже нарасхват.','Так держать: замки принимают казну без путаницы.','Вы сортируете точнее придворного грамматиста.','Ещё немного — и все три казны будут полны.','Ошибка — это подсказка, а не провал.','Серия растёт: очень уверенная работа.','Смотрите на вопрос к слову и на короткий контекст.','Финиш близко: осталось совсем чуть-чуть.'];
+const MODES = [
+  {id:'m1', title:'Режим 1: причастие — деепричастие — глагол', cats:['participle','gerund','verb'], hint:'Причастие обозначает признак по действию; деепричастие — добавочное действие; глагол — основное действие. В этом режиме контекст нужен реже, зато полезно смотреть на форму слова.'},
+  {id:'m2', title:'Режим 2: краткое причастие — краткое прилагательное — наречие', cats:['short_participle','short_adjective','adverb'], hint:'Краткое причастие и краткое прилагательное даны в среднем роде, чтобы получилась настоящая загадка. Решайте по контексту: «что-то сделано» — краткое причастие; «что-то каково?» — краткое прилагательное; «сделали как?» — наречие.'},
+  {id:'m3', title:'Режим 3: предлог — наречие — существительное с предлогом', cats:['preposition','adverb2','noun_with_prep'], hint:'Если слово требует после себя зависимое слово и само не является членом предложения, это предлог. Если отвечает на вопрос обстоятельства — наречие. Если сохраняется предметное значение, перед нами существительное с предлогом.'},
+  {id:'m4', title:'Режим 4: отымённое прилагательное — отглагольное прилагательное — причастие Н/НН', cats:['denom_adj','verbal_adj','participle_nn'], hint:'Отымённое прилагательное образовано от существительного. Отглагольное прилагательное — от глагола, но без признаков действия. Причастие сохраняет действие: есть зависимое слово, приставка, вид или суффиксы -ованн-/-ёванн-.'}
+];
+const CAT = {
+ particple:null,
+ participle:{name:'Причастие', icon:'👑', memo:'Причастие — особая форма глагола со значением признака по действию. Вопросы: какой? какая? какое? какие? Полные формы: читающий, проверенный. Краткие формы тоже возможны: проверен, раскрыто. Подсказка: часто можно заменить оборотом «который + глагол».'},
+ gerund:{name:'Деепричастие', icon:'🗡️', memo:'Деепричастие обозначает добавочное действие при основном: улыбаясь, прочитав, заметив. Вопросы: что делая? что сделав? Не изменяется.'},
+ verb:{name:'Глагол', icon:'🔥', memo:'Глагол называет действие или состояние: читать, заметил, улыбается. Вопросы: что делать? что сделать? что делает? что сделал?' },
+ short_participle:{name:'Краткое причастие', icon:'🏰', memo:'Краткое причастие сохраняет значение действия. Его можно проверить вопросами «что сделано? кем? чем?». Важно: в этом режиме все формы даны в среднем роде, чтобы различать их только по контексту: письмо написано, решение принято.'},
+ short_adjective:{name:'Краткое прилагательное', icon:'💎', memo:'Краткое прилагательное называет признак предмета. Оно отвечает на вопрос «каково?» и не содержит значения действия: небо ясно, решение верно. В этом режиме все формы тоже даны в среднем роде.'},
+ adverb:{name:'Наречие', icon:'🪄', memo:'Наречие относится к действию или к другому признаку и отвечает на вопрос «как? где? когда? насколько?»: сказал ясно, сделал быстро, посмотрел внимательно.'},
+ preposition:{name:'Предлог', icon:'🗝️', memo:'Предлог — служебная часть речи. Сам по себе членом предложения не является, но связывает слово с другими словами: в течение урока, навстречу гостям, благодаря помощи.'},
+ adverb2:{name:'Наречие', icon:'🧭', memo:'Наречие в этом режиме легко спутать с предлогом и сочетанием существительного с предлогом. Если слово отвечает на обстоятельственный вопрос и не требует после себя зависимого слова, это наречие: сначала, вовремя, навстречу.'},
+ noun_with_prep:{name:'Сущ. с предлогом', icon:'📜', memo:'Существительное с предлогом сохраняет предметное значение. Обычно можно вставить определение или зависимое слово: на встречу с другом, в начале книги, во время урока.'},
+ denom_adj:{name:'Отымённое прил.', icon:'🌿', memo:'Отымённое прилагательное образовано от существительного: серебро → серебряный, кожа → кожаный, глина → глиняный. В Н/НН важны суффиксы: -ан-/-ян- обычно одна Н, -енн-/-онн- обычно НН.'},
+ verbal_adj:{name:'Отглагольное прил.', icon:'⚒️', memo:'Отглагольное прилагательное образовано от глагола, но обозначает постоянный признак без значения действия: жареная рыба, крашеный пол, вязаный шарф. Обычно нет зависимых слов и чаще пишется одна Н.'},
+ participle_nn:{name:'Причастие', icon:'⚜️', memo:'Причастие сохраняет действие. Его выдают зависимые слова, приставки, совершенный вид, суффиксы -ованн-/-ёванн-. Примеры: жаренная на масле рыба, покрашенный мастером забор, организованная встреча.'}
+};
+function baseWords(){return {
+participle:[
+// ── ПОЛНЫЕ ПРИЧАСТИЯ (омонимия с прилагательными — главная трудность) ──
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Ведущий</b> специалист подписал договор.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Ведущий</b> поезд машинист не спал всю ночь.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Открытый</b> ветром ставень хлопал всю ночь.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Открытый</b> характер располагал к себе.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Собранный</b> в поход рюкзак стоял у двери.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Собранный</b> человек никогда не опаздывает.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Блестящий</b> на солнце купол был виден издалека.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Блестящий</b> ответ удивил всех присутствующих.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Выкованный</b> кузнецом меч лежал на столе.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Потерянный</b> кошелёк нашли утром.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Избалованный</b> родителями ребёнок капризничал.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Раненный</b> в плечо солдат держался стойко.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Написанное</b> наспех письмо пестрело ошибками.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Украшенный</b> флагами город встречал гостей.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Построенный</b> в прошлом веке дом ещё стоял.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Забытый</b> на скамейке зонт промок.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Проверенный</b> учителем диктант лежал на столе.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Замеченный</b> сторожем вор бросился бежать.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Уставший</b> за смену рабочий сел у окна.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Решённый</b> задолго до урока пример оказался верным.','полное причастие'],
+// новые полные причастия — акцент на омонимию и зависимые слова
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Летящий</b> над полем ястреб камнем упал вниз.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Знающий</b> все ответы ученик почему-то молчал.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Прочитанный</b> дважды текст наконец стал понятен.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сжигаемый</b> любопытством мальчик не утерпел.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Освещённый</b> фонарями переулок казался уютным.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Поседевший</b> за одну ночь старик смотрел в окно.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Принесённый</b> гонцом свиток лежал запечатанным.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Загорелый</b> после похода мальчик вернулся домой.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сломанный</b> во время бури забор починили утром.','полное причастие'],
+['Я нашёл <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">потрёпанный</b> жизнью старый дневник.','полное причастие'],
+['<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Испуганный</b> внезапным криком кот прыгнул на шкаф.','полное причастие'],
+// ── КРАТКИЕ ПРИЧАСТИЯ ──
+['Задание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">решено</b> учеником верно.','краткое причастие'],
+['Стена <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">побелена</b> к празднику.','краткое причастие'],
+['Письмо <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">написано</b> наспех.','краткое причастие'],
+['Кольчуга <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">скована</b> умелым мастером.','краткое причастие'],
+['Дверь <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">закрыта</b> сторожем на ночь.','краткое причастие'],
+['Книга <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прочитана</b> мной за один вечер.','краткое причастие'],
+['Картина <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">создана</b> неизвестным художником.','краткое причастие'],
+['Решение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">принято</b> большинством голосов.','краткое причастие'],
+['Мост <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">построен</b> в позапрошлом году.','краткое причастие'],
+['Вещи <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">собраны</b> и упакованы заранее.','краткое причастие'],
+// новые краткие причастия
+['Берег <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">усеян</b> мелкими камнями.','краткое причастие'],
+['Счёт <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">проверен</b> и утверждён директором.','краткое причастие'],
+['Документ <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">подписан</b> двумя свидетелями.','краткое причастие'],
+['Флаг <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поднят</b> над башней на рассвете.','краткое причастие'],
+['Карта <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нарисована</b> от руки мелким почерком.','краткое причастие'],
+['Груз <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">доставлен</b> без опоздания.','краткое причастие'],
+['Список <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">составлен</b> секретарём заблаговременно.','краткое причастие'],
+['Речь <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">произнесена</b> громко и чётко.','краткое причастие'],
+['Сундук <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">перенесён</b> в дальний угол подвала.','краткое причастие'],
+['Условие задачи <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">записано</b> на доске заранее.','краткое причастие'],
+],
+
+gerund:[
+// оригинальные
+'Он говорил, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">улыбаясь</b>.',
+'Она отвечала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не думая</b>.',
+'Кот, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">свернувшись</b> клубком, спал у батареи.',
+'Он читал, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лёжа</b> на диване.',
+'Она шла, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не оглядываясь</b>.',
+'Он замер, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">услышав</b> шум.',
+'Она вернулась, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не найдя</b> ответа.',
+'Они молчали, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">переглядываясь</b>.',
+'Он говорил, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">волнуясь</b>.',
+'Она вздохнула, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">отложив</b> книгу.',
+'Он стоял, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">опираясь</b> на трость.',
+'Она пела, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">закрыв</b> глаза.',
+'Он ответил, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не задумавшись</b>.',
+'Она писала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сидя</b> у окна.',
+'Он ушёл, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">хлопнув</b> дверью.',
+'Она решала задачу, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рассуждая</b> вслух.',
+'Он смотрел, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прищурившись</b>.',
+'Она слушала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кивая</b> головой.',
+'Он работал, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не поднимая</b> головы.',
+'Она говорила, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">торопясь</b>.',
+'Он обернулся, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">услышав</b> своё имя.',
+'Она вошла, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">запыхавшись</b>.',
+'Он жил, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не зная</b> забот.',
+'Она сидела, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">задумавшись</b>.',
+'Он отложил перо, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">закончив</b> письмо.',
+'Она смотрела в окно, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вспоминая</b> детство.',
+'Он молчал, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сжав</b> зубы.',
+'Она шила, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">напевая</b>.',
+'Он уснул, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не раздеваясь</b>.',
+'Она спустилась, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">держась</b> за перила.',
+// новые деепричастия — труднее: «не»-формы, омонимия с наречием и причастием
+'Он читал лекцию, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">опираясь</b> на новые источники.',
+'Она отвечала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не вникая</b> в суть вопроса.',
+'Он прошёл мимо, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не заметив</b> знакомого.',
+'Она готовила ужин, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">напевая</b> старую песню.',
+'Он замолчал, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">почувствовав</b> чужой взгляд.',
+'Она вернулась, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">промокнув</b> до нитки.',
+'Она убрала со стола, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не сказав</b> ни слова.',
+'Он перечитал письмо дважды, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ничего не поняв</b>.',
+'Она вязала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не отрываясь</b> от разговора.',
+'Он снял пальто, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">войдя</b> в комнату.',
+'Она мчалась, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не разбирая</b> дороги.',
+'Он остановился, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">переводя</b> дыхание.',
+'Она ответила, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">покраснев</b> до ушей.',
+'Он выбежал, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">громко хлопнув</b> калиткой.',
+'Она думала, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">машинально перелистывая</b> страницы.',
+'Он шагал вперёд, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не обращая</b> внимания на холод.',
+'Она спустилась вниз, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прислушиваясь</b> к каждому звуку.',
+'Он читал стоя, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">привалившись</b> к стене.',
+'Она писала быстро, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">не делая</b> ни одной паузы.',
+'Он молча смотрел на доску, <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">обдумывая</b> ответ.',
+],
+
+verb:[
+// оригинальные
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">читает</b> письмо у окна.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">улыбнулась</b> и кивнула.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">решил</b> задачу за минуту.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">заметила</b> ошибку сразу.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">открывает</b> окно каждое утро.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">закрыли</b> ворота на засов.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">проверяет</b> тетради после уроков.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">написал</b> письмо и отправил.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">услышали</b> шум и замерли.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">увидит</b> его завтра.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сказал</b> правду.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">молчит</b> весь вечер.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">стоят</b> у ворот.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глядит</b> вдаль.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вернулась</b> поздно.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смеётся</b> над каждой шуткой.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">торопятся</b> на поезд.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прибежал</b> первым.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вздохнула</b> и промолчала.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">объясняет</b> правило заново.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сравнивает</b> два текста.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">выбирает</b> долго.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поднимаются</b> по лестнице.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">перечитала</b> письмо трижды.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">исправил</b> все ошибки.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">запомнит</b> это навсегда.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нашёл</b> ключ под ковриком.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">потеряли</b> дорогу в лесу.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">доказал</b> свою правоту.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">разделила</b> торт поровну.',
+// новые глаголы — формы, созвучные причастиям и деепричастиям (трудные случаи)
+'Купол церкви <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">блестит</b> на утреннем солнце.',
+'Спортсмен <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">открывает</b> новый сезон уверенной победой.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">собрала</b> чемодан ещё с вечера.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">решает</b> каждую задачу методично.',
+'Она <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">написала</b> черновик за один присест.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">уточнил</b> детали по телефону.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">разошлись</b> в разные стороны молча.',
+'Он <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">забыл</b> зонт в вагоне.',
+'Они <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">проверяют</b> задание у доски.'],
+short_participle:[
+// Ключевой признак: слово обозначает РЕЗУЛЬТАТ действия,
+// можно поставить вопрос «что сделано? кем? чем?»,
+// есть или подразумевается производитель действия
+'Небо <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">затянуто</b> тучами с утра.',
+'Письмо <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">написано</b> второпях.',
+'Задание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">выполнено</b> учеником вчера.',
+'Окно <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">закрыто</b> кем-то из слуг.',
+'Решение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">принято</b> большинством.',
+'Задание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">подготовлено</b> заранее.',
+'Стол <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">накрыт</b> к ужину.',
+'Приказ <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">подписан</b> комендантом.',
+'ПОдношение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">доставлено</b> в срок.',
+'Ошибка <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">исправлена</b> красными чернилами.',
+'Список <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">составлен</b> секретарём.',
+'Объявление <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">размещено</b> у ворот.',
+'Книга <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">возвращена</b> в библиотеку.',
+'Письмо <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">отправлено</b> курьером.',
+'Перемещение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">согласовано</b> сторонами.',
+'Дорога <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">перекрыта</b> стражей.',
+'Помещение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">заперто</b> на три засова.',
+'Карта <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нарисована</b> от руки.',
+'Обращение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">зачитано</b> судьёй.',
+'Башня <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">построена</b> сто лет назад.',
+'Сундук <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спрятан</b> под полом.',
+'Флаг <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поднят</b> на рассвете.',
+'Гонец <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">послан</b> в столицу.',
+'Пленник <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">освобождён</b> к рассвету.',
+'Зерно <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">собрано</b> до дождей.',
+'Мост <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">разобран</b> по приказу.',
+'Печать <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сломана</b> до нас.',
+'Вода <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">принесена</b> из колодца.',
+'Свеча <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">погашена</b> слугой.',
+'Золото <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">взвешено</b> и пересчитано.',
+// ── новые: ср.р. — главная ловушка, форма совпадает с нар. и кр. прил. ──
+'Поле <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">засеяно</b> пшеницей ещё в мае.',
+'Послание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">запечатано</b> королевской печатью.',
+'Донесение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">зашифровано</b> опытным писцом.',
+'Решение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">обжаловано</b> защитником в суде.',
+'Имущество <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">описано</b> и передано в казну.',
+'Войско <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">собрано</b> за три дня.',
+'Всё необходимое <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">учтено</b> при расчёте.',
+'Задание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">оценено</b> на высший балл.',
+'Письмо <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">перечитано</b> трижды и отложено.',
+'Обвинение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">выдвинуто</b> прокурором на суде.',
+'Здание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">возведено</b> местными мастерами.',
+'Слово <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">произнесено</b> чётко и ясно.',
+'Обещание <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">дано</b> перед всем двором.',
+'Условие <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поставлено</b> ультимативно.',
+'Правило <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">выучено</b> учеником наизусть.',
+'Соглашение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">подписано</b> обеими сторонами.',
+'Донесение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">уничтожено</b> после прочтения.',
+'Зерно <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смолото</b> на мельнице вчера ночью.',
+'Решение <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">отменено</b> вышестоящим судом.',
+'Сокровище <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спрятано</b> под полом башни.',
+],
+
+short_adjective:[
+// Ключевой признак: слово обозначает ПРИЗНАК предмета,
+// отвечает на вопрос «каков? какова? каково? каковы?»,
+// является именным сказуемым, НЕ содержит значения действия,
+// НЕ имеет производителя действия в тв. падеже
+// ── все формы — подлинные краткие прилагательные ──
+'Её лицо было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спокойно</b> и бледно.',
+'Небо было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ясно</b> и звёздно.',
+'Поле было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">широко</b> и бескрайне.',
+'Она была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">умна</b> и наблюдательна.',
+'Его ответ был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">точен</b> и краток.',
+'Комната была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">светла</b> и просторна.',
+'Его поведение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смело</b>.',
+'Работа оказалась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сложна</b>.',
+'Дорога была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">длинна</b> и утомительна.',
+'Его намерения были <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ясны</b>.',
+'Совет оказался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">полезен</b>.',
+'Положение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">опасно</b>.',
+'Задача была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нова</b> для всех.',
+'Комната была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">пуста</b> и холодна.',
+'Его замечание было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">верно</b>.',
+'Лицо незнакомца было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">бледно</b> и сухо.',
+'Этот путь слишком <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">длинен</b>.',
+'Её голос был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мягок</b> и приятен.',
+'Стекло было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прозрачно</b> и чисто.',
+'Его манеры были <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">просты</b>.',
+'Настроение в зале было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">весело</b>.',
+'Их намерение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">твёрдо</b>.',
+'Текст оказался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ясен</b> и понятен.',
+'Его характер был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">упрям</b>.',
+'День был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тёпел</b> и солнечен.',
+'Её взгляд был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">холоден</b>.',
+// ── новые: акцент на омонимию со словами из категории «наречие» ──
+// ТРУДНОСТЬ: те же слова в другом контексте — наречия; здесь они — сказуемые
+'Море сегодня было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спокойно</b>.',
+'Её пение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нежно</b> и чисто.',
+'Небо над горами было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">высоко</b> и прозрачно.',
+'Его поведение казалось <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">странно</b>.',
+'Озеро было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глубоко</b> и холодно.',
+'Ущелье было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">узко</b> и темно.',
+'Выражение её лица было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">грустно</b>.',
+'Платье было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">просто</b>, но изящно.',
+'Расстояние до деревни казалось <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">далеко</b>.',
+'Его молчание было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">красноречиво</b>.',
+'Её поведение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смело</b> и решительно.',
+'Небо перед грозой было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">темно</b> и грозно.',
+'Болото было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">топко</b> и непроходимо.',
+'Его суждение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поверхностно</b>.',
+'Его намерение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">благородно</b>.',
+'Их решение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поспешно</b>.',
+'Его объяснение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">туманно</b>.',
+'Её лицо было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">приветливо</b>.',
+'Его слово было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">крепко</b>.',
+'Её настроение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тревожно</b>.',
+'Его признание было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">искренне</b>.',
+'Молчание в зале было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">напряжённо</b>.',
+'Его решение было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">неожиданно</b> для всех.',
+'Утро было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">свежо</b> и прохладно.',
+],
+
+adverb:[
+// Ключевой признак: слово относится к ГЛАГОЛУ или прилагательному,
+// отвечает на вопрос «как?», является обстоятельством,
+// НЕ является сказуемым, НЕ обозначает признак подлежащего
+// ГЛАВНАЯ ЛОВУШКА: те же слова, что и в «кратком прилагательном»,
+// но здесь они при глаголе, а не при подлежащем
+'Он сказал это <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">верно</b>.',
+'Она ответила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ясно</b>.',
+'Он поступил <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смело</b>.',
+'Она говорила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тихо</b>.',
+'Он двигался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">быстро</b>.',
+'Она объяснила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">просто</b>.',
+'Он посмотрел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">пристально</b>.',
+'Она решила задачу <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">точно</b>.',
+'Он работал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">аккуратно</b>.',
+'Она держалась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спокойно</b>.',
+'Он ответил <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">грустно</b>.',
+'Она улыбнулась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">весело</b>.',
+'Он поступил <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">верно</b>.',
+'Она рассказала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">интересно</b>.',
+'Он сделал всё <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">правильно</b>.',
+'Она говорила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">убедительно</b>.',
+'Он шёл <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">медленно</b>.',
+'Она одевалась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">красиво</b>.',
+'Он ел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мало</b> и редко.',
+'Она дышала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ровно</b>.',
+'Он смотрел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">прямо</b> в глаза.',
+'Она ответила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">твёрдо</b>.',
+'Он сказал это <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мягко</b>, но настойчиво.',
+'Она произнесла слово <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">чётко</b>.',
+'Он воспринял критику <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">спокойно</b>.',
+// ── НОВЫЕ: омонимия с кратким прилагательным — главная ловушка ───────────
+// Ключ к разграничению: наречие отвечает на вопрос КАК? и относится к глаголу,
+// а не является сказуемым при подлежащем
+'Она пела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">нежно</b> и протяжно.',
+// нежно → как пела? (наречие при глаголе пела)
+// ср. ловушка: Её пение было нежно (кр. прил., сказуемое)
+'Он смотрел на неё <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">грустно</b> и долго.',
+// грустно → как смотрел? (наречие при глаголе смотрел)
+// ср. ловушка: Его взгляд был грустно (кр. прил.)
+'Она объяснила правило <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">просто</b> и наглядно.',
+// просто → как объяснила? (наречие при глаголе объяснила)
+// ср. ловушка: Платье было просто (кр. прил.)
+'Он отвечал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">твёрдо</b> и уверенно.',
+// твёрдо → как отвечал? (наречие при глаголе отвечал)
+// ср. ловушка: Его намерение было твёрдо (кр. прил.)
+'Она держалась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">смело</b> перед судьями.',
+// смело → как держалась? (наречие при глаголе держалась)
+// ср. ловушка: Его поведение было смело (кр. прил.)
+'Он произнёс речь <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ясно</b> и громко.',
+// ясно → как произнёс? (наречие при глаголе произнёс)
+// ср. ловушка: Небо было ясно (кр. прил.)
+'Она говорила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">взволнованно</b>, не находя слов.',
+// взволнованно → как говорила? (наречие); НЕ путать с кр. прич. взволнована
+'Он рассуждал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">здраво</b> и последовательно.',
+// здраво → как рассуждал? (наречие при глаголе рассуждал)
+'Она писала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">грамотно</b> и без помарок.',
+// грамотно → как писала? (наречие при глаголе писала)
+'Он двигался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">осторожно</b>, стараясь не шуметь.',
+// осторожно → как двигался? (наречие при глаголе двигался)
+'Она ответила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">резко</b> и повернулась к окну.',
+// резко → как ответила? (наречие при глаголе ответила)
+// ср. ловушка: Его высказывание было резко (кр. прил.)
+'Он смотрел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">странно</b>, словно не узнавая.',
+// странно → как смотрел? (наречие при глаголе смотрел)
+// ср. ловушка: Его поведение было странно (кр. прил.)
+'Она пришла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">поздно</b> и молча легла спать.',
+// поздно → когда пришла? (наречие при глаголе пришла)
+// ср. ловушка: Было уже поздно (кр. прил., безличное предложение)
+'Он прыгнул <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">высоко</b> и ловко схватился за ветку.',
+// высоко → как/насколько прыгнул? (наречие при глаголе прыгнул)
+// ср. ловушка: Небо над горами было высоко (кр. прил.)
+'Она жила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">просто</b>, не требуя ничего лишнего.',
+// просто → как жила? (наречие при глаголе жила)
+// ср. ловушка: Платье было просто, но изящно (кр. прил.)
+'Он относился к делу <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">серьёзно</b>.',
+// серьёзно → как относился? (наречие при глаголе относился)
+'Она ответила на вопрос <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">неожиданно</b> для всех.',
+// неожиданно → как ответила? (наречие при глаголе ответила)
+// ср. ловушка: Его решение было неожиданно (кр. прил.)
+'Он встал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рано</b> и вышел до рассвета.',
+// рано → когда встал? (наречие при глаголе встал)
+'Она написала ответ <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">верно</b>, но небрежно.',
+// верно → как написала? (наречие при глаголе написала)
+// ср. ловушка: Его замечание было верно (кр. прил.)
+'Он смотрел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">напряжённо</b>, не отрываясь от горизонта.',
+// напряжённо → как смотрел? (наречие при глаголе смотрел)
+// ср. ловушка: Молчание в зале было напряжённо (кр. прил.)
+'Она вела себя <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">безупречно</b> на протяжении всего вечера.',
+// безупречно → как вела себя? (наречие при глаголе вела)
+// ср. ловушка: Его поведение было безупречно (кр. прил.)
+'Он говорил <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">искренне</b>, не скрывая чувств.',
+// искренне → как говорил? (наречие при глаголе говорил)
+// ср. ловушка: Его признание было искренне (кр. прил.)
+'Она отвечала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">уверенно</b>, хотя и волновалась.',
+// уверенно → как отвечала? (наречие при глаголе отвечала)
+'Он рассказал историю <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">увлечённо</b>, не замечая времени.',
+// увлечённо → как рассказал? (наречие при глаголе рассказал); НЕ путать с кр. прич. увлечён
+'Она улыбнулась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тепло</b> и протянула руку.',
+// тепло → как улыбнулась? (наречие при глаголе улыбнулась)
+// ср. ловушка: День был тёпел и солнечен (кр. прил.)
+],
+preposition:[
+// Ключевой признак: служебная часть речи, не является членом предложения,
+// требует после себя существительное в определённом падеже,
+// нельзя задать вопрос к самому предлогу как к члену предложения.
+// ГЛАВНАЯ ЛОВУШКА: совпадение написания и звучания с наречиями и сочетаниями «сущ. + предлог»
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В течение</b> всего урока он молчал.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В продолжение</b> разговора возникла долгая пауза.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вследствие</b> ошибки пришлось переписывать всё заново.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Несмотря на</b> усталость, она продолжала работу.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Навстречу</b> гостям вышел хозяин замка.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Наподобие</b> башни высилась одинокая скала.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Ввиду</b> болезни занятие было отменено.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Насчёт</b> поездки ещё ничего не решили.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вместо</b> ответа он пожал плечами.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вроде</b> тумана что-то стлалось по земле.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Благодаря</b> помощи друзей всё удалось.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Согласно</b> расписанию поезд прибывал в полдень.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вопреки</b> ожиданиям гость опоздал.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Около</b> старого дуба стоял колодец.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Посреди</b> комнаты лежал старый ковёр.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вокруг</b> замка шёл глубокий ров.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Мимо</b> ворот проехал одинокий всадник.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Путём</b> переговоров конфликт был разрешён.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сверх</b> нормы никто не работал.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В силу</b> обстоятельств пришлось остаться.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По причине</b> тумана рейс задержали.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По мере</b> роста запросов менялись и правила.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В целях</b> безопасности вход в башню закрыли.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">За исключением</b> одного случая всё шло гладко.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По поводу</b> встречи никто не предупредил заранее.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В отличие от</b> брата она была молчалива.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В связи с</b> переездом адрес изменился.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">За счёт</b> усилий команды задача была решена.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В результате</b> опыта получили новое вещество.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В области</b> точных наук он особенно преуспел.',
+// новые — акцент на трудные производные предлоги, омонимичные наречиям и сущ.
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вслед</b> за отрядом двинулась обозная телега.',
+// вслед за — предлог; ср.: он побежал вслед (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Напротив</b> школы открылся новый магазин.',
+// напротив — предлог при сущ.; ср.: он сидел напротив (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вблизи</b> деревни шумел молодой сосновый бор.',
+// вблизи — предлог; ср.: остановились вблизи (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Внутри</b> крепости скрывался небольшой отряд.',
+// внутри — предлог при сущ.; ср.: темно внутри (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Снаружи</b> здания виднелась старая кладка.',
+// снаружи — предлог; ср.: осмотрели снаружи (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Навстречу</b> ветру паруса вздулись пузырём.',
+// навстречу — предлог при сущ.; ср.: шли навстречу (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдоль</b> берега тянулась старая дамба.',
+// вдоль — предлог при сущ.; ср.: шли вдоль (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Поперёк</b> дороги лежало поваленное дерево.',
+// поперёк — предлог при сущ.; ср.: положить поперёк (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Позади</b> колонны шёл замыкающий отряд.',
+// позади — предлог; ср.: всё осталось позади (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Впереди</b> войска скакал знаменосец.',
+// впереди — предлог; ср.: дорога была впереди (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдали от</b> города он наконец почувствовал покой.',
+// вдали от — предлог; ср.: в дали моря (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Накануне</b> праздника в замке царила суета.',
+// накануне — предлог при сущ.; ср.: это было накануне (наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Наперекор</b> судьбе она добилась своего.',
+// наперекор — предлог
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Помимо</b> основного задания он выполнил дополнительное.',
+// помимо — предлог при сущ.
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Относительно</b> этого вопроса мнения разошлись.',
+// относительно — предлог при сущ.
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Касательно</b> договора он хранил молчание.',
+// касательно — предлог при сущ.
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Включая</b> новых учеников, в классе стало тридцать человек.',
+// включая — предлог при сущ.
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Исключая</b> выходные, работа велась каждый день.',
+// исключая — предлог
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Начиная с</b> понедельника расписание изменится.',
+// начиная с — предлог
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Судя по</b> следам, здесь прошло несколько человек.',
+// судя по — предлог
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В зависимости от</b> погоды поход могли отменить.',
+// в зависимости от — предлог
+],
+
+adverb2:[
+// Ключевой признак: слово является самостоятельным членом предложения — обстоятельством,
+// отвечает на вопрос «где? куда? откуда? когда? как?»,
+// НЕ требует после себя зависимого существительного.
+// ГЛАВНАЯ ЛОВУШКА: совпадение с производными предлогами и сочетаниями «сущ. + предлог»
+'Он пришёл <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вовремя</b>.',
+// вовремя — наречие (когда?); нет зависимого слова
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сначала</b> подумай, потом отвечай.',
+// сначала — наречие (когда?); ср. ловушка: с начала недели (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вначале</b> всё казалось простым.',
+// вначале — наречие (когда?); ср. ловушка: в начале книги (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Наутро</b> туман рассеялся.',
+// наутро — наречие (когда?); ср. ловушка: на утро следующего дня (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдали</b> виднелась одинокая башня.',
+// вдали — наречие (где?); ср. ловушка: в дали моря (сущ. с предлогом)
+'Птица взлетела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вверх</b>.',
+// вверх — наречие (куда?); ср. ловушка: в верх башни (сущ. с предлогом)
+'Монета упала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вниз</b>.',
+// вниз — наречие (куда?); ср. ловушка: в низ оврага (сущ. с предлогом)
+'На развилке сверни <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вправо</b>.',
+// вправо — наречие (куда?)
+'От ворот иди <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">налево</b>.',
+// налево — наречие (куда?)
+'Она шла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">навстречу</b>, широко улыбаясь.',
+// навстречу — наречие (как? куда?); ср. ловушка: навстречу гостям (предлог)
+'Он побежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вслед</b>, но не догнал.',
+// вслед — наречие; ср. ловушка: вслед за отрядом (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вокруг</b> было тихо и пусто.',
+// вокруг — наречие (где?); ср. ловушка: вокруг замка (предлог)
+'Она сидела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рядом</b>.',
+// рядом — наречие (где?)
+'Всадник промчался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мимо</b>.',
+// мимо — наречие; ср. ловушка: мимо ворот (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Позади</b> осталась деревня.',
+// позади — наречие (где?); ср. ловушка: позади колонны (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Впереди</b> виднелся густой тёмный лес.',
+// впереди — наречие (где?); ср. ловушка: впереди войска (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Снаружи</b> дом выглядел иначе, чем внутри.',
+// снаружи — наречие (где?); ср. ловушка: снаружи здания (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Изнутри</b> замок был просторнее, чем казалось.',
+// изнутри — наречие (откуда?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Затем</b> последовало долгое молчание.',
+// затем — наречие (когда?); ср. ловушка: за тем деревом (указ. мест. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Потом</b> он всё объяснил.',
+// потом — наречие (когда?); ср. ловушка: по тому мосту (указ. мест. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Снова</b> начался дождь.',
+// снова — наречие (когда?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сразу</b> стало понятно, что случилось.',
+// сразу — наречие (когда?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Наконец</b> все собрались в зале.',
+// наконец — наречие (когда?); ср. ловушка: на конец верёвки (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Заранее</b> никто ничего не знал.',
+// заранее — наречие (когда?)
+'Железо было доведено <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">добела</b>.',
+// добела — наречие (как?)
+'Он стёр написанное <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">досуха</b>.',
+// досуха — наречие (как?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сперва</b> нужно как следует подумать.',
+// сперва — наречие (когда?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Поэтому</b> он и хранил молчание.',
+// поэтому — наречие (почему?); ср. ловушка: по этому мосту (указ. мест. с предлогом)
+'Это было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">давно</b>.',
+// давно — наречие (когда?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Напротив</b> сидел незнакомый человек.',
+// напротив — наречие (где?); ср. ловушка: напротив школы (предлог)
+// новые наречия — омонимия с предлогами и сочетаниями «сущ. + предлог»
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вблизи</b> ничего подозрительного не было.',
+// вблизи — наречие (где?); ср. ловушка: вблизи деревни (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Внутри</b> было темно и сыро.',
+// внутри — наречие (где?); ср. ловушка: внутри крепости (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдоль</b> и поперёк всё было осмотрено.',
+// вдоль — наречие; ср. ловушка: вдоль берега (предлог)
+'Он встал и посмотрел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вокруг</b>.',
+// вокруг — наречие (где?); ср. ловушка: вокруг замка (предлог)
+'Колонна двигалась, он шёл <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">позади</b>.',
+// позади — наречие; ср. ловушка: позади колонны (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдоль</b> тянулись заснеженные поля.',
+// вдоль — наречие (где?)
+'Разведчики осмотрелись: <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кругом</b> было спокойно.',
+// кругом — наречие (где?)
+'Она оглянулась: <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">позади</b> никого не было.',
+// позади — наречие (где?); ср. ловушка: позади колонны (предлог)
+'Он шёл, не останавливаясь, и наконец оказался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вблизи</b>.',
+// вблизи — наречие; ср. ловушка: вблизи деревни (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Накануне</b> все были заняты приготовлениями.',
+// накануне — наречие (когда?); ср. ловушка: накануне праздника (предлог)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вместе</b> они могли справиться с любой задачей.',
+// вместе — наречие (как?)
+'Он провалился бы, но выкарабкался: <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">всё-таки</b> справился.',
+// всё-таки — наречие
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сбоку</b> виднелась неприметная дверь.',
+// сбоку — наречие (где?)
+'Путники остановились: <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">впереди</b> лежала топкая трясина.',
+// впереди — наречие (где?); ср. ловушка: впереди войска (предлог)
+'Она помолчала и <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">наконец</b> произнесла ответ.',
+// наконец — наречие (когда?); ср. ловушка: на конец верёвки (сущ. с предлогом)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Тотчас</b> же вслед за криком раздался шум.',
+// тотчас — наречие (когда?)
+'Он оглянулся: никого <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рядом</b> не было.',
+// рядом — наречие (где?)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Издалека</b> доносились звуки рожков.',
+// издалека — наречие (откуда?)
+'Она прочитала письмо и надолго задумалась: <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вот</b> и всё.',
+// вот — наречие (частица-наречие)
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вдали</b> мерцали огни деревни.',
+// вдали — наречие (где?); ср. ловушка: в дали моря (сущ. с предлогом)
+],
+
+
+noun_with_prep:[
+// Ключевой признак: существительное СОХРАНЯЕТ предметное значение.
+// Проверка: между предлогом и существительным можно вставить определение
+// («в (самом) начале», «на (важную) встречу», «в (морской) дали»).
+// Написание РАЗДЕЛЬНОЕ.
+// ГЛАВНАЯ ЛОВУШКА: созвучие с наречиями (вначале / в начале,
+// сначала / с начала, вдаль / в даль, навстречу / на встречу и др.)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Во время</b> урока нельзя шуметь.',
+// во время — предлог + сущ. «время»; НО: здесь это производный предлог!
+// Ср. ловушка: в течение урока (тоже предлог, иное написание)
+// ВНИМАНИЕ: «во время» — пограничный случай; оставлен как типичная ошибка учащихся
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">С начала</b> недели погода резко изменилась.',
+// с начала — предлог С + сущ. «начало» (с какого момента?)
+// вставка: с (самого) начала недели ✓
+// ср. ловушка: сначала подумай (наречие — слитно, = «прежде всего»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В начале</b> книги автор предупреждает читателя.',
+// в начале — предлог В + сущ. «начало» (в какой части?)
+// вставка: в (самом) начале книги ✓
+// ср. ловушка: вначале всё казалось простым (наречие — слитно, = «сперва»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На утро</b> после праздника все чувствовали усталость.',
+// на утро — предлог НА + сущ. «утро» (на какое время?)
+// вставка: на (следующее) утро ✓
+// ср. ловушка: наутро туман рассеялся (наречие — слитно, = «поутру»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В дали</b> моря скрылся последний парус.',
+// в дали — предлог В + сущ. «даль» в П.п. (в чьей дали?)
+// вставка: в (туманной) дали моря ✓
+// ср. ловушка: вдали виднелась башня (наречие — слитно, = «далеко»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В глубь</b> леса уходила едва заметная тропа.',
+// в глубь — предлог В + сущ. «глубь» в В.п. (в какую часть?)
+// вставка: в (самую) глубь леса ✓
+// ср. ловушка: вглубь — наречие при глаголе без зависимого слова
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В верх</b> башни вела крутая каменная лестница.',
+// в верх — предлог В + сущ. «верх» в В.п. (в какую часть?)
+// вставка: в (самый) верх башни ✓
+// ср. ловушка: птица взлетела вверх (наречие — слитно, = «кверху»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В низ</b> оврага стекал тонкий ручей.',
+// в низ — предлог В + сущ. «низ» в В.п. (в какую часть?)
+// вставка: в (самый) низ оврага ✓
+// ср. ловушка: монета упала вниз (наречие — слитно, = «книзу»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На встречу</b> с послом он явился в парадном мундире.',
+// на встречу — предлог НА + сущ. «встреча» (на какое мероприятие?)
+// вставка: на (важную) встречу с послом ✓
+// ср. ловушка: она шла навстречу, улыбаясь (наречие — слитно)
+// ср. ловушка: навстречу гостям вышел хозяин (предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По следу</b> зверя охотник шёл несколько часов.',
+// по следу — предлог ПО + сущ. «след» (по чему именно?)
+// вставка: по (свежему) следу зверя ✓
+// ср. ловушка: вслед за отрядом (производный предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В ряд</b> выстроились стражники у ворот крепости.',
+// в ряд — предлог В + сущ. «ряд» (в каком порядке?)
+// вставка: в (ровный) ряд ✓
+// ср. ловушка: он сказал это вряд ли (частица — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">За тем</b> деревом прятался лазутчик.',
+// за тем — предлог ЗА + указ. мест. «тот» (за каким именно?)
+// вставка: за (большим) тем деревом — смысл сохраняется ✓
+// ср. ловушка: затем он всё объяснил (наречие — слитно, = «потом»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По тому</b> мосту прошли три отряда.',
+// по тому — предлог ПО + указ. мест. «тот» (по какому?)
+// вставка: по (шаткому) тому мосту ✓
+// ср. ловушка: потому он молчал (наречие — слитно, = «из-за этого»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На конец</b> верёвки привязали тяжёлый груз.',
+// на конец — предлог НА + сущ. «конец» (на какую часть?)
+// вставка: на (самый) конец верёвки ✓
+// ср. ловушка: наконец все собрались (наречие — слитно, = «в итоге»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В тайне</b> хранился старинный свиток с пророчеством.',
+// в тайне — предлог В + сущ. «тайна» (в каком состоянии?)
+// вставка: в (строжайшей) тайне ✓
+// ср. ловушка: он сделал это втайне (наречие — слитно, = «тайно»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">С давних</b> времён замок стоял на этом холме.',
+// с давних времён — предлог С + прил. + сущ. (с каких пор?)
+// вставка: с (очень) давних времён ✓ — предметное значение сохраняется
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По новому</b> уставу всё изменилось в крепости.',
+// по новому уставу — предлог ПО + прил. + сущ. (на основании чего?)
+// вставка: по (недавно принятому) новому уставу ✓
+// ср. ловушка: по-новому смотреть (наречие с дефисом)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">За сегодняшний</b> день было сделано очень много.',
+// за сегодняшний день — предлог ЗА + прил. + сущ. (за какой период?)
+// вставка: за (весь) сегодняшний день ✓
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В сторону</b> леса потянулись первые разведчики.',
+// в сторону — предлог В + сущ. «сторона» (в каком направлении?)
+// вставка: в (тёмную) сторону леса ✓
+// ср. ловушка: он смотрел в сторону (наречие без зависимого слова)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На виду</b> у всех он совершил этот поступок.',
+// на виду — предлог НА + сущ. «вид» в П.п. (в чьём присутствии?)
+// вставка: на (полном) виду у всех ✓
+// ср. ловушка: он держался на виду — пограничный случай
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В даль</b> голубого неба уходили журавли.',
+// в даль — предлог В + сущ. «даль» в В.п. (в каком направлении?)
+// вставка: в (бесконечную) даль неба ✓
+// ср. ловушка: смотреть вдаль — наречие (слитно, без зависимого сущ.)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На миг</b> она остановилась у порога.',
+// на миг — предлог НА + сущ. «миг» (на какое время?)
+// вставка: на (один короткий) миг ✓
+// ср. ловушка: вмиг всё переменилось (наречие — слитно, = «мгновенно»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В пору</b> поздней осени листья пахнут особенно.',
+// в пору — предлог В + сущ. «пора» (в какое время?)
+// вставка: в (холодную) пору осени ✓
+// ср. ловушка: ему впору этот плащ (наречие — слитно, = «как раз»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В меру</b> своих сил он старался помочь.',
+// в меру — предлог В + сущ. «мера» (в каком количестве?)
+// вставка: в (разумную) меру сил ✓
+// ср. ловушка: умеренно — иное слово; «сверх меры» — тоже сущ. с предлогом
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В конце</b> переулка мерцал одинокий фонарь.',
+// в конце — предлог В + сущ. «конец» (в какой части?)
+// вставка: в (дальнем) конце переулка ✓
+// ср. ловушка: наконец все собрались (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В ходе</b> переговоров стороны пришли к согласию.',
+// в ходе — предлог В + сущ. «ход» (в процессе чего?)
+// вставка: в (длительном) ходе переговоров ✓
+// пограничный случай: «в ходе» — производный предлог с предметным значением
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По правде</b> говоря, он не был готов к встрече.',
+// по правде — предлог ПО + сущ. «правда»
+// вставка: по (чистой) правде ✓
+// ср. ловушка: воистину, вправду — наречия
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На время</b> похода солдатам выдали дополнительный паёк.',
+// на время — предлог НА + сущ. «время» (на какой срок?)
+// вставка: на (всё) время похода ✓
+// ср. ловушка: временно — наречие; «во время» — производный предлог
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В глубине</b> двора стоял старый заброшенный колодец.',
+// в глубине — предлог В + сущ. «глубина» (в какой части пространства?)
+// вставка: в (дальней) глубине двора ✓
+// ср. ловушка: вглубь — наречие без зависимого сущ.
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На вид</b> он казался совсем молодым.',
+// на вид — предлог НА + сущ. «вид» (по какому признаку?)
+// вставка: на (первый) вид ✓
+// ср. ловушка: видимо, по виду — иные формы
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В продолжение</b> ночи шёл проливной дождь.',
+// в продолжение — производный предлог (= «в течение»); написание на -е
+// вставка определения НЕВОЗМОЖНА → это уже НЕ сущ. с предлогом!
+// Включён как ловушка: внешне похоже на сущ. с предлогом «в продолжении романа»
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В продолжении</b> романа главный герой вернулся.',
+// в продолжении — предлог В + сущ. «продолжение» в П.п. (в какой части произведения?)
+// вставка: в (долгожданном) продолжении романа ✓
+// ср. ловушка: в продолжение ночи (производный предлог — на -е, без зависимого сущ.)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В следствии</b> по этому делу было допущено нарушение.',
+// в следствии — предлог В + сущ. «следствие» в П.п. (в каком процессе?)
+// вставка: в (уголовном) следствии ✓
+// ср. ловушка: вследствие ошибки (производный предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В виду</b> неблагоприятных условий поход отложили.',
+// ВНИМАНИЕ: это пограничный случай!
+// «ввиду» (слитно) — производный предлог = «из-за»
+// «в виду» (раздельно) — предлог В + сущ., употребляется только в обороте «иметь в виду»
+// Пример скорректирован:
+
+'Необходимо иметь <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">в виду</b> все возможные последствия.',
+// в виду — предлог В + сущ. «вид» в П.п.; только в устойчивом обороте «иметь в виду»
+// ср. ловушка: ввиду опасности (производный предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На счёт</b> экспедиции поступили необходимые средства.',
+// на счёт — предлог НА + сущ. «счёт» (куда именно?)
+// вставка: на (специальный) счёт экспедиции ✓
+// ср. ловушка: насчёт поездки ещё ничего не решили (производный предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В роде</b> этого дворянского семейства не было изменников.',
+// в роде — предлог В + сущ. «род» (в какой семье?)
+// вставка: в (древнем) роде семейства ✓
+// ср. ловушка: вроде тумана (производный предлог — слитно, = «подобно»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На место</b> командира назначили опытного офицера.',
+// на место — предлог НА + сущ. «место» (на какую должность?)
+// вставка: на (его) место ✓
+// ср. ловушка: вместо командира (производный предлог — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В течении</b> реки за зиму произошли изменения.',
+// в течении — предлог В + сущ. «течение» в П.п. (в чём именно?)
+// вставка: в (спокойном) течении реки ✓
+// ср. ловушка: в течение урока (производный предлог — на -е)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По средам</b> в замке проходил торговый день.',
+// по средам — предлог ПО + сущ. «среда» во мн.ч. Д.п. (в какие дни?)
+// вставка: смысл сохраняется ✓
+// ср. ловушка: посредине зала (наречие — слитно); посреди (предлог)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В связи</b> с этим событием многое изменилось.',
+// ВНИМАНИЕ: «в связи с» — производный предлог.
+// Заменён на сущ. с предлогом:
+'Она была задержана <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">в связях</b> с тайным орденом.',
+// в связях — предлог В + сущ. «связь» во мн.ч. П.п. (в каких отношениях?)
+// вставка: в (тайных) связях ✓
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На подобие</b> восковой фигуры нанесли специальный состав.',
+// на подобие — предлог НА + сущ. «подобие» (на что именно нанесли?)
+// вставка: на (точное) подобие фигуры ✓
+// ср. ловушка: наподобие башни (производный предлог — слитно, = «в виде»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В верхах</b> общества давно знали о готовящемся перевороте.',
+// в верхах — предлог В + сущ. «верхи» мн.ч. П.п. (среди кого?)
+// вставка: в (высших) верхах общества ✓
+// ср. ловушка: наверху стоял часовой (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">С верху</b> башни был виден весь город.',
+// ИСПРАВЛЕНИЕ: правильно «с верху» как «с верхней части»
+// с верху — предлог С + сущ. «верх» в Р.п. (откуда именно?)
+// вставка: с (самого) верху башни ✓
+// ср. ловушка: сверху летел снег (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В пустую</b> бочку налили воды.',
+// в пустую — предлог В + прил. «пустой» + подразумевается сущ. (в какую бочку?)
+// ср. ловушка: он трудился впустую (наречие — слитно, = «без результата»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">На удачу</b> путники не рассчитывали — и зря.',
+// на удачу — предлог НА + сущ. «удача» (на что рассчитывать?)
+// вставка: на (счастливую) удачу ✓
+// ср. ловушка: наудачу он бросил монету (наречие — слитно, = «авось»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В полной</b> мере это стало понятно позже.',
+// в полной мере — предлог В + прил. + сущ. «мера» (в каком объёме?)
+// вставка: в (полной, достаточной) мере ✓
+// ср. ловушка: вполне достаточно (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">За раз</b> он переносил по несколько тяжёлых ящиков.',
+// за раз — предлог ЗА + сущ. «раз» (за одно действие?)
+// вставка: за (один) раз ✓
+// ср. ловушка: сразу всё не понять (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">До поры</b> до времени об этом лучше молчать.',
+// до поры — предлог ДО + сущ. «пора» (до какого момента?)
+// вставка: до (определённой) поры ✓
+// ср. ловушка: поначалу, сперва — наречия
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В первый</b> раз он зашёл так далеко в лес.',
+// в первый раз — предлог В + числ.-прил. + сущ. (в котором по счёту?)
+// вставка: в (самый) первый раз ✓
+// ср. ловушка: впервые он видел такое (наречие — слитно)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Наряду с</b> другими задачами это тоже важно.',
+// ВНИМАНИЕ: «наряду с» — производный предлог (слитно).
+// Заменён на корректный пример с сущ. + предлог:
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В ряду</b> великих полководцев он занял достойное место.',
+// в ряду — предлог В + сущ. «ряд» в П.п. (среди кого?)
+// вставка: в (длинном) ряду полководцев ✓
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">По началу</b> речи было ясно, что оратор волнуется.',
+// ИСПРАВЛЕНИЕ: «по началу» употребляется только как предлог + сущ.
+// по началу — предлог ПО + сущ. «начало» (по какой части судить?)
+// вставка: по (самому) началу речи ✓
+// ср. ловушка: поначалу всё шло хорошо (наречие — слитно, = «сперва»)
+
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">В открытую</b> говорить о проблемах никто не решался.',
+// в открытую — предлог В + прил. «открытый» (каким образом?)
+// ср. ловушка: вскрытую карту показали всем — иное слово
+// ВНИМАНИЕ: «в открытую» пишется раздельно как устойчивое сочетание
+], 
+denom_adj:[
+// Ключевой признак: образовано от СУЩЕСТВИТЕЛЬНОГО,
+// обозначает материал, принадлежность, отношение к предмету.
+// Нет значения действия, нет производителя действия.
+// СУФФИКСЫ: -ан-/-ян- (одна Н: кожаный, глиняный),
+//           -ин- (одна Н: гусиный, лебединый),
+//           -енн-/-онн- (две НН: торжественный, лекционный),
+//           -н- после основы на Н (одна Н: туманный? — НЕТ, это -н- + -н- = НН)
+// ГЛАВНАЯ ЛОВУШКА: суффикс совпадает по звучанию с отглагольным прил. и причастием
+
+'На полке стоял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глиняный</b> горшок.',
+// глиняный ← глина + -ян- → одна Н; нет действия, нет производителя
+
+'Он носил <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кожаный</b> пояс.',
+// кожаный ← кожа + -ан- → одна Н
+
+'В шкатулке лежало <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">серебряное</b> кольцо.',
+// серебряное ← серебро + -ян- → одна Н
+
+'Стол был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">деревянным</b> и тяжёлым.',
+// деревянным ← дерево + -ян- → одна Н (исключение: три слова на -ян- с НН: деревянный, оловянный, стеклянный)
+
+'Солдатик был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">оловянным</b>.',
+// оловянным ← олово + -ян- → одна Н (исключение: НН; вместе с деревянный, стеклянный)
+
+'На окне стояла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">стеклянная</b> ваза.',
+// стеклянная ← стекло + -ян- → НН (исключение из правила -ян-)
+
+'Берег был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">песчаным</b> и пологим.',
+// песчаным ← песок + -ан- → одна Н
+
+'На столе лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ржаной</b> каравай.',
+// ржаной ← рожь + -ан- → одна Н
+
+'Под ногами хрустел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ледяной</b> наст.',
+// ледяной ← лёд + -ян- → одна Н
+
+'Она надела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">шерстяной</b> платок.',
+// шерстяной ← шерсть + -ян- → одна Н
+
+'На ней было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">льняное</b> платье.',
+// льняное ← лён + -ян- → одна Н
+
+'В огороде была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">земляная</b> насыпь.',
+// земляная ← земля + -ян- → одна Н
+
+'За холмом крутилась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ветряная</b> мельница.',
+// ветряная ← ветер + -ян- → одна Н; ср.: ветреный день (отглаг. прил.)
+
+'На столе стояла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">масляная</b> лампа.',
+// масляная ← масло + -ян- → одна Н; ср.: маслянистый, масленый (другие слова)
+
+'Дорога шла по <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">каменному</b> мосту.',
+// каменному ← камень + -енн- → НН (исключение: камень → каменный)
+
+'Крыша была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">соломенной</b>.',
+// соломенной ← солома + -енн- → НН
+
+'В небе полыхало <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">огненное</b> зарево.',
+// огненное ← огонь + -енн- → НН
+
+'Лиса утащила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">гусиное</b> яйцо.',
+// гусиное ← гусь + -ин- → одна Н
+
+'Над рекой летел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">журавлиный</b> клин.',
+// журавлиный ← журавль + -ин- → одна Н
+
+'В лесу нашли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лебединое</b> гнездо.',
+// лебединое ← лебедь + -ин- → одна Н
+
+'Он смотрел на неё <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">орлиным</b> взором.',
+// орлиным ← орёл + -ин- → одна Н
+
+'На руке блестел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">золотой</b> перстень.',
+// золотой ← золото + -от- → суффикс -от-, одна Н не нужна (прил. без Н/НН)
+
+'Он дал ей <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">оловянный</b> медальон.',
+// оловянный ← олово + -ян- → исключение: НН
+
+'В кармане лежали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">карманные</b> часы.',
+// карманные ← карман + -н- → одна Н (основа на -н- + суффикс -н- = НН? НЕТ: карман + -н- = одна Н, т.к. основа не на -н)
+
+'Над рекой висел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">туманный</b> покров.',
+// туманный ← туман + -н- → основа на Н + суффикс Н = НН
+
+'В небе светило <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лунное</b> серебро.',
+// лунное ← луна + -н- → основа на Н + суффикс Н = НН
+
+'Он приходил в <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">утренние</b> часы.',
+// утренние ← утро + -енн- → НН (утро → утренний)
+
+'Она посетила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лекционный</b> зал.',
+// лекционный ← лекция + -онн- → НН
+
+'Это была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">традиционная</b> церемония.',
+// традиционная ← традиция + -онн- → НН
+
+'Прошло <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">революционное</b> собрание.',
+// революционное ← революция + -онн- → НН
+
+'Они прибыли на <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">станционную</b> площадь.',
+// станционную ← станция + -онн- → НН
+
+'Туристы сели в <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">экскурсионный</b> автобус.',
+// экскурсионный ← экскурсия + -онн- → НН
+
+'Лётчики вошли в <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">авиационное</b> училище.',
+// авиационное ← авиация + -онн- → НН
+
+'В кувшине был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лимонный</b> напиток.',
+// лимонный ← лимон + -н- → основа на Н + суффикс Н = НН
+
+'Над полем стоял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">осенний</b> туман.',
+// осенний ← осень + -н- → основа на Н + суффикс Н = НН
+
+'В книге была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">старинная</b> карта.',
+// старинная ← старина + -н- → основа на Н + суффикс Н = НН
+
+'В соборе звонили <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">колокольные</b> звоны.',
+// колокольные ← колокол + -н- → одна Н (основа не на Н)
+
+'На столе лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">дровяной</b> топор.',
+// дровяной ← дрова + -ян- → одна Н
+
+'Охотник накинул <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">звериную</b> шкуру.',
+// звериную ← зверь + -ин- → одна Н
+
+'На ней было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">соболиное</b> боа.',
+// соболиное ← соболь + -ин- → одна Н
+
+'В саду стояла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сосновая</b> беседка.',
+// сосновая ← сосна + -ов- → одна Н (суффикс -ов-, без Н/НН)
+
+'Он вошёл в <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">дубовый</b> зал.',
+// дубовый ← дуб + -ов- → суффикс -ов-, без Н/НН
+
+'Дорожка была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">торфяной</b>.',
+// торфяной ← торф + -ян- → одна Н
+
+'Она держала в руках <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">куриное</b> яйцо.',
+// куриное ← курица + -ин- → одна Н
+
+'На площади стоял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">чугунный</b> фонарь.',
+// чугунный ← чугун + -н- → основа на Н + суффикс Н = НН
+
+'В храме горела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">восковая</b> свеча.',
+// восковая ← воск + -ов- → суффикс -ов-, без Н/НН
+
+'Он жил в <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">каменном</b> доме у реки.',
+// каменном ← камень + -енн- → НН
+
+'В кувшине хранилось <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">конопляное</b> масло.',
+// конопляное ← конопля + -ян- → одна Н
+
+'На столе лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глиняная</b> табличка.',
+// глиняная ← глина + -ян- → одна Н
+
+'На ней сиял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жемчужный</b> убор.',
+// жемчужный ← жемчуг + -н- → одна Н (основа не на Н)
+],
+
+verbal_adj:[
+'На сковороде шипела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жареная</b> рыба.',
+'В кастрюле дымился <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">варёный</b> картофель.',
+'На прилавке лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">копчёный</b> окорок.',
+'Пол был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">крашеный</b>, но облупившийся.',
+'На спинке стула висел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вязаный</b> шарф.',
+'В погребе стояли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мочёные</b> яблоки.',
+'На верёвке сохло <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">стираное</b> бельё.',
+'Луг был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кошеный</b> и ровный.',
+'На рынке продавали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">плетёные</b> корзины.',
+'Телега была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">гружёная</b>, но лёгкая на ходу.',
+'На скамье лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рваный</b> плащ.',
+'В горшке томилось <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тушёное</b> мясо.',
+'К рыбе подали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">солёный</b> огурец.',
+'На чердаке нашли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сушёные</b> травы.',
+'На доске лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глаженая</b> рубашка.',
+'В горне лежало <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">калёное</b> железо.',
+'Стена была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мазаная</b>, не беленая.',
+'Потолок был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">беленый</b> по весне.',
+'Продавали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кручёный</b> шёлк.',
+'Нашли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">точёную</b> деревянную фигурку.',
+'На столе стоял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">давленый</b> сок.',
+'На мельнице перебирали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сеяное</b> зерно.',
+'Она купила <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тканый</b> пояс.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Незваный</b> гость хуже татарина.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Пуганый</b> конь шарахается от каждого куста.',
+'У стены стоял <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кованый</b> сундук.',
+'На полу лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тканый</b> ковёр.',
+'В погребе хранилось <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">квашеное</b> молоко.',
+'На крюке висел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вяленый</b> окунь.',
+'В котомке было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">печёное</b> яблоко.',
+'На ней были <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">меченые</b> карты.',
+'В лавке продавался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лощёный</b> шёлк.',
+'На столе остался <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жёваный</b> кусок хлеба.',
+'На вешалке висел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ношеный</b> кафтан.',
+'В ведре плескалась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">цеженая</b> простокваша.',
+'На столе дымилась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">пареная</b> репа.',
+'Во дворе лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">ломаная</b> ветка.',
+'В кадке хранилась <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">солёная</b> капуста.',
+'На окне сохли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сушёные</b> грибы.',
+'В миске лежали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">варёные</b> яйца.',
+'На столе стояло <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">топлёное</b> масло.',
+'В чашке был <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тёртый</b> хрен.',
+'Хозяйка подала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">томлёные</b> овощи.',
+'На дне лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кислый</b>... ',
+'В мешке было <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">молотое</b> зерно.',
+'На верёвке висел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вяленый</b> лещ.',
+'В кувшине стояло <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">квашеное</b> молоко.',
+'На столе лежало <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">рубленое</b> мясо.',
+'В лавке продавали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">дроблёное</b> зерно.',
+'У порога стояли <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кованые</b> сапоги.',
+],
+
+participle_nn:[
+'На сковороде шипела <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жаренная на масле</b> рыба.',
+'В кастрюле дымился <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">варённый с травами</b> бульон.',
+'На прилавке лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">копчённая в печи</b> колбаса.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Крашенный мастером</b> забор выглядел нарядно.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вязанный бабушкой</b> шарф был тёплым.',
+'В бочке хранились <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мочённые в рассоле</b> яблоки.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Стиранное вчера</b> бельё уже высохло.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Кошенная в июне</b> трава пахла летом.',
+'На прилавке стояла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">плетённая из лозы</b> корзина.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Гружённая кирпичами</b> телега еле ехала.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Кованный кузнецом</b> засов не поддавался.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Рванная ветром</b> афиша висела на стене.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Пуганный охотником</b> зверь забился в нору.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сеянная на рассвете</b> пшеница взошла дружно.',
+'Скатерть была <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тканная золотом</b>.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Званный к столу</b> гость опоздал на час.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Раненный в плечо</b> солдат держался стойко.',
+'В погребе лежали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">мороженные с осени</b> ягоды.',
+'Хозяйка подала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">печённый в золе</b> пирог.',
+'На стол поставили <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">тушённые с луком</b> грибы.',
+'На тарелке лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">солённая заранее</b> рыба.',
+'В связке висели <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">сушённые на солнце</b> травы.',
+'В горне лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">калённый в огне</b> клинок.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Мазанный дёгтем</b> столб стоял у ворот.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Стриженный вчера</b> газон выглядел аккуратно.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Беленный весной</b> потолок уже пожелтел.',
+'На доске лежала <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">глаженная утром</b> рубашка.',
+'Матрос держал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кручённую в жгут</b> верёвку.',
+'На полке стояла <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">точённая резцом</b> фигурка.',
+'В чане лежали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">давленные прессом</b> ягоды.',
+'Со стола убрали <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жёванный собакой</b> кусок.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Тканная вручную</b> скатерть лежала на столе.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Квашенная в бочке</b> капуста стояла в погребе.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Вяленная на ветру</b> рыба пахла морем.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Молотая на мельнице</b> мука была очень белой.',
+'Повар подал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">пареную в горшке</b> репу.',
+'На стол поставили <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">томлённые в печи</b> овощи.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Топлённое в печи</b> масло имело особый вкус.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Рублённая топором</b> изгородь стояла криво.',
+'Мастер принёс <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">лощённый до блеска</b> щит.',
+'Он надел <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">кованные в кузне</b> сапоги.',
+'На прилавке лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">дроблённый жерновом</b> ячмень.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Цеженная через ткань</b> простокваша была чистой.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Тёртый на тёрке</b> хрен стоял на столе.',
+'Охотник принёс <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">вяленного в погребе</b> зайца.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Варённые в котле</b> овощи разложили по тарелкам.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Сушённые в печи</b> грибы пахли лесом.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Соленная с укропом</b> рыба была готова к утру.',
+'<b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">Копчённый над торфом</b> окорок висел на крюке.',
+'На тарелке лежал <b style="color:#9b233f;background:#ffe0ad;border-radius:.3em;padding:0 .2em">жаренный без масла</b> хлеб.',
+]
+}}
+const RAW = baseWords();
+function makeCards(cat){
+  return RAW[cat].map((x,i)=>{
+    const raw = Array.isArray(x) ? x[0] : x;
+    return {id:`${cat}_${i}`, cat, raw, norm:String(raw).toLowerCase()};
+  });
+}
+const DATA = Object.fromEntries(Object.keys(RAW).map(k=>[k, makeCards(k)]));
+const CASTLE_ART = ['assets/castle1.png','assets/castle2.png','assets/castle3.png'];
+const PILE_LAYOUT = [
+  [-430,18,-14],[-370,7,9],[-315,30,-7],[-260,9,13],[-210,32,-12],[-160,8,7],[-108,29,-4],[-55,7,12],
+  [0,30,-8],[55,8,10],[108,32,-10],[160,10,8],[212,31,-5],[265,9,12],[320,30,-9],[378,12,8],[432,26,-12],
+  [-350,-36,7],[-292,-48,-11],[-235,-30,9],[-178,-54,-5],[-120,-36,10],[-60,-60,-8],[0,-40,12],
+  [60,-64,-7],[120,-38,6],[178,-58,-10],[235,-34,11],[294,-52,-8],[352,-36,9],
+  [-245,-92,-8],[-184,-112,7],[-122,-88,-11],[-62,-124,5],[0,-96,-6],[62,-126,11],[122,-90,-7],[184,-110,8],[245,-92,-10]
+];
+const modeSelect = document.getElementById('modeSelect');
+const modePills = document.getElementById('modePills');
+const modeMenu = document.getElementById('modeMenu');
+const modeMenuBtn = document.getElementById('modeMenuBtn');
+const scoreEl = document.getElementById('score');
+const doneEl = document.getElementById('done');
+const errorsEl = document.getElementById('errors');
+const streakEl = document.getElementById('streak');
+const queuePosEl = document.getElementById('queuePos');
+const queueLeftEl = document.getElementById('queueLeft');
+const mistakeMini = document.getElementById('mistakeMini');
+const lastMistakeLabel = document.getElementById('lastMistakeLabel');
+const coinWrap = document.getElementById('coinWrap');
+let currentMode = MODES[0];
+let roundCards = [];
+let selectedCardId = null;
+let totalCards = 0;
+let score = 0, errors = 0, streak = 0, placed = 0;
+let mistakes = [];
+let collected = {};
+let audioCtx, musicTrack;
+
+MODES.forEach((m,idx)=>{
+  modeSelect.add(new Option(m.title, m.id));
+  const p = document.createElement('button');
+  p.type = 'button';
+  p.className = 'pill'+(idx===0?' active':'');
+  p.dataset.id = m.id;
+  p.textContent = m.title.replace(/^Режим \d+: /,'');
+  modePills.appendChild(p);
+});
+modeMenuBtn.addEventListener('click', ()=>{
+  modeMenu.classList.toggle('open');
+});
+modePills.addEventListener('click', e=>{
+  const btn = e.target.closest('.pill');
+  if(!btn) return;
+  modeSelect.value = btn.dataset.id;
+  selectMode(btn.dataset.id);
+  modeMenu.classList.remove('open');
+});
+document.addEventListener('click', e=>{
+  if(!modeMenu.contains(e.target)) modeMenu.classList.remove('open');
+});
+modeSelect.addEventListener('change', ()=>selectMode(modeSelect.value));
+document.getElementById('startBtn').addEventListener('click', startRound);
+document.getElementById('hintBtn').addEventListener('click', openGeneralHint);
+document.getElementById('showHintBtn').addEventListener('click', ()=>toast(currentMode.hint));
+document.getElementById('musicToggle').addEventListener('change', e=> e.target.checked ? startMusic() : stopMusic());
+
+function selectMode(id){
+  currentMode = MODES.find(m=>m.id===id) || MODES[0];
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active', p.dataset.id===id));
+  renderInfo();
+  startRound();
+}
+function renderInfo(){
+  document.getElementById('modeTitle').textContent = currentMode.title;
+  document.getElementById('generalHint').textContent = currentMode.hint;
+  modeMenuBtn.textContent = currentMode.title.replace(/^Режим \d+: /,'');
+}
+function sample(arr,n){
+  const pool = [...arr];
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0,n);
+}
+function shuffle(arr){
+  const a = [...arr];
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function startRound(){
+  if(resultDialog.open) resultDialog.close();
+  roundCards = shuffle(currentMode.cats.flatMap(cat => sample(DATA[cat], CARDS_PER_CATEGORY)));
+  selectedCardId = roundCards[0]?.id || null;
+  totalCards = roundCards.length;
+  score = 0; errors = 0; streak = 0; placed = 0; mistakes = [];
+  collected = Object.fromEntries(currentMode.cats.map(cat => [cat, []]));
+  renderInfo();
+  renderCastles();
+  renderMerchant();
+  updateStats();
+  lastMistakeLabel.textContent = '—';
+  mistakeMini.textContent = 'Пока без ошибок. Королевский торговец доволен.';
+  toast('Раунд начался. Три замка ждут свою казну.');
+}
+function renderCastles(){
+  const slots = [document.getElementById('slotA'), document.getElementById('slotB'), document.getElementById('slotC')];
+  currentMode.cats.forEach((cat, idx)=>{
+    const cfg = CAT[cat];
+    const host = slots[idx];
+    host.innerHTML = '';
+    const article = document.createElement('article');
+    article.className = 'castle';
+    article.innerHTML = `<img class="castleArt" src="${CASTLE_ART[idx]}" alt=""><button class="memoBtn" data-cat="${cat}" aria-label="Памятка: ${cfg.name}">Памятка</button><div class="castleTop"><button class="castleName" type="button" data-cat="${cat}">${cfg.name}</button><div class="castleCount" id="count_${cat}">0 / 10</div></div><div class="dropzone" data-cat="${cat}"></div>`;
+    host.appendChild(article);
+  });
+  document.querySelectorAll('.memoBtn').forEach(btn => btn.addEventListener('click', ()=>openMemo(btn.dataset.cat)));
+  document.querySelectorAll('.castleName').forEach(btn => btn.addEventListener('click', ()=>attemptPlace(btn.dataset.cat)));
+  document.querySelectorAll('.dropzone').forEach(zone => {
+    const castle = zone.closest('.castle');
+    zone.addEventListener('click', ()=>attemptPlace(zone.dataset.cat));
+    zone.addEventListener('dragover', e=>{ e.preventDefault(); castle?.classList.add('over'); });
+    zone.addEventListener('dragleave', ()=>castle?.classList.remove('over'));
+    zone.addEventListener('drop', e=>{ e.preventDefault(); castle?.classList.remove('over'); attemptPlace(zone.dataset.cat, e.dataTransfer.getData('text/plain')); });
+  });
+}
+function esc(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+function mark(s){return `<span class="target">${esc(s)}</span>`;}
+function highlightWhole(text){return mark(text);}
+function highlightFirstToken(text){
+  const parts = String(text).split(' ');
+  if(parts.length===1) return mark(text);
+  parts[0] = mark(parts[0]);
+  return parts.join(' ');
+}
+function pickFrom(list, seed){return list[seed % list.length];}
+const neuterNouns = ['небо','письмо','задание','решение','поле','окно','озеро','дело','объявление','платье'];
+const actionVerbs = ['сказано','сделано','объяснено','написано','прочитано','принято','решено','выполнено'];
+const speechVerbs = ['сказал','объяснил','ответил','произнёс','сделал','написал','решил','поступил','работал','двигался'];
+const nounObjects = ['плащ','кувшин','ключ','доспех','щит','кубок','сундук','мост','шарф','перстень'];
+const foodObjects = ['пирог','пол','шарф','суп','песок','хлеб','мяч','плащ','стол','ковёр'];
+const GENERAL_MEMOS = {
+  m1:'assets/Памятка общая режим 1.png',
+  m2:'assets/Памятка режим 2.png',
+  m3:'assets/памятка режим 3.png',
+  m4:'assets/Памятка режим 4.png'
+};
+const MEMO_IMAGES = {
+  m1:{participle:'assets/Памятка причастие.png',gerund:'assets/памятка деепричастие.png',verb:'assets/памятка глагол.png'},
+  m2:{short_participle:'assets/памятка краткое причастие.png',short_adjective:'assets/памятка краткое прилагательное.png',adverb:'assets/памятка наречие режим 2.png'},
+  m3:{preposition:'assets/памятка производный предлог.png',adverb2:'assets/памятка наречие режим 3.png',noun_with_prep:'assets/памятка существительное с предлогом.png'},
+  m4:{denom_adj:'assets/памятка отымённое прилагательное.png',verbal_adj:'assets/памятка отглагольное прилагательное.png',participle_nn:'assets/памятка причастие режим 4.png'}
+};
+const TARGET_WORDS = {
+  participle:['ведущий','открытый','собранный','блестящий','выкованный','потерянный','избалованный','раненный','написанное','украшенный','построенный','забытый','проверенный','замеченный','уставший','решённый','решено','побелена','написано','скована','закрыта','прочитана','создана','принято','построен','собраны','упакованы'],
+  gerund:['не оглядываясь','не задумавшись','не поднимая','не раздеваясь','не думая','не найдя','свернувшись','улыбаясь','услышав','переглядываясь','волнуясь','отложив','опираясь','закрыв','сидя','хлопнув','рассуждая','прищурившись','кивая','торопясь','запыхавшись','не зная','задумавшись','закончив','вспоминая','сжав','напевая','держась','лёжа'],
+  verb:['читает','улыбнулась','кивнула','решил','заметила','открывает','закрыли','проверяет','написал','отправил','услышали','замерли','увидит','сказал','молчит','стоят','глядит','вернулась','смеётся','торопятся','прибежал','вздохнула','промолчала','объясняет','сравнивает','выбирает','поднимаются','перечитала','исправил','запомнит','нашёл','потеряли','доказал','разделила'],
+  short_participle:['затянуто','написано','выполнено','закрыто','принято','подготовлен','накрыт','подписан','доставлен','исправлена','составлен','размещено','возвращена','отправлено','согласован','перекрыта','заперт','нарисована','зачитан','построена','спрятан','поднят','послан','освобождён','собрано','разобран','сломана','принесена','погашена','взвешено','пересчитано'],
+  short_adjective:['спокойно','бледно','верным','ясно','звёздно','тихий','ровно','широко','умна','простым','точен','краток','светла','смело','сложна','длинна','ясны','полезен','опасно','интересной','нова','пуста','холодна','верно','сухо','длинен','мягок','прозрачно','просты','весело','твёрдо','ясен','упрям','тёпел','солнечен','холоден'],
+  adverb:['верно','ясно','смело','тихо','быстро','просто','пристально','точно','аккуратно','спокойно','грустно','весело','интересно','правильно','убедительно','медленно','красиво','мало','редко','ровно','прямо','твёрдо','мягко','четко','серьёзно','нежно','рано'],
+  preposition:['в течение','в продолжение','вследствие','несмотря на','навстречу','наподобие','ввиду','насчёт','вместо','вроде','благодаря','согласно','вопреки','около','посреди','вокруг','мимо','путём','сверх','в силу','по причине','по мере','в целях','за исключением','по поводу','в отличие от','в связи с','за счёт','в области','в результате'],
+  adverb2:['во-первых','вовремя','сначала','вначале','наутро','вдали','вглубь','вверх','вниз','вправо','налево','навстречу','вслед','вокруг','рядом','мимо','позади','впереди','снаружи','изнутри','затем','потом','снова','сразу','наконец','заранее','досуха','добела','поэтому','давно'],
+  noun_with_prep:['во время','с начала','в начале','на утро','в дали','в глубь','в верх','в низ','в правую сторону','на левую сторону','на встречу','в след','в круг','в ряд','мимо ворот','за углом','в переди','с наружной стороны','из внутренней комнаты','за тем','по тому','в тот час','на конец','в тайне','с давних времён','в слухе','по новому уставу','по дружескому совету','за сегодняшний день'],
+  denom_adj:['глиняный','кожаный','серебряное','деревянным','оловянным','стеклянная','песчаным','ржаной','ледяной','шерстяной','льняное','земляная','ветряная','масляная','каменному','соломенной','огненное','утренние','лекционный','традиционная','революционное','станционную','экскурсионный','авиационное','лимонный','карманные','туманный','лунное','клюквенная','журавлиный'],
+  verbal_adj:['жареная','варёный','копчёный','крашеный','вязаный','мочёные','стираное','кошеный','плетёные','гружёная','кованый','рваный','пуганый','сеяное','тканый','незваный','тушёное','солёный','сушёные','калёное','мазаная','стриженый','беленый','глаженая','кручёный','точёную'],
+  participle_nn:['жаренная','варённый','копчённая','крашенный','вязанный','мочённые','стиранное','кошенная','плетённая','гружённая','кованный','рванная','пуганный','сеянная','тканная','званный','раненный','мороженные','печённый','тушённые','солённая','сушённые','калённый','мазанный','стриженный','беленный','гладженная','кручённая','точённая','давленные']
+};
+function normalizeText(s){return String(s).toLowerCase().replace(/ё/g,'е');}
+function findTarget(text, cat){
+  const hay = normalizeText(text);
+  const list = (TARGET_WORDS[cat] || []).slice().sort((a,b)=>b.length-a.length);
+  return list.find(word => hay.includes(normalizeText(word))) || null;
+}
+function targetExcerpt(text, target){
+  if(!target) return esc(text);
+  const lower = normalizeText(text);
+  const needle = normalizeText(target);
+  const index = lower.indexOf(needle);
+  if(index < 0) return esc(text);
+  let start = Math.max(0, index - 28);
+  let end = Math.min(text.length, index + target.length + 30);
+  while(start > 0 && !/\s/.test(text[start])) start--;
+  while(end < text.length && !/\s|[.!?,;]/.test(text[end])) end++;
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
+  const piece = text.slice(start, end).trim();
+  const local = normalizeText(piece).indexOf(needle);
+  if(local < 0) return prefix + esc(piece) + suffix;
+  return prefix + esc(piece.slice(0, local)) + mark(piece.slice(local, local + target.length)) + esc(piece.slice(local + target.length)) + suffix;
+}
+function renderSnippet(card){
+  const w = card.raw;
+  if(/<b[\s>]/i.test(w)) return w;
+  return targetExcerpt(w, findTarget(w, card.cat));
+}
+function currentCard(cardId = selectedCardId){
+  return roundCards.find(card => card.id === cardId) || roundCards[0] || null;
+}
+function renderMerchant(){
+  coinWrap.innerHTML = '';
+  const pile = document.createElement('div');
+  pile.className = 'coinPile';
+  if(!currentCard()) selectedCardId = roundCards[0]?.id || null;
+  roundCards.forEach((card, i)=>{
+    const [x,y,r] = PILE_LAYOUT[i % PILE_LAYOUT.length];
+    const c = document.createElement('div');
+    c.className = 'pileCoin';
+    if(card.id === selectedCardId){
+      c.classList.add('active');
+    }
+    c.draggable = true;
+    c.id = card.id;
+    c.title = plainCoinLabel(card);
+    c.setAttribute('aria-label', `Монетка: ${plainCoinLabel(card)}`);
+    c.addEventListener('click', ()=>{ selectedCardId = card.id; renderMerchant(); });
+    c.addEventListener('dragstart', e=>{
+      selectedCardId = card.id;
+      c.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', card.id);
+    });
+    c.addEventListener('dragend', ()=>c.classList.remove('dragging'));
+    c.style.setProperty('--x', `${x}px`);
+    c.style.setProperty('--y', `${y}px`);
+    c.style.setProperty('--r', `${r}deg`);
+    c.style.zIndex = card.id === selectedCardId ? '90' : String(i + 1);
+    c.innerHTML = `<div class="coinText">${coinLabel(card)}</div>`;
+    pile.appendChild(c);
+  });
+  coinWrap.appendChild(pile);
+  const card = currentCard();
+  if(!card){
+    const empty = document.createElement('div');
+    empty.className = 'emptyCoin';
+    empty.textContent = 'Все монетки доставлены. Пора подводить итоги.';
+    coinWrap.appendChild(empty);
+    return;
+  }
+}
+function coinLabel(card){
+  return renderSnippet(card);
+}
+function plainCoinLabel(card){
+  const div = document.createElement('div');
+  div.innerHTML = coinLabel(card);
+  return div.textContent.trim();
+}
+function updateStats(){
+  scoreEl.textContent = score;
+  doneEl.textContent = `${placed}/${totalCards || currentMode.cats.length * CARDS_PER_CATEGORY}`;
+  errorsEl.textContent = errors;
+  streakEl.textContent = streak;
+  queuePosEl.textContent = totalCards ? `${Math.min(placed+1, totalCards)}/${totalCards}` : '0/0';
+  queueLeftEl.textContent = Math.max(totalCards - placed, 0);
+  document.getElementById('motivation').textContent = placed ? MOTIVATION[Math.min(MOTIVATION.length-1, Math.floor(placed/4))] : 'Торговец ждёт вашего первого решения.';
+  currentMode.cats.forEach(cat => {
+    const c = document.getElementById(`count_${cat}`);
+    if(c) c.textContent = `${collected[cat].length} / ${CARDS_PER_CATEGORY}`;
+  });
+}
+function attemptPlace(targetCat, cardId = selectedCardId){
+  const card = currentCard(cardId);
+  if(!card) return;
+  const real = card.cat;
+  if(real === targetCat){
+    playTone('correct');
+    streak += 1;
+    score += 10 + Math.min(streak,5);
+    placed += 1;
+    collected[targetCat].push(card);
+    roundCards = roundCards.filter(item => item.id !== card.id);
+    selectedCardId = roundCards[0]?.id || null;
+    renderMerchant();
+    updateStats();
+    toast(MOTIVATION[Math.floor(Math.random()*MOTIVATION.length)]);
+    if(roundCards.length === 0) finishRound();
+  } else {
+    playTone('wrong');
+    streak = 0;
+    errors += 1;
+    score = Math.max(0, score - 3);
+    const msg = {text: renderSnippet(card).replace(/<[^>]+>/g,'').trim(), right: CAT[real].name, wrong: CAT[targetCat].name};
+    mistakes.push(msg);
+    lastMistakeLabel.textContent = `${msg.wrong}`;
+    mistakeMini.innerHTML = `<b>${msg.text}</b><br>Попало в замок «${msg.wrong}», а должно было отправиться в королевство «${msg.right}».`;
+    updateStats();
+    toast('Почти! Посмотрите на форму слова и короткий контекст на монетке.');
+  }
+}
+function openMemo(cat){
+  const src = MEMO_IMAGES[currentMode.id]?.[cat];
+  memoBody.innerHTML = src ? `<img class="memoImage" src="${src}" alt="${CAT[cat].name}">` : `<p>${CAT[cat].memo}</p><div class="hintBox">Общий ход рассуждения: задайте вопрос к слову → проверьте, есть ли значение действия → посмотрите, нужна ли зависимая форма или слово само является членом предложения.</div>`;
+  memoDialog.showModal();
+}
+function openGeneralHint(){
+  const src = GENERAL_MEMOS[currentMode.id];
+  memoBody.innerHTML = src ? `<img class="memoImage" src="${src}" alt="Подсказка">` : `<p>${currentMode.hint}</p>`;
+  memoDialog.showModal();
+}
+function finishRound(){
+  playTone('finish');
+  let html = `<div class="resultSummary"><span>Счёт <b>${score}</b></span><span>Собрано <b>${placed}/${totalCards}</b></span><span>Ошибки <b>${errors}</b></span></div>`;
+  html += '<h3>Казна по королевствам</h3>';
+  html += currentMode.cats.map(cat => `<div class="resultItem"><b>${CAT[cat].name}</b>: ${collected[cat].length} / ${CARDS_PER_CATEGORY}</div>`).join('');
+  if(mistakes.length){
+    html += '<h3>Допущенные ошибки</h3>' + mistakes.map(m => `<div class="resultItem"><b>${m.text}</b><br>Отправлено в: ${m.wrong}<br>Правильное королевство: ${m.right}</div>`).join('');
+  } else {
+    html += '<div class="resultItem">Без ошибок! Королевская казна собрана идеально.</div>';
+  }
+  if(DEMO_MODE){
+    html += '<div class="resultItem"><b>Демо-версия завершена.</b><br>В полной версии доступны полные раунды по всем режимам.<br><br><a class="primary" href="/shop/parts-of-speech-kingdom">Купить полный комплект</a></div>';
+  }
+  document.getElementById('resultBody').innerHTML = html;
+  renderMerchant();
+  resultDialog.showModal();
+}
+function toast(text){
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2300);
+}
+function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playTone(kind){
+  if(!document.getElementById('soundToggle').checked) return;
+  const ac = ctx();
+  const now = ac.currentTime;
+  const notes = kind === 'wrong' ? [164,146] : kind === 'finish' ? [220,277,330] : [196,247];
+  notes.forEach((freq, i)=>{
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = kind === 'wrong' ? 'triangle' : 'sine';
+    o.frequency.setValueAtTime(freq, now + i * .075);
+    g.gain.setValueAtTime(0.0001, now + i * .075);
+    g.gain.linearRampToValueAtTime(kind === 'wrong' ? .026 : .022, now + i * .075 + .025);
+    g.gain.exponentialRampToValueAtTime(.0001, now + i * .075 + .22);
+    o.connect(g);
+    g.connect(ac.destination);
+    o.start(now + i * .075);
+    o.stop(now + i * .075 + .24);
+  });
+}
+function startMusic(){
+  stopMusic();
+  musicTrack = new Audio('assets/Туманный дворец.mp3');
+  musicTrack.loop = true;
+  musicTrack.volume = .28;
+  musicTrack.play().catch(()=>toast('Браузер включит музыку после первого клика по экрану.'));
+}
+function stopMusic(){ if(musicTrack){ musicTrack.pause(); musicTrack.currentTime = 0; } musicTrack = null; }
+renderInfo();
+startRound();
+</script>
+</body>
+</html>

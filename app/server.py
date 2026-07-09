@@ -163,6 +163,18 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/grammar-zoo/index.html",
         "kind": "product",
     },
+    "parts-of-speech-kingdom": {
+        "id": "parts_of_speech_kingdom",
+        "title": "HTML-игра «Королевство трёх частей речи»",
+        "short_title": "Королевство трёх частей речи",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/Королевство трёх частей речи (1).png",
+        "url_env": "PARTS_OF_SPEECH_KINGDOM_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/parts-of-speech-kingdom/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/parts-of-speech-kingdom/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -225,6 +237,16 @@ DEMO_GAME_NOTICES = {
         "label": "Демо",
         "text": "Можно спокойно познакомиться с игрой: в этой версии доступно 20 заданий. Полный комплект откроется после покупки.",
         "shop_url": "/shop/grammar-zoo",
+    },
+    "paronyms": {
+        "label": "Демо",
+        "text": "Можно попробовать механику на ограниченном наборе групп. Полная версия доступна после покупки и остаётся в кабинетах тех, кто уже купил игру.",
+        "shop_url": "/shop/paronyms-game",
+    },
+    "parts-of-speech-kingdom": {
+        "label": "Демо",
+        "text": "Можно познакомиться с механикой на сокращённом раунде. Полный комплект откроется после покупки.",
+        "shop_url": "/shop/parts-of-speech-kingdom",
     },
 }
 
@@ -378,6 +400,7 @@ HTML_GAMES = {
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
     "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
+    "parts-of-speech-kingdom": HTML_DIR / "Королевства трёх частей речи",
 }
 
 PUBLIC_GAMES = {
@@ -392,6 +415,7 @@ PUBLIC_GAMES = {
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
     "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
+    "parts-of-speech-kingdom": HTML_DIR / "Королевства трёх частей речи",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -2386,6 +2410,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             item["mode_summary"] = [dict(mode_row) for mode_row in mode_rows]
             students_by_teacher.setdefault(row["teacher_id"], []).append(item)
         gifts_by_teacher = teacher_gifts_for_admin(con, teacher_ids)
+        connected_games_by_teacher = connected_games_for_admin(con, teachers, gifts_by_teacher)
         recent_attempts = recent_attempts_for_admin(con)
         created_games = created_games_for_admin(con)
         recent_game_visits = recent_game_visits_for_admin(con)
@@ -2419,6 +2444,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                 "consent_version": CURRENT_CONSENT_VERSION,
                 "students_list": students_by_teacher.get(row["user_id"], []),
                 "gifts": gifts_by_teacher.get(row["user_id"], []),
+                "connected_games": connected_games_by_teacher.get(row["user_id"], []),
             }
             for row in teachers
         ],
@@ -3393,6 +3419,73 @@ def teacher_gifts_for_admin(con: sqlite3.Connection, teacher_ids: list[str]) -> 
                 "online_url": product_online_url(product),
                 "note": row["note"] or "",
                 "created_at": row["created_at"],
+            }
+        )
+    return result
+
+
+def connected_games_for_admin(
+    con: sqlite3.Connection,
+    teachers: list[sqlite3.Row],
+    gifts_by_teacher: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    result: dict[str, list[dict[str, Any]]] = {
+        row["user_id"]: [
+            {
+                "kind": "gifted",
+                "product_id": gift.get("product_id"),
+                "slug": gift.get("slug"),
+                "title": gift.get("title"),
+                "online_url": gift.get("online_url"),
+                "offline_url": gift.get("offline_url"),
+                "created_at": gift.get("created_at"),
+                "note": gift.get("note") or "",
+            }
+            for gift in gifts_by_teacher.get(row["user_id"], [])
+        ]
+        for row in teachers
+    }
+    email_to_teacher = {
+        normalize_email(row["email"] or row["username"]): row["user_id"]
+        for row in teachers
+        if normalize_email(row["email"] or row["username"])
+    }
+    if not email_to_teacher:
+        return result
+    placeholders = ",".join("?" for _ in email_to_teacher)
+    rows = con.execute(
+        f"""
+        SELECT LOWER(so.buyer_email) AS buyer_email, pe.product_id, pe.slug, pe.title,
+               pe.delivery_url, pe.online_url, pe.url_env, so.order_uid, so.paid_at, so.created_at
+        FROM shop_orders so
+        JOIN paid_entities pe ON pe.product_id = so.product_id
+        WHERE so.status = 'paid'
+          AND pe.type = 'product'
+          AND LOWER(so.buyer_email) IN ({placeholders})
+        ORDER BY COALESCE(so.paid_at, so.created_at) DESC
+        """,
+        tuple(email_to_teacher.keys()),
+    ).fetchall()
+    seen: dict[str, set[str]] = {teacher_id: set() for teacher_id in result}
+    for teacher_id, gifts in result.items():
+        seen[teacher_id].update(str(gift.get("product_id") or "") for gift in gifts)
+    for row in rows:
+        teacher_id = email_to_teacher.get(normalize_email(row["buyer_email"]))
+        if not teacher_id or row["product_id"] in seen.setdefault(teacher_id, set()):
+            continue
+        seen[teacher_id].add(row["product_id"])
+        product = dict(row)
+        result.setdefault(teacher_id, []).append(
+            {
+                "kind": "purchased",
+                "product_id": row["product_id"],
+                "slug": row["slug"],
+                "title": row["title"],
+                "online_url": product_online_url(product),
+                "offline_url": product_delivery_url(product),
+                "order_uid": row["order_uid"],
+                "created_at": row["paid_at"] or row["created_at"],
+                "note": "",
             }
         )
     return result
