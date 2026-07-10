@@ -3973,29 +3973,28 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
   .site-demo-ribbon {{
     position: fixed;
     z-index: 2147483647;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(760px, calc(100vw - 24px));
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 10px;
+    top: 8px;
+    right: 8px;
+    width: auto;
+    max-width: min(360px, calc(100vw - 16px));
+    display: flex;
+    gap: 7px;
     align-items: center;
-    padding: 10px 12px;
+    padding: 5px 8px;
     border: 1px solid rgba(37, 99, 71, .26);
-    border-radius: 14px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, .94);
     color: #203a2c;
-    box-shadow: 0 12px 30px rgba(31, 54, 42, .18);
-    font: 600 14px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 5px 14px rgba(31, 54, 42, .16);
+    font: 600 11px/1.15 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     backdrop-filter: blur(8px);
   }}
   .site-demo-ribbon strong {{
-    padding: 6px 10px;
+    padding: 3px 6px;
     border-radius: 999px;
     background: #2f7f5f;
     color: #fff;
-    font-size: 13px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: .04em;
   }}
@@ -4009,12 +4008,13 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
   .site-demo-ribbon a:hover {{ text-decoration: underline; }}
   @media (max-width: 640px) {{
     .site-demo-ribbon {{
-      grid-template-columns: 1fr;
-      top: 8px;
-      text-align: center;
+      top: 5px;
+      right: 5px;
+      max-width: calc(100vw - 10px);
+      padding: 4px 6px;
+      font-size: 10px;
     }}
-    .site-demo-ribbon strong {{ justify-self: center; }}
-    .site-demo-ribbon a {{ white-space: normal; }}
+    .site-demo-ribbon span {{ display: none; }}
   }}
 </style>
 <div class="site-demo-ribbon" role="note" aria-label="Демо-версия игры">

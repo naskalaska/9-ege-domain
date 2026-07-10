@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Лабиринт: спряжение глагола</title>
+  <link rel="stylesheet" href="styles.css?v=final-audio-data-review-2">
+</head>
+<body>
+  <main class="game-shell">
+    <section id="startScreen" class="screen screen-start active">
+      <div class="hero">
+        <h1>Лабиринт: спряжение глагола</h1>
+        <p>Собери алгоритм, накопи ману и пройди лабиринт спряжений</p>
+        <div class="avatar-picker" id="avatarPicker" aria-label="Выбор аватара"></div>
+        <button class="primary-btn" id="startBtn" type="button">Начать</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <header class="topbar">
+        <div>
+          <p class="stage-kicker" id="stageKicker">Этап 1</p>
+          <h2 id="stageTitle">Собираем алгоритм</h2>
+        </div>
+        <div class="mana-widget">
+          <img data-asset="сосуд_манны_без_фона.png" alt="">
+          <span id="manaText">Мана: 0</span>
+        </div>
+        <div class="audio-controls" aria-label="Настройки звука">
+          <button class="audio-toggle" id="musicToggle" type="button">Мелодия: выкл</button>
+          <button class="audio-toggle" id="sfxToggle" type="button">Звуки: вкл</button>
+        </div>
+      </header>
+
+      <div id="stageMount" class="stage-mount"></div>
+    </section>
+
+    <section id="finishScreen" class="screen screen-finish">
+      <div class="finish-panel">
+        <img class="finish-medal" data-asset="медаль_успеха_без_фона.png" alt="">
+        <h2>Лабиринт пройден!</h2>
+        <p>Ты собрал ману и справился со спряжениями.</p>
+        <div id="statsPanel" class="stats-panel"></div>
+        <div id="mistakesPanel" class="mistakes-panel"></div>
+        <div class="finish-actions">
+          <button class="primary-btn" id="restartBtn" type="button">Играть ещё раз</button>
+          <button class="secondary-btn" id="reviewBtn" type="button">Повторить ошибки</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js?v=final-audio-data-review-2"></script>
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Хит-парад числительных: музыкальный квест</title>
+  <style>
+    :root{
+      --bg:#f7f1ff;--card:#fffdf8;--ink:#24182f;--muted:#725f80;--accent:#7b3ff2;--accent2:#ffb84d;--good:#1e9f68;--bad:#d64545;--line:rgba(36,24,47,.14);--shadow:0 18px 45px rgba(70,42,117,.16);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 12% 10%, rgba(255,184,77,.25), transparent 28%),radial-gradient(circle at 88% 6%, rgba(123,63,242,.18), transparent 34%),linear-gradient(135deg,#fff7e8 0%,var(--bg) 56%,#eef6ff 100%);color:var(--ink);min-height:100vh} button,input{font:inherit}.shell{max-width:1200px;margin:0 auto;padding:26px}.hero{display:grid;grid-template-columns:1.35fr .75fr;gap:20px;align-items:stretch;margin-bottom:18px}.hero-card,.panel,.location-card{background:rgba(255,253,248,.92);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:28px}.hero-card{padding:22px;position:relative;overflow:hidden}.hero-card:after{content:"цифры • факты";position:absolute;right:-12px;bottom:8px;font-size:30px;font-weight:900;color:rgba(123,63,242,.08);transform:rotate(-6deg)}.eyebrow{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:900;font-size:11px;margin:0 0 8px}h1{font-size:clamp(30px,4vw,46px);line-height:.98;margin:0 0 10px}h2{font-size:24px;margin:0 0 8px}.hero p{font-size:16px;line-height:1.45;color:var(--muted);max-width:820px}.score-card{padding:22px;display:flex;flex-direction:column;gap:12px;justify-content:center}.score-big{font-size:38px;font-weight:950;color:var(--accent)}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;color:var(--muted);font-weight:800;font-size:13px}.map{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:18px 0}.location-card{padding:15px;min-height:168px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:.18s transform,.18s box-shadow;position:relative;overflow:hidden}.location-card:hover{transform:translateY(-3px);box-shadow:0 24px 55px rgba(70,42,117,.22)}.location-card.done{outline:3px solid rgba(30,159,104,.28)}.loc-icon{width:42px;height:42px;border-radius:18px;background:linear-gradient(135deg,var(--accent),#ad7cff);color:white;display:grid;place-items:center;font-size:24px;font-weight:950}.location-card h3{margin:0;font-size:16px}.location-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.42}.badge{position:absolute;right:14px;top:14px;background:#f0e9ff;color:var(--accent);font-weight:900;border-radius:999px;padding:6px 10px;font-size:12px}.panel{padding:20px;margin-top:14px}.stage-screen{min-height:calc(100vh - 28px);display:flex;flex-direction:column;justify-content:flex-start}.hidden{display:none!important}.stage-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}.stage-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.btn{border:0;border-radius:16px;padding:12px 16px;font-weight:900;cursor:pointer;background:var(--accent);color:white;box-shadow:0 10px 20px rgba(123,63,242,.22)}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.warn{background:var(--accent2);color:#3b2600}.btn:disabled{opacity:.45;cursor:not-allowed}.memo-box{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:center;background:#fff8df;border:1px dashed rgba(123,63,242,.35);padding:10px;border-radius:18px;margin-bottom:12px}.memo-box img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:13px;background:linear-gradient(145deg,#f3e8ff,#fff8df)}.memo-box p{margin:0;color:var(--muted);line-height:1.48}.task-card{background:white;border:1px solid var(--line);border-radius:22px;padding:18px}.task-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tag{background:#f0e9ff;color:var(--accent);font-weight:900;border-radius:999px;padding:7px 10px;font-size:12px}.question{font-size:20px;line-height:1.35;font-weight:900;margin:0 0 16px}.fact{font-size:15px;line-height:1.45;background:#faf7ff;border-radius:16px;padding:14px 16px;margin-bottom:16px;color:#53415f}.fact b{color:var(--ink)}.broken{font-size:16px;line-height:1.45;border-left:5px solid var(--accent2);padding:12px 15px;background:#fffaf0;border-radius:12px;margin-bottom:16px}.options{display:grid;gap:10px}.option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:16px;padding:13px;background:#fff;cursor:pointer}.option input{margin-top:4px}.option.correct{border-color:rgba(30,159,104,.55);background:rgba(30,159,104,.08)}.option.wrong{border-color:rgba(214,69,69,.55);background:rgba(214,69,69,.08)}.answer-row{display:flex;gap:10px;align-items:center}.answer-row input{flex:1;border:1px solid var(--line);border-radius:16px;padding:14px 15px;background:#fff;min-width:0}.feedback{border-radius:18px;padding:14px;margin-top:14px;line-height:1.5}.feedback.good{background:rgba(30,159,104,.10);border:1px solid rgba(30,159,104,.28)}.feedback.bad{background:rgba(214,69,69,.10);border:1px solid rgba(214,69,69,.28)}.feedback b{display:block;margin-bottom:4px}.nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:16px;align-items:center}.progress{height:10px;background:#eee6f8;border-radius:99px;overflow:hidden;flex:1}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.2s}.unlock{background:linear-gradient(135deg,#fff8df,#f4ecff);border:1px solid var(--line);border-radius:22px;padding:18px;margin-top:16px}.unlock h3{margin:0 0 8px}.small,.footer-note{font-size:13px;color:var(--muted);line-height:1.5}.sources{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}.sources a{color:var(--accent);font-weight:800}.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.result-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px}.result-card b{font-size:24px;color:var(--accent)}
+    @media (max-width:980px){.hero{grid-template-columns:1fr}.map{grid-template-columns:repeat(2,1fr)}.result-grid{grid-template-columns:1fr}}
+    @media (max-width:580px){.shell{padding:14px}.map{grid-template-columns:1fr}.stage-head{flex-direction:column}.memo-box{grid-template-columns:1fr}.answer-row{flex-direction:column}.answer-row .btn{width:100%}}
+    body{
+      background:
+        linear-gradient(90deg, rgba(20,12,38,.58), rgba(20,12,38,.10)),
+        url("assets/фон.png") center/cover fixed no-repeat;
+    }
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,247,232,.42));
+      z-index:-1;
+    }
+    .shell{max-width:1180px;padding:clamp(12px,2.4vw,28px)}
+    .hero{grid-template-columns:minmax(0,1.2fr) minmax(280px,.55fr);align-items:stretch}
+    .hero-card,.panel,.location-card,.task-card{
+      backdrop-filter:blur(10px);
+      border-radius:22px;
+    }
+    .hero-card{
+      min-height:260px;
+      border:1px solid rgba(255,255,255,.58);
+      background:linear-gradient(115deg, rgba(255,253,248,.64), rgba(255,248,223,.34));
+    }
+    .hero-card:after{content:""}
+    .score-card{
+      background:linear-gradient(160deg, rgba(255,255,255,.70), rgba(246,238,255,.52));
+    }
+    .score-controls{display:grid;gap:10px;margin-top:auto}
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:44px;
+      border-radius:14px;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+      touch-action:manipulation;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.icon-music:before{
+      content:"";
+      width:24px;
+      height:24px;
+      flex:0 0 auto;
+      background:center/contain no-repeat;
+    }
+    .btn.icon-music:before{background-image:url("assets/иконка наушники.png")}
+    .btn.icon-check,.btn.icon-next{
+      min-height:56px;
+      background:center/100% 100% no-repeat;
+      border:0;
+      box-shadow:none;
+      color:transparent;
+      text-shadow:none;
+      overflow:hidden;
+    }
+    .btn.icon-check{width:206px;background-image:url("assets/проверить.png")}
+    .btn.icon-next{width:190px;background-image:url("assets/дальше.png")}
+    .btn.icon-check:disabled,.btn.icon-next:disabled{filter:grayscale(.35);opacity:.45}
+    .music-button.is-on{
+      background:#fff8df;
+      color:#3b2600;
+      border-color:rgba(255,184,77,.75);
+      box-shadow:0 10px 22px rgba(255,184,77,.20);
+    }
+    .map{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .location-card{
+      min-height:0;
+      aspect-ratio:308/394;
+      padding:0;
+      border:0;
+      border-radius:26px;
+      background:transparent;
+      box-shadow:none;
+      overflow:visible;
+      display:block;
+    }
+    .location-card:focus-visible,.btn:focus-visible,.option:focus-within,.answer-row input:focus{
+      outline:3px solid rgba(255,184,77,.72);
+      outline-offset:3px;
+    }
+    .location-card.done{outline:0}
+    .stage-card-img{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter:drop-shadow(0 18px 28px rgba(70,42,117,.18));
+      transition:transform .18s ease, filter .18s ease;
+    }
+    .location-card:hover .stage-card-img{transform:translateY(-4px);filter:drop-shadow(0 24px 34px rgba(70,42,117,.24))}
+    .location-card.done .stage-card-img{filter:drop-shadow(0 18px 28px rgba(30,159,104,.22)) saturate(1.05)}
+    .loc-icon{
+      display:none;
+      position:absolute;
+      right:8px;
+      top:8px;
+      width:54px;
+      height:54px;
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 10px 18px rgba(70,42,117,.14);
+      overflow:hidden;
+    }
+    .loc-icon img{width:100%;height:100%;object-fit:contain;padding:7px}
+    .location-card.done .loc-icon{
+      display:block;
+      background:rgba(255,248,223,.9);
+      box-shadow:inset 0 0 0 1px rgba(255,184,77,.55),0 12px 20px rgba(255,184,77,.18);
+    }
+    .location-card .badge,.location-card h3,.location-card p,.location-card .small{display:none}
+    .panel{
+      background:rgba(255,253,248,.46);
+      border-color:rgba(255,255,255,.65);
+    }
+    .stage-screen{
+      min-height:auto;
+      display:grid;
+      gap:14px;
+    }
+    .stage-head{
+      align-items:center;
+      border-bottom:0;
+      margin-bottom:0;
+      padding-bottom:0;
+    }
+    .memo-modal{
+      position:fixed;
+      inset:0;
+      z-index:20;
+      display:grid;
+      place-items:center;
+      padding:22px;
+      background:rgba(32,18,53,.45);
+      backdrop-filter:blur(8px);
+    }
+    .memo-modal.hidden{display:none}
+    .memo-dialog{
+      width:min(760px,100%);
+      max-height:min(86vh,760px);
+      overflow:auto;
+      border:1px solid rgba(125,63,239,.2);
+      border-radius:18px;
+      background:rgba(255,253,248,.98);
+      box-shadow:0 24px 70px rgba(47,25,86,.28);
+      padding:18px;
+    }
+    .memo-dialog.is-large{width:min(1080px,100%)}
+    .memo-dialog-head{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:14px;
+    }
+    .memo-dialog-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .memo-dialog img{
+      width:100%;
+      max-height:58vh;
+      object-fit:contain;
+      border-radius:14px;
+      background:#fff;
+      border:1px solid rgba(125,63,239,.15);
+    }
+    .memo-dialog.is-large img{max-height:72vh}
+    .task-card{
+      position:relative;
+      overflow:hidden;
+      background:rgba(255,255,255,.46);
+      backdrop-filter:blur(4px);
+    }
+    .fact{
+      background:rgba(250,247,255,.58);
+    }
+    .broken{
+      background:rgba(255,250,240,.58);
+    }
+    .option{
+      min-height:54px;
+      border-width:2px;
+      transition:background .16s ease,border-color .16s ease,transform .16s ease,box-shadow .16s ease;
+    }
+    .option:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(70,42,117,.08)}
+    .option.correct{
+      border-color:var(--good);
+      background:linear-gradient(90deg, rgba(30,159,104,.18), rgba(255,255,255,.96));
+    }
+    .option.correct:after{
+      content:"верно";
+      margin-left:auto;
+      color:#12613d;
+      font-weight:950;
+    }
+    .option.wrong{
+      border-color:var(--bad);
+      background:linear-gradient(90deg, rgba(214,69,69,.16), rgba(255,255,255,.96));
+    }
+    .option.wrong:after{
+      content:"неверно";
+      margin-left:auto;
+      color:#9f2525;
+      font-weight:950;
+    }
+    .answer-row input.correct{
+      border-color:var(--good);
+      background:rgba(30,159,104,.08);
+      box-shadow:0 0 0 3px rgba(30,159,104,.12);
+    }
+    .answer-row input.wrong{
+      border-color:var(--bad);
+      background:rgba(214,69,69,.08);
+      box-shadow:0 0 0 3px rgba(214,69,69,.12);
+    }
+    .feedback.good,.feedback.bad{border-width:2px}
+    .feedback.good b{color:#12613d}
+    .feedback.bad b{color:#9f2525}
+    .review-list{
+      display:grid;
+      gap:10px;
+      margin-top:14px;
+    }
+    .review-item{
+      display:grid;
+      gap:6px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.82);
+    }
+    .review-item.good{border-color:rgba(30,159,104,.38)}
+    .review-item.bad{
+      border-color:rgba(214,69,69,.42);
+      background:rgba(255,246,246,.9);
+    }
+    .review-title{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:950;
+    }
+    .review-status{
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .review-status.good{background:rgba(30,159,104,.12);color:#12613d}
+    .review-status.bad{background:rgba(214,69,69,.12);color:#9f2525}
+    .review-detail{
+      margin:0;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .unlock{
+      background:
+        linear-gradient(135deg, rgba(255,248,223,.95), rgba(244,236,255,.94)),
+        url("assets/Награды.png") right 18px bottom 18px/118px auto no-repeat;
+      padding-right:150px;
+    }
+    .stage-prize{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      margin:8px 0 14px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.74);
+      border:1px solid rgba(255,184,77,.42);
+      font-weight:900;
+      color:#3b2600;
+    }
+    .stage-prize img{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+    }
+    @media (max-width:980px){
+      body{background-attachment:scroll}
+      .hero{grid-template-columns:1fr}
+      .map{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .stage-head{align-items:flex-start}
+      .memo-dialog{width:min(720px,100%)}
+    }
+    @media (max-width:640px){
+      html,body{max-width:100%;overflow-x:hidden}
+      .shell{width:100%;max-width:390px;margin:0;padding:10px;overflow:hidden}
+      .hero{display:block;width:100%;min-width:0}
+      .score-card{margin-top:20px}
+      .hero,.score-card,.hero-card,.panel,.location-card,.task-card{min-width:0;width:100%;max-width:100%}
+      .hero-card *,.panel *,.location-card *,.task-card *{min-width:0}
+      .hero-card,.panel{border-radius:18px}
+      .hero-card{min-height:0;background:rgba(255,253,248,.68)}
+      h1{font-size:30px;line-height:1.05;overflow-wrap:anywhere}
+      h2{font-size:21px}
+      .hero p{font-size:15px}
+      .chips{gap:7px}
+      .chip{max-width:100%;white-space:normal;font-size:12px;padding:7px 10px}
+      .map{display:block;width:100%;min-width:0}
+      .location-card{display:block;margin-bottom:10px;aspect-ratio:308/394}
+      .location-card .badge{right:10px;top:10px}
+      .loc-icon{width:48px;height:48px}
+      .stage-head,.stage-actions,.answer-row,.nav-row{flex-direction:column;align-items:stretch}
+      .stage-actions .btn{width:100%}
+      .nav-row .btn.icon-check,.answer-row .btn.icon-check,.nav-row .btn.icon-next{width:100%;max-width:260px;margin-inline:auto}
+      .memo-modal{padding:10px}
+      .memo-dialog{max-height:92vh;border-radius:16px;padding:14px}
+      .memo-dialog-head{display:block}
+      .memo-dialog-actions{justify-content:flex-start;margin-top:12px}
+      .memo-dialog img,.memo-dialog.is-large img{max-height:62vh}
+      .question{font-size:18px}
+      .fact,.broken,.task-card{padding:12px}
+      .option{align-items:flex-start}
+      .option.correct:after,.option.wrong:after{font-size:12px}
+      .unlock{padding-right:18px;background:linear-gradient(135deg, rgba(255,248,223,.95), rgba(244,236,255,.94))}
+      .stage-prize{width:100%;justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div id="homeView">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">музыкальная редакция</p>
+        <h1>Хит-парад числительных</h1>
+        <p>Квест по склонению числительных на материале реальных музыкальных итогов, фестивальных отчётов и новостных карточек. Ученик открывает локации, редактирует факты и собирает выпуск музыкального медиа без ошибок.</p>
+        <div class="chips"><span class="chip">сорок / девяносто / сто</span><span class="chip">сложные числительные</span><span class="chip">полтора / полтораста</span><span class="chip">собирательные</span><span class="chip">финальный эфир</span></div>
+      </div>
+      <div class="score-card hero-card">
+        <p class="eyebrow">прогресс редакции</p>
+        <div class="score-big" id="scoreBig">0/0</div>
+        <div id="scoreText" class="small">Выберите локацию на карте.</div>
+        <div class="score-controls">
+          <button class="btn secondary icon-music music-button" id="musicToggle" type="button" aria-pressed="false">Включить музыку</button>
+          <button class="btn secondary" id="resetBtn" type="button">Сбросить прохождение</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="map" id="map"></section>
+    </div>
+
+    <section class="panel stage-screen hidden" id="stagePanel">
+      <div class="stage-head">
+        <div><p class="eyebrow" id="stageEyebrow">локация</p><h2 id="stageTitle"></h2><p class="small" id="stageLead"></p></div>
+        <div class="stage-actions"><button class="btn secondary" id="memoBtn" type="button">Памятка</button><button class="btn secondary" id="memoLargeBtn" type="button">Увеличить памятку</button><button class="btn secondary" id="toMapBtn" type="button">К карте</button><button class="btn warn" id="restartStageBtn" type="button">Начать локацию заново</button></div>
+      </div>
+      <div class="task-card" id="taskCard"></div>
+    </section>
+
+    <div class="memo-modal hidden" id="memoModal" role="dialog" aria-modal="true" aria-labelledby="memoModalTitle">
+      <div class="memo-dialog" id="memoDialog">
+        <div class="memo-dialog-head">
+          <div>
+            <p class="eyebrow">памятка</p>
+            <h2 id="memoModalTitle">Памятка к локации</h2>
+            <p class="small" id="memoText"></p>
+          </div>
+          <div class="memo-dialog-actions">
+            <button class="btn secondary" id="memoZoomBtn" type="button">Увеличить</button>
+            <button class="btn secondary" id="memoCloseBtn" type="button">Закрыть</button>
+          </div>
+        </div>
+        <img id="memoImg" alt="Памятка к этапу" />
+      </div>
+    </div>
+
+    <section class="panel hidden" id="finalPanel">
+      <h2>Выпуск собран</h2>
+      <p class="small">Итог по всем локациям.</p>
+      <div class="result-grid" id="finalStats"></div>
+      <div class="unlock"><h3>Что дальше</h3><p>В базе заданий у каждого факта есть поле <code>source</code>. Перед публикацией можно заменить или обновить исполнителей, статистику и ссылки, не трогая механику игры.</p></div>
+    </section>
+
+    <p class="footer-note">Данные используются как учебный материал для тренировки грамматики. Фактология могла пострадать ради науки </p>
+  </div>
+
+<script>
+const STAGES = [
+  {
+    id:'simple', icon:'🎟️', cardImg:'assets/студия.png', iconImg:'assets/иконка билет.png', title:'Студия 40–90–100', lead:'Редактор готовит короткие новости о фестивалях и итогах года: в этих числительных меняется только окончание.', memo:'У числительных 40, 90, 100 две формы: И./В. — сорок, девяносто, сто; остальные падежи — сорока, девяноста, ста.', img:'assets/Памятка 40,90,100.png', unlock:'Карточка открыта: в новостях о музыке формы «сорока», «девяноста», «ста» чаще всего появляются после предлогов к, о, с, после, около.',
+    tasks:[
+      {type:'choose', skill:'40/90/100', fact:'VK Fest 2025 прошёл в пяти городах и собрал 205 тысяч гостей; трансляция из Москвы в официальном сообществе набрала 30 миллионов просмотров.', question:'Выберите грамотный вариант для новостной карточки.', broken:'Редакция пишет: «Трансляция фестиваля приблизилась к ___ миллионам просмотров».', options:['тридцать','тридцати','тридцатью'], answer:1, note:'После предлога «к» нужен дательный падеж: к тридцати миллионам.'},
+      {type:'fix', skill:'сто', fact:'По итогам VK Музыки 2024 Баста был отмечен как артист с самой большой аудиторией: более 20 миллионов уникальных слушателей.', question:'Исправьте ошибку в фразе.', broken:'Редактор написал: «Новость разошлась среди сто музыкальных пабликов».', answers:['среди ста музыкальных пабликов'], note:'После «среди» нужен родительный падеж: среди ста пабликов.'},
+      {type:'choose', skill:'сорок', fact:'Музыкальные итоги часто оформляют как набор карточек: артист года, артистка года, группа года, альбом года, трек года.', question:'Выберите форму числительного.', broken:'В подборку вошли данные о ___ релизах и концертах.', options:['сорок','сорока','сорокам'], answer:1, note:'После предлога «о» нужен предложный падеж: о сорока релизах.'},
+      {type:'find', skill:'90', fact:'В музыкальных медиа числа часто появляются в подписях к графикам: просмотры, стримы, концерты, города.', question:'Найдите строку с ошибкой.', options:['о девяноста концертах сезона','к девяноста новым заявкам','с девяносто участниками эфира','после девяноста минут трансляции'], answer:2, fix:'с девяноста участниками эфира', note:'В творительном падеже: с девяноста участниками.'},
+      {type:'input', skill:'сто', fact:'В 2025 году VK Fest собрал 205 тысяч гостей в пяти городах.', question:'Впишите форму числительного 100 словами.', broken:'Организаторы рассказали о более чем ___ тысячах гостей на отдельных площадках.', answers:['ста'], note:'О более чем ста тысячах: предложный падеж.'},
+      {type:'fix', skill:'сорок', fact:'В музыкальной статистике часто сравнивают чарты за недели и месяцы.', question:'Исправьте ошибку.', broken:'В отчёте сравнили данные по сорок неделям прослушиваний.', answers:['по сорока неделям прослушиваний'], note:'После «по» в значении распределения/охвата: по сорока неделям.'},
+      {type:'choose', skill:'100', fact:'Некоторые итоговые подборки платформ собирают сотни карточек: артисты, треки, альбомы, жанры.', question:'Выберите верную форму.', broken:'Редактор работал со ___ карточками музыкальных итогов.', options:['сто','ста','стами'], answer:1, note:'Творительный падеж у числительного 100 — ста: со ста карточками.'},
+      {type:'find', skill:'40/90/100', fact:'Перед публикацией редактор проверяет падежи после предлогов.', question:'Найдите все строки без ошибки.', multi:true, options:['к сорока городам фестивального тура','о девяноста концертах сезона','со ста тысячами зрителей','после сорок дней репетиций'], answers:[0,1,2], note:'Ошибка только в последней строке: после сорока дней.'}
+    ]
+  },
+  {
+    id:'complex', icon:'📊', cardImg:'assets/чарты.png', iconImg:'assets/иконка рейтинг.png', title:'Чарты', lead:'Работаем с большими числами: у составных числительных склоняется каждое слово.', memo:'В составных количественных числительных изменяется каждая часть: о двухстах пяти тысячах, с тремястами пятьюдесятью семью артистами, к девятистам пятидесяти миллионам.', img:'assets/памятка сложные.png', unlock:'Карточка открыта: большие числа в музыкальных новостях — идеальный материал для задания, потому что ошибка в одном слове ломает весь факт.',
+    tasks:[
+      {type:'input', skill:'800 000 000', fact:'В итогах VK Музыки 2025 артистом года назвали MACAN: он набрал 800 миллионов прослушиваний.', question:'Впишите форму числительного.', broken:'В новости сообщили о более чем ___ прослушиваний MACAN за 2025 год.', answers:['восьмистах миллионах'], note:'О более чем восьмистах миллионах: предложный падеж.'},
+      {type:'choose', skill:'175 000 000', fact:'Альбом BRATLAND в VK Музыке назвали альбомом года; релиз прослушали 175 миллионов раз.', question:'Выберите грамотный вариант.', broken:'Карточка альбома говорит о более чем ___ прослушиваний.', options:['ста семидесяти пяти миллионах','сто семидесяти пяти миллионах','стами семьюдесятью пятью миллионами'], answer:0, note:'О более чем ста семидесяти пяти миллионах.'},
+      {type:'fix', skill:'590 000 000', fact:'Miyagi & Эндшпиль в итогах VK Музыки 2025 названы группой года; их слушали более 590 миллионов раз.', question:'Исправьте ошибку.', broken:'Музыкальные итоги рассказали о пятисот девяноста миллионах прослушиваний дуэта.', answers:['о пятистах девяноста миллионах прослушиваний дуэта'], note:'У числительного 500 в предложном падеже: пятистах.'},
+      {type:'input', skill:'280 000 000', fact:'ANNA ASTI стала артисткой года в VK Музыке 2025; её слушали свыше 280 миллионов раз.', question:'Впишите форму числительного.', broken:'Редактор написал материал о более чем ___ прослушиваний ANNA ASTI.', answers:['двухстах восьмидесяти миллионах'], note:'О двухстах восьмидесяти миллионах.'},
+      {type:'fix', skill:'950 000 000', fact:'В итогах VK Музыки 2024 MACAN третий год подряд получил титул артиста года и собрал более 950 миллионов стримов.', question:'Исправьте ошибку.', broken:'В 2024 году MACAN приблизился к девятьсот пятидесяти миллионам стримов.', answers:['к девятистам пятидесяти миллионам стримов'], note:'К девятистам пятидесяти миллионам: дательный падеж у каждой части.'},
+      {type:'choose', skill:'700 000 000', fact:'Miyagi & Эндшпиль в 2024 году набрали более 700 миллионов стримов в VK Музыке.', question:'Выберите верный вариант.', broken:'В обзоре написали о более чем ___ стримов дуэта за год.', options:['семьсот миллионах','семистах миллионах','семьюстами миллионами'], answer:1, note:'О семистах миллионах.'},
+      {type:'input', skill:'205 000', fact:'VK Fest 2025 прошёл в пяти городах и собрал 205 тысяч гостей.', question:'Впишите форму числительного.', broken:'Организаторы рассказали о ___ гостях фестивального тура.', answers:['двухстах пяти тысячах'], note:'О двухстах пяти тысячах гостей. В ответ вписываем числительное: двухстах пяти тысячах.'},
+      {type:'fix', skill:'295', fact:'VK Fest 2025 вошёл в Книгу рекордов России по количеству выступающих артистов: 295 исполнителей и музыкальных коллективов.', question:'Исправьте ошибку.', broken:'Фестиваль заключил программу с двести девяноста пятью артистами и коллективами.', answers:['с двумястами девяноста пятью артистами и коллективами'], note:'Творительный падеж: с двумястами девяноста пятью.'},
+      {type:'find', skill:'составные', fact:'В чарт-центре редактор сверяет числительные в коротких лидах.', question:'Найдите все строки без ошибки.', multi:true, options:['о двухстах пяти тысячах гостей VK Fest','к восьмистам миллионам прослушиваний MACAN','с двести девяноста пятью артистами','о ста семидесяти пяти миллионах прослушиваний BRATLAND'], answers:[0,1,3], note:'Ошибка: с двумястами девяноста пятью артистами.'}
+    ]
+  },
+  {
+    id:'half', icon:'🎧', cardImg:'assets/концерт.png', iconImg:'assets/иконка наушники.png', title:'Концерт: полтора часа до выхода', lead:'Саундчеки, туры, фестивали: тренируем полтора, полторы, полутора и полтораста.', memo:'Полтора — муж. и ср. род, полторы — жен. род. Во всех косвенных падежах: полутора. Полтораста в И./В.; в остальных падежах — полутораста.', img:'assets/памятка полтора, полтораста.png', unlock:'Карточка открыта: «за полтора месяца» — готовая живая формула из фестивальных отчётов, но после предлогов часто потребуется «полутора».',
+    tasks:[
+      {type:'choose', skill:'полтора', fact:'VK Fest 2025 за полтора месяца посетили 205 тысяч человек.', question:'Выберите верный вариант.', broken:'___ месяца фестивальный тур шёл по пяти городам.', options:['Полтора','Полторы','Полутора'], answer:0, note:'Месяц — мужской род: полтора месяца.'},
+      {type:'input', skill:'полтора', fact:'VK Fest 2025 длился полтора месяца и завершился московскими концертами 19–20 июля.', question:'Впишите форму числительного.', broken:'Итоговый отчёт вышел после ___ месяцев фестивального тура.', answers:['полутора'], note:'После — родительный падеж: после полутора месяцев.'},
+      {type:'choose', skill:'полторы', fact:'У музыкальных премьер часто считают первые недели после релиза.', question:'Выберите верную форму.', broken:'За ___ недели трек успел попасть в несколько редакционных подборок.', options:['полтора','полторы','полутора'], answer:1, note:'Неделя — женский род: полторы недели.'},
+      {type:'fix', skill:'полтора', fact:'Перед большим концертом саундчек может идти больше часа: это удобно для заданий с косвенными падежами.', question:'Исправьте ошибку.', broken:'После полтора часов саундчека команда проверила звук для лайв-трансляции.', answers:['после полутора часов саундчека команда проверила звук для лайв-трансляции'], note:'После — родительный падеж: после полутора часов.'},
+      {type:'choose', skill:'полтораста', fact:'В редакции музыкального медиа могут обрабатывать сотни заявок от молодых артистов и промогрупп.', question:'Выберите форму для новости.', broken:'Редакция выбрала участников из ___ заявок на лайв-сессию.', options:['полтораста','полутораста','полторыста'], answer:1, note:'После «из» нужен родительный падеж: из полутораста заявок.'},
+      {type:'input', skill:'полтораста', fact:'Для фестивального спецпроекта редактор сравнивает заявки музыкантов, блогеров и команд.', question:'Впишите форму числительного.', broken:'К ___ заявкам добавили ещё несколько демозаписей.', answers:['полутораста'], note:'Дательный падеж: к полутораста заявкам.'},
+      {type:'find', skill:'полтора/полтораста', fact:'Бэкстейдж-редактор проверяет подписи к расписанию.', question:'Найдите строку с ошибкой.', options:['за полтора часа до выхода артиста','после полутора часов саундчека','из полутораста заявок на фестиваль','к полтораста заявкам добавили демо'], answer:3, fix:'к полутораста заявкам добавили демо', note:'Косвенный падеж: полутораста.'},
+      {type:'fix', skill:'полторы', fact:'Музыкальные чарты иногда обновляются через неделю, две недели или полторы недели после релиза.', question:'Исправьте ошибку.', broken:'Через полтора недели после релиза трек попал в подборку новых хитов.', answers:['через полторы недели после релиза трек попал в подборку новых хитов'], note:'Неделя — женский род: полторы недели.'}
+    ]
+  },
+  {
+    id:'collective', icon:'🎤', cardImg:'assets/плейлист.png', iconImg:'assets/иконка микрофон.png', title:'Плейлист и составы', lead:'Собирательные числительные: где уместны двое, трое, пятеро, а где нужны обычные два, три, пять.', memo:'Собирательные числительные употребляются с лицами мужского пола, детьми, детёнышами, pluralia tantum. С существительными женского рода обычно нужны количественные: две артистки, три певицы.', img:'assets/памятка собирательные.png', unlock:'Карточка открыта: собирательные числительные хорошо работают в описаниях дуэтов, команд, фан-групп и бэкстейджа, но не подходят к словам «артистка», «певица», «солистка».',
+    tasks:[
+      {type:'choose', skill:'двое/два', fact:'Miyagi & Эндшпиль — дуэт; в музыкальных итогах VK Музыки 2025 он был назван группой года.', question:'Выберите грамотно оформленную фразу.', broken:'В новости о дуэте нужно написать:', options:['двое участников дуэта получили звание группы года','два участников дуэта получили звание группы года','двое участниц дуэта получили звание группы года'], answer:0, note:'С лицами мужского пола возможно собирательное: двое участников.'},
+      {type:'choose', skill:'две/двое', fact:'ANNA ASTI и Клава Кока часто появляются в музыкальных новостях как отдельные артистки, а не как участники одного мужского коллектива.', question:'Выберите грамотный вариант.', broken:'В обзоре сравнили ___ артисток по динамике прослушиваний.', options:['двух','двоих','обоих'], answer:0, note:'С существительными женского рода в родительном падеже: двух артисток.'},
+      {type:'fix', skill:'три/трое', fact:'В музыкальном выпуске редактор отдельно пишет про артистов и артисток.', question:'Исправьте ошибку.', broken:'В финальный блок вошли трое певиц и два дуэта.', answers:['в финальный блок вошли три певицы и два дуэта'], note:'С «певицы» нужно количественное числительное: три певицы.'},
+      {type:'choose', skill:'оба/обе', fact:'В дуэте Miyagi & Эндшпиль оба участника участвуют в создании треков и выступлений.', question:'Выберите верную форму.', broken:'___ участника дуэта попали в карточку группы года.', options:['Оба','Обе','Двое из двух'], answer:0, note:'Участника — мужской род: оба участника.'},
+      {type:'find', skill:'собирательные', fact:'Фан-зона готовит подписи к фотографиям с лайв-сессии.', question:'Найдите все строки без ошибки.', multi:true, options:['трое музыкантов вышли на бис','две артистки попали в подборку','пятеро ребят из фан-клуба встретили артиста','двое певиц дали интервью'], answers:[0,1,2], note:'Ошибка: две певицы, не двое певиц.'},
+      {type:'input', skill:'обе', fact:'Если в новости названы две артистки, форма «обе» зависит от женского рода.', question:'Впишите числительное.', broken:'___ артистки появились в итоговой подборке музыкального года.', answers:['обе'], note:'Артистки — женский род: обе артистки.'},
+      {type:'fix', skill:'оба/обе', fact:'В музыкальной редакции отдельно проверяют подписи к дуэтам и сольным артисткам.', question:'Исправьте ошибку.', broken:'Обе участника дуэта Miyagi & Эндшпиль получили упоминание в итогах года.', answers:['оба участника дуэта miyagi & эндшпиль получили упоминание в итогах года','оба участника дуэта Miyagi & Эндшпиль получили упоминание в итогах года'], note:'Участника — мужской род: оба участника.'},
+      {type:'choose', skill:'pluralia tantum', fact:'Иногда в музыкальных отчётах встречаются слова только множественного числа: сутки, ножницы, кулисы.', question:'Выберите допустимый вариант.', broken:'До финального концерта оставалось:', options:['трое суток','три сутки','трое сутки'], answer:0, note:'С pluralia tantum возможно собирательное: трое суток.'}
+    ]
+  },
+  {
+    id:'final', icon:'🏆', cardImg:'assets/Награды.png', iconImg:'assets/иконка звезда.png', title:'Награды: финальный эфир', lead:'Смешанный выпуск: исправляем музыкальную новость целиком.', memo:'В финале смешаны все правила. Проверяйте предлог, падеж, род существительного и каждую часть составного числительного.', img:'assets/памятка финал.png', unlock:'Финальный бейдж открыт: выпуск можно публиковать, если каждая цифра согласована с падежом и смыслом.',
+    tasks:[
+      {type:'fix', fullOnly:true, skill:'микс', fact:'VK Fest 2025 собрал 205 тысяч гостей и 295 артистов в пяти городах.', question:'Исправьте фразу полностью.', broken:'В отчёте рассказали о двести пяти тысячах гостей и двухсот девяноста пяти артистах.', answers:['в отчёте рассказали о двухстах пяти тысячах гостей и двухстах девяноста пяти артистах'], note:'О двухстах пяти тысячах; о двухстах девяноста пяти артистах.'},
+      {type:'choose', skill:'микс', fact:'Трансляция московской части VK Fest 2025 собрала 30 миллионов просмотров.', question:'Выберите грамотный вариант.', broken:'Редактор пишет о трансляции:', options:['с тридцатью миллионами просмотров','с тридцати миллионами просмотров','с тридцать миллионами просмотров'], answer:0, note:'Творительный падеж: с тридцатью миллионами.'},
+      {type:'fix', skill:'микс', fact:'MACAN в VK Музыке 2025 набрал 800 миллионов прослушиваний, а BRATLAND прослушали 175 миллионов раз.', question:'Исправьте ошибку.', broken:'В выпуске сравнили восемьсот миллионов прослушиваний MACAN со сто семьюдесятью пятью миллионами прослушиваний BRATLAND.', answers:['в выпуске сравнили восемьсот миллионов прослушиваний MACAN со ста семьюдесятью пятью миллионами прослушиваний BRATLAND','в выпуске сравнили восемьсот миллионов прослушиваний macan со ста семьюдесятью пятью миллионами прослушиваний bratland'], note:'После «со» нужен творительный: со ста семьюдесятью пятью миллионами.'},
+      {type:'input', skill:'микс', fact:'VK Fest 2025 длился полтора месяца.', question:'Впишите форму числительного.', broken:'Ведущий рассказал о ___ месяцах фестивального тура.', answers:['полутора'], note:'О полутора месяцах.'},
+      {type:'find', skill:'микс', fact:'Финальный редактор ищет ошибки перед публикацией.', question:'Найдите все строки с ошибкой.', multi:true, options:['о восьмистах миллионах прослушиваний','с двумястами девяноста пятью артистами','после полтора месяцев фестиваля','двое артисток дали комментарий'], answers:[2,3], note:'Правильно: после полутора месяцев; две артистки.'},
+      {type:'choose', skill:'микс', fact:'ANNA ASTI в итогах VK Музыки 2025 слушали свыше 280 миллионов раз.', question:'Выберите верную форму для заголовка.', broken:'«Итоги года: материал о ___ прослушиваний ANNA ASTI»', options:['двухстах восьмидесяти миллионах','двести восьмидесяти миллионах','двумястами восьмьюдесятью миллионами'], answer:0, note:'О двухстах восьмидесяти миллионах.'},
+      {type:'fix', fullOnly:true, skill:'микс', fact:'Miyagi & Эндшпиль в 2024 году набрали более 700 миллионов стримов, а в 2025 — более 590 миллионов прослушиваний.', question:'Исправьте фразу.', broken:'Редактор написал о семиста миллионах стримов в 2024 году и пятисот девяноста миллионах прослушиваний в 2025 году.', answers:['редактор написал о семистах миллионах стримов в 2024 году и пятистах девяноста миллионах прослушиваний в 2025 году'], note:'О семистах; о пятистах девяноста.'},
+      {type:'choose', skill:'микс', fact:'Если в карточке говорится о двух артистках, собирательное числительное не подходит.', question:'Выберите строку без ошибки.', broken:'Редактор пишет о сравнении артисток:', options:['о двоих артистках','о двух артистках','о обеих артистки'], answer:1, note:'Нейтрально и грамотно: о двух артистках. «Обеих» требует формы артистках, но здесь проверяем числительное два.'}
+    ]
+  }
+];
+const state = {stage:null, index:0, total:STAGES.reduce((s,st)=>s+st.tasks.length,0), answered:false, selected:new Set(), done:{}, correct:{}, attempts:{}, music:false, audioCtx:null};
+const els = {home:document.getElementById('homeView'), map:document.getElementById('map'), panel:document.getElementById('stagePanel'), final:document.getElementById('finalPanel'), task:document.getElementById('taskCard'), scoreBig:document.getElementById('scoreBig'), scoreText:document.getElementById('scoreText'), title:document.getElementById('stageTitle'), lead:document.getElementById('stageLead'), eyebrow:document.getElementById('stageEyebrow'), memoImg:document.getElementById('memoImg'), memoText:document.getElementById('memoText'), memoModal:document.getElementById('memoModal'), memoDialog:document.getElementById('memoDialog'), memoModalTitle:document.getElementById('memoModalTitle'), memoBtn:document.getElementById('memoBtn'), memoLargeBtn:document.getElementById('memoLargeBtn'), memoZoomBtn:document.getElementById('memoZoomBtn'), memoCloseBtn:document.getElementById('memoCloseBtn'), musicToggle:document.getElementById('musicToggle')};
+const bgMusic = new Audio('assets/музыка.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.32;
+function norm(s){return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[«»"']/g,'').replace(/[.,;:!?]/g,'').replace(/\s+/g,' ').trim()}
+function containsWholePhrase(full, part){const f=' '+norm(full)+' '; const p=norm(part); if(p.length<3) return false; return f.includes(' '+p+' ')}
+function answerMatches(t, value){const val=norm(value); if(!val) return false; const answers=(t.answers||[]); if(answers.map(norm).includes(val)) return true; if(t.type==='fix' && !t.fullOnly){return answers.some(a=>containsWholePhrase(a,val))} return false}
+function answerHint(t){if(t.type==='fix' && !t.fullOnly) return 'Можно ввести только исправленное числительное / исправленный фрагмент или всю фразу.'; if(t.type==='fix') return 'Введите исправленную фразу полностью.'; return 'Введите форму числительного без кавычек.'}
+function taskKey(stageIndex=state.stage, taskIndex=state.index){return `${STAGES[stageIndex].id}:${taskIndex}`}
+function scoreTotal(){return Object.keys(state.correct).length}
+function stageScore(stageIndex){const st=STAGES[stageIndex];return st.tasks.reduce((sum,_,i)=>sum+(state.correct[`${st.id}:${i}`]?1:0),0)}
+function correctAnswerText(t){if(t.multi)return t.answers.map(i=>t.options[i]).join('; '); if(typeof t.answer==='number')return t.options[t.answer]; return (t.answers&&t.answers[0])||t.fix||''}
+function recordAttempt(ok,given,correct){state.attempts[taskKey()]={ok,given:given||'нет ответа',correct:correct||'',note:STAGES[state.stage].tasks[state.index].note||''}}
+function stageReview(stageIndex){const st=STAGES[stageIndex];return `<div class="review-list">${st.tasks.map((t,i)=>{const key=`${st.id}:${i}`;const ok=Boolean(state.correct[key]);const attempt=state.attempts[key]||{};const given=attempt.given||'задание пропущено';const correct=attempt.correct||correctAnswerText(t);return `<article class="review-item ${ok?'good':'bad'}"><div class="review-title"><span>${i+1}. ${t.question}</span><span class="review-status ${ok?'good':'bad'}">${ok?'верно':'ошибка'}</span></div>${ok?`<p class="review-detail">Ответ: ${given}</p>`:`<p class="review-detail"><b>Твой ответ:</b> ${given}</p><p class="review-detail"><b>Правильно:</b> ${correct}</p><p class="review-detail">${t.note}</p>`}</article>`}).join('')}</div>`}
+function audioContext(){if(!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return state.audioCtx}
+function playTone(ok){try{const ctx=audioContext(); const now=ctx.currentTime; const osc=ctx.createOscillator(); const gain=ctx.createGain(); osc.type=ok?'triangle':'sawtooth'; osc.frequency.setValueAtTime(ok?660:180,now); osc.frequency.exponentialRampToValueAtTime(ok?990:95,now+.18); gain.gain.setValueAtTime(.0001,now); gain.gain.exponentialRampToValueAtTime(ok?.12:.08,now+.02); gain.gain.exponentialRampToValueAtTime(.0001,now+.22); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now+.24)}catch(error){}}
+function updateMusicButton(){els.musicToggle.textContent=state.music?'Выключить музыку':'Включить музыку';els.musicToggle.setAttribute('aria-pressed',state.music?'true':'false');els.musicToggle.classList.toggle('is-on',state.music)}
+function toggleMusic(){state.music=!state.music; if(state.music){bgMusic.play().catch(()=>{state.music=false;updateMusicButton()})}else{bgMusic.pause()} updateMusicButton()}
+function openMemo(large=false){if(state.stage===null)return;const st=STAGES[state.stage];els.memoModalTitle.textContent=st.title;els.memoImg.src=st.img;els.memoText.textContent=st.memo;els.memoDialog.classList.toggle('is-large',large);els.memoZoomBtn.textContent=large?'Уменьшить':'Увеличить';els.memoModal.classList.remove('hidden')}
+function closeMemo(){els.memoModal.classList.add('hidden')}
+function toggleMemoZoom(){const large=!els.memoDialog.classList.contains('is-large');els.memoDialog.classList.toggle('is-large',large);els.memoZoomBtn.textContent=large?'Уменьшить':'Увеличить'}
+function renderMap(){els.map.innerHTML='';STAGES.forEach((st,i)=>{const done=state.done[st.id];const card=document.createElement('article');card.className='location-card'+(done?' done':'');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`${st.title}. ${done?'Локация пройдена':'Открыть локацию'}`);card.innerHTML=`<img class="stage-card-img" src="${st.cardImg}" alt="${st.title}"><span class="badge">${done?'пройдено':'открыто'}</span><div class="loc-icon" aria-hidden="true">${st.iconImg?`<img src="${st.iconImg}" alt="">`:st.icon}</div><h3>${st.title}</h3><p>${st.lead}</p><span class="small">${st.tasks.length} заданий</span>`;card.onclick=()=>openStage(i);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openStage(i)}};els.map.appendChild(card)});updateScore()}
+function updateScore(){const score=scoreTotal();els.scoreBig.textContent=`${score}/${state.total}`;const doneCount=Object.keys(state.done).length;els.scoreText.textContent=`Пройдено локаций: ${doneCount}/${STAGES.length}. Правильных ответов: ${score}.`;if(doneCount===STAGES.length) renderFinal()}
+function openStage(i){state.stage=i;state.index=0;state.answered=false;state.selected=new Set();const st=STAGES[i];els.home.classList.add('hidden');els.final.classList.add('hidden');els.panel.classList.remove('hidden');els.title.textContent=st.title;els.lead.textContent=st.lead;els.eyebrow.textContent=`локация ${i+1}`;els.memoImg.src=st.img;els.memoText.textContent=st.memo;renderTask();window.scrollTo({top:0,behavior:'smooth'});}
+function renderTask(){const st=STAGES[state.stage];const t=st.tasks[state.index];state.answered=false;state.selected=new Set();const meta=`<div class="task-meta"><span class="tag">${t.skill}</span><span class="tag">${state.index+1}/${st.tasks.length}</span><span class="tag">${typeLabel(t)}</span></div>`;let body=`${meta}<p class="question">${t.question}</p><div class="fact"><b>Факт для редакции.</b> ${t.fact}</div>${t.broken?`<div class="broken">${t.broken}</div>`:''}`;
+ if(t.type==='choose'||t.type==='find'){body+=`<div class="options">${t.options.map((o,i)=>`<label class="option" data-i="${i}"><input type="${t.multi?'checkbox':'radio'}" name="opt" value="${i}"><span>${o}</span></label>`).join('')}</div><div class="nav-row"><button class="btn icon-check" onclick="checkChoice()">Проверить</button></div>`}
+ if(t.type==='input'||t.type==='fix'){body+=`<p class="small">${answerHint(t)}</p><div class="answer-row"><input id="answerInput" placeholder="Введите ответ без кавычек" autocomplete="off"><button class="btn icon-check" onclick="checkInput()">Проверить</button></div>`}
+ body+=`<div id="feedback"></div><div class="nav-row"><div class="progress"><div class="bar" style="width:${((state.index)/st.tasks.length)*100}%"></div></div><button class="btn secondary icon-next" id="nextBtn" onclick="nextTask()" disabled>Дальше</button></div>`;
+ els.task.innerHTML=body;const input=document.getElementById('answerInput');if(input){input.addEventListener('keydown',(event)=>{if(event.key==='Enter') checkInput()});input.focus({preventScroll:true})}}
+function typeLabel(t){if(t.type==='choose')return 'выбор'; if(t.type==='find')return t.multi?'множественный выбор':'найти ошибку'; if(t.type==='fix')return 'редактор'; return 'самостоятельно'}
+function feedback(ok, text){playTone(ok);const f=document.getElementById('feedback');f.className='feedback '+(ok?'good':'bad');f.innerHTML=`<b>${ok?'Верно.':'Есть ошибка.'}</b>${text}${ok?'':'<br><span class="small">Можно исправить ответ и проверить ещё раз или перейти дальше без балла.</span>'}`;document.getElementById('nextBtn').disabled=false;if(ok){state.correct[taskKey()]=true;state.answered=true;updateScore()}}
+function checkChoice(){const st=STAGES[state.stage];const t=st.tasks[state.index];const checked=[...document.querySelectorAll('.option input:checked')].map(x=>Number(x.value));let ok=false;if(t.multi){ok=checked.length===t.answers.length && t.answers.every(x=>checked.includes(x))}else{ok=checked.length===1 && checked[0]===t.answer}document.querySelectorAll('.option').forEach(el=>{const i=Number(el.dataset.i);el.classList.remove('correct','wrong');const good=t.multi?t.answers.includes(i):i===t.answer;if(good)el.classList.add('correct'); if(checked.includes(i)&&!good)el.classList.add('wrong')});const given=checked.length?checked.map(i=>t.options[i]).join('; '):'нет ответа';const correct=correctAnswerText(t);recordAttempt(ok,given,correct);let extra=t.fix?`<br><b>Правка:</b> ${t.fix}`:''; if(t.overrideCorrect) extra+=`<br><b>Правильно:</b> ${t.overrideCorrect}`; feedback(ok,`${t.note}${extra}`)}
+function checkInput(){const st=STAGES[state.stage];const t=st.tasks[state.index];const input=document.getElementById('answerInput');const val=input.value;const ok=answerMatches(t,val);input.classList.remove('correct','wrong');input.classList.add(ok?'correct':'wrong');recordAttempt(ok,val,correctAnswerText(t));feedback(ok,`${t.note}<br><b>Ответ:</b> ${t.answers[0]}`)}
+function nextTask(){const st=STAGES[state.stage];if(state.index<st.tasks.length-1){state.index++;renderTask()}else{state.done[st.id]=true;const got=stageScore(state.stage);els.task.innerHTML=`<div class="unlock"><h3>${st.icon} Локация пройдена: ${got}/${st.tasks.length}</h3><p>${st.unlock}</p><div class="stage-prize">${st.iconImg?`<img src="${st.iconImg}" alt="">`:st.icon}<span>Награда получена</span></div><button class="btn icon-next" onclick="backToMap()">Вернуться к карте</button></div>${stageReview(state.stage)}`;renderMap();updateScore()}}
+function backToMap(){els.panel.classList.add('hidden');els.home.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
+function renderFinal(){els.final.classList.remove('hidden');const score=scoreTotal();const byStage=STAGES.map((st,i)=>`<div class="result-card"><b>${stageScore(i)}/${st.tasks.length}</b><p>${st.title}</p></div>`).join('');document.getElementById('finalStats').innerHTML=byStage+`<div class="result-card"><b>${score}</b><p>правильных ответов из ${state.total}</p></div>`}
+document.getElementById('toMapBtn').onclick=backToMap;document.getElementById('restartStageBtn').onclick=()=>openStage(state.stage);els.memoBtn.onclick=()=>openMemo(false);els.memoLargeBtn.onclick=()=>openMemo(true);els.memoZoomBtn.onclick=toggleMemoZoom;els.memoCloseBtn.onclick=closeMemo;els.memoModal.addEventListener('click',(event)=>{if(event.target===els.memoModal)closeMemo()});document.addEventListener('keydown',(event)=>{if(event.key==='Escape')closeMemo()});document.getElementById('resetBtn').onclick=()=>{state.stage=null;state.index=0;state.correct={};state.attempts={};state.done={};els.panel.classList.add('hidden');els.final.classList.add('hidden');els.home.classList.remove('hidden');closeMemo();renderMap()};els.musicToggle.onclick=toggleMusic;updateMusicButton();renderMap();
+</script>
+</body>
+</html>
