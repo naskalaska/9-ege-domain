@@ -141,11 +141,13 @@
   @media (max-width:640px){
     .app{height:100svh}.topbar{grid-template-columns:1fr auto;gap:7px;padding:7px}.brand{grid-column:1/-1;font-size:18px}.modeMenu{justify-self:stretch}.modeMenuBtn{max-width:100%;width:100%;padding:10px 18px}.controls{justify-content:flex-start;overflow-x:auto;grid-column:1/-1}.primary,.hintBtn,.toggle{flex:0 0 148px;width:148px;height:48px;font-size:13px}.hintBtn{flex-basis:136px;width:136px}.toggle{padding:0 14px}.toggle::after{min-width:34px;padding:3px 6px;font-size:9px}
     .stage{width:100vw;overflow:hidden}.kingdomMap{width:100vw;max-width:100vw;height:100%;}
-    .boardGrid{top:45%;width:max(760px,133.334cqh);transform:translate(-50%,-45%)}
+    /* На телефоне показываем всю ширину карты: все три якоря замков
+       остаются внутри экрана, а монеты располагаются отдельным рядом ниже. */
+    .boardGrid{top:0;width:100cqw;transform:translateX(-50%)}
     .hud{display:none}.panel{padding:8px 9px;border-radius:12px}.panel::before{inset:-4px}.hintBox{max-height:86px;overflow:auto;font-size:11px;line-height:1.2}
-    .stats{left:8px;right:auto;top:96px;width:166px;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.stat{padding:7px 2px;border-radius:11px}.stat b{font-size:18px}.stat span{font-size:8px}
-    .castleName{width:min(128px,92%);min-height:34px;font-size:10px;padding:6px 14px}.castleCount{font-size:10px;padding:4px 7px}.memoBtn{width:28px;height:28px;right:8%;top:12%}.memoBtn::before{font-size:17px}
-    .dropzone{inset:0 0 8%}.merchantSlot{bottom:max(12px,calc(55% - 55cqh));width:100%}.coinWrap{height:210px}.pileCoin{width:min(92px,24vw);padding:12px}.pileCoin.active{width:min(118px,31vw);bottom:18px;padding:14px;transform:translateX(calc(-50% + var(--x))) translateY(calc(var(--y) - 10px)) rotate(var(--r)) scale(1.04)}.pileCoin .coinText{font-size:10px}.pileCoin.active .coinText{font-size:12px}.toast{bottom:10px;font-size:14px}
+    .stats{left:4px;right:4px;top:4px;width:auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}.stat{padding:4px 1px;border-radius:8px}.stat b{font-size:14px}.stat span{margin-top:1px;font-size:6px}
+    .castleArt{width:96%}.slotB .castleArt{width:98%}.slotC .castleArt{width:95%}.castleName{width:96%;min-height:27px;font-size:8px;padding:4px 5px}.castleCount{font-size:8px;padding:3px 5px}.memoBtn{width:22px;height:22px;right:4%;top:12%}.slotC .memoBtn{right:2%;top:48%}.memoBtn::before{font-size:14px}
+    .dropzone{inset:-8% -4% 0}.merchantSlot{top:80%;bottom:auto;width:100%}.coinWrap{height:210px}.pileCoin{width:min(82px,22vw);padding:10px;touch-action:none}.pileCoin.active{width:min(104px,28vw);bottom:18px;padding:12px;transform:translateX(calc(-50% + var(--x))) translateY(calc(var(--y) - 10px)) rotate(var(--r)) scale(1.04)}.pileCoin .coinText{font-size:9px}.pileCoin.active .coinText{font-size:11px}.toast{bottom:10px;font-size:14px}
     .modal{padding:28px 24px 24px;background-image:url("assets/подложка вертикальная.png")}
     #resultDialog .modal{height:min(680px,90vh);font-size:15px}.resultScroll{margin:76px 34px 18px;padding:12px}.resultSummary{grid-template-columns:1fr;gap:6px}.resultSummary b{font-size:19px}#resultDialog .resultItem{font-size:15px;padding:10px 12px}#resultDialog .footerActions{margin:0 34px 38px}#resultDialog .footerActions .primary,#resultDialog .footerActions .ghost{width:150px;height:48px;font-size:15px}
   }
@@ -1567,7 +1569,50 @@ function renderMerchant(){
     c.id = card.id;
     c.title = plainCoinLabel(card);
     c.setAttribute('aria-label', `Монетка: ${plainCoinLabel(card)}`);
-    c.addEventListener('click', ()=>{ selectedCardId = card.id; renderMerchant(); });
+    let touchDrag = null;
+    let suppressClick = false;
+    c.addEventListener('click', ()=>{
+      if(suppressClick) return;
+      selectedCardId = card.id;
+      renderMerchant();
+    });
+    c.addEventListener('pointerdown', e=>{
+      if(e.pointerType === 'mouse') return;
+      selectedCardId = card.id;
+      touchDrag = {pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+      c.setPointerCapture(e.pointerId);
+      c.classList.add('dragging','active');
+      e.preventDefault();
+    });
+    c.addEventListener('pointermove', e=>{
+      if(!touchDrag || e.pointerId !== touchDrag.pointerId) return;
+      const dx = e.clientX - touchDrag.startX;
+      const dy = e.clientY - touchDrag.startY;
+      if(Math.hypot(dx,dy) > 7) touchDrag.moved = true;
+      c.style.translate = `${dx}px ${dy}px`;
+      c.style.zIndex = '999';
+      e.preventDefault();
+    });
+    const finishTouchDrag = e=>{
+      if(!touchDrag || e.pointerId !== touchDrag.pointerId) return;
+      const wasMoved = touchDrag.moved;
+      const zone = document.elementsFromPoint(e.clientX,e.clientY)
+        .find(el=>el.classList?.contains('dropzone'));
+      c.style.translate = '';
+      c.classList.remove('dragging');
+      touchDrag = null;
+      if(wasMoved){
+        suppressClick = true;
+        setTimeout(()=>{ suppressClick = false; },0);
+        if(zone) attemptPlace(zone.dataset.cat, card.id);
+        else renderMerchant();
+      } else {
+        renderMerchant();
+      }
+      e.preventDefault();
+    };
+    c.addEventListener('pointerup', finishTouchDrag);
+    c.addEventListener('pointercancel', finishTouchDrag);
     c.addEventListener('dragstart', e=>{
       selectedCardId = card.id;
       c.classList.add('dragging');

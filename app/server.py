@@ -3974,7 +3974,7 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
     position: fixed;
     z-index: 2147483647;
     top: 8px;
-    right: 8px;
+    left: 8px;
     width: auto;
     max-width: min(360px, calc(100vw - 16px));
     display: flex;
@@ -4009,7 +4009,7 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
   @media (max-width: 640px) {{
     .site-demo-ribbon {{
       top: 5px;
-      right: 5px;
+      left: 5px;
       max-width: calc(100vw - 10px);
       padding: 4px 6px;
       font-size: 10px;
@@ -4027,6 +4027,64 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
         html = html.replace("</body>", f"{badge}</body>", 1)
     else:
         html += badge
+    return html.encode("utf-8")
+
+
+def inject_game_menu_link(body: bytes) -> bytes:
+    """Add or normalize a compact menu link in every served HTML game."""
+    html = body.decode("utf-8", errors="replace")
+    has_menu_link = "game-menu-link" in html
+    menu_button = "" if has_menu_link else (
+        '<a class="game-menu-link site-game-menu-link" href="/games/" target="_top" '
+        'aria-label="Назад в меню игр">← Меню</a>'
+    )
+    menu_style = """
+<style>
+  html body .game-menu-link {
+    position: fixed !important;
+    z-index: 2147483646 !important;
+    left: 8px !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: 8px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 6px 9px !important;
+    border: 1px solid rgba(255,255,255,.46) !important;
+    border-radius: 9px !important;
+    background: rgba(25,28,27,.72) !important;
+    color: #fff !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.2) !important;
+    font: 700 11px/1 system-ui,-apple-system,"Segoe UI",sans-serif !important;
+    letter-spacing: 0 !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    opacity: .78;
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+  }
+  html body .game-menu-link:hover,
+  html body .game-menu-link:focus-visible {
+    opacity: 1;
+    background: rgba(25,28,27,.92) !important;
+  }
+  @media (max-width:640px) {
+    html body .game-menu-link {
+      left: 5px !important;
+      bottom: 5px !important;
+      padding: 5px 7px !important;
+      font-size: 10px !important;
+    }
+  }
+</style>
+"""
+    addition = f"{menu_style}{menu_button}"
+    if "</body>" in html:
+        html = html.replace("</body>", f"{addition}</body>", 1)
+    else:
+        html += addition
     return html.encode("utf-8")
 
 
@@ -4589,6 +4647,7 @@ class Handler(SimpleHTTPRequestHandler):
         body = file_path.read_bytes()
         if relative_path in {"index.html", ""}:
             body = inject_demo_notice(slug, body)
+            body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
@@ -4617,6 +4676,7 @@ class Handler(SimpleHTTPRequestHandler):
         body = file_path.read_bytes()
         if relative_path in {"index.html", ""}:
             body = inject_demo_notice(slug, body)
+            body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
@@ -4640,6 +4700,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
         body = file_path.read_bytes()
+        if relative_path in {"index.html", ""}:
+            body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
