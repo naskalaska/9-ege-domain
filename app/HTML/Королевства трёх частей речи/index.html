@@ -1557,6 +1557,9 @@ function renderMerchant(){
   coinWrap.innerHTML = '';
   const pile = document.createElement('div');
   pile.className = 'coinPile';
+  const mobilePileScale = window.matchMedia('(max-width:640px)').matches
+    ? Math.min(.55, Math.max(.22, (window.innerWidth / 2 - 56) / 432))
+    : 1;
   if(!currentCard()) selectedCardId = roundCards[0]?.id || null;
   roundCards.forEach((card, i)=>{
     const [x,y,r] = PILE_LAYOUT[i % PILE_LAYOUT.length];
@@ -1619,7 +1622,7 @@ function renderMerchant(){
       e.dataTransfer.setData('text/plain', card.id);
     });
     c.addEventListener('dragend', ()=>c.classList.remove('dragging'));
-    c.style.setProperty('--x', `${x}px`);
+    c.style.setProperty('--x', `${Math.round(x * mobilePileScale)}px`);
     c.style.setProperty('--y', `${y}px`);
     c.style.setProperty('--r', `${r}deg`);
     c.style.zIndex = card.id === selectedCardId ? '90' : String(i + 1);

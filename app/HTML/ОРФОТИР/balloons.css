@@ -1,0 +1,82 @@
+.red{--balloon:url('assets/balloon-red.png')}
+.cyan{--balloon:url('assets/balloon-cyan.png')}
+.gold{--balloon:url('assets/balloon-gold.png')}
+.purple{--balloon:url('assets/balloon-purple.png')}
+.pink{--balloon:url('assets/balloon-pink.png')}
+.green{--balloon:url('assets/balloon-blue.png')}
+
+.mini-ball,
+.balloon,
+.quest-ball{
+  border-radius:0;
+  box-shadow:none;
+  background-color:transparent!important;
+  background-image:var(--balloon)!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:contain!important;
+  filter:drop-shadow(0 12px 9px #0017258c);
+}
+
+.mini-ball:before,
+.mini-ball:after,
+.balloon:before,
+.balloon:after,
+.balloon>span:after,
+.quest-ball:before,
+.quest-ball:after{content:none!important}
+
+.mini-ball{
+  left:25px;
+  top:62px;
+  width:72px;
+  height:122px;
+  padding-top:31px;
+  place-items:start center;
+}
+
+.compact-grid .mini-ball{
+  left:16px;
+  top:48px;
+  width:63px;
+  height:107px;
+  padding-top:27px;
+}
+
+.balloons{
+  inset:18% 12% 16%;
+}
+
+.balloon{
+  width:118px;
+  height:200px;
+  padding:0;
+  overflow:visible;
+}
+
+.balloon>span{
+  display:grid;
+  place-items:start center;
+  width:100%;
+  height:100%;
+  padding-top:47px;
+}
+
+.balloon:hover{
+  filter:brightness(1.08) drop-shadow(0 16px 12px #001725aa);
+}
+
+.quest-ball{
+  width:100px;
+  height:170px;
+  padding-top:39px;
+  place-items:start center;
+  --balloon:url('assets/balloon-red.png');
+}
+
+@media(max-width:620px){
+  .balloons{inset:17% 3% 12%}
+  .balloon{width:72px;height:122px}
+  .balloon>span{padding-top:29px}
+  .quest-ball{width:68px;height:116px;padding-top:26px}
+}

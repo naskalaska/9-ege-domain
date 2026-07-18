@@ -175,6 +175,30 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/parts-of-speech-kingdom/index.html",
         "kind": "product",
     },
+    "butterflies-participial-phrase": {
+        "id": "butterflies_participial_phrase",
+        "title": "HTML-игра «Бабочки: причастный оборот»",
+        "short_title": "Бабочки: причастный оборот",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/Бабочки (1).png",
+        "url_env": "BUTTERFLIES_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/butterflies-participial-phrase/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/butterflies-participial-phrase/index.html",
+        "kind": "product",
+    },
+    "orthoshooting": {
+        "id": "orthoshooting",
+        "title": "HTML-игра «Орфотир»",
+        "short_title": "Орфотир",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/Орфотир (1).png",
+        "url_env": "ORTHOSHOOTING_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/orthoshooting/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/orthoshooting/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -247,6 +271,11 @@ DEMO_GAME_NOTICES = {
         "label": "Демо",
         "text": "Можно познакомиться с механикой на сокращённом раунде. Полный комплект откроется после покупки.",
         "shop_url": "/shop/parts-of-speech-kingdom",
+    },
+    "orthoshooting": {
+        "label": "Демо",
+        "text": "В демо доступны первые 20 заданий. Полная версия со всей базой открывается после покупки.",
+        "shop_url": "/shop/orthoshooting",
     },
 }
 
@@ -401,10 +430,14 @@ HTML_GAMES = {
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
     "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
     "parts-of-speech-kingdom": HTML_DIR / "Королевства трёх частей речи",
+    "butterflies-participial-phrase": HTML_DIR / "бабочки",
+    "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
+    "orthoshooting": HTML_DIR / "ОРФОТИР",
 }
 
 PUBLIC_GAMES = {
     "fluffs": first_existing_path(HTML_DIR / "fluffs", HTML_DIR / "Пушинки"),
+    "butterflies": HTML_DIR / "бабочки-суффиксы-причастий",
     "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
@@ -416,12 +449,15 @@ PUBLIC_GAMES = {
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
     "grammar-zoo": HTML_DIR / "Зоопарк - грамматические основы",
     "parts-of-speech-kingdom": HTML_DIR / "Королевства трёх частей речи",
+    "butterflies-participial-phrase": HTML_DIR / "бабочки",
+    "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
+    "orthoshooting": HTML_DIR / "ОРФОТИР",
 }
 
 GAME_SET_MAX_ITEMS = 200
 GAME_SET_MAX_STRING = 600
 GAME_SET_MAX_PAYLOAD_BYTES = 200_000
-GAME_MECHANICS = {"fluffs", "berry-season", "mouse-space"}
+GAME_MECHANICS = {"fluffs", "berry-season", "mouse-space", "butterflies"}
 PUBLIC_DOC_FILES = {
     "contacts": "contacts.txt",
     "delivery": "delivery.txt",
@@ -2885,6 +2921,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
             {"id": "fluffs", "title": "Пушинки", "available": True},
             {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True},
             {"id": "mouse-space", "title": "Мышонок в космосе: выбор буквы", "available": True},
+            {"id": "butterflies", "title": "Бабочки: суффиксы причастий", "available": True},
             {"id": "focus", "title": "Фокус", "available": False},
         ],
         "sources": sources,
@@ -2974,6 +3011,7 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     mechanic_title = {
         "berry-season": "Ягодный сезон",
         "mouse-space": "Мышонок в космосе",
+        "butterflies": "Бабочки",
     }.get(mechanic, "Пушинки")
     title = clean_game_string(payload.get("title"), 120) or f"{mechanic_title}: {default_title}"
     game_payload = normalize_game_payload(
@@ -4645,6 +4683,8 @@ class Handler(SimpleHTTPRequestHandler):
         if relative_path in {"index.html", ""}:
             record_public_game_visit(slug, None, self.path)
         body = file_path.read_bytes()
+        if slug == "orthoshooting" and relative_path == "data.js":
+            body += b"\n;window.OGE6_BANK.questions=window.OGE6_BANK.questions.slice(0,20);window.OGE6_BANK.categories=window.OGE6_BANK.categories.map(c=>({...c,count:window.OGE6_BANK.questions.filter(q=>q.category===c.name).length})).filter(c=>c.count);\n"
         if relative_path in {"index.html", ""}:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
@@ -4674,6 +4714,8 @@ class Handler(SimpleHTTPRequestHandler):
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
         body = file_path.read_bytes()
+        if slug == "orthoshooting" and relative_path == "data.js":
+            body += b"\n;window.OGE6_BANK.questions=window.OGE6_BANK.questions.slice(0,20);window.OGE6_BANK.categories=window.OGE6_BANK.categories.map(c=>({...c,count:window.OGE6_BANK.questions.filter(q=>q.category===c.name).length})).filter(c=>c.count);\n"
         if relative_path in {"index.html", ""}:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)

@@ -1,0 +1,26 @@
+"use strict";
+const defaults = [
+  ["вид..щий вдали поезд","я","видящий","Действительное причастие от глагола II спряжения «видеть»: -ящ-."],
+  ["стел..щийся туман","ю","стелющийся","От глагола I спряжения «стелить»: -ющ-."],
+  ["бор..щийся за победу","ю","борющийся","От глагола I спряжения «бороться»: -ющ-."],
+  ["дыш..щий ровно ребёнок","а","дышащий","От глагола II спряжения «дышать»: -ащ-."],
+  ["кле..щий афишу рабочий","я","клеящий","От глагола II спряжения «клеить»: -ящ-."],
+  ["та..щий на солнце снег","ю","тающий","От глагола I спряжения «таять»: -ющ-."],
+  ["слыш..мый издали звук","и","слышимый","Страдательное причастие от глагола II спряжения: -им-."],
+  ["управля..мый диспетчером поезд","е","управляемый","Страдательное причастие от глагола I спряжения: -ем-."],
+  ["завис..мый от погоды маршрут","и","зависимый","От глагола II спряжения «зависеть»: -им-."],
+  ["колебл..мый ветром лист","е","колеблемый","От глагола I спряжения «колебать»: -ем-."],
+  ["увид..нный вдали дом","е","увиденный","Перед -нн- сохраняется гласная инфинитива «увидеть»."],
+  ["услыш..нный разговор","а","услышанный","Причастие образовано от глагола «услышать»: -анн-."],
+  ["зате..нная игра","я","затеянная","Перед -нн- сохраняется -я- инфинитива «затеять»."],
+  ["выкач..нная из подвала вода","а","выкачанная","От глагола «выкачать»: -анн-."],
+  ["подстрел..нная птица","е","подстреленная","От глагола «подстрелить»: суффикс -енн-."],
+].map((x,i)=>({variant:x[0],answer:x[1],correct_spelling:x[2],explanation:x[3],options:[x[1],...(["а","я","е","и","у","ю"].filter(v=>v!==x[1]).slice(0,2))],id:i}));
+
+const root=document.getElementById("root"); let items=defaults, done=new Set(), current=null, picked="", feedback="";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function asset(name){return `assets/${name}`}
+async function load(){const id=new URLSearchParams(location.search).get("set");if(id){try{const r=await fetch(`/api/games/sets/${encodeURIComponent(id)}`);if(r.ok){const d=await r.json();if(d.mechanic==="butterflies"&&d.items?.length)items=d.items.map((x,i)=>({...x,id:i}));}}catch(e){console.warn(e)}}render()}
+function render(){root.innerHTML=`<main class="world"><header><div class="brand"><span>🦋</span><div><small>ЗАДАНИЕ 12 ЕГЭ</small><strong>Сад причастий</strong></div></div><div class="progress"><div><span>Освобождено бабочек</span><b>${done.size} / ${items.length}</b></div><i><u style="width:${done.size/items.length*100}%"></u></i></div><div class="headerBtns"><button onclick="location.href='/games'">← Назад</button></div></header><section class="garden"><div class="gardenHeading"><div><small>СУФФИКСЫ ПРИЧАСТИЙ</small><h2>Выберите кокон</h2></div><p>Вставьте пропущенную букву — и бабочка окажется на свободе.</p></div><div class="cocoonGrid">${items.map((x,i)=>done.has(i)?`<button class="pod freed" disabled><img src="${asset(["orange-monarch.png","blue-morpho.png","yellow-swallowtail.png","purple-emperor.png","pink-fantasy.png","zebra-longwing.png"][i%6])}"><small>ОСВОБОЖДЕНА</small></button>`:`<button class="pod p${i%5}" data-i="${i}"><b>КОКОН ${i+1}</b><span class="branch"></span><span class="cocoon"><i></i><u></u><em></em></span><small>ОТКРЫТЬ</small></button>`).join("")}</div></section><footer><span>База: суффиксы причастий, задание 12 ЕГЭ</span><button onclick="location.href='/games'">← К списку игр</button></footer>${current===null?"":modal()}</main>`;document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{current=+b.dataset.i;picked="";feedback="";render()});}
+function modal(){const x=items[current], opts=x.options?.length?x.options:[x.answer];return `<div class="overlay"><section class="taskCard"><button class="close" data-close>×</button><div class="taskVisual"><div class="modalPod"><span class="cocoon"><i></i><u></u><em></em></span></div><div><small>ВЫБЕРИТЕ БУКВУ</small><h2>Суффикс причастия</h2><p>${esc(x.explanation||"Определите исходный глагол и способ образования причастия.")}</p></div></div><div class="sentence">${esc(x.variant)}</div><div class="choiceRow">${opts.map(o=>`<button class="letterChoice ${picked===o?'chosen':''}" data-letter="${esc(o)}">${esc(o).toUpperCase()}</button>`).join("")}</div><button class="check" data-check>Проверить <span>→</span></button>${feedback?`<div class="feedback ${feedback==='good'?'good':'bad'}"><b>${feedback==='good'?'Верно! Бабочка свободна.':'Пока неверно. Попробуйте ещё раз.'}</b>${feedback==='good'&&x.correct_spelling?`<span>${esc(x.correct_spelling)}</span>`:""}</div>`:""}</section></div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-close],[data-letter],[data-check]");if(!b)return;if(b.hasAttribute("data-close")){current=null;render()}else if(b.dataset.letter!==undefined){picked=b.dataset.letter;feedback="";render()}else if(picked){if(picked.toLowerCase()===String(items[current].answer).toLowerCase()){done.add(current);feedback="good";setTimeout(()=>{current=null;render()},900)}else{feedback="bad";render()}}});load();
