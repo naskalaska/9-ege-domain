@@ -1714,15 +1714,14 @@ function renderPublicGames() {
         <form class="builder-panel" id="baseGameForm">
           <h4>Из моих баз</h4>
           <label>Механика
-            <select name="mechanic">
-              <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
-              <option value="mouse-space">Мышонок в космосе - для орфографии, выбор буквы</option>
-              <option value="berry-season">Ягодный сезон: ИК-ЕК</option>
+            <select name="mechanic" data-game-mechanic-select>
+              <option value="">Загрузка механик...</option>
             </select>
           </label>
           <label>База
             <select name="source" id="gameSourceSelect"></select>
           </label>
+          <p class="muted" data-game-compatibility></p>
           <div class="game-rule-picker" id="gameRulePicker"></div>
           <label>Количество
             <input name="count" type="number" min="1" max="200" value="10" />
@@ -2702,16 +2701,14 @@ function renderMiniActivity() {
         <form class="builder-panel" id="baseGameForm">
           <h4>Из моих баз</h4>
           <label>Механика
-            <select name="mechanic">
-              <option value="fluffs">Пушинки - рекомендуется для орфографии</option>
-              <option value="mouse-space">Мышонок в космосе - для орфографии, выбор буквы</option>
-              <option value="berry-season">Ягодный сезон: ИК-ЕК</option>
-              <option value="focus" disabled>Фокус - скоро</option>
+            <select name="mechanic" data-game-mechanic-select>
+              <option value="">Загрузка механик...</option>
             </select>
           </label>
           <label>База
             <select name="source" id="gameSourceSelect"></select>
           </label>
+          <p class="muted" data-game-compatibility></p>
           <div class="game-rule-picker" id="gameRulePicker"></div>
           <label>Количество
             <input name="count" type="number" min="1" max="200" value="10" />
@@ -2828,6 +2825,7 @@ async function setupGameBuilder() {
   if (!builder) return;
 
   const sourceSelect = builder.querySelector("#gameSourceSelect");
+  const mechanicSelect = builder.querySelector("[data-game-mechanic-select]");
   const rulePicker = builder.querySelector("#gameRulePicker");
   const result = builder.querySelector("#gameBuilderResult");
   const link = builder.querySelector("#gameBuilderLink");
@@ -2847,6 +2845,18 @@ async function setupGameBuilder() {
   function sourceRules() {
     const source = sources.find((item) => item.id === sourceSelect.value);
     return source?.rules || {};
+  }
+
+  function updateMechanicCompatibility() {
+    const note = builder.querySelector("[data-game-compatibility]");
+    const submit = builder.querySelector("#baseGameForm button[type='submit']");
+    const incompatible = mechanicSelect.value === "butterflies" && ["ege13", "ege14", "ege15"].includes(sourceSelect.value);
+    if (note) note.textContent = incompatible
+      ? "Для заданий 13–15 выберите «Пушинки» или «Мышонок в космосе». «Бабочки» рассчитаны на ввод одной пропущенной буквы."
+      : mechanicSelect.value === "butterflies"
+        ? "В «Бабочках» ученик самостоятельно вписывает пропущенную букву."
+        : "Эта механика поддерживает базы заданий 9–15.";
+    if (submit) submit.disabled = incompatible;
   }
 
   function updateGameRuleSummary() {
@@ -2925,10 +2935,14 @@ async function setupGameBuilder() {
   try {
     const data = await api("/api/games/sources");
     sources = data.sources || [];
+    mechanicSelect.innerHTML = (data.mechanics || [])
+      .map((mechanic) => `<option value="${escapeHtml(mechanic.id)}" ${mechanic.available ? "" : "disabled"}>${escapeHtml(mechanic.title)}${mechanic.available ? "" : " — скоро"}</option>`)
+      .join("");
     sourceSelect.innerHTML = sources.map((source) =>
       `<option value="${escapeHtml(source.id)}">${escapeHtml(source.title)}</option>`
     ).join("");
     fillRules();
+    updateMechanicCompatibility();
   } catch (error) {
     showBuilderError("#baseGameError", error.message);
   }
@@ -2936,7 +2950,9 @@ async function setupGameBuilder() {
   sourceSelect.addEventListener("change", () => {
     selectedGameRuleIds = new Set();
     fillRules();
+    updateMechanicCompatibility();
   });
+  mechanicSelect.addEventListener("change", updateMechanicCompatibility);
 
   builder.querySelector("#baseGameForm").addEventListener("submit", async (event) => {
     event.preventDefault();

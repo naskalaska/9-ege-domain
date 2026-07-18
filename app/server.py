@@ -2795,6 +2795,24 @@ def game_source_config(source: str) -> dict[str, Any]:
             "words_by_rule": ege12_module.WORDS_BY_RULE,
             "letter_choices": ege12_module.letter_choices,
         },
+        "ege13": {
+            "title": "ЕГЭ-13",
+            "rules": ege13_module.RULES,
+            "words_by_rule": ege13_module.WORDS_BY_RULE,
+            "letter_choices": lambda word: list(ege13_module.SPELLING_TYPES),
+        },
+        "ege14": {
+            "title": "ЕГЭ-14",
+            "rules": ege14_module.RULES,
+            "words_by_rule": ege14_module.WORDS_BY_RULE,
+            "letter_choices": ege14_module.letter_choices,
+        },
+        "ege15": {
+            "title": "ЕГЭ-15",
+            "rules": ege15_module.RULES,
+            "words_by_rule": ege15_module.WORDS_BY_RULE,
+            "letter_choices": lambda word: list(ege15_module.SPELLING_TYPES),
+        },
     }
     if source not in sources:
         raise ValueError("Источник заданий не найден.")
@@ -2904,7 +2922,7 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
 
 def game_sources_for_teacher() -> dict[str, Any]:
     sources = []
-    for source_id in ("ege9", "ege10", "ege11", "ege12"):
+    for source_id in ("ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"):
         config = game_source_config(source_id)
         grouped: dict[str, list[dict[str, Any]]] = {}
         for rule in config["rules"]:
@@ -2921,7 +2939,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
             {"id": "fluffs", "title": "Пушинки", "available": True},
             {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True},
             {"id": "mouse-space", "title": "Мышонок в космосе: выбор буквы", "available": True},
-            {"id": "butterflies", "title": "Бабочки: суффиксы причастий", "available": True},
+            {"id": "butterflies", "title": "Бабочки: впишите пропущенное", "available": True},
             {"id": "focus", "title": "Фокус", "available": False},
         ],
         "sources": sources,
@@ -2983,6 +3001,8 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     if mechanic not in GAME_MECHANICS:
         raise ValueError("Выбранная механика пока недоступна.")
     source = clean_game_string(payload.get("source") or "ege9", 20)
+    if mechanic == "butterflies" and source in {"ege13", "ege14", "ege15"}:
+        raise ValueError("Для заданий 13–15 выберите «Пушинки» или «Мышонок в космосе»: в «Бабочках» ученик вписывает одну пропущенную букву.")
     raw_rule_ids = payload.get("rule_ids")
     if isinstance(raw_rule_ids, list):
         rule_ids = [clean_game_string(rule_id, 80) for rule_id in raw_rule_ids]
