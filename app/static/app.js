@@ -2800,9 +2800,8 @@ function renderMiniActivity() {
   `;
   view.querySelectorAll(".open-mini-game").forEach((button) => {
     button.addEventListener("click", () => {
-      state.currentMiniGame = button.dataset.game;
-      history.pushState(null, "", `/apps/mini/games/${button.dataset.game}`);
-      renderMiniActivity();
+      const game = miniGames.find((item) => item.slug === button.dataset.game);
+      if (game) window.location.href = safeRelativeUrl(`/games/${game.slug}/index.html`);
     });
   });
   view.querySelector("#backToMiniMenu")?.addEventListener("click", () => {
@@ -2830,6 +2829,7 @@ async function setupGameBuilder() {
   const result = builder.querySelector("#gameBuilderResult");
   const link = builder.querySelector("#gameBuilderLink");
   let sources = [];
+  let mechanics = [];
   let selectedGameRuleIds = new Set();
 
   function showResult(data) {
@@ -2844,19 +2844,36 @@ async function setupGameBuilder() {
 
   function sourceRules() {
     const source = sources.find((item) => item.id === sourceSelect.value);
-    return source?.rules || {};
+    const mechanic = mechanicSelect.value;
+    return Object.fromEntries(Object.entries(source?.rules || {})
+      .map(([category, rules]) => [category, rules
+        .filter((rule) => Number(rule.mechanic_counts?.[mechanic] || 0) > 0)
+        .map((rule) => ({ ...rule, count: Number(rule.mechanic_counts?.[mechanic] || 0) }))])
+      .filter(([, rules]) => rules.length));
   }
 
   function updateMechanicCompatibility() {
     const note = builder.querySelector("[data-game-compatibility]");
     const submit = builder.querySelector("#baseGameForm button[type='submit']");
-    const incompatible = mechanicSelect.value === "butterflies" && ["ege13", "ege14", "ege15"].includes(sourceSelect.value);
-    if (note) note.textContent = incompatible
-      ? "Для заданий 13–15 выберите «Пушинки» или «Мышонок в космосе». «Бабочки» рассчитаны на ввод одной пропущенной буквы."
-      : mechanicSelect.value === "butterflies"
-        ? "В «Бабочках» ученик самостоятельно вписывает пропущенную букву."
-        : "Эта механика поддерживает базы заданий 9–15.";
+    const mechanic = mechanics.find((item) => item.id === mechanicSelect.value);
+    const incompatible = !sourceSelect.value || !(mechanic?.compatible_sources || []).includes(sourceSelect.value);
+    if (note) note.textContent = mechanicSelect.value === "butterflies"
+        ? "В «Бабочках» ученик самостоятельно вписывает букву, часть слова или вариант написания."
+        : "Показаны только базы, совместимые с выбранной механикой.";
     if (submit) submit.disabled = incompatible;
+  }
+
+  function fillSources() {
+    const mechanic = mechanics.find((item) => item.id === mechanicSelect.value);
+    const compatible = new Set(mechanic?.compatible_sources || []);
+    const visibleSources = sources.filter((source) => compatible.has(source.id) &&
+      Object.values(source.rules || {}).flat().some((rule) => Number(rule.mechanic_counts?.[mechanicSelect.value] || 0) > 0));
+    sourceSelect.innerHTML = visibleSources
+      .map((source) => `<option value="${escapeHtml(source.id)}">${escapeHtml(source.title)}</option>`)
+      .join("");
+    selectedGameRuleIds = new Set();
+    fillRules();
+    updateMechanicCompatibility();
   }
 
   function updateGameRuleSummary() {
@@ -2935,14 +2952,11 @@ async function setupGameBuilder() {
   try {
     const data = await api("/api/games/sources");
     sources = data.sources || [];
-    mechanicSelect.innerHTML = (data.mechanics || [])
+    mechanics = data.mechanics || [];
+    mechanicSelect.innerHTML = mechanics
       .map((mechanic) => `<option value="${escapeHtml(mechanic.id)}" ${mechanic.available ? "" : "disabled"}>${escapeHtml(mechanic.title)}${mechanic.available ? "" : " — скоро"}</option>`)
       .join("");
-    sourceSelect.innerHTML = sources.map((source) =>
-      `<option value="${escapeHtml(source.id)}">${escapeHtml(source.title)}</option>`
-    ).join("");
-    fillRules();
-    updateMechanicCompatibility();
+    fillSources();
   } catch (error) {
     showBuilderError("#baseGameError", error.message);
   }
@@ -2952,7 +2966,7 @@ async function setupGameBuilder() {
     fillRules();
     updateMechanicCompatibility();
   });
-  mechanicSelect.addEventListener("change", updateMechanicCompatibility);
+  mechanicSelect.addEventListener("change", fillSources);
 
   builder.querySelector("#baseGameForm").addEventListener("submit", async (event) => {
     event.preventDefault();

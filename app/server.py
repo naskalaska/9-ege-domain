@@ -2820,7 +2820,7 @@ def game_source_config(source: str) -> dict[str, Any]:
 
 
 def public_game_url(mechanic: str, public_id: str) -> str:
-    return f"{APP_BASE_URL}/games/{mechanic}?set={public_id}"
+    return f"{APP_BASE_URL}/games/{mechanic}/index.html?set={public_id}"
 
 
 def make_game_public_id(con: sqlite3.Connection) -> str:
@@ -2855,17 +2855,20 @@ def generic_game_options(answer: str) -> list[str]:
 
 def normalize_game_options(options: Any, answer: str) -> list[str]:
     result: list[str] = []
+    seen: set[str] = set()
     if isinstance(options, list):
         for option in options:
-            text = clean_game_string(option, 80)
-            if text and text not in result:
+            text = normalize_game_answer(clean_game_string(option, 80))
+            key = text.casefold()
+            if text and key not in seen:
                 result.append(text)
+                seen.add(key)
             if len(result) >= 6:
                 break
     if not result:
         result = generic_game_options(answer)
     answer_text = clean_game_string(answer, 80)
-    if answer_text and answer_text not in result:
+    if answer_text and answer_text.casefold() not in seen:
         result.insert(0, answer_text)
     return result[:6]
 
@@ -2912,6 +2915,8 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
         bad_answers = [item["answer"] for item in normalized_items if item["answer"] not in {"е", "и"}]
         if bad_answers:
             raise ValueError("Для «Ягодного сезона» подходят только ответы «е» и «и».")
+    if mechanic == "mouse-space" and any(len(item["options"]) < 2 for item in normalized_items):
+        raise ValueError("Для «Мышонка в космосе» у каждого задания должны быть минимум два разных варианта ответа.")
     return {
         "title": title,
         "description": clean_game_string(payload.get("description"), 300),
@@ -2926,7 +2931,16 @@ def game_sources_for_teacher() -> dict[str, Any]:
         config = game_source_config(source_id)
         grouped: dict[str, list[dict[str, Any]]] = {}
         for rule in config["rules"]:
-            grouped.setdefault(rule["category"], []).append(rule)
+            pool = config["words_by_rule"].get(rule["rule_id"], [])
+            answers = [normalize_game_answer(word.get("correct_letter") or word.get("answer")) for word in pool]
+            rule_item = dict(rule)
+            rule_item["mechanic_counts"] = {
+                "fluffs": len(pool),
+                "mouse-space": sum(1 for word in pool if len(normalize_game_options(config["letter_choices"](word), normalize_game_answer(word.get("correct_letter") or word.get("answer")))) >= 2),
+                "butterflies": len(pool),
+                "berry-season": sum(1 for answer in answers if answer in {"е", "и"}),
+            }
+            grouped.setdefault(rule["category"], []).append(rule_item)
         sources.append(
             {
                 "id": source_id,
@@ -2936,11 +2950,11 @@ def game_sources_for_teacher() -> dict[str, Any]:
         )
     return {
         "mechanics": [
-            {"id": "fluffs", "title": "Пушинки", "available": True},
-            {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True},
-            {"id": "mouse-space", "title": "Мышонок в космосе: выбор буквы", "available": True},
-            {"id": "butterflies", "title": "Бабочки: впишите пропущенное", "available": True},
-            {"id": "focus", "title": "Фокус", "available": False},
+            {"id": "fluffs", "title": "Пушинки", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
+            {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12"]},
+            {"id": "mouse-space", "title": "Мышонок в космосе: выбор ответа", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
+            {"id": "butterflies", "title": "Бабочки: впишите пропущенное", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
+            {"id": "focus", "title": "Фокус", "available": False, "compatible_sources": []},
         ],
         "sources": sources,
     }
@@ -3001,8 +3015,6 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     if mechanic not in GAME_MECHANICS:
         raise ValueError("Выбранная механика пока недоступна.")
     source = clean_game_string(payload.get("source") or "ege9", 20)
-    if mechanic == "butterflies" and source in {"ege13", "ege14", "ege15"}:
-        raise ValueError("Для заданий 13–15 выберите «Пушинки» или «Мышонок в космосе»: в «Бабочках» ученик вписывает одну пропущенную букву.")
     raw_rule_ids = payload.get("rule_ids")
     if isinstance(raw_rule_ids, list):
         rule_ids = [clean_game_string(rule_id, 80) for rule_id in raw_rule_ids]
