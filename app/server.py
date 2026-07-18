@@ -4069,12 +4069,12 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
 
 
 def inject_game_menu_link(body: bytes) -> bytes:
-    """Add or normalize a compact menu link in every served HTML game."""
+    """Add a contextual return link to every served HTML game."""
     html = body.decode("utf-8", errors="replace")
     has_menu_link = "game-menu-link" in html
     menu_button = "" if has_menu_link else (
-        '<a class="game-menu-link site-game-menu-link" href="/games/" target="_top" '
-        'aria-label="Назад в меню игр">← Меню</a>'
+        '<a class="game-menu-link site-game-menu-link" href="/games" target="_top" '
+        'aria-label="Назад к играм">← Назад к играм</a>'
     )
     menu_style = """
 <style>
@@ -4118,7 +4118,22 @@ def inject_game_menu_link(body: bytes) -> bytes:
   }
 </style>
 """
-    addition = f"{menu_style}{menu_button}"
+    context_script = """
+<script>
+(function () {
+  var fromMyGames = /\\/apps\\/my-games(?:[/?#]|$)/.test(document.referrer || "");
+  var target = fromMyGames ? "/apps/my-games" : "/games";
+  var label = fromMyGames ? "← Назад к моим играм" : "← Назад к играм";
+  document.querySelectorAll(".game-menu-link").forEach(function (link) {
+    link.href = target;
+    link.textContent = label;
+    link.setAttribute("aria-label", label.slice(2));
+  });
+  window.SITE_GAMES_RETURN_URL = target;
+})();
+</script>
+"""
+    addition = f"{menu_style}{menu_button}{context_script}"
     if "</body>" in html:
         html = html.replace("</body>", f"{addition}</body>", 1)
     else:
@@ -4683,8 +4698,6 @@ class Handler(SimpleHTTPRequestHandler):
         if relative_path in {"index.html", ""}:
             record_public_game_visit(slug, None, self.path)
         body = file_path.read_bytes()
-        if slug == "orthoshooting" and relative_path == "data.js":
-            body += b"\n;window.OGE6_BANK.questions=window.OGE6_BANK.questions.slice(0,20);window.OGE6_BANK.categories=window.OGE6_BANK.categories.map(c=>({...c,count:window.OGE6_BANK.questions.filter(q=>q.category===c.name).length})).filter(c=>c.count);\n"
         if relative_path in {"index.html", ""}:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
@@ -4714,9 +4727,9 @@ class Handler(SimpleHTTPRequestHandler):
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
         body = file_path.read_bytes()
-        if slug == "orthoshooting" and relative_path == "data.js":
-            body += b"\n;window.OGE6_BANK.questions=window.OGE6_BANK.questions.slice(0,20);window.OGE6_BANK.categories=window.OGE6_BANK.categories.map(c=>({...c,count:window.OGE6_BANK.questions.filter(q=>q.category===c.name).length})).filter(c=>c.count);\n"
         if relative_path in {"index.html", ""}:
+            if slug == "orthoshooting":
+                body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
