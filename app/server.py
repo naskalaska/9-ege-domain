@@ -252,6 +252,11 @@ LEGACY_SHOP_COVERS = {
     "/assets/shop/cover_grammar_zoo.png",
 }
 DEMO_GAME_NOTICES = {
+    "karaoke-numerals": {
+        "label": "Демо · 20 упражнений",
+        "text": "Памятки и караоке доступны полностью, а практика ограничена 20 упражнениями. Расширенная версия с текстами выдаётся после покупки.",
+        "shop_url": "/shop",
+    },
     "truth-action-oge": {
         "label": "Демо",
         "text": "Можно спокойно попробовать механику: в этой версии доступно 20 действий. Полный комплект откроется после покупки.",
@@ -425,6 +430,8 @@ HTML_GAMES = {
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
     "numerals-hit-parade": HTML_DIR / "Хит-парад числительных",
+    "karaoke-numerals": HTML_DIR / "Караоке_числительных_HTML",
+    "summer-gerund-bar": HTML_DIR / "Летний_бар_деепричастие_обновлённая",
     "mouse-space": HTML_DIR / "Мышонок в космосе",
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
@@ -444,6 +451,8 @@ PUBLIC_GAMES = {
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
     "paronyms": first_existing_path(HTML_DIR / "paronyms", HTML_DIR / "Паронимы"),
     "numerals-hit-parade": HTML_DIR / "Хит-парад числительных",
+    "karaoke-numerals": HTML_DIR / "Караоке_числительных_HTML",
+    "summer-gerund-bar": HTML_DIR / "Летний_бар_деепричастие_обновлённая",
     "mouse-space": HTML_DIR / "Мышонок в космосе",
     "verb-conjugation-quest": HTML_DIR / "спряжение квест",
     "truth-action-oge": HTML_DIR / "Игра-знакомство",
@@ -4762,6 +4771,8 @@ class Handler(SimpleHTTPRequestHandler):
         if relative_path in {"index.html", ""}:
             if slug == "orthoshooting":
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
+            if slug == "karaoke-numerals":
+                body = body.replace(b"<script src=\"app-v10.js\">", b"<script>window.KARAOKE_DEMO_LIMIT=20;</script><script src=\"app-v10.js\">")
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)

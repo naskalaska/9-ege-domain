@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a7482" />
+  <title>Летний бар — деепричастный квест</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <audio id="melody" src="assets/melody.mp3" loop preload="none"></audio>
+  <div class="ambient bubbles" aria-hidden="true"></div>
+  <header class="topbar">
+    <button id="homeBtn" class="icon-btn" aria-label="На карту" title="На карту">⌂</button>
+    <div class="brand"><span class="brand-leaf">✦</span><span>Летний бар</span><small>деепричастный квест</small></div>
+    <div class="top-actions">
+      <div class="progress-pill" aria-label="Прогресс"><span id="progressText">0 / 5</span><i><b id="progressBar"></b></i></div>
+      <button id="resetProgressBtn" class="icon-btn reset-progress" aria-label="Сбросить весь прогресс" title="Сбросить прогресс"><span aria-hidden="true">↻</span><small>Сброс</small></button>
+      <button id="drawBtn" class="icon-btn draw" aria-label="Рисовать поверх задания" title="Карандаш">✎</button>
+      <button id="soundBtn" class="icon-btn sound" aria-label="Включить фоновую мелодию" title="Музыка">♪</button>
+    </div>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <canvas id="drawCanvas" aria-label="Поле для рисования поверх игры"></canvas>
+  <div id="drawTools" class="draw-tools" hidden>
+    <strong>Карандаш</strong>
+    <button class="color-dot active" data-color="#e63362" style="--dot:#e63362" aria-label="Красный цвет"></button>
+    <button class="color-dot" data-color="#087584" style="--dot:#087584" aria-label="Синий цвет"></button>
+    <button class="color-dot" data-color="#47a83d" style="--dot:#47a83d" aria-label="Зелёный цвет"></button>
+    <label>Толщина <input id="drawSize" type="range" min="2" max="12" value="5"></label>
+    <button id="clearDraw" class="tool-btn">Очистить</button>
+    <button id="closeDraw" class="tool-btn close">Готово</button>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <footer>Анастасия Димитриева | Учитель и нейросети</footer>
+  <script src="script.js"></script>
+</body>
+</html>

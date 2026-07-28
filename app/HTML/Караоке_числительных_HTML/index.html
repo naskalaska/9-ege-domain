@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7ec">
+  <title>Числовслух — расширенное караоке числительных v10</title>
+  <link rel="stylesheet" href="styles-v3.css">
+  <link rel="stylesheet" href="styles-v4.css">
+  <link rel="stylesheet" href="styles-v10.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand"><span>7<i></i></span><b>Число<em>вслух</em></b></div>
+      <nav aria-label="Режимы работы">
+        <button class="active" data-screen="theory"><small>01</small> Памятки и караоке</button>
+        <button data-screen="reading"><small>02</small> Работа с текстами</button>
+      </nav>
+      <div class="header-status"><button id="soundToggle" type="button" title="Выключить звуки" aria-label="Выключить звуки" aria-pressed="true">♪</button><button id="statsButton" class="stats-open" type="button" aria-label="Открыть общую статистику"><b id="globalProgress">0%</b><span>статистика</span></button></div>
+    </header>
+
+    <main id="theoryScreen" class="screen theory-screen">
+      <aside class="topic-sidebar">
+        <div class="sidebar-title"><span>8 тем</span><h2>Числительные</h2></div>
+        <div id="lessonNav" class="lesson-nav"></div>
+        <div class="sidebar-foot"><i id="lessonBar"></i><span id="lessonCount">0 из 8 разделов</span></div>
+      </aside>
+
+      <nav class="mobile-stage-tabs" aria-label="Рабочая область">
+        <button class="active" data-mobile-focus="memo" type="button"><span>01</span>Памятка</button>
+        <button data-mobile-focus="karaoke" type="button"><span>02</span>Караоке</button>
+        <button data-mobile-focus="practice" type="button"><span>03</span>Отработка</button>
+      </nav>
+
+      <section id="studyStage" class="study-stage" data-focus="memo">
+        <section class="memo-column study-panel memo-panel">
+        <article id="memoPoster" class="memo-poster">
+          <div class="poster-top">
+            <span id="posterNumber">01</span>
+            <p id="posterKicker"></p>
+            <b id="posterFormula"></b>
+            <button class="panel-expand" data-focus-panel="memo" type="button" title="Развернуть памятку" aria-label="Развернуть памятку">↗</button>
+          </div>
+          <div id="modelCarousel" class="model-carousel">
+            <button id="modelPrev" type="button" aria-label="Предыдущая модель">←</button>
+            <div><span id="modelPosition"></span><b id="modelLabel"></b></div>
+            <button id="modelNext" type="button" aria-label="Следующая модель">→</button>
+          </div>
+          <figure class="drawn-memo-stage">
+            <img id="drawnMemoImage" alt="">
+          </figure>
+          <div class="memo-copy-source" aria-live="polite">
+            <h1 id="posterTitle"></h1><p id="posterRule"></p><strong id="posterPrinciple"></strong>
+            <img id="posterImage" alt=""><div id="posterTips"></div><div id="posterTable"></div><div id="posterNorm"></div>
+          </div>
+        </article>
+        </section>
+
+        <section class="activity-card karaoke-card study-panel">
+          <div class="card-title"><div><span>01 · Сначала услышь</span><h2>Караоке формы</h2></div><div class="card-actions"><button id="replayButton" title="Начать заново">↺</button><button class="panel-expand" data-focus-panel="karaoke" type="button" title="Развернуть караоке" aria-label="Развернуть караоке">↗</button></div></div>
+          <label class="speed-control" for="speedRange">
+            <span>Пауза между буквами</span>
+            <strong id="speedValue">1,2 с</strong>
+            <input id="speedRange" type="range" min="500" max="3500" step="100" value="1200">
+            <small><i>быстрее</i><i>медленнее</i></small>
+          </label>
+          <div id="karaokeExampleNav" class="karaoke-example-nav">
+            <button id="karaokeExamplePrev" type="button" aria-label="Предыдущий пример">←</button>
+            <strong id="karaokeExampleLabel">Пример 1 из 1</strong>
+            <button id="karaokeExampleNext" type="button" aria-label="Следующий пример">→</button>
+          </div>
+          <div class="karaoke-prompt"><span id="karaokeCase"></span><i id="karaokeCue"></i></div>
+          <div class="think-row"><b id="karaokeDigit">5</b><span>→</span><div id="thinkCountdown" class="countdown">ответьте<br>про себя</div></div>
+          <div id="karaokeWord" class="karaoke-word" aria-live="polite"></div>
+          <div id="caseDots" class="case-dots"></div>
+          <div class="karaoke-controls">
+            <button id="playButton" class="play-button">▶</button>
+            <div><b id="karaokeStatus">Нажмите: сначала будет пауза</b><span id="karaokePosition">1 / 6</span></div>
+          </div>
+        </section>
+
+        <section class="activity-card practice-card study-panel">
+          <div class="card-title"><div><span>02 · Теперь ответьте</span><h2 id="practiceTitle">10 фактов</h2></div><div class="card-actions"><b id="practicePosition">1/10</b><button class="panel-expand" data-focus-panel="practice" type="button" title="Развернуть отработку" aria-label="Развернуть отработку">↗</button></div></div>
+          <div id="practiceDots" class="practice-dots"></div>
+          <span id="practiceCase" class="case-chip"></span>
+          <div id="practiceSentence" class="practice-sentence"></div>
+          <label class="quick-answer"><span>Введите форму и нажмите Enter</span><input id="practiceInput" autocomplete="off" placeholder="Числительное словами…"></label>
+          <div class="practice-bottom"><p id="practiceFeedback">Правильный ответ автоматически откроет следующий пример.</p><button id="skipPractice">Пропустить →</button></div>
+        </section>
+      </section>
+    </main>
+
+    <main id="readingScreen" class="screen reading-screen" hidden>
+      <aside class="text-sidebar">
+        <div class="sidebar-title"><span><b id="readingTotal">37</b> заданий</span><h2>Музыка и числа</h2></div>
+        <div id="topicFilters" class="topic-filters"></div>
+        <div id="readingList" class="reading-list"></div>
+        <div class="sidebar-foot"><i id="readingBar"></i><span id="readingCount">0 из 37 текстов</span></div>
+      </aside>
+
+      <section class="text-workspace">
+        <article class="text-card">
+          <header class="text-head">
+            <div><span id="textTopic"></span><h1 id="textTitle"></h1></div>
+            <p id="textSource"></p>
+          </header>
+          <div class="text-instruction"><b>Как работать</b><span>Напишите форму числительного прямо в скобках после цифры. Enter переводит к следующему полю.</span></div>
+          <div id="inlineText" class="inline-text"></div>
+          <footer class="text-footer">
+            <div><b id="textFilled">0 / 0</b><span>форм заполнено</span></div>
+            <p id="textSaved"></p>
+            <div class="text-actions"><button id="checkText">Проверить</button><button id="showTextAnswers">Показать ответы</button><button id="nextText">Следующий текст →</button></div>
+          </footer>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="statsDialog" class="stats-dialog">
+    <div class="stats-head"><div><span>Общий результат</span><h2>Статистика прохождения</h2></div><button id="closeStats" type="button" aria-label="Закрыть статистику">×</button></div>
+    <div class="stats-total"><div id="statsRing"><b id="statsPercent">0%</b><span>всего</span></div><p>Считаются прослушанные памятки, верные ответы в фактах и правильно заполненные числительные в текстах.</p></div>
+    <div class="stats-grid">
+      <article><span>Темы</span><b id="statsLessons">0 / 8</b><i><em id="statsLessonsBar"></em></i></article>
+      <article><span>Факты</span><b id="statsPractice">0 / 90</b><i><em id="statsPracticeBar"></em></i></article>
+      <article><span>Поля в текстах</span><b id="statsFields">0 / 0</b><i><em id="statsFieldsBar"></em></i></article>
+      <article><span>Тексты без ошибок</span><b id="statsTexts">0 / 37</b><i><em id="statsTextsBar"></em></i></article>
+    </div>
+  </dialog>
+
+  <script src="data-v10.js"></script>
+  <script src="theory-v10.js"></script>
+  <script src="practice-v10.js"></script>
+  <script src="reading-answers-v10.js"></script>
+  <script src="app-v10.js"></script>
+</body>
+</html>
