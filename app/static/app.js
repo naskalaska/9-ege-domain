@@ -727,6 +727,50 @@ const shopProducts = [
     ],
   },
   {
+    slug: "karaoke-numerals",
+    title: "HTML-игра «Караоке числительных»",
+    price: "500 ₽",
+    image: "/shop-media/Караоке числительных (1).png",
+    images: [
+      "/shop-media/Караоке числительных (1).png",
+      "/shop-media/Караоке числительных (2).png",
+      "/shop-media/Караоке числительных (3)-v2.png",
+      "/shop-media/Караоке числительных (4).png",
+    ],
+    demoUrl: "/games/karaoke-numerals/index.html",
+    demoLabel: "Открыть демо",
+    shortDescription: "Музыкальная игра по склонению числительных: памятки, караоке форм, практика и работа с текстами. В демо доступны 20 упражнений, полная версия открывается после покупки.",
+    fullDescription: "«Караоке числительных» помогает запомнить падежные формы через ритм, подсказки и практику. Ученик сначала слушает и проговаривает формы, затем закрепляет их в отдельных упражнениях и в связных текстах.",
+    tryBefore: [
+      "Демо доступно в общем разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/karaoke-numerals/index.html",
+      "В демо полностью открыты памятки и караоке, а практика ограничена 20 упражнениями. Раздел с текстами входит в полную версию.",
+    ],
+    suitableFor: [
+      "для повторения склонения количественных, порядковых, дробных и собирательных числительных",
+      "для подготовки к ОГЭ и ЕГЭ по русскому языку",
+      "для урока, интерактивной панели и самостоятельной работы",
+    ],
+    howItWorks: [
+      "Ученик выбирает группу числительных и повторяет формы за караоке-подсказкой.",
+      "После памятки он выполняет задания на нужную падежную форму и получает мгновенную обратную связь.",
+      "В полном режиме открывается расширенная практика и работа с числительными в связных текстах.",
+    ],
+    package: [
+      "Полная онлайн-версия без демо-ограничения.",
+      "Все памятки и караоке-разделы.",
+      "Расширенная база упражнений и раздел работы с текстами.",
+    ],
+    adaptation: ["Комплект поставляется как готовая учебная игра."],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: ["современный браузер", "компьютер, планшет, интерактивная панель или телефон", "звук для караоке-режима"],
+    delivery: "После оплаты полная онлайн-версия появится в разделе «Мои игры» учительского аккаунта с тем же email.",
+    important: [
+      "Перед оплатой проверьте email: по нему покупка привязывается к кабинету.",
+      "В общем разделе «Игры» остаётся демо; полный путь доступен только покупателю или получателю подарка.",
+    ],
+  },
+  {
     slug: "butterflies-participial-phrase",
     title: "HTML-игра «Бабочки: причастный оборот»",
     price: "300 ₽",
@@ -4358,6 +4402,10 @@ function renderAdminContent(data, closeButton = "") {
     const attemptsCount = Number(teacher.attempts || 0);
     const correctCount = Number(teacher.correct || 0);
     const errorsCount = Math.max(0, attemptsCount - correctCount);
+    const teacherAttempts = Number(teacher.teacher_attempts || 0);
+    const teacherCorrect = Number(teacher.teacher_correct || 0);
+    const teacherErrors = Math.max(0, teacherAttempts - teacherCorrect);
+    const studentAttempts = Number(teacher.student_attempts || 0);
     const giftRows = gifts.length ? gifts.map((gift) => `
       <li>
         <span>
@@ -4421,6 +4469,16 @@ function renderAdminContent(data, closeButton = "") {
         </tr>
       `).join("")
       : `<tr><td colspan="7">Учеников пока нет</td></tr>`;
+    const teacherStatsRow = `
+      <tr>
+        <td>${escapeHtml(teacher.display_name)} <span class="muted">(учитель)</span></td>
+        <td>${escapeHtml(teacherEmail)}</td>
+        <td>${teacherAttempts}</td>
+        <td>${teacherCorrect}</td>
+        <td>${teacherErrors}</td>
+        <td>${pct(teacherCorrect, teacherAttempts)}</td>
+        <td>—</td>
+      </tr>`;
     return `
       <tr class="admin-user-summary-row">
         <td><b>${escapeHtml(teacher.display_name)}</b><br><span class="muted">${escapeHtml(teacherEmail)}</span></td>
@@ -4442,8 +4500,8 @@ function renderAdminContent(data, closeButton = "") {
       <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="stats">
         <td colspan="7">
           <div class="admin-inline-detail">
-            <div class="table-head"><h3>Общая статистика учеников</h3><span class="muted">${attemptsCount} решений · ${correctCount} верных · ${errorsCount} ошибок · точность ${pct(correctCount, attemptsCount)}</span></div>
-            <table class="table"><tr><th>Ученик</th><th>Email</th><th>Решений</th><th>Верно</th><th>Ошибок</th><th>Точность</th><th>Управление</th></tr>${students}</table>
+            <div class="table-head"><h3>Статистика учителя и учеников</h3><span class="muted">${attemptsCount} решений всего · учитель ${teacherAttempts} · ученики ${studentAttempts} · точность ${pct(correctCount, attemptsCount)}</span></div>
+            <table class="table"><tr><th>Пользователь</th><th>Email</th><th>Решений</th><th>Верно</th><th>Ошибок</th><th>Точность</th><th>Управление</th></tr>${teacherStatsRow}${students}</table>
           </div>
         </td>
       </tr>

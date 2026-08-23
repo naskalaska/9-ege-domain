@@ -199,6 +199,19 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/orthoshooting/index.html",
         "kind": "product",
     },
+    "karaoke-numerals": {
+        "id": "gift_game_karaoke_numerals",
+        "title": "HTML-игра «Караоке числительных»",
+        "short_title": "Караоке числительных",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/Караоке числительных (1).png",
+        "url_env": "KARAOKE_NUMERALS_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/karaoke-numerals/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/karaoke-numerals/index.html",
+        "kind": "product",
+        "force_active": True,
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -253,9 +266,9 @@ LEGACY_SHOP_COVERS = {
 }
 DEMO_GAME_NOTICES = {
     "karaoke-numerals": {
-        "label": "Демо · 20 упражнений",
+        "label": "Демо · 20",
         "text": "Памятки и караоке доступны полностью, а практика ограничена 20 упражнениями. Расширенная версия с текстами выдаётся после покупки.",
-        "shop_url": "/shop",
+        "shop_url": "/shop/karaoke-numerals",
     },
     "truth-action-oge": {
         "label": "Демо",
@@ -626,7 +639,9 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
                     delivery_url = COALESCE(NULLIF(delivery_url, ''), ?),
                     online_url = COALESCE(NULLIF(online_url, ''), ?),
                     cover_url = ?,
-                    url_env = ?, is_active = COALESCE(is_active, 1), updated_at = ?
+                    url_env = ?,
+                    is_active = CASE WHEN ? = 1 THEN 1 ELSE COALESCE(is_active, 1) END,
+                    updated_at = ?
                 WHERE product_id = ?
                 """,
                 (
@@ -640,6 +655,7 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
                     product.get("online_url") or "",
                     cover_url,
                     product["url_env"],
+                    int(bool(product.get("force_active"))),
                     now,
                     existing["product_id"],
                 ),
@@ -684,6 +700,7 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "parts-of-speech-kingdom": "parts_of_speech_kingdom",
         "butterflies-participial-phrase": "butterflies_participial_phrase",
         "orthoshooting": "orthoshooting",
+        "karaoke-numerals": "gift_game_karaoke_numerals",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -2464,8 +2481,14 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                    t.last_seen_at,
                    uc.accepted_at AS consent_accepted_at,
                    COUNT(DISTINCT s.user_id) AS students,
-                   COUNT(a.attempt_id) AS attempts,
-                   COALESCE(SUM(a.is_correct), 0) AS correct
+                   (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS teacher_attempts,
+                   (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS teacher_correct,
+                   COUNT(a.attempt_id) AS student_attempts,
+                   COALESCE(SUM(a.is_correct), 0) AS student_correct,
+                   COUNT(a.attempt_id) +
+                       (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS attempts,
+                   COALESCE(SUM(a.is_correct), 0) +
+                       (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS correct
             FROM users t
             LEFT JOIN user_consents uc
                 ON uc.user_id = t.user_id
@@ -4154,6 +4177,41 @@ def product_by_id(product_id: str) -> dict[str, str] | None:
     return paid_entity_row(row) if row else None
 
 
+def user_can_access_full_game(user: dict[str, Any], slug: str) -> bool:
+    """Allow a full game only to an admin or to the teacher who owns its product."""
+    if user.get("role") == "admin":
+        return True
+    if user.get("role") != "teacher":
+        return False
+    teacher_email = normalize_email(user.get("email") or user.get("username"))
+    with db() as con:
+        product = con.execute(
+            "SELECT product_id FROM paid_entities WHERE slug = ? AND type = 'product'",
+            (slug,),
+        ).fetchone()
+        if not product:
+            return False
+        purchased = con.execute(
+            """
+            SELECT 1 FROM shop_orders
+            WHERE product_id = ? AND status = 'paid' AND LOWER(buyer_email) = ?
+            LIMIT 1
+            """,
+            (product["product_id"], teacher_email),
+        ).fetchone()
+        if purchased:
+            return True
+        gifted = con.execute(
+            """
+            SELECT 1 FROM teacher_product_gifts
+            WHERE teacher_id = ? AND product_id = ?
+            LIMIT 1
+            """,
+            (user["user_id"], product["product_id"]),
+        ).fetchone()
+    return bool(gifted)
+
+
 def product_delivery_url(product: dict[str, str]) -> str:
     delivery_url = str(product.get("delivery_url") or "").strip()
     if delivery_url:
@@ -4200,32 +4258,38 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
     z-index: 2147483647;
     top: 8px;
     left: 8px;
-    width: auto;
-    max-width: min(360px, calc(100vw - 16px));
-    display: flex;
-    gap: 7px;
+    font: 600 11px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }}
+  .site-demo-ribbon summary {{
+    display: inline-flex;
     align-items: center;
     padding: 5px 8px;
-    border: 1px solid rgba(37, 99, 71, .26);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .94);
-    color: #203a2c;
-    box-shadow: 0 5px 14px rgba(31, 54, 42, .16);
-    font: 600 11px/1.15 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    backdrop-filter: blur(8px);
-  }}
-  .site-demo-ribbon strong {{
-    padding: 3px 6px;
     border-radius: 999px;
     background: #2f7f5f;
     color: #fff;
     font-size: 10px;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .04em;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(31, 54, 42, .18);
+    list-style: none;
   }}
-  .site-demo-ribbon span {{ min-width: 0; }}
+  .site-demo-ribbon summary::-webkit-details-marker {{ display: none; }}
+  .site-demo-ribbon div {{
+    width: min(280px, calc(100vw - 16px));
+    margin-top: 6px;
+    padding: 8px 10px;
+    border: 1px solid rgba(37, 99, 71, .22);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .97);
+    color: #203a2c;
+    box-shadow: 0 5px 14px rgba(31, 54, 42, .16);
+    backdrop-filter: blur(8px);
+  }}
   .site-demo-ribbon a {{
-    white-space: nowrap;
+    display: inline-block;
+    margin-top: 5px;
     color: #1f6f54;
     font-weight: 800;
     text-decoration: none;
@@ -4235,18 +4299,16 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
     .site-demo-ribbon {{
       top: 5px;
       left: 5px;
-      max-width: calc(100vw - 10px);
-      padding: 4px 6px;
-      font-size: 10px;
     }}
-    .site-demo-ribbon span {{ display: none; }}
   }}
 </style>
-<div class="site-demo-ribbon" role="note" aria-label="Демо-версия игры">
-  <strong>{notice["label"]}</strong>
-  <span>{notice["text"]}</span>
-  <a href="{notice["shop_url"]}" target="_top">Полная версия</a>
-</div>
+<details class="site-demo-ribbon" aria-label="Демо-версия игры">
+  <summary>{notice["label"]}</summary>
+  <div role="note">
+    <span>{notice["text"]}</span><br>
+    <a href="{notice["shop_url"]}" target="_top">Полная версия →</a>
+  </div>
+</details>
 """
     if "</body>" in html:
         html = html.replace("</body>", f"{badge}</body>", 1)
@@ -4850,11 +4912,22 @@ class Handler(SimpleHTTPRequestHandler):
             return f"{content_type}; charset=utf-8"
         return content_type
 
-    def send_json(self, data: Any, status: int = 200) -> None:
+    def session_cookie(self, token: str, clear: bool = False) -> str:
+        value = "" if clear else token
+        parts = [f"ege_session={value}", "Path=/", "HttpOnly", "SameSite=Lax"]
+        if clear:
+            parts.append("Max-Age=0")
+        if production_mode():
+            parts.append("Secure")
+        return "; ".join(parts)
+
+    def send_json(self, data: Any, status: int = 200, headers: dict[str, str] | None = None) -> None:
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
@@ -4932,6 +5005,10 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
+        if slug == "karaoke-numerals":
+            user = self.require_user()
+            if not user_can_access_full_game(user, slug):
+                raise PermissionError("Полная версия «Караоке числительных» доступна после покупки.")
         relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
@@ -4974,6 +5051,13 @@ class Handler(SimpleHTTPRequestHandler):
     def current_user(self) -> dict[str, Any] | None:
         header = self.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
+        if not token:
+            cookies = {}
+            for part in self.headers.get("Cookie", "").split(";"):
+                name, separator, value = part.strip().partition("=")
+                if separator:
+                    cookies[name] = value
+            token = cookies.get("ege_session", "")
         session = SESSIONS.get(token)
         if session:
             now = now_iso()
@@ -5169,19 +5253,25 @@ class Handler(SimpleHTTPRequestHandler):
                 token = secrets.token_urlsafe(24)
                 user = public_user(row)
                 SESSIONS[token] = {"user": user, "created_at": now_iso()}
-                self.send_json({"token": token, "user": user})
+                self.send_json({"token": token, "user": user}, headers={"Set-Cookie": self.session_cookie(token)})
             elif parsed.path in {"/api/register", "/api/auth/register"}:
                 user = register_user(payload, self.request_ip(), self.request_user_agent())
                 token = secrets.token_urlsafe(24)
                 SESSIONS[token] = {"user": user, "created_at": now_iso()}
-                self.send_json({"token": token, "user": user})
+                self.send_json({"token": token, "user": user}, headers={"Set-Cookie": self.session_cookie(token)})
             elif parsed.path == "/api/heartbeat":
                 self.send_json(record_visitor_heartbeat(self.current_user(), payload, self.request_ip(), self.request_user_agent()))
             elif parsed.path in {"/api/logout", "/api/auth/logout"}:
                 header = self.headers.get("Authorization", "")
                 token = header.removeprefix("Bearer ").strip()
+                if not token:
+                    for part in self.headers.get("Cookie", "").split(";"):
+                        name, separator, value = part.strip().partition("=")
+                        if separator and name == "ege_session":
+                            token = value
+                            break
                 SESSIONS.pop(token, None)
-                self.send_json({"ok": True})
+                self.send_json({"ok": True}, headers={"Set-Cookie": self.session_cookie("", clear=True)})
             elif parsed.path in {"/api/forgot-password", "/api/auth/forgot-password"}:
                 self.send_json(request_password_reset(payload))
             elif parsed.path in {"/api/reset-password", "/api/auth/reset-password"}:
