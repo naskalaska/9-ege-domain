@@ -1191,6 +1191,79 @@ button {
   min-width: 760px;
 }
 
+.admin-users-table {
+  min-width: 920px;
+}
+
+.admin-user-summary-row > td {
+  vertical-align: middle;
+}
+
+.admin-metric-button {
+  display: inline-grid;
+  min-width: 72px;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--green-dark);
+  text-align: center;
+  cursor: pointer;
+}
+
+.admin-metric-button b,
+.admin-metric-button span {
+  display: block;
+}
+
+.admin-metric-button b {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.admin-metric-button span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-metric-button:hover,
+.admin-metric-button.active {
+  border-color: var(--green);
+  background: #eef8f1;
+}
+
+.admin-metric-button.has-errors b {
+  color: #a63a32;
+}
+
+.admin-user-detail-row > td {
+  padding: 0 9px 12px;
+  background: #f8fbf8;
+}
+
+.admin-inline-detail {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-inline-detail .teacher-gifts-panel {
+  margin: 14px 0 0;
+}
+
+.admin-account-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.suspicious-users-details {
+  margin-top: 20px;
+}
+
 .paid-entity-form,
 .receipt-form {
   display: grid;
@@ -1207,8 +1280,32 @@ button {
 }
 
 .paid-entity-form input,
+.paid-entity-form textarea,
 .receipt-form input {
   width: 100%;
+}
+
+.admin-product-create summary {
+  cursor: pointer;
+  color: var(--green-dark);
+  font-weight: 900;
+}
+
+.new-paid-entity-form {
+  margin-top: 16px;
+  max-width: 920px;
+}
+
+.admin-product-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .admin-product-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .receipt-filters .active {

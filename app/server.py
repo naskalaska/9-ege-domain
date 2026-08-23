@@ -442,6 +442,24 @@ HTML_GAMES = {
     "orthoshooting": HTML_DIR / "ОРФОТИР",
 }
 
+HTML_GAME_TITLES = {
+    "suffixes-nouns": "Пушинки: суффиксы существительных",
+    "homogeneous-members-magic": "Магия однородных членов предложения",
+    "berry-season-ik-ek": "Ягодный сезон: ИК-ЕК",
+    "paronyms": "Паронимы",
+    "numerals-hit-parade": "Хит-парад числительных",
+    "karaoke-numerals": "Караоке числительных",
+    "summer-gerund-bar": "Бар добавочных действий",
+    "mouse-space": "Мышонок в космосе: суффиксы прилагательных",
+    "verb-conjugation-quest": "Спряжение глагола",
+    "truth-action-oge": "Правда, действие, ОГЭ",
+    "grammar-zoo": "Зоопарк: грамматические основы",
+    "parts-of-speech-kingdom": "Королевство трёх частей речи",
+    "butterflies-participial-phrase": "Бабочки: причастный оборот",
+    "butterflies-participle-suffixes": "Бабочки: суффиксы причастий",
+    "orthoshooting": "Орфотир",
+}
+
 PUBLIC_GAMES = {
     "fluffs": first_existing_path(HTML_DIR / "fluffs", HTML_DIR / "Пушинки"),
     "butterflies": HTML_DIR / "бабочки-суффиксы-причастий",
@@ -646,6 +664,50 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
                 product.get("online_url") or "",
                 product.get("cover_url") or "",
                 product["url_env"],
+                now,
+                now,
+            ),
+        )
+
+
+def seed_gift_only_games(con: sqlite3.Connection) -> None:
+    """Keep every platform game giftable without publishing it in the shop."""
+    shop_product_by_game_slug = {
+        "suffixes-nouns": "dandelion_suffixes",
+        "homogeneous-members-magic": "focus_homogeneous",
+        "berry-season-ik-ek": "berry_season",
+        "paronyms": "paronyms_game",
+        "mouse-space": "mouse_space_game",
+        "verb-conjugation-quest": "verb_conjugation_quest",
+        "truth-action-oge": "truth_action_oge",
+        "grammar-zoo": "grammar_zoo",
+        "parts-of-speech-kingdom": "parts_of_speech_kingdom",
+        "butterflies-participial-phrase": "butterflies_participial_phrase",
+        "orthoshooting": "orthoshooting",
+    }
+    now = now_iso()
+    for slug in HTML_GAMES:
+        if slug in shop_product_by_game_slug:
+            continue
+        product_id = f"gift_game_{slug.replace('-', '_')}"
+        con.execute(
+            """
+            INSERT INTO paid_entities (
+                product_id, slug, title, type, amount, currency,
+                delivery_url, online_url, cover_url, url_env,
+                is_active, created_at, updated_at
+            )
+            VALUES (?, ?, ?, 'product', '0.00', 'RUB', '', ?, '', '', 0, ?, ?)
+            ON CONFLICT(product_id) DO UPDATE SET
+                title = excluded.title,
+                online_url = excluded.online_url,
+                updated_at = excluded.updated_at
+            """,
+            (
+                product_id,
+                slug,
+                f"HTML-игра «{HTML_GAME_TITLES.get(slug, slug)}»",
+                f"{APP_BASE_URL}/full-games/{slug}/{game_entry_file(slug, 'index.html')}",
                 now,
                 now,
             ),
@@ -926,6 +988,7 @@ def ensure_app_db() -> None:
         ensure_column(con, "users", "teacher_id", "TEXT")
         ensure_column(con, "users", "email", "TEXT")
         ensure_column(con, "users", "password_reset_required", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(con, "users", "last_seen_at", "TEXT")
         ensure_admin_role_supported(con)
         con.execute("UPDATE users SET email = LOWER(username) WHERE email IS NULL AND instr(username, '@') > 1")
         con.execute(
@@ -952,6 +1015,7 @@ def ensure_app_db() -> None:
         ensure_column(con, "paid_entities", "online_url", "TEXT")
         ensure_column(con, "paid_entities", "description_json", "TEXT")
         seed_paid_entities(con)
+        seed_gift_only_games(con)
         seed_documents(con)
         ensure_service_admin(con)
         ensure_fallback_teacher(con)
@@ -2397,6 +2461,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         teachers = con.execute(
             """
             SELECT t.user_id, t.display_name, t.username, t.email, t.teacher_code, t.password_reset_required,
+                   t.last_seen_at,
                    uc.accepted_at AS consent_accepted_at,
                    COUNT(DISTINCT s.user_id) AS students,
                    COUNT(a.attempt_id) AS attempts,
@@ -3529,44 +3594,76 @@ def connected_games_for_admin(
         for row in teachers
         if normalize_email(row["email"] or row["username"])
     }
-    if not email_to_teacher:
-        return result
-    placeholders = ",".join("?" for _ in email_to_teacher)
-    rows = con.execute(
-        f"""
-        SELECT LOWER(so.buyer_email) AS buyer_email, pe.product_id, pe.slug, pe.title,
-               pe.delivery_url, pe.online_url, pe.url_env, so.order_uid, so.paid_at, so.created_at
-        FROM shop_orders so
-        JOIN paid_entities pe ON pe.product_id = so.product_id
-        WHERE so.status = 'paid'
-          AND pe.type = 'product'
-          AND LOWER(so.buyer_email) IN ({placeholders})
-        ORDER BY COALESCE(so.paid_at, so.created_at) DESC
-        """,
-        tuple(email_to_teacher.keys()),
-    ).fetchall()
     seen: dict[str, set[str]] = {teacher_id: set() for teacher_id in result}
     for teacher_id, gifts in result.items():
         seen[teacher_id].update(str(gift.get("product_id") or "") for gift in gifts)
-    for row in rows:
-        teacher_id = email_to_teacher.get(normalize_email(row["buyer_email"]))
-        if not teacher_id or row["product_id"] in seen.setdefault(teacher_id, set()):
-            continue
-        seen[teacher_id].add(row["product_id"])
-        product = dict(row)
-        result.setdefault(teacher_id, []).append(
-            {
-                "kind": "purchased",
-                "product_id": row["product_id"],
-                "slug": row["slug"],
-                "title": row["title"],
-                "online_url": product_online_url(product),
-                "offline_url": product_delivery_url(product),
-                "order_uid": row["order_uid"],
-                "created_at": row["paid_at"] or row["created_at"],
-                "note": "",
-            }
-        )
+
+    if email_to_teacher:
+        placeholders = ",".join("?" for _ in email_to_teacher)
+        rows = con.execute(
+            f"""
+            SELECT LOWER(so.buyer_email) AS buyer_email, pe.product_id, pe.slug, pe.title,
+                   pe.delivery_url, pe.online_url, pe.url_env, so.order_uid, so.paid_at, so.created_at
+            FROM shop_orders so
+            JOIN paid_entities pe ON pe.product_id = so.product_id
+            WHERE so.status = 'paid'
+              AND pe.type = 'product'
+              AND LOWER(so.buyer_email) IN ({placeholders})
+            ORDER BY COALESCE(so.paid_at, so.created_at) DESC
+            """,
+            tuple(email_to_teacher.keys()),
+        ).fetchall()
+        for row in rows:
+            teacher_id = email_to_teacher.get(normalize_email(row["buyer_email"]))
+            if not teacher_id or row["product_id"] in seen.setdefault(teacher_id, set()):
+                continue
+            seen[teacher_id].add(row["product_id"])
+            product = dict(row)
+            result.setdefault(teacher_id, []).append(
+                {
+                    "kind": "purchased",
+                    "product_id": row["product_id"],
+                    "slug": row["slug"],
+                    "title": row["title"],
+                    "online_url": product_online_url(product),
+                    "offline_url": product_delivery_url(product),
+                    "order_uid": row["order_uid"],
+                    "created_at": row["paid_at"] or row["created_at"],
+                    "note": "",
+                }
+            )
+
+    teacher_ids = [row["user_id"] for row in teachers]
+    if teacher_ids:
+        placeholders = ",".join("?" for _ in teacher_ids)
+        created_rows = con.execute(
+            f"""
+            SELECT teacher_id, public_id, title, mechanic, created_at, updated_at,
+                   is_active, is_deleted, use_count, last_used_at
+            FROM game_sets
+            WHERE teacher_id IN ({placeholders})
+            ORDER BY COALESCE(last_used_at, created_at) DESC
+            """,
+            tuple(teacher_ids),
+        ).fetchall()
+        for row in created_rows:
+            result.setdefault(row["teacher_id"], []).append(
+                {
+                    "kind": "created",
+                    "public_id": row["public_id"],
+                    "title": row["title"],
+                    "mechanic": row["mechanic"],
+                    "online_url": public_game_url(row["mechanic"], row["public_id"]),
+                    "offline_url": "",
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                    "is_active": bool(row["is_active"]),
+                    "is_deleted": bool(row["is_deleted"]),
+                    "use_count": int(row["use_count"] or 0),
+                    "last_used_at": row["last_used_at"],
+                    "note": "",
+                }
+            )
     return result
 
 
@@ -3574,7 +3671,8 @@ def shop_products_public() -> dict[str, Any]:
     with db() as con:
         rows = con.execute(
             """
-            SELECT product_id, slug, title, type, amount, currency, cover_url, description_json, is_active
+            SELECT product_id, slug, title, type, amount, currency, cover_url, online_url,
+                   description_json, is_active
             FROM paid_entities
             WHERE is_active = 1
             ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
@@ -3591,6 +3689,7 @@ def shop_products_public() -> dict[str, Any]:
                 "currency": row["currency"],
                 "price": format_amount_label(row["amount"], row["currency"]),
                 "cover_url": row["cover_url"] or "",
+                "online_url": row["online_url"] or "",
                 "description": json.loads(row["description_json"] or "{}"),
                 "is_active": bool(row["is_active"]),
             }
@@ -3768,6 +3867,53 @@ def update_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[s
         )
         updated = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
     return {"ok": True, "entity": paid_entity_row(updated)}
+
+
+def create_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    """Create a shop product from the admin panel."""
+    require_admin(admin)
+    title = trim_for_admin(payload.get("title"), 180)
+    slug = trim_for_admin(payload.get("slug"), 100).lower()
+    amount = normalize_amount(payload.get("amount"))
+    currency = trim_for_admin(payload.get("currency") or "RUB", 12).upper()
+    cover_url = str(payload.get("cover_url") or "").strip()
+    delivery_url = str(payload.get("delivery_url") or "").strip()
+    online_url = str(payload.get("online_url") or "").strip()
+    description_json = safe_description_json(payload.get("description") or {})
+    if not title:
+        raise ValueError("Введите название товара.")
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
+        raise ValueError("Адрес товара должен состоять из латинских букв, цифр и дефисов.")
+    if currency != "RUB":
+        raise ValueError("Сейчас поддерживается только валюта RUB.")
+    if not delivery_url:
+        raise ValueError("Укажите ссылку на материал, который получит покупатель.")
+
+    product_id = f"product_{slug.replace('-', '_')}"
+    now = now_iso()
+    with db() as con:
+        duplicate = con.execute(
+            "SELECT product_id FROM paid_entities WHERE product_id = ? OR slug = ?",
+            (product_id, slug),
+        ).fetchone()
+        if duplicate:
+            raise ValueError("Товар с таким адресом уже существует.")
+        con.execute(
+            """
+            INSERT INTO paid_entities (
+                product_id, slug, title, type, amount, currency,
+                delivery_url, online_url, cover_url, description_json, url_env,
+                is_active, created_at, updated_at
+            )
+            VALUES (?, ?, ?, 'product', ?, ?, ?, ?, ?, ?, '', 1, ?, ?)
+            """,
+            (
+                product_id, slug, title, amount, currency, delivery_url,
+                online_url, cover_url, description_json, now, now,
+            ),
+        )
+        created = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+    return {"ok": True, "entity": paid_entity_row(created)}
 
 
 def update_paid_entity_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -4830,7 +4976,13 @@ class Handler(SimpleHTTPRequestHandler):
         token = header.removeprefix("Bearer ").strip()
         session = SESSIONS.get(token)
         if session:
-            session["last_seen_at"] = now_iso()
+            now = now_iso()
+            session["last_seen_at"] = now
+            last_persisted = parse_iso(session.get("last_seen_persisted_at"))
+            if not last_persisted or (datetime.now(timezone.utc) - last_persisted).total_seconds() >= 60:
+                with db() as con:
+                    con.execute("UPDATE users SET last_seen_at = ? WHERE user_id = ?", (now, session["user"]["user_id"]))
+                session["last_seen_persisted_at"] = now
         return session["user"] if session else None
 
     def require_user(self) -> dict[str, Any]:
@@ -5106,6 +5258,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(update_paid_entity_delivery(self.require_user(), payload))
             elif parsed.path == "/api/admin/paid-entity":
                 self.send_json(update_paid_entity(self.require_user(), payload))
+            elif parsed.path == "/api/admin/paid-entity/create":
+                self.send_json(create_paid_entity(self.require_user(), payload), HTTPStatus.CREATED)
             elif parsed.path == "/api/admin/paid-entity-description":
                 self.send_json(update_paid_entity_description(self.require_user(), payload))
             elif parsed.path == "/api/admin/teacher-gift":

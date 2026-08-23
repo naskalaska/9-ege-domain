@@ -804,7 +804,28 @@ function applyShopProductOverride(product) {
 }
 
 function currentShopProducts() {
-  return shopProducts.map(applyShopProductOverride);
+  const builtIn = shopProducts.map(applyShopProductOverride);
+  const builtInSlugs = new Set(shopProducts.map((product) => product.slug));
+  const addedInAdmin = [...(shopProductOverrides?.values() || [])]
+    .filter((product) => product.type === "product" && !builtInSlugs.has(product.slug))
+    .map((product) => {
+      const description = product.description || {};
+      const image = product.cover_url || "/logo.jpg";
+      return {
+        slug: product.slug,
+        product_id: product.product_id,
+        title: product.title,
+        price: product.price,
+        image,
+        images: [image],
+        demoUrl: product.online_url || "",
+        demoLabel: "Открыть демо",
+        shortDescription: description.shortDescription || "Цифровой учебный материал.",
+        fullDescription: description.fullDescription || "",
+        ...description,
+      };
+    });
+  return [...builtIn, ...addedInAdmin];
 }
 
 function currentSupportProducts() {
@@ -1910,7 +1931,7 @@ function shopProductCard(product) {
           ${product.maxOnly
             ? `<button class="secondary-button" data-route="/shop/${product.slug}" type="button">${escapeHtml(product.buyLabel || "Подробнее")}</button>`
             : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить")}</button>`}
-          <a class="secondary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
+          ${product.demoUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
         </div>
         <span class="shop-soon-badge">${product.oldPrice ? `<span class="old-price">${escapeHtml(product.oldPrice)}</span> ` : ""}${escapeHtml(product.price)}</span>
       </div>
@@ -1923,6 +1944,7 @@ function renderList(items) {
 }
 
 function renderProductBlock(title, content) {
+  if (!content || (Array.isArray(content) && !content.length)) return "";
   const body = Array.isArray(content) ? renderList(content) : `<p>${escapeHtml(content)}</p>`;
   return `
     <section class="product-detail-block">
@@ -2039,7 +2061,7 @@ async function renderShopProductPage(slug) {
           ${product.promoNote ? `<div class="shop-notice">${escapeHtml(product.promoNote)}</div>` : ""}
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
-            <a class="primary-button public-play-link" href="${product.demoUrl}" target="_blank" rel="noopener">${product.demoLabel || "Играть онлайн"}</a>
+            ${product.demoUrl ? `<a class="primary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
             ${product.maxOnly
               ? `<a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
@@ -4148,7 +4170,7 @@ function renderAdminContent(data, closeButton = "") {
   const suspiciousUsers = data.suspicious_users || [];
   const giftProducts = paidEntities.filter((entity) => entity.type === "product");
   const giftProductOptions = giftProducts.map((entity) => `
-    <option value="${escapeHtml(entity.product_id)}">${escapeHtml(entity.title || entity.product_id)}</option>
+    <option value="${escapeHtml(entity.product_id)}">${escapeHtml(entity.title || entity.product_id)}${entity.is_active ? "" : " · не в продаже"}</option>
   `).join("");
   const consentLabel = (row) => row.consent_accepted
     ? `да${row.consent_accepted_at ? `, ${new Date(row.consent_accepted_at).toLocaleDateString()}` : ""}`
@@ -4327,10 +4349,15 @@ function renderAdminContent(data, closeButton = "") {
       </td>
     </tr>
   `).join("") : `<tr><td colspan="4">Подозрительных пользователей не найдено</td></tr>`;
-  const teacherCards = data.teachers.map((teacher) => {
+  const teacherRows = data.teachers.map((teacher) => {
     const teacherEmail = teacher.email || teacher.username;
     const gifts = teacher.gifts || [];
     const connectedGames = teacher.connected_games || [];
+    const teacherId = escapeHtml(teacher.user_id);
+    const studentsCount = Number(teacher.students || teacher.students_list.length || 0);
+    const attemptsCount = Number(teacher.attempts || 0);
+    const correctCount = Number(teacher.correct || 0);
+    const errorsCount = Math.max(0, attemptsCount - correctCount);
     const giftRows = gifts.length ? gifts.map((gift) => `
       <li>
         <span>
@@ -4354,29 +4381,37 @@ function renderAdminContent(data, closeButton = "") {
       </form>
     ` : `<p class="muted">В магазине пока нет товаров-игр для подарков.</p>`;
     const connectedGameRows = connectedGames.length ? connectedGames.map((game) => `
-      <tr>
-        <td>${escapeHtml(game.title || "Игра")}<br><span class="muted">${escapeHtml(game.product_id || game.slug || "")}</span></td>
-        <td>${game.kind === "gifted" ? "подарок" : "покупка"}</td>
+      <tr data-game-deleted="${game.is_deleted ? "1" : "0"}">
+        <td>${escapeHtml(game.title || "Игра")}<br><span class="muted">${escapeHtml(game.public_id || game.product_id || game.slug || "")}</span></td>
+        <td>${game.kind === "gifted" ? "подарок" : game.kind === "created" ? "создана пользователем" : "покупка"}</td>
         <td>${game.online_url ? `<a href="${escapeHtml(game.online_url)}" target="_blank" rel="noopener">онлайн</a>` : "—"}</td>
         <td>${game.offline_url ? `<a href="${escapeHtml(game.offline_url)}" target="_blank" rel="noopener">комплект</a>` : "—"}</td>
-        <td>${formatAdminDate(game.created_at)}</td>
+        <td>
+          ${game.kind === "created"
+            ? `${game.is_deleted ? `<span class="status-bad">удалена</span>` : game.is_active ? `<span class="status-ok">активна</span>` : `<span class="status-bad">отключена</span>`}<br><span class="muted">открытий: ${game.use_count || 0}</span>`
+            : formatAdminDate(game.created_at)}
+        </td>
+        <td>
+          ${game.kind === "created" ? `
+            <button class="ghost-button toggle-game-active" data-public-id="${escapeHtml(game.public_id)}" data-next-active="${game.is_active ? "0" : "1"}" type="button" ${game.is_deleted ? "disabled" : ""}>
+              ${game.is_active ? "Деактивировать" : "Включить"}
+            </button>
+            <button class="ghost-button delete-game" data-public-id="${escapeHtml(game.public_id)}" type="button" ${game.is_deleted ? "disabled" : ""}>Удалить</button>
+          ` : game.kind === "gifted" ? `
+            <button class="ghost-button revoke-teacher-gift" data-teacher-id="${escapeHtml(teacher.user_id)}" data-product-id="${escapeHtml(game.product_id)}" type="button">Убрать подарок</button>
+          ` : `<span class="muted">покупка подтверждена</span>`}
+        </td>
       </tr>
-    `).join("") : `<tr><td colspan="5">Подключённых игр пока нет</td></tr>`;
+    `).join("") : `<tr><td colspan="6">Игр в кабинете пока нет</td></tr>`;
     const students = teacher.students_list.length
       ? teacher.students_list.map((student) => `
         <tr>
           <td>${escapeHtml(student.display_name)}</td>
           <td>${escapeHtml(student.email || student.username)}<br><span class="muted">согласие: ${consentLabel(student)}</span></td>
-          <td>
-            <span>${adminStudentSummary(student)}</span>
-            <button class="ghost-button admin-student-details-toggle" type="button">Подробнее</button>
-            <div class="admin-student-details hidden">
-              <div class="teacher-metrics">
-                <div class="stat"><b>${student.attempts}</b><span>ответов</span></div>
-                <div class="stat"><b>${pct(student.correct, student.attempts)}</b><span>точность</span></div>
-              </div>
-            </div>
-          </td>
+          <td>${student.attempts || 0}</td>
+          <td>${student.correct || 0}</td>
+          <td>${Math.max(0, Number(student.attempts || 0) - Number(student.correct || 0))}</td>
+          <td>${pct(student.correct, student.attempts)}</td>
           <td>
             <button class="ghost-button reset-password" data-user-id="${escapeHtml(student.user_id)}" data-username="${escapeHtml(student.email || student.username)}" type="button">
               ${student.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
@@ -4385,38 +4420,56 @@ function renderAdminContent(data, closeButton = "") {
           </td>
         </tr>
       `).join("")
-      : `<tr><td colspan="5">Учеников пока нет</td></tr>`;
+      : `<tr><td colspan="7">Учеников пока нет</td></tr>`;
     return `
-      <article class="admin-card">
-        <div class="student-card-head">
-          <div>
-            <b>${escapeHtml(teacher.display_name)}</b>
-            <span class="muted">${escapeHtml(teacherEmail)} · код ${escapeHtml(teacher.teacher_code || "не задан")}</span>
+      <tr class="admin-user-summary-row">
+        <td><b>${escapeHtml(teacher.display_name)}</b><br><span class="muted">${escapeHtml(teacherEmail)}</span></td>
+        <td>${teacher.last_seen_at ? formatAdminDate(teacher.last_seen_at) : `<span class="muted">ещё не входил</span>`}</td>
+        <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="students" type="button"><b>${studentsCount}</b><span>учеников</span></button></td>
+        <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="stats" type="button"><b>${attemptsCount}</b><span>решений</span></button></td>
+        <td><button class="admin-metric-button ${errorsCount ? "has-errors" : ""}" data-teacher-id="${teacherId}" data-teacher-detail="stats" type="button"><b>${errorsCount}</b><span>ошибок</span></button></td>
+        <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="games" type="button"><b>${connectedGames.length}</b><span>игр</span></button></td>
+        <td><button class="ghost-button admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="account" type="button">Управление</button></td>
+      </tr>
+      <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="students">
+        <td colspan="7">
+          <div class="admin-inline-detail">
+            <div class="table-head"><h3>Ученики ${escapeHtml(teacher.display_name)}</h3><span class="muted">код учителя: ${escapeHtml(teacher.teacher_code || "не задан")}</span></div>
+            <table class="table"><tr><th>Ученик</th><th>Email</th><th>Решений</th><th>Верно</th><th>Ошибок</th><th>Точность</th><th>Управление</th></tr>${students}</table>
           </div>
-          <div class="button-row">
-            <button class="ghost-button reset-password" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail)}" type="button">
-              ${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}
-            </button>
-            <button class="ghost-button delete-user" data-user-id="${escapeHtml(teacher.user_id)}" data-username="${escapeHtml(teacherEmail || teacher.display_name)}" type="button">Удалить</button>
+        </td>
+      </tr>
+      <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="stats">
+        <td colspan="7">
+          <div class="admin-inline-detail">
+            <div class="table-head"><h3>Общая статистика учеников</h3><span class="muted">${attemptsCount} решений · ${correctCount} верных · ${errorsCount} ошибок · точность ${pct(correctCount, attemptsCount)}</span></div>
+            <table class="table"><tr><th>Ученик</th><th>Email</th><th>Решений</th><th>Верно</th><th>Ошибок</th><th>Точность</th><th>Управление</th></tr>${students}</table>
           </div>
-        </div>
-        <button class="ghost-button admin-connected-games-toggle" data-closed-label="Игры пользователя (${connectedGames.length})" type="button">Игры пользователя (${connectedGames.length})</button>
-        <div class="admin-connected-games hidden">
-          <table class="table"><tr><th>Игра</th><th>Источник</th><th>Онлайн</th><th>Комплект</th><th>Дата</th></tr>${connectedGameRows}</table>
-        </div>
-        <div class="teacher-metrics">
-          <div class="stat"><b>${teacher.attempts}</b><span>ответов</span></div>
-          <div class="stat"><b>${pct(teacher.correct, teacher.attempts)}</b><span>точность</span></div>
-        </div>
-        <div class="teacher-gifts-panel">
-          <div>
-            <b>Подарки в кабинете</b>
-            <ul>${giftRows}</ul>
+        </td>
+      </tr>
+      <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="games">
+        <td colspan="7">
+          <div class="admin-inline-detail">
+            <div class="table-head"><h3>Игры пользователя</h3><span class="muted">покупки, подарки и созданные игры</span></div>
+            <table class="table"><tr><th>Игра</th><th>Источник</th><th>Онлайн</th><th>Комплект</th><th>Статус / дата</th><th>Управление</th></tr>${connectedGameRows}</table>
+            <div class="teacher-gifts-panel">
+              <div><b>Подарки в кабинете</b><ul>${giftRows}</ul></div>
+              ${giftForm}
+            </div>
           </div>
-          ${giftForm}
-        </div>
-        <table class="table"><tr><th>Ученик</th><th>Email</th><th>Саммари</th><th>Пароль</th></tr>${students}</table>
-      </article>
+        </td>
+      </tr>
+      <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="account">
+        <td colspan="7">
+          <div class="admin-inline-detail admin-account-actions">
+            <span><b>${escapeHtml(teacher.display_name)}</b> · ${escapeHtml(teacherEmail)} · код ${escapeHtml(teacher.teacher_code || "не задан")}</span>
+            <div class="button-row">
+              <button class="ghost-button reset-password" data-user-id="${teacherId}" data-username="${escapeHtml(teacherEmail)}" type="button">${teacher.password_reset_required ? "Ожидает новый пароль" : "Сбросить пароль"}</button>
+              <button class="ghost-button delete-user" data-user-id="${teacherId}" data-username="${escapeHtml(teacherEmail || teacher.display_name)}" type="button">Удалить пользователя</button>
+            </div>
+          </div>
+        </td>
+      </tr>
     `;
   }).join("");
   return `
@@ -4461,6 +4514,42 @@ function renderAdminContent(data, closeButton = "") {
     </section>
     <section class="admin-section hidden" data-admin-panel="delivery">
       <div class="table-head"><h3>Товары магазина</h3><span class="muted">цена и обложка видны на витрине; без ссылки выдачи оплату начать нельзя</span></div>
+      <details class="admin-card admin-product-create">
+        <summary>＋ Добавить новый товар</summary>
+        <form class="paid-entity-form new-paid-entity-form" id="newPaidEntityForm">
+          <div class="admin-product-form-grid">
+            <label>Название *
+              <input name="title" required maxlength="180" placeholder="HTML-игра «Название»" />
+            </label>
+            <label>Адрес страницы *
+              <input name="slug" required maxlength="100" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="my-new-product" />
+              <span class="muted">Латинские буквы, цифры и дефисы</span>
+            </label>
+            <label>Цена, ₽ *
+              <input name="amount" required value="300" inputmode="decimal" />
+            </label>
+            <label>Обложка
+              <input name="cover_url" placeholder="/assets/shop/cover.png или https://..." />
+            </label>
+            <label>Ссылка на материал после оплаты *
+              <input name="delivery_url" type="url" required placeholder="https://disk.yandex.ru/d/..." />
+            </label>
+            <label>Демо / онлайн-версия
+              <input name="online_url" placeholder="https://... или /games/..." />
+            </label>
+          </div>
+          <label>Короткое описание *
+            <textarea name="shortDescription" required rows="3" maxlength="4000" placeholder="Текст для карточки на витрине"></textarea>
+          </label>
+          <label>Полное описание
+            <textarea name="fullDescription" rows="4" maxlength="4000" placeholder="Подробности на странице товара"></textarea>
+          </label>
+          <div class="button-row">
+            <button class="primary-button" type="submit">Добавить товар</button>
+            <span class="muted" data-create-product-status></span>
+          </div>
+        </form>
+      </details>
       <table class="table admin-table delivery-table"><tr><th>id</th><th>Тип</th><th>Карточка товара</th><th>Статус</th></tr>${deliveryRows}</table>
     </section>
     <section class="admin-section hidden" data-admin-panel="receipts">
@@ -4479,11 +4568,18 @@ function renderAdminContent(data, closeButton = "") {
     </section>
     <section class="admin-section hidden" data-admin-panel="users">
       <div class="table-head">
-        <h3>Подозрительные пользователи</h3>
-        <button class="ghost-button" id="deleteSuspiciousUsers" type="button" ${suspiciousUsers.length ? "" : "disabled"}>Удалить подозрительных</button>
+        <h3>Преподаватели</h3>
+        <span class="muted">Нажмите на число, чтобы открыть подробности</span>
       </div>
-      <table class="table admin-table" id="suspiciousUsersTable"><tr><th>Имя</th><th>Email</th><th>Создан</th><th>Действие</th></tr>${suspiciousRows}</table>
-      <div class="admin-list">${teacherCards}</div>
+      <table class="table admin-users-table">
+        <tr><th>Преподаватель</th><th>Последний визит</th><th>Ученики</th><th>Решения</th><th>Ошибки</th><th>Игры</th><th></th></tr>
+        ${teacherRows || `<tr><td colspan="7">Преподавателей пока нет</td></tr>`}
+      </table>
+      <details class="activity-details suspicious-users-details">
+        <summary>Подозрительные пользователи (${suspiciousUsers.length})</summary>
+        <div class="table-head"><span></span><button class="ghost-button" id="deleteSuspiciousUsers" type="button" ${suspiciousUsers.length ? "" : "disabled"}>Удалить подозрительных</button></div>
+        <table class="table admin-table" id="suspiciousUsersTable"><tr><th>Имя</th><th>Email</th><th>Создан</th><th>Действие</th></tr>${suspiciousRows}</table>
+      </details>
     </section>
     <section class="admin-section hidden" data-admin-panel="mail">
       <form class="admin-card smtp-test-panel" id="smtpTestForm">
@@ -4575,6 +4671,24 @@ function bindAdminActions(root) {
       row.classList.toggle("hidden", !showDeleted);
     });
   });
+  root.querySelectorAll(".admin-metric-button[data-teacher-detail]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const teacherId = button.dataset.teacherId;
+      const detail = button.dataset.teacherDetail;
+      const matchingRows = [...root.querySelectorAll(".admin-user-detail-row")]
+        .filter((row) => row.dataset.teacherId === teacherId);
+      const target = matchingRows.find((row) => row.dataset.teacherDetailRow === detail);
+      const willOpen = Boolean(target?.classList.contains("hidden"));
+      matchingRows.forEach((row) => row.classList.add("hidden"));
+      [...root.querySelectorAll(".admin-metric-button[data-teacher-id]")]
+        .filter((item) => item.dataset.teacherId === teacherId)
+        .forEach((item) => item.classList.remove("active"));
+      if (willOpen) {
+        target?.classList.remove("hidden");
+        button.classList.add("active");
+      }
+    });
+  });
   root.querySelectorAll(".admin-student-details-toggle").forEach((button) => {
     button.addEventListener("click", () => {
       const details = button.parentElement.querySelector(".admin-student-details");
@@ -4600,6 +4714,7 @@ function bindAdminActions(root) {
     });
   });
   root.querySelectorAll(".paid-entity-form").forEach((form) => {
+    if (form.id === "newPaidEntityForm") return;
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = form.querySelector("button[type='submit']");
@@ -4625,6 +4740,38 @@ function bindAdminActions(root) {
         submit.disabled = false;
       }
     });
+  });
+  root.querySelector("#newPaidEntityForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submit = form.querySelector("button[type='submit']");
+    const status = form.querySelector("[data-create-product-status]");
+    const formData = new FormData(form);
+    submit.disabled = true;
+    if (status) status.textContent = "Добавляю...";
+    try {
+      await api("/api/admin/paid-entity/create", {
+        method: "POST",
+        body: JSON.stringify({
+          title: formData.get("title"),
+          slug: formData.get("slug"),
+          amount: formData.get("amount"),
+          currency: "RUB",
+          cover_url: formData.get("cover_url"),
+          delivery_url: formData.get("delivery_url"),
+          online_url: formData.get("online_url"),
+          description: {
+            shortDescription: formData.get("shortDescription"),
+            fullDescription: formData.get("fullDescription"),
+          },
+        }),
+      });
+      shopProductOverrides = null;
+      await reloadAdminPanel("delivery");
+    } catch (err) {
+      if (status) status.textContent = err.message;
+      submit.disabled = false;
+    }
   });
   root.querySelectorAll(".teacher-gift-form").forEach((form) => {
     form.addEventListener("submit", async (event) => {
