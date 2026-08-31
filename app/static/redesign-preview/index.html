@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7f8fb" />
+  <title>Русский язык × нейросети — концепт главной</title>
+  <link rel="stylesheet" href="styles-v2.css" />
+</head>
+<body>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="На главную" data-view-target="home">
+      <span class="brand-sign">А</span>
+      <span class="brand-copy"><b>Русский язык</b><small>и нейросети</small></span>
+    </a>
+    <nav class="nav" aria-label="Основная навигация">
+      <a class="nav-link active" href="#home" data-view-target="home">Главная</a>
+      <a class="nav-link" href="#games" data-view-target="games">Игры</a>
+      <a class="nav-link" href="#shop" data-view-target="shop">Магазин</a>
+      <a class="nav-link" href="#services" data-view-target="services">Услуги</a>
+      <button class="profile-button" type="button" data-view-target="auth">
+        <span class="profile-dot"></span> Кабинет
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div class="prototype-view is-visible" data-view="home">
+    <section class="hero" id="directions">
+      <div class="network network-a" aria-hidden="true"></div>
+      <div class="network network-b" aria-hidden="true"></div>
+
+      <div class="hero-intro">
+        <p class="eyebrow"><span></span> Образовательная экосистема</p>
+        <h1>Выберите свой способ <em>изучать язык</em></h1>
+        <p class="lead">Четыре направления — одно пространство для практики, игры и новых идей.</p>
+      </div>
+
+      <div class="module-stage">
+        <div class="stage-hint"><span>Нажмите на кубик</span><i>↘</i></div>
+        <div class="modules" id="showcase" aria-label="Разделы платформы">
+        <article class="module module-trainer" tabindex="0" role="button" aria-expanded="false" data-module>
+          <div class="module-photo" role="img" aria-label="Интерфейс тренажёра"></div>
+          <div class="module-number">01</div>
+          <div class="module-heading">
+            <span class="module-icon">Aa</span>
+            <div><small>Системная практика</small><h2>Тренажёр</h2></div>
+          </div>
+          <div class="module-detail" aria-hidden="true">
+            <button class="close-detail" type="button" aria-label="Закрыть описание">×</button>
+            <p class="detail-kicker">Тренажёр</p>
+            <h3>Тренажёры в формате ЕГЭ</h3>
+            <ul><li>Задания 5 и 9–15</li><li>Общий прогресс</li><li>Копилка ошибок</li></ul>
+            <a href="#auth" class="detail-link" data-view-target="auth">Перейти <span>→</span></a>
+          </div>
+        </article>
+
+        <article class="module module-games" tabindex="0" role="button" aria-expanded="false" data-module>
+          <div class="module-photo" role="img" aria-label="Учебные игры"></div>
+          <div class="module-number">02</div>
+          <div class="module-heading">
+            <span class="module-icon">✦</span>
+            <div><small>Учиться увлекательно</small><h2>Игры</h2></div>
+          </div>
+          <div class="module-detail" aria-hidden="true">
+            <button class="close-detail" type="button" aria-label="Закрыть описание">×</button>
+            <p class="detail-kicker">Игры</p>
+            <h3>HTML-игры по русскому языку</h3>
+            <ul><li>Орфография</li><li>Пунктуация</li><li>Культура речи</li></ul>
+            <a href="#games" class="detail-link" data-view-target="games">Перейти <span>→</span></a>
+          </div>
+        </article>
+
+        <article class="module module-shop" tabindex="0" role="button" aria-expanded="false" data-module>
+          <div class="module-photo" role="img" aria-label="Материалы магазина"></div>
+          <div class="module-number">03</div>
+          <div class="module-heading">
+            <span class="module-icon">□</span>
+            <div><small>Авторские материалы</small><h2>Магазин</h2></div>
+          </div>
+          <div class="module-detail" aria-hidden="true">
+            <button class="close-detail" type="button" aria-label="Закрыть описание">×</button>
+            <p class="detail-kicker">Магазин</p>
+            <h3>Цифровые материалы по русскому языку</h3>
+            <ul><li>Игры</li><li>Карточки</li><li>Методические комплекты</li></ul>
+            <a href="#shop" class="detail-link" data-view-target="shop">Перейти <span>→</span></a>
+          </div>
+        </article>
+
+        <article class="module module-learning" tabindex="0" role="button" aria-expanded="false" data-module>
+          <div class="module-photo" role="img" aria-label="Обучение и консультации"></div>
+          <div class="module-number">04</div>
+          <div class="module-heading">
+            <span class="module-icon">”</span>
+            <div><small>Опыт и поддержка</small><h2>Услуги</h2></div>
+          </div>
+          <div class="module-detail" aria-hidden="true">
+            <button class="close-detail" type="button" aria-label="Закрыть описание">×</button>
+            <p class="detail-kicker">Услуги / обучение</p>
+            <h3>Услуги для учителей и учеников</h3>
+            <ul><li>Личная консультация</li><li>Отрисовка визуала</li><li>Готовые уроки</li></ul>
+            <a href="#services" class="detail-link" data-view-target="services">Перейти <span>→</span></a>
+          </div>
+        </article>
+        </div>
+      </div>
+
+      <div class="scroll-note" aria-hidden="true"><span></span> исследовать</div>
+    </section>
+
+    <section class="idea-section" id="idea">
+      <div class="idea-mark" aria-hidden="true">”</div>
+      <p class="eyebrow dark"><span></span> Логика нового образа</p>
+      <div class="idea-grid">
+        <h2>Современное<br />образование с<br /><em>русским характером.</em></h2>
+        <div class="idea-copy">
+          <p>Белый фон даёт воздух, кобальтовый синий собирает пространство, а красный работает как точный смысловой акцент.</p>
+          <div class="palette" aria-label="Цветовая палитра">
+            <span style="--swatch:#0d3b8e">#0D3B8E</span>
+            <span style="--swatch:#4a7cc7">#4A7CC7</span>
+            <span style="--swatch:#bfd6f2">#BFD6F2</span>
+            <span style="--swatch:#d62828">#D62828</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <section class="prototype-view catalog-page" data-view="games" aria-labelledby="gamesTitle">
+      <div class="page-orbit" aria-hidden="true"></div>
+      <div class="page-head">
+        <div>
+          <p class="eyebrow"><span></span> Игры без регистрации</p>
+          <h1 id="gamesTitle">Игры по <em>русскому языку</em></h1>
+          <p>Учебные мини-игры можно быстро открыть, запустить и дать ученикам ссылку. Авторизованный учитель может заменить лексику внутри игры.</p>
+        </div>
+        <div class="page-art game-art" aria-hidden="true"></div>
+      </div>
+      <nav class="rubricator" aria-label="Рубрики игр">
+        <button class="active" type="button" data-filter="all">Все</button>
+        <button type="button" data-filter="orthography">Орфография</button>
+        <button type="button" data-filter="morphology">Морфология</button>
+        <button type="button" data-filter="syntax">Синтаксис и пунктуация</button>
+        <button type="button" data-filter="speech">Культура речи</button>
+      </nav>
+      <div class="catalog-grid game-grid">
+        <article class="catalog-card" data-category="orthography"><img src="assets/game-berry.png" alt="Ягодный сезон" /><div><small>мини-игра · орфография</small><h2>Ягодный сезон: ИК-ЕК</h2><p>Собирайте слова в корзинки Е и И, тренируя суффиксы -ек- и -ик-.</p><button type="button" data-placeholder>Играть <span>→</span></button></div></article>
+        <article class="catalog-card" data-category="syntax"><img src="assets/game-magic.png" alt="Магия однородных членов" /><div><small>мини-игра · пунктуация</small><h2>Магия однородных членов предложения</h2><p>Выбирайте свитки с правильными цифрами для запятых.</p><button type="button" data-placeholder>Играть <span>→</span></button></div></article>
+        <article class="catalog-card" data-category="speech"><img src="assets/game-hitparade.png" alt="Хит-парад числительных" /><div><small>мини-игра · культура речи</small><h2>Хит-парад числительных</h2><p>Музыкальный квест: редактируйте факты, ищите ошибки и собирайте выпуск.</p><button type="button" data-placeholder>Играть <span>→</span></button></div></article>
+        <article class="catalog-card" data-category="syntax"><img src="assets/game-butterflies.png" alt="Бабочки" /><div><small>мини-игра · пунктуация</small><h2>Бабочки: причастный оборот</h2><p>Освободите бабочек, расставляя запятые в предложениях.</p><button type="button" data-placeholder>Играть <span>→</span></button></div></article>
+        <article class="catalog-card compact-card" data-category="orthography"><div class="letter-cover">ИК</div><div><small>мини-игра · орфография</small><h2>Пушинки: суффиксы существительных</h2><p>Поймайте пушинки и выберите правильную букву.</p><button type="button" data-placeholder>Играть <span>→</span></button></div></article>
+        <article class="catalog-card compact-card" data-category="morphology"><div class="letter-cover">ЧР</div><div><small>игра · морфология</small><h2>Королевство трёх частей речи</h2><p>Распределяйте слова по королевствам частей речи.</p><button type="button" data-placeholder>Демо <span>→</span></button></div></article>
+        <article class="catalog-card compact-card" data-category="speech"><div class="letter-cover">5</div><div><small>большая игра · культура речи</small><h2>Паронимы</h2><p>Попробуйте механику большой игры на ограниченном наборе групп.</p><button type="button" data-placeholder>Демо <span>→</span></button></div></article>
+        <article class="catalog-card compact-card" data-category="orthography"><div class="letter-cover">О</div><div><small>большая игра · орфография</small><h2>Орфотир</h2><p>Выбирайте сектор, сбивайте шарики и собирайте награды.</p><button type="button" data-placeholder>Демо <span>→</span></button></div></article>
+      </div>
+    </section>
+
+    <section class="prototype-view catalog-page" data-view="shop" aria-labelledby="shopTitle">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow"><span></span> Цифровые материалы</p>
+          <h1 id="shopTitle">Магазин <em>для уроков</em></h1>
+          <p>Игры, карточки, интерактивные задания и методические комплекты. После оплаты ссылка на материал приходит на указанную электронную почту.</p>
+        </div>
+        <div class="page-art shop-art" aria-hidden="true"></div>
+      </div>
+      <nav class="rubricator shop-rubricator" aria-label="Рубрики магазина">
+        <button class="active" type="button" data-shop-filter="all">Все материалы</button>
+        <button type="button" data-shop-filter="orthography">Орфография</button>
+        <button type="button" data-shop-filter="syntax">Пунктуация</button>
+        <button type="button" data-shop-filter="morphology">Морфология</button>
+        <button type="button" data-shop-filter="speech">Культура речи</button>
+        <button type="button" data-shop-filter="exam">ОГЭ / ЕГЭ</button>
+      </nav>
+      <div class="catalog-grid shop-grid">
+        <article class="product-card" data-shop-category="orthography"><img src="assets/product-fruit.png" alt="Фруктовый сад" /><div><small>HTML-игра · орфография</small><h2>Фруктовый сад: суффиксы ИК-ЕК</h2><p>Редактируемая игра с сортировкой слов по корзинкам Е и И.</p><footer><b>300 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+        <article class="product-card" data-shop-category="orthography"><img src="assets/product-dandelion.png" alt="Одуванчик" /><div><small>HTML-игра · орфография</small><h2>Одуванчик: суффиксы существительных</h2><p>Ученики ловят одуванчики и выбирают пропущенную букву.</p><footer><b>300 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+        <article class="product-card" data-shop-category="syntax"><img src="assets/product-focus.png" alt="Фокус" /><div><small>HTML-игра · пунктуация</small><h2>Фокус: однородные члены</h2><p>Редактируемая игра для тренировки постановки запятых.</p><footer><b>500 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+        <article class="product-card" data-shop-category="speech exam"><img src="assets/product-paronyms.png" alt="Паронимы" /><div><small>большая HTML-игра · ЕГЭ</small><h2>Паронимы: ЕГЭ. Задание 5</h2><p>Все группы паронимов, визуальные и объясняющие карточки.</p><footer><b>800 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+        <article class="product-card art-product" data-shop-category="morphology"><div class="product-art kingdom-art"></div><div><small>большая игра · морфология</small><h2>Королевство трёх частей речи</h2><p>Распределение слов и форм по королевствам частей речи.</p><footer><b>500 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+        <article class="product-card art-product" data-shop-category="orthography exam"><div class="product-art shooting-art"></div><div><small>большая игра · ОГЭ</small><h2>Орфотир</h2><p>Тематические секторы, статистика и коллекция наград.</p><footer><b>500 ₽</b><button type="button" data-placeholder>Подробнее</button></footer></div></article>
+      </div>
+    </section>
+
+    <section class="prototype-view services-page" data-view="services" aria-labelledby="servicesTitle">
+      <div class="service-intro">
+        <p class="eyebrow"><span></span> Услуги</p>
+        <h1 id="servicesTitle">От идеи — к <em>готовому решению</em></h1>
+        <p>Три формата персональной работы. Пока это визуальные заглушки для оценки структуры и подачи.</p>
+      </div>
+      <div class="service-cards">
+        <article class="service-card featured"><span class="service-index">01</span><div class="service-symbol">”</div><small>Персональная работа</small><h2>Личная консультация</h2><p>Урок с полной проработкой материала и персональным маршрутом.</p><ul><li>Диагностика запроса</li><li>Разбор темы</li><li>План дальнейшей работы</li></ul><button type="button" data-placeholder>Оставить заявку <span>→</span></button></article>
+        <article class="service-card"><span class="service-index">02</span><div class="service-symbol">✦</div><small>Визуальная концепция</small><h2>Отрисовка визуала</h2><p>Обложки, иллюстрации и оформление образовательного материала в едином стиле.</p><ul><li>Поиск образа</li><li>Серия визуалов</li><li>Подготовка к публикации</li></ul><button type="button" data-placeholder>Оставить заявку <span>→</span></button></article>
+        <article class="service-card"><span class="service-index">03</span><div class="service-symbol">Aa</div><small>Материал под ключ</small><h2>Готовые уроки</h2><p>Цельный урок со структурой, заданиями, визуалом и материалами для проведения.</p><ul><li>Сценарий урока</li><li>Задания и механики</li><li>Готовое оформление</li></ul><button type="button" data-placeholder>Оставить заявку <span>→</span></button></article>
+      </div>
+    </section>
+
+    <section class="prototype-view auth-page" data-view="auth" aria-labelledby="authTitle">
+      <div class="auth-visual">
+        <div class="auth-art"></div>
+        <p class="eyebrow dark"><span></span> Личный кабинет</p>
+        <h1 id="authTitle">Продолжайте с того места, <em>где остановились.</em></h1>
+        <p>Единый вход в тренажёры, прогресс, созданные и приобретённые игры.</p>
+      </div>
+      <div class="auth-panels">
+        <form class="auth-card" data-demo-form>
+          <p class="detail-kicker">Уже есть аккаунт</p><h2>Вход</h2>
+          <label>Email<input type="email" autocomplete="email" placeholder="name@example.ru" /></label>
+          <label>Пароль<input type="password" autocomplete="current-password" placeholder="••••••••" /></label>
+          <button class="form-primary" type="submit">Войти <span>→</span></button>
+          <button class="text-button" type="button" data-placeholder>Забыли пароль?</button>
+        </form>
+        <form class="auth-card register-card" data-demo-form>
+          <p class="detail-kicker">Первый раз здесь</p><h2>Регистрация</h2>
+          <fieldset class="role-choice" aria-label="Выберите роль">
+            <legend>Кто вы?</legend>
+            <label class="role-card selected" data-role-card="student">
+              <input type="radio" name="role" value="student" checked />
+              <span class="role-mark">У</span>
+              <span class="role-copy"><b>Я ученик</b><small>Тренируюсь, вижу прогресс и занимаюсь с учителем</small></span>
+              <span class="role-check">✓</span>
+            </label>
+            <label class="role-card" data-role-card="teacher">
+              <input type="radio" name="role" value="teacher" />
+              <span class="role-mark">П</span>
+              <span class="role-copy"><b>Я учитель</b><small>Создаю классы и игры, отслеживаю результаты</small></span>
+              <span class="role-check">✓</span>
+            </label>
+          </fieldset>
+          <div class="two-fields"><label>Имя<input type="text" autocomplete="name" /></label><label>Email<input type="email" autocomplete="email" /></label></div>
+          <label>Пароль<input type="password" autocomplete="new-password" /></label>
+          <label class="teacher-code-field" data-teacher-code>Код учителя <span>необязательно</span><input type="text" placeholder="например, TEACHER-2026" /><small>По коду ваш прогресс будет доступен учителю.</small></label>
+          <small class="form-note">Для регистрации нужна почта в доменной зоне .ru.</small>
+          <button class="form-primary" type="submit">Создать аккаунт <span>→</span></button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="script-v2.js"></script>
+</body>
+</html>

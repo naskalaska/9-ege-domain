@@ -108,6 +108,16 @@ const miniGames = [
     kindLabel: "мини-игра",
   },
   {
+    slug: "expedition-memory-isolated-members",
+    title: "Экспедиция памяти: обособленные члены предложения",
+    description: "Пройдите маршрут из 30 испытаний, восстановите правила обособления и соберите пять артефактов памяти.",
+    button: "Играть",
+    path: "/games/expedition-memory-isolated-members/index.html",
+    category: "syntax",
+    categoryTitle: "Синтаксис и пунктуация",
+    kindLabel: "мини-игра",
+  },
+  {
     slug: "berry-season-ik-ek",
     title: "Ягодный сезон: ИК-ЕК",
     description: "Собирайте слова в корзинки Е и И, тренируя суффиксы -ек- и -ик-.",
@@ -466,6 +476,60 @@ const shopProducts = [
     ],
   },
   {
+    slug: "expedition-memory-isolated-members",
+    title: "HTML-игра «Экспедиция памяти: обособленные члены предложения»",
+    kindLabel: "мини-игра",
+    price: "300 ₽",
+    image: "/games/expedition-memory-isolated-members/02_assets/bg-expedition-world.png",
+    images: [
+      "/games/expedition-memory-isolated-members/02_assets/bg-expedition-world.png",
+      "/games/expedition-memory-isolated-members/02_assets/shop-card-functionality.png",
+      "/games/expedition-memory-isolated-members/02_assets/shop-card-topics.png",
+      "/games/expedition-memory-isolated-members/02_assets/shop-card-task-types.png",
+    ],
+    demoUrl: "/games/expedition-memory-isolated-members/index.html",
+    demoLabel: "Играть онлайн",
+    shortDescription: "Интерактивная экспедиция по теме обособленных членов предложения: 30 испытаний, пять навыков и маршрут с артефактами.",
+    fullDescription: "HTML-игра «Экспедиция памяти» помогает повторить правила обособления в формате учебного путешествия. Ученик проходит пять участков маршрута, выполняет 30 испытаний, собирает артефакты и восстанавливает карту мира.",
+    tryBefore: [
+      "Онлайн-версия доступна в разделе «Игры»:",
+      "https://dimitrieva-av.ru/games/expedition-memory-isolated-members/index.html",
+      "Можно посмотреть оформление, маршрут экспедиции и механику заданий перед покупкой.",
+    ],
+    suitableFor: [
+      "для урока русского языка",
+      "для повторения обособленных членов предложения",
+      "для тренировки пунктуации",
+      "для самостоятельной работы ученика",
+      "для учеников 9 класса",
+    ],
+    howItWorks: [
+      "Ученик проходит пять участков экспедиционного маршрута и выполняет 30 заданий на правила обособления.",
+      "За завершённые этапы открываются артефакты, а прогресс собирается в восстановленную карту мира.",
+      "В игре есть мгновенная проверка, возможность исправлять ошибки, теория и итоговый экран результатов.",
+    ],
+    package: [
+      "Готовая HTML-игра с необходимыми изображениями.",
+      "Оффлайн-версия для запуска в современном браузере.",
+      "Онлайн-ссылка на игру.",
+    ],
+    adaptation: [
+      "Игра поставляется как готовый комплект.",
+      "Структуру папки с HTML-файлом и изображениями необходимо сохранять без изменений.",
+    ],
+    format: "Цифровой материал. Физическая доставка не требуется.",
+    requirements: [
+      "компьютер, планшет, интерактивная панель или телефон",
+      "любой современный браузер",
+      "для оффлайн-запуска: папка с HTML-файлом и папкой 02_assets",
+    ],
+    delivery: "После успешной оплаты на указанную электронную почту придёт ссылка на материал.",
+    important: [
+      "Перед оплатой проверьте правильность электронной почты.",
+      "Для локального запуска сохраните рядом index.html и папку 02_assets.",
+    ],
+  },
+  {
     slug: "paronyms-game",
     title: "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
     price: "800 ₽",
@@ -812,10 +876,10 @@ const shopProducts = [
 ];
 
 const supportProducts = [
-  { slug: "support-100", id: "support_100", title: "Тёплое спасибо", price: "100 ₽", description: "Небольшая поддержка проекта и знак, что такие материалы действительно нужны." },
-  { slug: "support-300", id: "support_300", title: "На новые задания", price: "300 ₽", description: "Помогает пополнять и вычитывать базы, добавлять новые режимы тренировки и чинить мелочи, которые “почти незаметны”, но очень важны." },
-  { slug: "support-500", id: "support_500", title: "На новые игры", price: "500 ₽", description: "Поддержка разработки учебных HTML-игр, которые можно запускать прямо из браузера и использовать на уроке." },
-  { slug: "support-1000", id: "support_1000", title: "Большая поддержка", price: "1000 ₽", description: "Помогает быстрее развивать платформу, оплачивать технические расходы и выпускать новые материалы." },
+  { slug: "support-100", id: "support_100", displayTitle: "Тёплое спасибо", title: "Тёплое спасибо", price: "100 ₽", image: "/assets/support/support-100.png", description: "Небольшая поддержка проекта и знак, что такие материалы действительно нужны." },
+  { slug: "support-300", id: "support_300", displayTitle: "На новые задания", title: "На новые задания", price: "300 ₽", image: "/assets/support/support-300.png", description: "Помогает пополнять и вычитывать базы, добавлять новые режимы тренировки и чинить мелочи, которые почти незаметны, но очень важны." },
+  { slug: "support-500", id: "support_500", displayTitle: "На новые игры", title: "На новые игры", price: "500 ₽", image: "/assets/support/support-500.png", description: "Поддержка разработки учебных HTML-игр, которые можно запускать прямо из браузера и использовать на уроке." },
+  { slug: "support-1000", id: "support_1000", displayTitle: "Большая поддержка", title: "Большая поддержка", price: "1000 ₽", image: "/assets/support/support-1000.png", description: "Помогает быстрее развивать платформу, оплачивать технические расходы и выпускать новые материалы." },
 ];
 
 let shopProductOverrides = null;
@@ -1100,20 +1164,21 @@ function ruleCategories() {
 }
 
 function isPublicPage(path = window.location.pathname) {
-  return ["/", "/games", "/donate", "/support", "/contacts", "/delivery", "/refund", "/offer", "/shop/thanks"].includes(path) || path === "/shop" || path.startsWith("/shop/");
+  return ["/", "/games", "/services", "/donate", "/support", "/contacts", "/delivery", "/refund", "/offer", "/shop/thanks"].includes(path) || path === "/shop" || path.startsWith("/shop/");
 }
 
 function setShellMode(mode = "app") {
   appShell.classList.toggle("public-shell", mode === "public");
   if (brand) {
     brand.innerHTML = mode === "public"
-      ? `<div class="brand-mark">РЯ</div><div><h1>Русский язык</h1><p>тренажёры, игры и материалы</p></div>`
-      : `<div class="brand-mark">ЕГЭ</div><div><h1>ЕГЭ: платформа активностей</h1><p>Единый вход, каталог тренажёров и общий прогресс</p></div>`;
+      ? `<div class="brand-mark">А</div><div><h1>Русский язык</h1><p>и нейросети</p></div>`
+      : `<div class="brand-mark">А</div><div><h1>Русский язык</h1><p>тренажёры и прогресс</p></div>`;
   }
 }
 
 function navigate(path) {
   stopTeacherStatsRefresh();
+  document.querySelectorAll(".modal-backdrop").forEach((item) => item.remove());
   state.activityLoadRequestId += 1;
   history.pushState(null, "", path);
   restoreSession();
@@ -1281,6 +1346,8 @@ function renderTopActions() {
     localStorage.removeItem("ege_token");
     state.token = null;
     state.user = null;
+    document.querySelectorAll(".modal-backdrop").forEach((item) => item.remove());
+    history.replaceState(null, "", "/login");
     renderLogin();
   });
   topActions.append(role);
@@ -1308,9 +1375,10 @@ function renderPublicTopActions(active = "") {
     : "";
   topActions.innerHTML = `
     <button class="ghost-button public-nav-link" data-route="/" type="button">На главную</button>
-    <button class="ghost-button public-nav-link" data-public-nav="#trainers" type="button">Тренажёры</button>
+    <button class="ghost-button public-nav-link" data-route="${state.user ? "/apps" : "/login"}" type="button">Тренажёры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
+    <button class="ghost-button public-nav-link" data-route="/services" type="button">Услуги</button>
     <button class="ghost-button public-nav-link" data-route="/donate" type="button">Поддержать</button>
     ${teacherGamesButton}
     <button class="primary-button public-nav-login" data-route="${state.user ? "/apps" : "/login"}" type="button">
@@ -1352,16 +1420,21 @@ function renderLogin() {
   document.querySelector("#loginForm").insertAdjacentHTML("afterend", `
     <form class="login-panel register-panel" id="registerForm">
       <h2>Регистрация</h2>
-      <div class="role-choice" aria-label="Роль">
-        <label>
+      <fieldset class="role-choice" aria-label="Выберите роль">
+        <legend>Кто вы?</legend>
+        <label class="role-card selected" data-role-card="student">
           <input type="radio" name="role" value="student" checked />
-          <span>Ученик</span>
+          <span class="role-mark">У</span>
+          <span class="role-copy"><b>Я ученик</b><small>Тренируюсь, вижу прогресс и занимаюсь с учителем</small></span>
+          <span class="role-check">✓</span>
         </label>
-        <label>
+        <label class="role-card" data-role-card="teacher">
           <input type="radio" name="role" value="teacher" />
-          <span>Учитель</span>
+          <span class="role-mark">П</span>
+          <span class="role-copy"><b>Я учитель</b><small>Создаю классы и игры, отслеживаю результаты</small></span>
+          <span class="role-check">✓</span>
         </label>
-      </div>
+      </fieldset>
       <label>
         Имя
         <input name="display_name" autocomplete="name" required />
@@ -1379,9 +1452,10 @@ function renderLogin() {
         Сайт
         <input name="website" autocomplete="off" tabindex="-1" />
       </label>
-      <label id="teacherCodeLabel">
-        Код учителя
+      <label id="teacherCodeLabel" class="teacher-code-field">
+        <span class="teacher-code-title">Код учителя <small>необязательно</small></span>
         <input name="teacher_code" placeholder="например, TEACHER-2026" />
+        <span class="muted">По коду ваш прогресс будет доступен учителю.</span>
       </label>
       <button class="secondary-button" type="submit">Создать аккаунт</button>
       <p class="error" id="registerError"></p>
@@ -1429,6 +1503,7 @@ function renderLogin() {
       } else if (target) {
         await loadActivity(target, false);
       } else {
+        history.replaceState(null, "", "/apps");
         await loadBootstrap();
         renderDashboard();
       }
@@ -1440,7 +1515,10 @@ function renderLogin() {
   document.querySelectorAll("input[name='role']").forEach((input) => {
     input.addEventListener("change", () => {
       const role = document.querySelector("input[name='role']:checked").value;
-      codeLabel.classList.toggle("hidden", role === "teacher");
+      document.querySelectorAll("[data-role-card]").forEach((card) => {
+        card.classList.toggle("selected", card.dataset.roleCard === role);
+      });
+      codeLabel.classList.toggle("role-hidden", role === "teacher");
     });
   });
   document.querySelector("#registerForm").addEventListener("submit", async (event) => {
@@ -1482,6 +1560,7 @@ function renderLogin() {
       } else if (target) {
         await loadActivity(target, false);
       } else {
+        history.replaceState(null, "", "/apps");
         await loadBootstrap();
         renderDashboard();
       }
@@ -1635,129 +1714,125 @@ function renderLandingPage(scrollTarget = "") {
   renderPublicTopActions("/");
   view.innerHTML = `
     <main class="landing-page">
-      <section class="landing-section landing-hero" id="top" style="--bg: url('${landingAsset("asset_trainer1.png")}')">
-        <div class="landing-wrap">
-          <article class="landing-card">
-            <div class="landing-text-row">
-              <div>
-                <p class="eyebrow">образовательная платформа</p>
-                <h2>Русский язык: тренажёры и игры для системной подготовки к экзаменам</h2>
-              </div>
-              <div>
-                <p class="landing-lead">Платформа объединяет тренажёры в формате ЕГЭ, учебные игры по русскому языку и цифровые материалы для уроков.</p>
-                <p class="landing-lead">Ученики могут тренироваться, играть и закреплять темы, а учитель - быстро собирать тесты, отслеживать статистику и подбирать материалы под задачи класса.</p>
-                <div class="landing-actions">
-                  <button class="primary-button" data-scroll="#trainers" type="button">Тренажёры</button>
-                  <button class="secondary-button" data-route="/games" type="button">Игры</button>
-                  <button class="secondary-button" data-route="/shop" type="button">Магазин</button>
-                </div>
-              </div>
-            </div>
-          </article>
-          <div class="landing-gallery">
-            <img src="${landingAsset("asset_trainer3.png")}" alt="Тренажёры по русскому языку" />
-            <img src="${landingAsset("asset_game3.png")}" alt="Игры по русскому языку" />
-            <img src="${landingAsset("asset_shop3.png")}" alt="Магазин материалов" />
+      <section class="landing-section landing-hero redesign-hero" id="top">
+        <div class="redesign-network redesign-network-a" aria-hidden="true"></div>
+        <div class="redesign-network redesign-network-b" aria-hidden="true"></div>
+        <div class="redesign-hero-intro">
+          <p class="eyebrow">образовательная экосистема</p>
+          <h2>Выберите свой способ <em>изучать язык</em></h2>
+          <p>Платформа объединяет тренажёры в формате ЕГЭ, учебные игры по русскому языку и цифровые материалы для уроков.</p>
+        </div>
+        <div class="direction-stage">
+          <p class="direction-hint">Нажмите на раздел <span>↘</span></p>
+          <div class="direction-grid" aria-label="Разделы платформы">
+            <article class="direction-card trainer-direction" tabindex="0" role="button" aria-expanded="false" data-direction="trainer">
+              <div class="direction-cover"></div><span class="direction-number">01</span>
+              <div class="direction-title"><small>Системная практика</small><h3>Тренажёр</h3></div>
+              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Тренажёр</small><h4>Тренажёры в формате ЕГЭ</h4><p>Тренировки по правилам, в миксе и в экзаменационном формате. Система запоминает ошибки и возвращает сложные слова.</p><button class="direction-link" data-route="${state.user ? "/apps" : "/login"}" type="button">Перейти <span>→</span></button></div>
+            </article>
+            <article class="direction-card games-direction" tabindex="0" role="button" aria-expanded="false" data-direction="games">
+              <div class="direction-cover"></div><span class="direction-number">02</span>
+              <div class="direction-title"><small>Играть без входа</small><h3>Игры</h3></div>
+              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Игры</small><h4>Игры по русскому языку</h4><p>Учебные мини-игры, которые можно быстро открыть, запустить и дать ученикам ссылку.</p><button class="direction-link" data-route="/games" type="button">Перейти <span>→</span></button></div>
+            </article>
+            <article class="direction-card shop-direction" tabindex="0" role="button" aria-expanded="false" data-direction="shop">
+              <div class="direction-cover"></div><span class="direction-number">03</span>
+              <div class="direction-title"><small>Цифровые материалы</small><h3>Магазин</h3></div>
+              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Магазин</small><h4>Магазин материалов</h4><p>Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p><button class="direction-link" data-route="/shop" type="button">Перейти <span>→</span></button></div>
+            </article>
+            <article class="direction-card services-direction" tabindex="0" role="button" aria-expanded="false" data-direction="services">
+              <div class="direction-cover"></div><span class="direction-number">04</span>
+              <div class="direction-title"><small>Персональная работа</small><h3>Услуги</h3></div>
+              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Скоро в продаже</small><h4>Услуги и обучение</h4><p>Личная консультация, отрисовка визуала и обучение работе с ИИ.</p><button class="direction-link" data-route="/services" type="button">Перейти <span>→</span></button></div>
+            </article>
           </div>
         </div>
       </section>
 
-      <section class="landing-section" id="trainers" style="--bg: url('${landingAsset("asset_trainer2.png")}')">
-        <div class="landing-wrap">
-          <article class="landing-card">
-            <div class="landing-text-row">
-              <div>
-                <p class="eyebrow">тренажёры</p>
-                <h2>Тренажёры в формате ЕГЭ</h2>
-              </div>
-              <div>
-                <p class="landing-lead">Тренировки по русскому языку: по правилам, в миксе и в экзаменационном формате. Система запоминает ошибки, возвращает сложные слова и помогает постепенно закрывать слабые места.</p>
-                <p class="landing-lead">Ученики подключаются по коду учителя, а в кабинете учителя собирается статистика и доступна быстрая сборка тестов.</p>
-              </div>
-            </div>
-            <div class="landing-features">
-              <div><b>Формат ЕГЭ</b><span>Тренировка в логике экзаменационных заданий.</span></div>
-              <div><b>Умный повтор</b><span>Верные ответы уходят из выдачи, ошибки возвращаются.</span></div>
-              <div><b>Копилка ошибок</b><span>Сложные слова дорабатываются до устойчивого результата.</span></div>
-              <div><b>Кабинет учителя</b><span>Статистика учеников и быстрая сборка тестов.</span></div>
-            </div>
-            <div class="landing-actions">
-              <button class="primary-button" data-route="${state.user ? "/apps" : "/login"}" type="button">Войти в тренажёры</button>
-              <span class="muted">Для доступа нужен аккаунт ученика или учителя.</span>
-            </div>
-          </article>
-          <div class="landing-gallery">
-            <img src="${landingAsset("asset_trainer3.png")}" alt="Интерфейс тренажёров" />
-            <img src="${landingAsset("asset_trainer4.png")}" alt="Копилка ошибок и повторы" />
-            <img src="${landingAsset("asset_trainer5.png")}" alt="Кабинет учителя и сборка тестов" />
-          </div>
-        </div>
-      </section>
-
-      <section class="landing-section landing-games" id="games" style="--bg: url('${landingAsset("asset_game2.png")}')">
-        <div class="landing-wrap">
-          <article class="landing-card">
-            <div class="landing-text-row">
-              <div>
-                <p class="eyebrow">игры</p>
-                <h2>Игры по русскому языку</h2>
-              </div>
-              <div>
-                <p class="landing-lead">Учебные мини-игры, которые можно быстро открыть, запустить и дать ученикам ссылку.</p>
-                <p class="landing-lead">Ученики могут играть без регистрации, а авторизованный учитель может заменить лексику внутри игры.</p>
-              </div>
-            </div>
-            <div class="landing-features">
-              <div><b>Играть без входа</b><span>Ученику достаточно открыть ссылку.</span></div>
-              <div><b>Готовые механики</b><span>Сортировка, выбор ответа, карточки и игровые сцены.</span></div>
-              <div><b>Своя лексика</b><span>Учитель может заменить слова под тему урока.</span></div>
-              <div><b>Быстрая настройка</b><span>Готовая игра превращается в упражнение под класс.</span></div>
-            </div>
-            <div class="landing-actions">
-              <button class="primary-button" data-route="/games" type="button">Перейти к играм</button>
-              <span class="muted">Играть можно без регистрации. Настройка доступна авторизованным учителям.</span>
-            </div>
-          </article>
-          <div class="landing-gallery">
-            <img src="${landingAsset("asset_game3.png")}" alt="Каталог игр" />
-            <img src="${landingAsset("asset_game4.png")}" alt="Мини-игра с одуванчиком" />
-            <img src="${landingAsset("asset_game5.png")}" alt="Игровые механики по русскому языку" />
-          </div>
-        </div>
-      </section>
-
-      <section class="landing-section landing-shop" id="shop" style="--bg: url('${landingAsset("Asset_shop.png")}')">
-        <div class="landing-wrap">
-          <article class="landing-card">
-            <div class="landing-text-row">
-              <div>
-                <p class="eyebrow">магазин</p>
-                <h2>Магазин материалов</h2>
-              </div>
-              <div>
-                <p class="landing-lead">Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
-                <p class="landing-lead">В разделе уже можно посмотреть первые материалы, открыть демо-версии игр и заранее выбрать подходящий комплект.</p>
-              </div>
-            </div>
-            <div class="landing-actions">
-              <button class="primary-button" data-route="/shop" type="button">Открыть магазин</button>
-              <span class="muted">После оплаты ссылка на материал приходит на указанную почту.</span>
-            </div>
-          </article>
-          <div class="landing-gallery">
-            <img src="${landingAsset("asset_shop3.png")}" alt="Магазин материалов" />
-            <img src="${landingAsset("asset_shop4.png")}" alt="Карточки материалов" />
-            <img src="${landingAsset("asset_shop5.png")}" alt="Страница материала" />
-          </div>
-        </div>
-      </section>
     </main>
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
-  if (scrollTarget) {
-    requestAnimationFrame(() => document.querySelector(scrollTarget)?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }
+  bindLandingDirections(view);
+}
+
+function bindLandingDirections(root) {
+  const stage = root.querySelector(".direction-stage");
+  if (!stage) return;
+  const cards = [...stage.querySelectorAll("[data-direction]")];
+  const closeAll = (except = null) => {
+    cards.forEach((card) => {
+      if (card === except) return;
+      card.classList.remove("open");
+      card.setAttribute("aria-expanded", "false");
+      card.querySelector(".direction-detail")?.setAttribute("aria-hidden", "true");
+    });
+    stage.classList.toggle("is-active", Boolean(except));
+  };
+  const toggle = (card) => {
+    const willOpen = !card.classList.contains("open");
+    closeAll(willOpen ? card : null);
+    card.classList.toggle("open", willOpen);
+    card.setAttribute("aria-expanded", String(willOpen));
+    card.querySelector(".direction-detail")?.setAttribute("aria-hidden", String(!willOpen));
+  };
+  cards.forEach((card) => {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      toggle(card);
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggle(card);
+      }
+      if (event.key === "Escape") closeAll();
+    });
+    card.querySelector(".direction-close")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeAll();
+      card.focus();
+    });
+    card.querySelector(".direction-link")?.addEventListener("click", (event) => event.stopPropagation());
+  });
+  root.querySelector(".redesign-hero")?.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-direction]")) closeAll();
+  });
+}
+
+function renderServicesPage() {
+  renderPublicTopActions("/services");
+  view.innerHTML = `
+    <section class="public-page services-page">
+      <header class="services-head">
+        <p class="eyebrow">услуги</p>
+        <h2>От идеи — к готовому решению</h2>
+        <p class="public-page-lead">Три формата персональной работы. Все услуги пока готовятся к запуску.</p>
+      </header>
+      <div class="services-grid">
+        <article class="service-card service-featured">
+          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">01</span><div class="service-mark">”</div>
+          <p class="eyebrow">персональная работа</p><h3>Личная консультация</h3>
+          <p>Урок с полной проработкой материала и персональным маршрутом.</p>
+          <ul><li>Диагностика запроса</li><li>Разбор материала</li><li>Персональный маршрут</li></ul>
+        </article>
+        <article class="service-card">
+          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">02</span><div class="service-mark">✦</div>
+          <p class="eyebrow">визуальная концепция</p><h3>Отрисовка визуала</h3>
+          <p>Обложки, иллюстрации и оформление образовательного материала в едином стиле.</p>
+          <ul><li>Поиск визуального образа</li><li>Серия согласованных материалов</li><li>Подготовка к публикации</li></ul>
+        </article>
+        <article class="service-card">
+          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">03</span><div class="service-mark">ИИ</div>
+          <p class="eyebrow">практическое обучение</p><h3>Обучение ИИ</h3>
+          <p>Практическое обучение работе с ИИ для подготовки уроков, материалов и визуала.</p>
+          <ul><li>Работа с запросами</li><li>Подготовка учебных материалов</li><li>Безопасный рабочий процесс</li></ul>
+        </article>
+      </div>
+    </section>
+    ${publicFooter()}
+  `;
+  bindPublicNavigation(view);
 }
 
 function bindPublicNavigation(root) {
@@ -1893,22 +1968,35 @@ async function renderPublicTextPage(slug) {
 async function renderDonatePage() {
   await loadShopProductOverrides();
   renderPublicTopActions("/donate");
-  const supportCards = currentSupportProducts().map((product) => `
-    <article class="shop-product-card support-card">
-      <div class="shop-product-body">
+  const supportCards = currentSupportProducts().map((product) => {
+    const title = product.displayTitle || product.title;
+    return `
+    <article class="shop-product-card support-card" tabindex="0" role="button" aria-expanded="false" data-shop-card>
+      <div class="shop-product-cover">
+        <img src="${escapeHtml(product.image)}" alt="" />
+        <span>поддержка</span>
+      </div>
+      <div class="shop-product-title">
+        <small>поддержка проекта</small>
+        <h3>${escapeHtml(title)}</h3>
+        <b>${escapeHtml(product.price)}</b>
+      </div>
+      <div class="shop-product-detail" aria-hidden="true">
+        <button class="shop-product-close" type="button" aria-label="Закрыть описание">×</button>
         <p class="eyebrow">поддержка проекта</p>
-        <h3>${escapeHtml(product.price)}</h3>
-        <strong>${escapeHtml(product.title)}</strong>
+        <h3>${escapeHtml(title)}</h3>
         <p>${escapeHtml(product.description)}</p>
         <div class="shop-product-meta">
-          <span>${escapeHtml(product.id)}</span>
+          <strong>${escapeHtml(product.price)}</strong>
+          <span>После оплаты подарок придёт на указанную почту.</span>
         </div>
         <div class="shop-product-actions">
           <button class="primary-button" data-buy-product="${product.slug}" type="button">Поддержать</button>
         </div>
       </div>
     </article>
-  `).join("");
+  `;
+  }).join("");
   view.innerHTML = `
     <section class="public-placeholder public-page shop-page support-page">
       <p class="eyebrow">поддержка</p>
@@ -1926,6 +2014,7 @@ async function renderDonatePage() {
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  bindShopCards(view);
   bindShopPayment(view);
 }
 
@@ -1941,12 +2030,97 @@ async function renderShopPlaceholder() {
       <div class="shop-notice">
         Игры доступны к покупке. После оплаты ссылка на материал придёт на указанную электронную почту.
       </div>
+      <nav class="shop-rubricator" aria-label="Рубрики магазина">
+        <button class="active" data-shop-rubric="all" type="button">Все материалы</button>
+        <button data-shop-rubric="orthography" type="button">Орфография</button>
+        <button data-shop-rubric="syntax" type="button">Пунктуация</button>
+        <button data-shop-rubric="morphology" type="button">Морфология</button>
+        <button data-shop-rubric="speech" type="button">Культура речи</button>
+        <button data-shop-rubric="exam" type="button">ОГЭ / ЕГЭ</button>
+      </nav>
       <div class="shop-product-grid">${cards}</div>
     </section>
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  bindShopRubricator(view);
+  bindShopCards(view);
   bindShopPayment(view);
+}
+
+function shopProductRubrics(product) {
+  const text = `${product.slug || ""} ${product.title || ""} ${product.shortDescription || ""}`.toLocaleLowerCase("ru");
+  const rubrics = new Set();
+  if (/суффикс|спряж|орфотир|орфограф|причастий/.test(text)) rubrics.add("orthography");
+  if (/однородн|обособлен|причастн.{0,12}оборот|грамматическ|пунктуац/.test(text)) rubrics.add("syntax");
+  if (/част.{0,8}реч|морфолог/.test(text)) rubrics.add("morphology");
+  if (/пароним|числительн|культура речи/.test(text)) rubrics.add("speech");
+  if (/егэ|огэ|пароним|орфотир|грамматическ/.test(text)) rubrics.add("exam");
+  return [...rubrics].join(" ") || "other";
+}
+
+function bindShopRubricator(root) {
+  const buttons = [...root.querySelectorAll("[data-shop-rubric]")];
+  const cards = [...root.querySelectorAll("[data-shop-rubrics]")];
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const rubric = button.dataset.shopRubric;
+      const grid = root.querySelector(".shop-product-grid");
+      grid?.classList.remove("is-active");
+      cards.forEach((card) => {
+        card.classList.remove("open");
+        card.setAttribute("aria-expanded", "false");
+        card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "true");
+      });
+      buttons.forEach((item) => item.classList.toggle("active", item === button));
+      cards.forEach((card) => {
+        const values = String(card.dataset.shopRubrics || "").split(" ");
+        card.classList.toggle("shop-filtered-out", rubric !== "all" && !values.includes(rubric));
+      });
+    });
+  });
+}
+
+function bindShopCards(root) {
+  const grid = root.querySelector(".shop-product-grid");
+  if (!grid) return;
+  const cards = [...grid.querySelectorAll("[data-shop-card]")];
+  const closeAll = () => {
+    grid.classList.remove("is-active");
+    cards.forEach((card) => {
+      card.classList.remove("open");
+      card.setAttribute("aria-expanded", "false");
+      card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "true");
+    });
+  };
+  const toggle = (card) => {
+    const willOpen = !card.classList.contains("open");
+    closeAll();
+    if (!willOpen) return;
+    grid.classList.add("is-active");
+    card.classList.add("open");
+    card.setAttribute("aria-expanded", "true");
+    card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "center" }));
+  };
+  cards.forEach((card) => {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("button, a")) return;
+      toggle(card);
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggle(card);
+      }
+      if (event.key === "Escape") closeAll();
+    });
+    card.querySelector(".shop-product-close")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeAll();
+      card.focus();
+    });
+  });
 }
 
 function shopProductCard(product) {
@@ -1954,14 +2128,21 @@ function shopProductCard(product) {
     ? `<strong><span class="old-price">${escapeHtml(product.oldPrice)}</span> ${escapeHtml(product.price)}</strong>`
     : `<strong>${escapeHtml(product.price)}</strong>`;
   const image = shopMediaUrl(product.image);
+  const kindLabel = product.kindLabel || "цифровой материал";
   return `
-    <article class="shop-product-card">
+    <article class="shop-product-card" tabindex="0" role="button" aria-expanded="false" data-shop-card data-shop-rubrics="${escapeHtml(shopProductRubrics(product))}">
       <div class="shop-product-cover">
         <img src="${escapeHtml(image)}" alt="${escapeHtml(product.title)}" />
         <span>Доступно к покупке</span>
+        <div class="shop-product-title">
+          <small>${escapeHtml(kindLabel)}</small>
+          <h3>${escapeHtml(product.title)}</h3>
+          <b>Нажмите, чтобы посмотреть</b>
+        </div>
       </div>
-      <div class="shop-product-body">
-        <p class="eyebrow">цифровой материал</p>
+      <div class="shop-product-detail" aria-hidden="true">
+        <button class="shop-product-close" type="button" aria-label="Закрыть описание">×</button>
+        <p class="eyebrow">${escapeHtml(kindLabel)}</p>
         <h3>${escapeHtml(product.title)}</h3>
         <p>${escapeHtml(product.shortDescription)}</p>
         ${product.promoNote ? `<p class="shop-promo-note">${escapeHtml(product.promoNote)}</p>` : ""}
@@ -2502,6 +2683,10 @@ async function restoreSession() {
     renderPublicGames();
     return;
   }
+  if (window.location.pathname === "/services") {
+    renderServicesPage();
+    return;
+  }
   if (window.location.pathname === "/shop") {
     await renderShopPlaceholder();
     return;
@@ -2555,6 +2740,9 @@ async function restoreSession() {
   if (userNeedsConsent()) {
     await renderConsentGate();
     return;
+  }
+  if (window.location.pathname === "/login") {
+    history.replaceState(null, "", "/apps");
   }
   if (window.location.pathname === "/apps/my-games") {
     state.currentActivity = null;

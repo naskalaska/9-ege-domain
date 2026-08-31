@@ -115,6 +115,18 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/homogeneous-members-magic/index.html",
         "kind": "product",
     },
+    "expedition-memory-isolated-members": {
+        "id": "expedition_memory_isolated_members",
+        "title": "HTML-игра «Экспедиция памяти: обособленные члены предложения»",
+        "short_title": "Экспедиция памяти",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/games/expedition-memory-isolated-members/02_assets/bg-expedition-world.png",
+        "url_env": "EXPEDITION_MEMORY_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/expedition-memory-isolated-members/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/expedition-memory-isolated-members/index.html",
+        "kind": "product",
+    },
     "paronyms-game": {
         "id": "paronyms_game",
         "title": "HTML-игра «Паронимы: ЕГЭ. Задание 5»",
@@ -218,7 +230,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "100.00",
         "currency": "RUB",
-        "cover_url": "",
+        "cover_url": "/assets/support/support-100.png",
         "url_env": "SUPPORT_100_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/M3avG3To68fHMw",
         "kind": "donation",
@@ -229,7 +241,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "300.00",
         "currency": "RUB",
-        "cover_url": "",
+        "cover_url": "/assets/support/support-300.png",
         "url_env": "SUPPORT_300_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/VfpRyCwgn2vkFA",
         "kind": "donation",
@@ -240,7 +252,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "500.00",
         "currency": "RUB",
-        "cover_url": "",
+        "cover_url": "/assets/support/support-500.png",
         "url_env": "SUPPORT_500_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/F7r4stcTO4saIw",
         "kind": "donation",
@@ -251,7 +263,7 @@ SHOP_PRODUCTS = {
         "short_title": "Поддержка проекта",
         "amount": "1000.00",
         "currency": "RUB",
-        "cover_url": "",
+        "cover_url": "/assets/support/support-1000.png",
         "url_env": "SUPPORT_1000_PRODUCT_URL",
         "default_url": "https://disk.yandex.ru/d/z_guLJ0-kWCIJg",
         "kind": "donation",
@@ -453,6 +465,7 @@ HTML_GAMES = {
     "butterflies-participial-phrase": HTML_DIR / "бабочки",
     "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
     "orthoshooting": HTML_DIR / "ОРФОТИР",
+    "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
 }
 
 HTML_GAME_TITLES = {
@@ -471,6 +484,7 @@ HTML_GAME_TITLES = {
     "butterflies-participial-phrase": "Бабочки: причастный оборот",
     "butterflies-participle-suffixes": "Бабочки: суффиксы причастий",
     "orthoshooting": "Орфотир",
+    "expedition-memory-isolated-members": "Экспедиция памяти: обособленные члены предложения",
 }
 
 PUBLIC_GAMES = {
@@ -492,6 +506,7 @@ PUBLIC_GAMES = {
     "butterflies-participial-phrase": HTML_DIR / "бабочки",
     "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
     "orthoshooting": HTML_DIR / "ОРФОТИР",
+    "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -701,6 +716,7 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "butterflies-participial-phrase": "butterflies_participial_phrase",
         "orthoshooting": "orthoshooting",
         "karaoke-numerals": "gift_game_karaoke_numerals",
+        "expedition-memory-isolated-members": "expedition_memory_isolated_members",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -5198,6 +5214,7 @@ class Handler(SimpleHTTPRequestHandler):
                         "/games",
                         "/donate",
                         "/shop",
+                        "/services",
                         "/support",
                     }
                     or parsed.path.startswith("/shop/")
