@@ -1690,7 +1690,6 @@ async function renderDocumentPage(type) {
       <div class="document-content">
         ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${escapeHtml(line)}</p>` : "").join("")}
       </div>
-      <p class="muted">Текст является шаблоном и должен быть заменен на финальный юридически выверенный текст перед запуском регистрации реальных пользователей.</p>
       ${legalLinks()}
     `;
     panel.querySelector("#backFromDocument").addEventListener("click", () => {
@@ -2549,7 +2548,7 @@ async function confirmReturnedShopOrder(orderUid) {
 async function renderConsentGate() {
   renderTopActions();
   const data = await api("/api/me/consents").catch(() => ({
-    required: [{ document_version: "2026-06-02", privacy_policy_version: "2026-06-02" }],
+    required: [{ document_version: "2026-08-31", privacy_policy_version: "2026-08-31" }],
   }));
   const required = data.required?.[0] || {};
   view.innerHTML = `
