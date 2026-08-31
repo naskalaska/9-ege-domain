@@ -178,7 +178,7 @@ const EXTRA_TASKS = [
   { id: "ege12u_0043", variant: "(ветер) засвищ..т", answer: "е", correct_letter: "е", correct_spelling: "(ветер) засвищет", explanation: "Засвистеть относится к I спряжению в этой форме." },
   { id: "ege12u_0044", variant: "загон..шь", answer: "и", correct_letter: "и", correct_spelling: "загонишь", explanation: "Загонить относится ко II спряжению." },
   { id: "ege12u_0045", variant: "(он) наточ..т (ножницы)", answer: "и", correct_letter: "и", correct_spelling: "(он) наточит (ножницы)", explanation: "Наточить относится ко II спряжению." },
-  { id: "ege12u_0046", variant: "(они) топч..т (траву)", answer: "а", correct_letter: "а", correct_spelling: "(они) топчат (траву)", explanation: "Топтать относится ко II спряжению в этой форме." },
+  { id: "ege12u_0046", variant: "(они) топч..т (траву)", answer: "у", correct_letter: "у", correct_spelling: "(они) топчут (траву)", explanation: "Топтать относится ко I спряжению." },
   { id: "ege12u_0047", variant: "раздел..шь (на части)", answer: "и", correct_letter: "и", correct_spelling: "разделишь (на части)", explanation: "Разделить относится ко II спряжению." },
   { id: "ege12u_0048", variant: "посе..шь (зёрна)", answer: "е", correct_letter: "е", correct_spelling: "посеешь (зёрна)", explanation: "Посеять относится к I спряжению." },
   { id: "ege12u_0049", variant: "(оладьи) жар..тся", answer: "я", correct_letter: "я", correct_spelling: "(оладьи) жарятся", explanation: "Жариться относится ко II спряжению." },
