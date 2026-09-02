@@ -108,6 +108,16 @@ const miniGames = [
     kindLabel: "мини-игра",
   },
   {
+    slug: "syntactic-soup",
+    title: "Синтаксический суп",
+    description: "Определяйте согласование, управление и примыкание, а затем заменяйте словосочетания синонимичными.",
+    button: "Играть",
+    path: "/games/syntactic-soup/index.html",
+    category: "syntax",
+    categoryTitle: "Синтаксис и пунктуация",
+    kindLabel: "мини-игра",
+  },
+  {
     slug: "expedition-memory-isolated-members",
     title: "Экспедиция памяти: обособленные члены предложения",
     description: "Пройдите маршрут из 30 испытаний, восстановите правила обособления и соберите пять артефактов памяти.",
@@ -873,6 +883,32 @@ const shopProducts = [
     delivery: "После оплаты ссылка придёт на почту, а полная версия появится в разделе «Мои игры» аккаунта с тем же email.",
     important: ["В общем каталоге остаётся демо; полная версия доступна только покупателю."],
   },
+  {
+    slug: "syntactic-soup",
+    title: "HTML-игра «Синтаксический суп»",
+    price: "300 ₽",
+    image: "/games/syntactic-soup/sintaksicheskiy-sup-cover.png",
+    images: [
+      "/games/syntactic-soup/sintaksicheskiy-sup-cover.png",
+      "/games/syntactic-soup/ChatGPT Image 2 сент. 2026 г., 20_19_39 (1).png",
+      "/games/syntactic-soup/ChatGPT Image 2 сент. 2026 г., 20_19_39 (2).png",
+      "/games/syntactic-soup/ChatGPT Image 2 сент. 2026 г., 20_19_39 (3).png",
+      "/games/syntactic-soup/ChatGPT Image 2 сент. 2026 г., 20_19_41 (4).png",
+    ],
+    demoUrl: "/games/syntactic-soup/index.html",
+    demoLabel: "Играть онлайн",
+    shortDescription: "Яркая мини-игра по видам подчинительной связи: согласованию, управлению и примыканию.",
+    fullDescription: "Телешоу «Синтаксический суп» превращает тему словосочетаний в короткую игровую сессию. Ученик крутит колесо, определяет тип связи и в двух режимах заменяет словосочетание синонимичным, сохраняя смысл.",
+    tryBefore: ["Онлайн-версия доступна в разделе «Игры».", "https://dimitrieva-av.ru/games/syntactic-soup/index.html"],
+    suitableFor: ["для повторения темы «Словосочетание» в 8–9 классе", "для подготовки к ОГЭ", "для урока, командной игры и самостоятельной тренировки"],
+    howItWorks: ["Колесо выбирает задание, ученик определяет вид связи и сразу получает объяснение.", "В режимах с заменой нужно преобразовать сочетание в синонимичное с другим типом связи.", "Решённые секторы исчезают, поэтому задания не повторяются."],
+    package: ["Автономная HTML-игра со встроенными стилями, логикой, заданиями и изображениями.", "Три режима игры.", "Ответы ко всем заданиям и промпт для обновления банка.", "Обложка и материалы для публикации."],
+    adaptation: ["Банк заданий можно обновить с помощью готового промпта из комплекта."],
+    format: "Цифровой материал. Игра работает без интернета и установки.",
+    requirements: ["современный браузер", "компьютер или ноутбук; для показа классу — интерактивная панель"],
+    delivery: "После оплаты ссылка на комплект придёт на указанную электронную почту.",
+    important: ["В заданиях на замену на колесе показано исходное словосочетание — ученик превращает его в указанный синонимичный результат."],
+  },
 ];
 
 const supportProducts = [
@@ -900,11 +936,15 @@ function applyShopProductOverride(product) {
   if (!override) return product;
   const image = override.cover_url || product.image;
   const images = [image, ...(product.images || []).filter((item) => item && item !== image)];
+  const saleActive = Boolean(override.sale_active);
   return {
     ...product,
     product_id: override.product_id || product.product_id,
     title: override.title || product.title,
     price: override.price || product.price,
+    oldPrice: saleActive ? override.old_price : product.oldPrice,
+    saleEndsAt: saleActive ? override.sale_ends_at : "",
+    promoNote: saleActive ? `Цена по акции до ${formatSaleEnd(override.sale_ends_at)}` : product.promoNote,
     image,
     images,
     ...(override.description || {}),
@@ -924,6 +964,9 @@ function currentShopProducts() {
         product_id: product.product_id,
         title: product.title,
         price: product.price,
+        oldPrice: product.sale_active ? product.old_price : "",
+        saleEndsAt: product.sale_active ? product.sale_ends_at : "",
+        promoNote: product.sale_active ? `Цена по акции до ${formatSaleEnd(product.sale_ends_at)}` : "",
         image,
         images: [image],
         demoUrl: product.online_url || "",
@@ -2051,7 +2094,7 @@ function shopProductRubrics(product) {
   const text = `${product.slug || ""} ${product.title || ""} ${product.shortDescription || ""}`.toLocaleLowerCase("ru");
   const rubrics = new Set();
   if (/суффикс|спряж|орфотир|орфограф|причастий/.test(text)) rubrics.add("orthography");
-  if (/однородн|обособлен|причастн.{0,12}оборот|грамматическ|пунктуац/.test(text)) rubrics.add("syntax");
+  if (/синтакс|словосочетан|однородн|обособлен|причастн.{0,12}оборот|грамматическ|пунктуац/.test(text)) rubrics.add("syntax");
   if (/част.{0,8}реч|морфолог/.test(text)) rubrics.add("morphology");
   if (/пароним|числительн|культура речи/.test(text)) rubrics.add("speech");
   if (/егэ|огэ|пароним|орфотир|грамматическ/.test(text)) rubrics.add("exam");
@@ -2213,7 +2256,8 @@ function renderProductGallery(product) {
   return `
     <div class="product-detail-gallery" data-product-gallery>
       <div class="product-detail-cover">
-        <img data-gallery-main src="${escapeHtml(images[0])}" alt="${escapeHtml(product.title)}" />
+        <img data-gallery-main data-gallery-open tabindex="0" role="button" src="${escapeHtml(images[0])}" alt="${escapeHtml(product.title)}. Открыть крупно" />
+        <span class="product-gallery-zoom-hint" aria-hidden="true">⛶</span>
         ${controls}
       </div>
       ${thumbs}
@@ -2354,10 +2398,12 @@ function bindProductAdminEditor(root = document, product) {
 function bindProductGallery(root = document) {
   root.querySelectorAll("[data-product-gallery]").forEach((gallery) => {
     const thumbs = Array.from(gallery.querySelectorAll("[data-gallery-index]"));
-    const images = thumbs.map((thumb) => thumb.querySelector("img")?.getAttribute("src")).filter(Boolean);
     const main = gallery.querySelector("[data-gallery-main]");
     const current = gallery.querySelector("[data-gallery-current]");
-    if (!main || !images.length) return;
+    if (!main) return;
+    const thumbImages = thumbs.map((thumb) => thumb.querySelector("img")?.getAttribute("src")).filter(Boolean);
+    const images = thumbImages.length ? thumbImages : [main.getAttribute("src")].filter(Boolean);
+    if (!images.length) return;
     let activeIndex = 0;
     const show = (nextIndex) => {
       activeIndex = (nextIndex + images.length) % images.length;
@@ -2368,7 +2414,64 @@ function bindProductGallery(root = document) {
     gallery.querySelector("[data-gallery-prev]")?.addEventListener("click", () => show(activeIndex - 1));
     gallery.querySelector("[data-gallery-next]")?.addEventListener("click", () => show(activeIndex + 1));
     thumbs.forEach((thumb, index) => thumb.addEventListener("click", () => show(index)));
+    const open = () => openProductGalleryLightbox(images, activeIndex, main.alt.replace(/\. Открыть крупно$/, ""));
+    main.addEventListener("click", open);
+    main.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
   });
+}
+
+function openProductGalleryLightbox(images, startIndex = 0, title = "Изображение товара") {
+  if (!images.length) return;
+  let activeIndex = (startIndex + images.length) % images.length;
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop product-gallery-lightbox-backdrop";
+  backdrop.innerHTML = `
+    <section class="product-gallery-lightbox" role="dialog" aria-modal="true" aria-label="Просмотр изображений товара">
+      <button class="modal-close" type="button" aria-label="Закрыть">×</button>
+      <button class="product-gallery-lightbox-nav product-gallery-lightbox-prev" type="button" aria-label="Предыдущее изображение">‹</button>
+      <img src="" alt="" />
+      <button class="product-gallery-lightbox-nav product-gallery-lightbox-next" type="button" aria-label="Следующее изображение">›</button>
+      <div class="product-gallery-lightbox-count" aria-live="polite"></div>
+    </section>
+  `;
+  const image = backdrop.querySelector("img");
+  const count = backdrop.querySelector(".product-gallery-lightbox-count");
+  const previousFocus = document.activeElement;
+  const show = (nextIndex) => {
+    activeIndex = (nextIndex + images.length) % images.length;
+    image.src = images[activeIndex];
+    image.alt = `${title}, изображение ${activeIndex + 1} из ${images.length}`;
+    count.textContent = `${activeIndex + 1} / ${images.length}`;
+  };
+  const close = () => {
+    document.removeEventListener("keydown", onKeydown);
+    backdrop.remove();
+    previousFocus?.focus?.();
+  };
+  const onKeydown = (event) => {
+    if (event.key === "Escape") close();
+    if (event.key === "ArrowLeft") show(activeIndex - 1);
+    if (event.key === "ArrowRight") show(activeIndex + 1);
+  };
+  if (images.length === 1) {
+    backdrop.querySelectorAll(".product-gallery-lightbox-nav").forEach((button) => button.remove());
+  } else {
+    backdrop.querySelector(".product-gallery-lightbox-prev").addEventListener("click", () => show(activeIndex - 1));
+    backdrop.querySelector(".product-gallery-lightbox-next").addEventListener("click", () => show(activeIndex + 1));
+  }
+  backdrop.querySelector(".modal-close").addEventListener("click", close);
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) close();
+  });
+  document.addEventListener("keydown", onKeydown);
+  document.body.append(backdrop);
+  show(activeIndex);
+  backdrop.querySelector(".modal-close").focus();
 }
 
 function bindShopPayment(root = document) {
@@ -2402,6 +2505,14 @@ function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
       <p class="eyebrow">${isSupport ? "поддержка проекта" : "покупка материала"}</p>
       <h2>Куда отправить письмо?</h2>
       <p>${isSupport ? "Спасибо за вашу поддержку! Напишите здесь свою почту, чтобы получить небольшой подарок от меня." : `После успешной оплаты письмо по позиции «${escapeHtml(product.title)}» придёт на эту почту.`}</p>
+      ${isSupport ? "" : `
+        <div class="payment-return-instruction">
+          <strong>После оплаты покупки не забудьте вернуться в магазин, нажав на синюю кнопку.</strong>
+          <span class="payment-return-arrow" aria-hidden="true">↓</span>
+          <span class="payment-return-button-preview">Вернуться на сайт</span>
+          <p>Если вы забыли нажать и вернулись на сайт другим способом, товары поступят на вашу почту в течение дня.</p>
+        </div>
+      `}
       <label>
         Email
         <input name="email" type="email" autocomplete="email" required />
@@ -4375,6 +4486,28 @@ function formatAdminDate(value) {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 }
 
+function formatSaleEnd(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function datetimeLocalValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function saleEndToIso(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : date.toISOString();
+}
+
 function formatAdminUser(row) {
   return `${escapeHtml(row.display_name || "Без имени")}<br><span class="muted">${escapeHtml(row.email || row.username || row.role || "")}</span>`;
 }
@@ -4509,8 +4642,14 @@ function renderAdminContent(data, closeButton = "") {
           <label>Название
             <input name="title" value="${escapeHtml(entity.title || "")}" />
           </label>
-          <label>Цена, ₽
+          <label>Обычная цена, ₽
             <input name="amount" value="${escapeHtml(entity.amount || "0.00")}" inputmode="decimal" />
+          </label>
+          <label>Цена по акции, ₽
+            <input name="sale_amount" value="${escapeHtml(entity.sale_amount || "")}" inputmode="decimal" placeholder="Оставьте пустым без акции" />
+          </label>
+          <label>Акция действует до
+            <input name="sale_ends_at" type="datetime-local" value="${escapeHtml(datetimeLocalValue(entity.sale_ends_at))}" />
           </label>
           <label>Обложка
             <input name="cover_url" value="${escapeHtml(entity.cover_url || "")}" placeholder="/assets/shop/cover.png" />
@@ -4528,6 +4667,7 @@ function renderAdminContent(data, closeButton = "") {
         <span class="${entity.has_delivery_url ? "status-ok" : "status-bad"}">${entity.has_delivery_url ? "оффлайн задан" : "оффлайн не задан"}</span><br>
         <span class="${entity.has_online_url ? "status-ok" : "status-bad"}">${entity.has_online_url ? "онлайн задан" : "онлайн не задан"}</span><br>
         <span class="${entity.has_cover_url ? "status-ok" : "status-bad"}">${entity.has_cover_url ? "обложка задана" : "обложка не задана"}</span>
+        ${entity.sale_amount ? `<br><span class="${entity.sale_active ? "status-ok" : "status-bad"}">${entity.sale_active ? `акция до ${escapeHtml(formatSaleEnd(entity.sale_ends_at))}` : "акция завершилась"}</span>` : ""}
       </td>
     </tr>
   `).join("") : `<tr><td colspan="4">Платные сущности не найдены</td></tr>`;
@@ -4770,8 +4910,15 @@ function renderAdminContent(data, closeButton = "") {
               <input name="slug" required maxlength="100" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="my-new-product" />
               <span class="muted">Латинские буквы, цифры и дефисы</span>
             </label>
-            <label>Цена, ₽ *
+            <label>Обычная цена, ₽ *
               <input name="amount" required value="300" inputmode="decimal" />
+            </label>
+            <label>Цена по акции, ₽
+              <input name="sale_amount" inputmode="decimal" placeholder="Например, 250" />
+            </label>
+            <label>Акция действует до
+              <input name="sale_ends_at" type="datetime-local" />
+              <span class="muted">Оба поля акции заполняются вместе</span>
             </label>
             <label>Обложка
               <input name="cover_url" placeholder="/assets/shop/cover.png или https://..." />
@@ -4972,6 +5119,8 @@ function bindAdminActions(root) {
             product_id: form.dataset.productId,
             title: formData.get("title"),
             amount: formData.get("amount"),
+            sale_amount: formData.get("sale_amount"),
+            sale_ends_at: saleEndToIso(formData.get("sale_ends_at")),
             currency: "RUB",
             cover_url: formData.get("cover_url"),
             delivery_url: formData.get("delivery_url"),
@@ -5001,6 +5150,8 @@ function bindAdminActions(root) {
           title: formData.get("title"),
           slug: formData.get("slug"),
           amount: formData.get("amount"),
+          sale_amount: formData.get("sale_amount"),
+          sale_ends_at: saleEndToIso(formData.get("sale_ends_at")),
           currency: "RUB",
           cover_url: formData.get("cover_url"),
           delivery_url: formData.get("delivery_url"),

@@ -225,6 +225,18 @@ SHOP_PRODUCTS = {
         "kind": "product",
         "force_active": True,
     },
+    "syntactic-soup": {
+        "id": "syntactic_soup",
+        "title": "HTML-игра «Синтаксический суп»",
+        "short_title": "Синтаксический суп",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/games/syntactic-soup/sintaksicheskiy-sup-cover.png",
+        "url_env": "SYNTACTIC_SOUP_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/syntactic-soup/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/syntactic-soup/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -467,6 +479,7 @@ HTML_GAMES = {
     "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
     "orthoshooting": HTML_DIR / "ОРФОТИР",
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
+    "syntactic-soup": HTML_DIR / "Синтаксический суп",
 }
 
 HTML_GAME_TITLES = {
@@ -486,6 +499,7 @@ HTML_GAME_TITLES = {
     "butterflies-participle-suffixes": "Бабочки: суффиксы причастий",
     "orthoshooting": "Орфотир",
     "expedition-memory-isolated-members": "Экспедиция памяти: обособленные члены предложения",
+    "syntactic-soup": "Синтаксический суп",
 }
 
 PUBLIC_GAMES = {
@@ -508,6 +522,7 @@ PUBLIC_GAMES = {
     "butterflies-participle-suffixes": HTML_DIR / "бабочки-суффиксы-причастий",
     "orthoshooting": HTML_DIR / "ОРФОТИР",
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
+    "syntactic-soup": HTML_DIR / "Синтаксический суп",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -718,6 +733,7 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "orthoshooting": "orthoshooting",
         "karaoke-numerals": "gift_game_karaoke_numerals",
         "expedition-memory-isolated-members": "expedition_memory_isolated_members",
+        "syntactic-soup": "syntactic_soup",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -1558,6 +1574,8 @@ def ensure_app_db() -> None:
                 title TEXT NOT NULL,
                 type TEXT NOT NULL CHECK(type IN ('product', 'donation')),
                 amount TEXT NOT NULL,
+                sale_amount TEXT,
+                sale_ends_at TEXT,
                 currency TEXT DEFAULT 'RUB',
                 delivery_url TEXT,
                 online_url TEXT,
@@ -1637,6 +1655,8 @@ def ensure_app_db() -> None:
         ensure_column(con, "paid_entities", "cover_url", "TEXT")
         ensure_column(con, "paid_entities", "online_url", "TEXT")
         ensure_column(con, "paid_entities", "description_json", "TEXT")
+        ensure_column(con, "paid_entities", "sale_amount", "TEXT")
+        ensure_column(con, "paid_entities", "sale_ends_at", "TEXT")
         seed_paid_entities(con)
         seed_gift_only_games(con)
         seed_documents(con)
@@ -4143,24 +4163,29 @@ def safe_description_json(value: Any) -> str:
 def paid_entities_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = con.execute(
         """
-        SELECT product_id, slug, title, type, amount, currency, delivery_url, online_url, cover_url,
+        SELECT product_id, slug, title, type, amount, sale_amount, sale_ends_at,
+               currency, delivery_url, online_url, cover_url,
                description_json,
                is_active, updated_at
         FROM paid_entities
         ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
         """
     ).fetchall()
-    return [
-        {
-            **dict(row),
-            "is_active": bool(row["is_active"]),
-            "has_delivery_url": bool(str(row["delivery_url"] or "").strip()),
-            "has_online_url": bool(str(row["online_url"] or "").strip()),
-            "has_cover_url": bool(str(row["cover_url"] or "").strip()),
-            "description": json.loads(row["description_json"] or "{}"),
-        }
-        for row in rows
-    ]
+    result = []
+    for row in rows:
+        pricing = sale_pricing(row)
+        result.append(
+            {
+                **dict(row),
+                **pricing,
+                "is_active": bool(row["is_active"]),
+                "has_delivery_url": bool(str(row["delivery_url"] or "").strip()),
+                "has_online_url": bool(str(row["online_url"] or "").strip()),
+                "has_cover_url": bool(str(row["cover_url"] or "").strip()),
+                "description": json.loads(row["description_json"] or "{}"),
+            }
+        )
+    return result
 
 
 def teacher_gifts_for_admin(con: sqlite3.Connection, teacher_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
@@ -4300,15 +4325,18 @@ def shop_products_public() -> dict[str, Any]:
     with db() as con:
         rows = con.execute(
             """
-            SELECT product_id, slug, title, type, amount, currency, cover_url, online_url,
+            SELECT product_id, slug, title, type, amount, sale_amount, sale_ends_at,
+                   currency, cover_url, online_url,
                    description_json, is_active
             FROM paid_entities
             WHERE is_active = 1
             ORDER BY CASE type WHEN 'product' THEN 0 ELSE 1 END, amount + 0, title
             """
         ).fetchall()
-    return {
-        "products": [
+    products = []
+    for row in rows:
+        pricing = sale_pricing(row)
+        products.append(
             {
                 "slug": row["slug"],
                 "product_id": row["product_id"],
@@ -4316,15 +4344,16 @@ def shop_products_public() -> dict[str, Any]:
                 "type": row["type"],
                 "amount": row["amount"],
                 "currency": row["currency"],
-                "price": format_amount_label(row["amount"], row["currency"]),
+                "price": format_amount_label(pricing["effective_amount"], row["currency"]),
+                "old_price": format_amount_label(row["amount"], row["currency"]) if pricing["sale_active"] else "",
+                **pricing,
                 "cover_url": row["cover_url"] or "",
                 "online_url": row["online_url"] or "",
                 "description": json.loads(row["description_json"] or "{}"),
                 "is_active": bool(row["is_active"]),
             }
-            for row in rows
-        ]
-    }
+        )
+    return {"products": products}
 
 
 def format_amount_label(amount: str, currency: str = "RUB") -> str:
@@ -4459,6 +4488,48 @@ def normalize_amount(value: Any) -> str:
     return f"{amount.quantize(Decimal('0.01'))}"
 
 
+def normalize_sale_fields(amount: str, sale_amount_value: Any, sale_ends_at_value: Any) -> tuple[str | None, str | None]:
+    raw_sale_amount = str(sale_amount_value or "").strip()
+    raw_sale_ends_at = str(sale_ends_at_value or "").strip()
+    if not raw_sale_amount and not raw_sale_ends_at:
+        return None, None
+    if not raw_sale_amount or not raw_sale_ends_at:
+        raise ValueError("Для акции укажите и новую цену, и дату окончания.")
+    sale_amount = normalize_amount(raw_sale_amount)
+    if Decimal(sale_amount) >= Decimal(amount):
+        raise ValueError("Цена по акции должна быть ниже обычной цены.")
+    sale_ends_at = parse_iso(raw_sale_ends_at)
+    if not sale_ends_at:
+        raise ValueError("Не удалось распознать дату окончания акции.")
+    if sale_ends_at.tzinfo is None:
+        sale_ends_at = sale_ends_at.replace(tzinfo=timezone(timedelta(hours=3)))
+    sale_ends_at = sale_ends_at.astimezone(timezone.utc)
+    if sale_ends_at <= datetime.now(timezone.utc):
+        raise ValueError("Дата окончания акции должна быть в будущем.")
+    return sale_amount, sale_ends_at.isoformat(timespec="seconds")
+
+
+def sale_pricing(product: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+    regular_amount = str(product["amount"] or "0.00")
+    sale_amount = str(product["sale_amount"] or "").strip() if "sale_amount" in product.keys() else ""
+    sale_ends_at = str(product["sale_ends_at"] or "").strip() if "sale_ends_at" in product.keys() else ""
+    ends_at = parse_iso(sale_ends_at)
+    if ends_at and ends_at.tzinfo is None:
+        ends_at = ends_at.replace(tzinfo=timezone(timedelta(hours=3)))
+    sale_active = bool(
+        sale_amount
+        and ends_at
+        and ends_at > datetime.now(timezone.utc)
+        and Decimal(sale_amount) < Decimal(regular_amount)
+    )
+    return {
+        "regular_amount": regular_amount,
+        "effective_amount": sale_amount if sale_active else regular_amount,
+        "sale_active": sale_active,
+        "sale_ends_at": sale_ends_at,
+    }
+
+
 def update_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     require_admin(admin)
     product_id = trim_for_admin(payload.get("product_id"), 80)
@@ -4476,14 +4547,25 @@ def update_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[s
     if currency != "RUB":
         raise ValueError("Сейчас поддерживается только валюта RUB.")
     with db() as con:
-        row = con.execute("SELECT product_id FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+        row = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
         if not row:
             raise LookupError("Платная сущность не найдена.")
+        regular_amount = amount or str(row["amount"])
+        if "sale_amount" in payload or "sale_ends_at" in payload:
+            sale_amount, sale_ends_at = normalize_sale_fields(
+                regular_amount,
+                payload.get("sale_amount"),
+                payload.get("sale_ends_at"),
+            )
+        else:
+            sale_amount, sale_ends_at = row["sale_amount"], row["sale_ends_at"]
         con.execute(
             """
             UPDATE paid_entities
             SET title = ?,
                 amount = COALESCE(?, amount),
+                sale_amount = ?,
+                sale_ends_at = ?,
                 currency = ?,
                 delivery_url = ?,
                 online_url = ?,
@@ -4492,7 +4574,10 @@ def update_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[s
                 updated_at = ?
             WHERE product_id = ?
             """,
-            (title, amount, currency, delivery_url, online_url, cover_url, description_json, now_iso(), product_id),
+            (
+                title, amount, sale_amount, sale_ends_at, currency,
+                delivery_url, online_url, cover_url, description_json, now_iso(), product_id,
+            ),
         )
         updated = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
     return {"ok": True, "entity": paid_entity_row(updated)}
@@ -4504,6 +4589,11 @@ def create_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[s
     title = trim_for_admin(payload.get("title"), 180)
     slug = trim_for_admin(payload.get("slug"), 100).lower()
     amount = normalize_amount(payload.get("amount"))
+    sale_amount, sale_ends_at = normalize_sale_fields(
+        amount,
+        payload.get("sale_amount"),
+        payload.get("sale_ends_at"),
+    )
     currency = trim_for_admin(payload.get("currency") or "RUB", 12).upper()
     cover_url = str(payload.get("cover_url") or "").strip()
     delivery_url = str(payload.get("delivery_url") or "").strip()
@@ -4530,15 +4620,15 @@ def create_paid_entity(admin: dict[str, Any], payload: dict[str, Any]) -> dict[s
         con.execute(
             """
             INSERT INTO paid_entities (
-                product_id, slug, title, type, amount, currency,
+                product_id, slug, title, type, amount, sale_amount, sale_ends_at, currency,
                 delivery_url, online_url, cover_url, description_json, url_env,
                 is_active, created_at, updated_at
             )
-            VALUES (?, ?, ?, 'product', ?, ?, ?, ?, ?, ?, '', 1, ?, ?)
+            VALUES (?, ?, ?, 'product', ?, ?, ?, ?, ?, ?, ?, ?, '', 1, ?, ?)
             """,
             (
-                product_id, slug, title, amount, currency, delivery_url,
-                online_url, cover_url, description_json, now, now,
+                product_id, slug, title, amount, sale_amount, sale_ends_at, currency,
+                delivery_url, online_url, cover_url, description_json, now, now,
             ),
         )
         created = con.execute("SELECT * FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
@@ -4761,6 +4851,9 @@ def send_admin_smtp_test(admin: dict[str, Any], payload: dict[str, Any]) -> dict
 
 def paid_entity_row(row: sqlite3.Row) -> dict[str, str]:
     item = dict(row)
+    pricing = sale_pricing(row)
+    item.update(pricing)
+    item["amount"] = pricing["effective_amount"]
     item["id"] = item["product_id"]
     item["kind"] = item["type"]
     item["short_title"] = item["title"]
@@ -4849,6 +4942,8 @@ def game_entry_file(slug: str, relative_path: str) -> str:
     clean_path = relative_path or "index.html"
     if slug == "grammar-zoo" and clean_path in {"", "index.html", "grammar_zoo_engine.html"}:
         return "index.html"
+    if slug == "syntactic-soup" and clean_path in {"", "index.html"}:
+        return "Синтаксический суп.html"
     return clean_path
 
 
@@ -5550,7 +5645,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
+        requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        is_entry_file = requested_path in {"index.html", ""}
+        relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
@@ -5561,10 +5658,10 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
-        if relative_path in {"index.html", ""}:
+        if is_entry_file:
             record_public_game_visit(slug, None, self.path)
         body = file_path.read_bytes()
-        if relative_path in {"index.html", ""}:
+        if is_entry_file:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -5578,7 +5675,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
+        requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        is_entry_file = requested_path in {"index.html", ""}
+        relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
@@ -5589,11 +5688,11 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
-        if relative_path in {"index.html", ""}:
+        if is_entry_file:
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
         body = file_path.read_bytes()
-        if relative_path in {"index.html", ""}:
+        if is_entry_file:
             if slug == "orthoshooting":
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
             if slug == "karaoke-numerals":
@@ -5615,7 +5714,9 @@ class Handler(SimpleHTTPRequestHandler):
             user = self.require_user()
             if not user_can_access_full_game(user, slug):
                 raise PermissionError("Полная версия «Караоке числительных» доступна после покупки.")
-        relative_path = game_entry_file(slug, unquote(relative_path).lstrip("/") or "index.html")
+        requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        is_entry_file = requested_path in {"index.html", ""}
+        relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
@@ -5627,7 +5728,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
         body = file_path.read_bytes()
-        if relative_path in {"index.html", ""}:
+        if is_entry_file:
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
