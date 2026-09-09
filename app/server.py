@@ -237,6 +237,30 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/syntactic-soup/index.html",
         "kind": "product",
     },
+    "foxwarts-syntax": {
+        "id": "foxwarts_syntax",
+        "title": "HTML-игра «Собираемся в Фоксвартс: синтаксический разбор»",
+        "short_title": "Собираемся в Фоксвартс",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/foxwarts-syntax-cover.png",
+        "url_env": "FOXWARTS_SYNTAX_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/foxwarts-syntax/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/foxwarts-syntax/index.html",
+        "kind": "product",
+    },
+    "summer-gerund-bar": {
+        "id": "summer_gerund_bar",
+        "title": "HTML-игра «Бар добавочных действий»",
+        "short_title": "Бар добавочных действий",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/shop-media/summer-gerund-bar-cover-1.png",
+        "url_env": "SUMMER_GERUND_BAR_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/summer-gerund-bar/index.html",
+        "online_url": f"{APP_BASE_URL}/full-games/summer-gerund-bar/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -288,6 +312,7 @@ LEGACY_SHOP_COVERS = {
     "/assets/shop/cover_verb_conjugation.png",
     "/assets/shop/cover_truth_action_oge.png",
     "/assets/shop/cover_grammar_zoo.png",
+    "/shop-media/summer-gerund-bar-cover.png",
 }
 DEMO_GAME_NOTICES = {
     "karaoke-numerals": {
@@ -480,6 +505,7 @@ HTML_GAMES = {
     "orthoshooting": HTML_DIR / "ОРФОТИР",
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
+    "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
 }
 
 HTML_GAME_TITLES = {
@@ -500,6 +526,7 @@ HTML_GAME_TITLES = {
     "orthoshooting": "Орфотир",
     "expedition-memory-isolated-members": "Экспедиция памяти: обособленные члены предложения",
     "syntactic-soup": "Синтаксический суп",
+    "foxwarts-syntax": "Собираемся в Фоксвартс: синтаксический разбор",
 }
 
 PUBLIC_GAMES = {
@@ -523,6 +550,7 @@ PUBLIC_GAMES = {
     "orthoshooting": HTML_DIR / "ОРФОТИР",
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
+    "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -734,6 +762,8 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "karaoke-numerals": "gift_game_karaoke_numerals",
         "expedition-memory-isolated-members": "expedition_memory_isolated_members",
         "syntactic-soup": "syntactic_soup",
+        "foxwarts-syntax": "foxwarts_syntax",
+        "summer-gerund-bar": "summer_gerund_bar",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -3039,6 +3069,48 @@ def recent_attempts_for_admin(con: sqlite3.Connection, limit: int = 60) -> list[
     ]
 
 
+def teacher_errors_for_admin(
+    con: sqlite3.Connection,
+    teacher_ids: list[str],
+    limit_per_teacher: int = 200,
+) -> dict[str, list[dict[str, Any]]]:
+    if not teacher_ids:
+        return {}
+    placeholders = ",".join("?" for _ in teacher_ids)
+    rows = con.execute(
+        f"""
+        WITH ranked_errors AS (
+            SELECT a.created_at, a.mode, a.scope_id, a.category, a.rule_name, a.prompt,
+                   a.given_answer, a.correct_answer, a.time_spent_sec,
+                   u.display_name, u.username, u.email, u.role,
+                   CASE WHEN u.role = 'teacher' THEN u.user_id ELSE u.teacher_id END AS owner_teacher_id,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY CASE WHEN u.role = 'teacher' THEN u.user_id ELSE u.teacher_id END
+                       ORDER BY a.created_at DESC
+                   ) AS error_rank
+            FROM attempts a
+            JOIN users u ON u.user_id = a.user_id
+            WHERE a.is_correct = 0
+        )
+        SELECT *
+        FROM ranked_errors
+        WHERE owner_teacher_id IN ({placeholders}) AND error_rank <= ?
+        ORDER BY owner_teacher_id, created_at DESC
+        """,
+        (*teacher_ids, limit_per_teacher),
+    ).fetchall()
+    result: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        item = dict(row)
+        owner_teacher_id = item.pop("owner_teacher_id")
+        item.pop("error_rank", None)
+        item["activity_title"] = activity_title_from_scope(item.get("scope_id"))
+        item["mode_title"] = mode_title(item.get("mode"))
+        item["prompt"] = trim_for_admin(item.get("prompt"))
+        result.setdefault(owner_teacher_id, []).append(item)
+    return result
+
+
 def created_games_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = con.execute(
         """
@@ -3170,6 +3242,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
             students_by_teacher.setdefault(row["teacher_id"], []).append(item)
         gifts_by_teacher = teacher_gifts_for_admin(con, teacher_ids)
         connected_games_by_teacher = connected_games_for_admin(con, teachers, gifts_by_teacher)
+        errors_by_teacher = teacher_errors_for_admin(con, teacher_ids)
         recent_attempts = recent_attempts_for_admin(con)
         created_games = created_games_for_admin(con)
         recent_game_visits = recent_game_visits_for_admin(con)
@@ -3204,6 +3277,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                 "students_list": students_by_teacher.get(row["user_id"], []),
                 "gifts": gifts_by_teacher.get(row["user_id"], []),
                 "connected_games": connected_games_by_teacher.get(row["user_id"], []),
+                "error_attempts": errors_by_teacher.get(row["user_id"], []),
             }
             for row in teachers
         ],
@@ -4944,6 +5018,8 @@ def game_entry_file(slug: str, relative_path: str) -> str:
         return "index.html"
     if slug == "syntactic-soup" and clean_path in {"", "index.html"}:
         return "Синтаксический суп.html"
+    if slug == "foxwarts-syntax" and clean_path in {"", "index.html"}:
+        return "index (5).html"
     return clean_path
 
 

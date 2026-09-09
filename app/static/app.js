@@ -118,6 +118,16 @@ const miniGames = [
     kindLabel: "мини-игра",
   },
   {
+    slug: "foxwarts-syntax",
+    title: "Собираемся в Фоксвартс: синтаксический разбор",
+    description: "Соберите чемодан в школу словесной магии: проверьте знания, определите члены предложения и выполните полный синтаксический разбор.",
+    button: "Играть",
+    path: "/games/foxwarts-syntax/index.html",
+    category: "syntax",
+    categoryTitle: "Синтаксис и пунктуация",
+    kindLabel: "игра",
+  },
+  {
     slug: "expedition-memory-isolated-members",
     title: "Экспедиция памяти: обособленные члены предложения",
     description: "Пройдите маршрут из 30 испытаний, восстановите правила обособления и соберите пять артефактов памяти.",
@@ -882,6 +892,51 @@ const shopProducts = [
     requirements: ["современный браузер", "компьютер, планшет или телефон"],
     delivery: "После оплаты ссылка придёт на почту, а полная версия появится в разделе «Мои игры» аккаунта с тем же email.",
     important: ["В общем каталоге остаётся демо; полная версия доступна только покупателю."],
+  },
+  {
+    slug: "foxwarts-syntax",
+    title: "HTML-игра «Собираемся в Фоксвартс: синтаксический разбор»",
+    price: "300 ₽",
+    image: "/shop-media/foxwarts-syntax-cover.png",
+    images: ["/shop-media/foxwarts-syntax-cover.png"],
+    demoUrl: "/games/foxwarts-syntax/index.html",
+    demoLabel: "Играть онлайн",
+    kindLabel: "автономная HTML-игра",
+    shortDescription: "Волшебный маршрут по членам предложения и полному синтаксическому разбору. Весь материал упакован в один автономный HTML-файл: скачайте, откройте двойным щелчком — и игра готова к уроку.",
+    fullDescription: "«Собираемся в Фоксвартс» превращает синтаксический разбор в подготовку к путешествию в школу словесной магии. Ученики проходят три этапа: проверяют теорию, раскладывают слова по синтаксическим ролям и разбирают предложение на интерактивной доске. Никакой установки, папок с ресурсами и настройки сервера: игра, оформление, задания и логика уже находятся внутри одного файла.",
+    tryBefore: ["Полная онлайн-версия доступна в разделе «Игры».", "https://dimitrieva-av.ru/games/foxwarts-syntax/index.html", "Перед покупкой можно пройти любой этап и проверить, как игра выглядит на вашем устройстве."],
+    suitableFor: ["для изучения и повторения членов предложения в 5–6 классе", "для первого полного синтаксического разбора", "для урока, интерактивной панели и самостоятельной тренировки", "для быстрой игры без технической подготовки"],
+    howItWorks: ["Учитель выбирает нужные этапы и количество заданий — все выбранные этапы сразу доступны в любом порядке.", "На этапе «Проверка» ученики отвечают на вопросы по теории.", "На этапе «Чемодан» определяют роль выделенного слова или сочетания: подлежащее, сказуемое, определение, дополнение или обстоятельство.", "На этапе «Разбор» отмечают члены предложения на интерактивной доске, при желании добавляют характеристику предложения и части речи.", "Итоговый экран показывает успехи с первой попытки и темы, которые стоит повторить."],
+    package: ["Один автономный HTML-файл — это весь комплект.", "Встроенные стили, иллюстрации, задания, ответы и игровая логика.", "Три игровых этапа и гибкая настройка длины маршрута.", "Работа без интернета после скачивания."],
+    adaptation: ["Чтобы начать, достаточно скачать один файл и открыть его в любом современном браузере.", "Файл можно отправить коллеге, перенести на флешке или открыть на интерактивной панели — ничего распаковывать и связывать не нужно."],
+    format: "Один автономный HTML-файл. Установка и интернет не требуются.",
+    requirements: ["любой современный браузер", "компьютер, ноутбук или интерактивная панель", "один скачанный HTML-файл"],
+    delivery: "После оплаты на указанную электронную почту придёт ссылка на единственный HTML-файл. Скачайте его и откройте двойным щелчком.",
+    important: ["Не нужно сохранять папки с картинками, стилями или скриптами: всё уже встроено в один файл.", "Перед оплатой проверьте email, на который должна прийти ссылка."],
+  },
+  {
+    slug: "summer-gerund-bar",
+    title: "HTML-игра «Бар добавочных действий»",
+    price: "300 ₽",
+    image: "/shop-media/summer-gerund-bar-cover-1.png",
+    images: [
+      "/shop-media/summer-gerund-bar-cover-1.png",
+      "/shop-media/summer-gerund-bar-cover-2.png",
+      "/shop-media/summer-gerund-bar-cover-3.png",
+    ],
+    demoUrl: "/games/summer-gerund-bar/index.html",
+    demoLabel: "Играть онлайн",
+    shortDescription: "Летняя игра-квест по деепричастию и деепричастному обороту: пять локаций, рецепты напитков, 40 заданий и мгновенная проверка.",
+    fullDescription: "«Бар добавочных действий» помогает отработать поиск деепричастий и оборотов, постановку запятых и преобразование предложений. Ученик готовит лимонад, компот, морс и смузи, проходя четыре тематические локации по 5 заданий, а затем закрепляет тему в финальной тренировке из 20 заданий.",
+    tryBefore: ["Онлайн-версия доступна в разделе «Игры».", "https://dimitrieva-av.ru/games/summer-gerund-bar/index.html"],
+    suitableFor: ["для изучения и повторения деепричастного оборота", "для 7 класса и подготовки к ОГЭ", "для урока, командной игры и самостоятельной работы", "для интерактивной панели"],
+    howItWorks: ["В первых четырёх локациях ученик находит деепричастие, выделяет оборот, выписывает его и расставляет запятые.", "За верные ответы открываются рецепты летних напитков и новые локации.", "Финальная локация предлагает ещё 20 заданий для закрепления.", "Встроенный карандаш позволяет подчёркивать и размечать предложение прямо на экране; доступны три цвета, толщина линии и очистка."],
+    package: ["Готовая HTML-игра и папка визуальных ресурсов.", "Пять локаций и 40 заданий.", "Встроенная памятка, рисование поверх задания и автоматическое сохранение прогресса.", "Инструкция по запуску."],
+    adaptation: ["Игра запускается двойным щелчком по index.html.", "После скачивания интернет для игры не нужен; структуру папки комплекта нужно сохранить."],
+    format: "Цифровой комплект для автономного запуска в браузере.",
+    requirements: ["современный браузер", "компьютер, планшет или интерактивная панель", "папка с index.html и ресурсами игры"],
+    delivery: "После оплаты ссылка на комплект придёт на указанную электронную почту.",
+    important: ["Для локального запуска не переименовывайте и не разъединяйте index.html и папку assets.", "Перед оплатой проверьте правильность электронной почты."],
   },
   {
     slug: "syntactic-soup",
@@ -2075,7 +2130,7 @@ async function renderShopPlaceholder() {
       <nav class="shop-rubricator" aria-label="Рубрики магазина">
         <button class="active" data-shop-rubric="all" type="button">Все материалы</button>
         <button data-shop-rubric="orthography" type="button">Орфография</button>
-        <button data-shop-rubric="syntax" type="button">Пунктуация</button>
+        <button data-shop-rubric="syntax" type="button">Синтаксис и пунктуация</button>
         <button data-shop-rubric="morphology" type="button">Морфология</button>
         <button data-shop-rubric="speech" type="button">Культура речи</button>
         <button data-shop-rubric="exam" type="button">ОГЭ / ЕГЭ</button>
@@ -4733,6 +4788,17 @@ function renderAdminContent(data, closeButton = "") {
     const teacherCorrect = Number(teacher.teacher_correct || 0);
     const teacherErrors = Math.max(0, teacherAttempts - teacherCorrect);
     const studentAttempts = Number(teacher.student_attempts || 0);
+    const errorAttempts = teacher.error_attempts || [];
+    const errorAttemptRows = errorAttempts.length ? errorAttempts.map((row) => `
+      <tr>
+        <td>${formatAdminDate(row.created_at)}</td>
+        <td>${formatAdminUser(row)}</td>
+        <td>${escapeHtml(row.activity_title || "")}<br><span class="muted">${escapeHtml(row.mode_title || row.mode || "")}</span></td>
+        <td>${escapeHtml(row.rule_name || row.category || "—")}<br><span class="muted">${escapeHtml(row.prompt || "")}</span></td>
+        <td><span class="status-bad">${escapeHtml(row.given_answer || "—")}</span></td>
+        <td><span class="status-ok">${escapeHtml(row.correct_answer || "—")}</span></td>
+      </tr>
+    `).join("") : `<tr><td colspan="6">Ошибок пока нет</td></tr>`;
     const giftRows = gifts.length ? gifts.map((gift) => `
       <li>
         <span>
@@ -4812,7 +4878,7 @@ function renderAdminContent(data, closeButton = "") {
         <td>${teacher.last_seen_at ? formatAdminDate(teacher.last_seen_at) : `<span class="muted">ещё не входил</span>`}</td>
         <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="students" type="button"><b>${studentsCount}</b><span>учеников</span></button></td>
         <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="stats" type="button"><b>${attemptsCount}</b><span>решений</span></button></td>
-        <td><button class="admin-metric-button ${errorsCount ? "has-errors" : ""}" data-teacher-id="${teacherId}" data-teacher-detail="stats" type="button"><b>${errorsCount}</b><span>ошибок</span></button></td>
+        <td><button class="admin-metric-button ${errorsCount ? "has-errors" : ""}" data-teacher-id="${teacherId}" data-teacher-detail="errors" type="button"><b>${errorsCount}</b><span>ошибок</span></button></td>
         <td><button class="admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="games" type="button"><b>${connectedGames.length}</b><span>игр</span></button></td>
         <td><button class="ghost-button admin-metric-button" data-teacher-id="${teacherId}" data-teacher-detail="account" type="button">Управление</button></td>
       </tr>
@@ -4829,6 +4895,14 @@ function renderAdminContent(data, closeButton = "") {
           <div class="admin-inline-detail">
             <div class="table-head"><h3>Статистика учителя и учеников</h3><span class="muted">${attemptsCount} решений всего · учитель ${teacherAttempts} · ученики ${studentAttempts} · точность ${pct(correctCount, attemptsCount)}</span></div>
             <table class="table"><tr><th>Пользователь</th><th>Email</th><th>Решений</th><th>Верно</th><th>Ошибок</th><th>Точность</th><th>Управление</th></tr>${teacherStatsRow}${students}</table>
+          </div>
+        </td>
+      </tr>
+      <tr class="admin-user-detail-row hidden" data-teacher-id="${teacherId}" data-teacher-detail-row="errors">
+        <td colspan="7">
+          <div class="admin-inline-detail">
+            <div class="table-head"><h3>Какие ошибки допустили ${escapeHtml(teacher.display_name)} и ученики</h3><span class="muted">последние ${Math.min(errorsCount, 200)} из ${errorsCount} ошибок</span></div>
+            <table class="table admin-table"><tr><th>Время</th><th>Пользователь</th><th>Где</th><th>Тема и задание</th><th>Ответ</th><th>Правильно</th></tr>${errorAttemptRows}</table>
           </div>
         </td>
       </tr>
