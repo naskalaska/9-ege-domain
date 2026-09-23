@@ -67,14 +67,34 @@ class ShopCartTest(unittest.TestCase):
         self.assertIn(b"if(!demoActionAllowed())return", demo)
         self.assertEqual(demo.count(b"function demoActionAllowed()"), 1)
 
-    def test_mobile_injection_removes_locked_zoom_and_narrow_screen_overflow(self):
-        source = (Path(__file__).parent / "HTML" / "Карта причастия" / "karta-prichastie-v36.html").read_bytes()
-        mobile = server.inject_participle_map_mobile(source)
-        self.assertIn(b'id="site-participle-mobile-fixes"', mobile)
-        self.assertIn(b"viewport-fit=cover", mobile)
-        self.assertNotIn(b"user-scalable=no", mobile)
-        self.assertIn(b"min-width: 0 !important", mobile)
-        self.assertIn(b"grid-template-columns: repeat(2,minmax(0,1fr))", mobile)
+    def test_game_source_contains_mobile_support(self):
+        game_dir = Path(__file__).parent / "HTML" / "Карта причастия"
+        source = (game_dir / "karta-prichastie-v36.html").read_bytes()
+        mobile_css = (game_dir / "mobile-fixes.css").read_bytes()
+        self.assertIn(b'href="mobile-fixes.css"', source)
+        self.assertIn(b"viewport-fit=cover", source)
+        self.assertNotIn(b"user-scalable=no", source)
+        self.assertIn(b"min-width: 0 !important", mobile_css)
+        self.assertIn(b"grid-template-columns: repeat(2, minmax(0, 1fr))", mobile_css)
+
+    def test_participle_map_uses_normative_kolyushchiy(self):
+        source = (
+            Path(__file__).parent / "HTML" / "Карта причастия" / "karta-prichastie-v36.html"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("колущий", source.lower())
+        self.assertGreaterEqual(source.lower().count("колющий"), 4)
+        self.assertIn("['колющий','колют']", source)
+        self.assertIn("['кол…щий','Ю']", source)
+        self.assertNotIn("['кол…щий','У']", source)
+        for fragment, vowel in (
+            ("вед…щий", "У"), ("бор…щийся", "Ю"), ("дыш…щий", "А"), ("стро…щий", "Я"),
+            ("чита…мый", "Е"), ("вид…мый", "И"), ("рису…щий", "Ю"), ("держ…щий", "А"),
+            ("кле…щий", "Я"), ("реша…мый", "Е"), ("слыш…мый", "И"), ("пиш…щий", "У"),
+            ("вою…щий", "Ю"), ("спеш…щий", "А"), ("завис…щий", "Я"), ("создава…мый", "Е"),
+            ("хран…мый", "И"), ("ищ…щий", "У"), ("танцу…щий", "Ю"), ("крич…щий", "А"),
+            ("лет…щий", "Я"), ("управля…мый", "Е"), ("гон…мый", "И"),
+        ):
+            self.assertIn(f"['{fragment}','{vowel}']", source)
 
 
 if __name__ == "__main__":

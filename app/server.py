@@ -5204,58 +5204,6 @@ function demoActionAllowed(){{
     return body
 
 
-def inject_participle_map_mobile(body: bytes) -> bytes:
-    """Make the large map and every task usable on narrow touch screens."""
-    body = body.replace(
-        b'content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"',
-        b'content="width=device-width,initial-scale=1,viewport-fit=cover"',
-        1,
-    )
-    styles = b"""
-<style id="site-participle-mobile-fixes">
-  button, input, select, textarea { touch-action: manipulation; }
-  @media (max-width: 650px) {
-    html, body { width: 100%; min-height: 100%; height: auto; overflow: auto !important; overscroll-behavior: none; }
-    .game { width: 100%; min-width: 0 !important; min-height: 100svh !important; height: auto !important; padding: 154px 10px 78px; overflow: visible; }
-    .hud { position: absolute; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
-    .title { width: 100%; padding: 7px 10px; font-size: 17px !important; }
-    .progress-card { min-width: 0; padding: 8px 10px; }
-    .progress-row { gap: 6px; font-size: 13px; }
-    .tools { gap: 5px; }
-    .tool { min-width: 44px; min-height: 44px; padding: 7px; }
-    .locations { position: relative; inset: auto; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 34px 10px; width: 100%; }
-    .route-line, .crest, .story-tag { display: none !important; }
-    .location, .location:hover, .location:focus-visible { position: relative !important; left: auto !important; top: auto !important; width: 100%; min-width: 0; min-height: 48px; transform: none !important; }
-    .loc-label { width: 100%; min-height: 48px; display: grid; place-items: center; padding: 8px 5px !important; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
-    .loc-ring { top: -28px; }
-    .modal { width: 100vw; height: 100dvh; padding: max(4px,env(safe-area-inset-top)) 4px max(4px,env(safe-area-inset-bottom)); overflow: hidden; }
-    .panel, .location-panel, .location-panel.task-active { width: 100% !important; height: 100% !important; max-height: 100dvh !important; padding: 12px 10px !important; border-width: 2px; border-radius: 10px; }
-    .location-panel .quest, .location-panel.task-active .quest { overflow: auto !important; -webkit-overflow-scrolling: touch; max-height: none !important; }
-    .location-panel .actions { padding-bottom: env(safe-area-inset-bottom); }
-    .location-panel .actions button, .answer, .primary, .secondary, .mode-card { min-height: 44px; }
-    .mode-grid, .passport-fields, .case-file, .guide-grid, .tl-fields { grid-template-columns: 1fr !important; }
-    .case-file .repair-source, .case-file .input-answer { grid-column: 1 !important; grid-row: auto !important; }
-    .sort-pool { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
-    .sort-zones { grid-template-columns: 1fr !important; }
-    .line-sort-board, .connect-board { grid-template-columns: minmax(0,1fr) minmax(112px,.65fr) !important; gap: 7px !important; padding: 7px !important; }
-    .line-item, .line-target, .connect-item { padding: 7px 5px; font-size: 12px; overflow-wrap: anywhere; }
-    .formation-guide { grid-template-columns: 1fr !important; }
-    .swamp-board { min-height: 520px !important; }
-    input, select, textarea { max-width: 100%; font-size: 16px !important; }
-  }
-  @media (max-width: 390px) {
-    .game { padding-inline: 7px; }
-    .location-panel .theory-card { grid-template-columns: 72px 1fr !important; }
-    .location-panel .theory-picture { height: 48px !important; }
-    .quest { padding: 10px !important; }
-    .answers { gap: 7px; }
-    .answer, .primary, .secondary { padding: 9px 10px; }
-  }
-</style>
-"""
-    return body.replace(b"</head>", styles + b"</head>", 1)
-
-
 def inject_game_menu_link(body: bytes) -> bytes:
     """Add a contextual return link to every served HTML game."""
     html = body.decode("utf-8", errors="surrogateescape")
@@ -5944,8 +5892,6 @@ class Handler(SimpleHTTPRequestHandler):
             record_public_game_visit(slug, None, self.path)
         body = file_path.read_bytes()
         if is_entry_file:
-            if slug == "participle-map":
-                body = inject_participle_map_mobile(body)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -5977,8 +5923,6 @@ class Handler(SimpleHTTPRequestHandler):
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
         body = file_path.read_bytes()
         if is_entry_file:
-            if slug == "participle-map":
-                body = inject_participle_map_mobile(body)
             if slug == "orthoshooting":
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
             if slug == "karaoke-numerals":
@@ -6017,8 +5961,6 @@ class Handler(SimpleHTTPRequestHandler):
             return
         body = file_path.read_bytes()
         if is_entry_file:
-            if slug == "participle-map":
-                body = inject_participle_map_mobile(body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
