@@ -67,6 +67,15 @@ class ShopCartTest(unittest.TestCase):
         self.assertIn(b"if(!demoActionAllowed())return", demo)
         self.assertEqual(demo.count(b"function demoActionAllowed()"), 1)
 
+    def test_mobile_injection_removes_locked_zoom_and_narrow_screen_overflow(self):
+        source = (Path(__file__).parent / "HTML" / "Карта причастия" / "karta-prichastie-v36.html").read_bytes()
+        mobile = server.inject_participle_map_mobile(source)
+        self.assertIn(b'id="site-participle-mobile-fixes"', mobile)
+        self.assertIn(b"viewport-fit=cover", mobile)
+        self.assertNotIn(b"user-scalable=no", mobile)
+        self.assertIn(b"min-width: 0 !important", mobile)
+        self.assertIn(b"grid-template-columns: repeat(2,minmax(0,1fr))", mobile)
+
 
 if __name__ == "__main__":
     unittest.main()

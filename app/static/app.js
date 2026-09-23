@@ -2293,10 +2293,10 @@ function shopProductCard(product) {
           <span>Получение: Ссылка на папку после оплаты</span>
         </div>
         <div class="shop-product-actions">
-          <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
           ${product.maxOnly
-            ? `<button class="secondary-button" data-route="/shop/${product.slug}" type="button">${escapeHtml(product.buyLabel || "Подробнее")}</button>`
-            : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "В корзину")}</button>`}
+            ? `<button class="primary-button" data-route="/shop/${product.slug}" type="button">${escapeHtml(product.buyLabel || "Подробнее")}</button>`
+            : `<button class="primary-button" data-buy-now="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить сейчас")}</button><button class="secondary-button" data-buy-product="${product.slug}" type="button">Добавить в корзину</button>`}
+          <button class="secondary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
           ${product.demoUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
         </div>
         <span class="shop-soon-badge">${product.oldPrice ? `<span class="old-price">${escapeHtml(product.oldPrice)}</span> ` : ""}${escapeHtml(product.price)}</span>
@@ -2428,11 +2428,11 @@ async function renderShopProductPage(slug) {
           ${product.promoNote ? `<div class="shop-notice">${escapeHtml(product.promoNote)}</div>` : ""}
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
-            ${product.demoUrl ? `<a class="primary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
-            <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
             ${product.maxOnly
               ? `<a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
-              : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "В корзину")}</button>`}
+              : `<button class="primary-button" data-buy-now="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить сейчас")}</button><button class="secondary-button" data-buy-product="${product.slug}" type="button">Добавить в корзину</button>`}
+            ${product.demoUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
+            <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
           </div>
         </div>
       </div>
@@ -2575,6 +2575,9 @@ function openProductGalleryLightbox(images, startIndex = 0, title = "Изобр�
 }
 
 function bindShopPayment(root = document) {
+  root.querySelectorAll("[data-buy-now]").forEach((button) => {
+    button.addEventListener("click", () => openPaymentForm([button.dataset.buyNow]));
+  });
   root.querySelectorAll("[data-buy-product]").forEach((button) => {
     button.addEventListener("click", () => {
       const slug = button.dataset.buyProduct;
@@ -2582,7 +2585,7 @@ function bindShopPayment(root = document) {
       else addToCart(slug);
     });
   });
-  root.querySelector("[data-cart-checkout]")?.addEventListener("click", () => openPaymentForm(shopCart));
+  root.querySelector("[data-cart-checkout]")?.addEventListener("click", () => openPaymentForm(shopCart, true));
   root.querySelectorAll("[data-cart-remove]").forEach((button) => {
     button.addEventListener("click", () => removeFromCart(button.dataset.cartRemove));
   });
@@ -2653,7 +2656,7 @@ function removeFromCart(slug) {
   refreshShopCart();
 }
 
-function openPaymentForm(productSlugs = ["fruit-garden-ik-ek"]) {
+function openPaymentForm(productSlugs = ["fruit-garden-ik-ek"], clearCartOnSuccess = false) {
   const slugs = Array.isArray(productSlugs) ? productSlugs : [productSlugs];
   const products = slugs.map(paymentProductBySlug).filter(Boolean);
   if (!products.length) return;
@@ -2720,7 +2723,7 @@ function openPaymentForm(productSlugs = ["fruit-garden-ik-ek"]) {
         body: JSON.stringify({ email, products: slugs }),
       });
       if (!data.confirmation_url) throw new Error("Не удалось получить ссылку на оплату.");
-      if (!isSupport) { shopCart = []; saveShopCart(); }
+      if (clearCartOnSuccess) { shopCart = []; saveShopCart(); }
       window.location.href = data.confirmation_url;
     } catch (err) {
       submit.disabled = false;
