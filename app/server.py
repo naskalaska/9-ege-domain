@@ -261,6 +261,18 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/summer-gerund-bar/index.html",
         "kind": "product",
     },
+    "participle-map": {
+        "id": "participle_map",
+        "title": "HTML-игра «Карта причастия»",
+        "short_title": "Карта причастия",
+        "amount": "600.00",
+        "currency": "RUB",
+        "cover_url": "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_27_59-1.png",
+        "url_env": "PARTICIPLE_MAP_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/full-games/participle-map/otvety-karta-prichastie-v35.pdf",
+        "online_url": f"{APP_BASE_URL}/full-games/participle-map/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -344,6 +356,11 @@ DEMO_GAME_NOTICES = {
         "label": "Демо",
         "text": "В демо доступны первые 20 заданий. Полная версия со всей базой открывается после покупки.",
         "shop_url": "/shop/orthoshooting",
+    },
+    "participle-map": {
+        "label": "Демо · 30",
+        "text": "В демо доступны 30 проверенных действий. Полная версия без ограничения открывается после покупки.",
+        "shop_url": "/shop/participle-map",
     },
 }
 
@@ -506,6 +523,7 @@ HTML_GAMES = {
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
     "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
+    "participle-map": HTML_DIR / "Карта причастия",
 }
 
 HTML_GAME_TITLES = {
@@ -527,6 +545,7 @@ HTML_GAME_TITLES = {
     "expedition-memory-isolated-members": "Экспедиция памяти: обособленные члены предложения",
     "syntactic-soup": "Синтаксический суп",
     "foxwarts-syntax": "Собираемся в Фоксвартс: синтаксический разбор",
+    "participle-map": "Карта причастия",
 }
 
 PUBLIC_GAMES = {
@@ -551,6 +570,7 @@ PUBLIC_GAMES = {
     "expedition-memory-isolated-members": HTML_DIR / "Экспедиция памяти обособленные члены предложения",
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
     "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
+    "participle-map": HTML_DIR / "Карта причастия",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -764,6 +784,7 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "syntactic-soup": "syntactic_soup",
         "foxwarts-syntax": "foxwarts_syntax",
         "summer-gerund-bar": "summer_gerund_bar",
+        "participle-map": "participle_map",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -1598,6 +1619,16 @@ def ensure_app_db() -> None:
                 raw_webhook TEXT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS shop_order_items (
+                order_uid TEXT NOT NULL,
+                product_id TEXT NOT NULL,
+                product_title TEXT NOT NULL,
+                amount TEXT NOT NULL,
+                currency TEXT DEFAULT 'RUB',
+                PRIMARY KEY(order_uid, product_id),
+                FOREIGN KEY(product_id) REFERENCES paid_entities(product_id)
+            );
+
             CREATE TABLE IF NOT EXISTS paid_entities (
                 product_id TEXT PRIMARY KEY,
                 slug TEXT UNIQUE NOT NULL,
@@ -1647,6 +1678,7 @@ def ensure_app_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_game_sets_teacher ON game_sets(teacher_id, created_at);
             CREATE INDEX IF NOT EXISTS idx_shop_orders_uid ON shop_orders(order_uid);
             CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(yookassa_payment_id);
+            CREATE INDEX IF NOT EXISTS idx_shop_order_items_product ON shop_order_items(product_id);
             CREATE INDEX IF NOT EXISTS idx_game_visits_opened_at ON game_visits(opened_at);
             CREATE INDEX IF NOT EXISTS idx_paid_entities_slug ON paid_entities(slug);
             CREATE INDEX IF NOT EXISTS idx_teacher_product_gifts_teacher ON teacher_product_gifts(teacher_id, created_at);
@@ -4333,7 +4365,8 @@ def connected_games_for_admin(
             SELECT LOWER(so.buyer_email) AS buyer_email, pe.product_id, pe.slug, pe.title,
                    pe.delivery_url, pe.online_url, pe.url_env, so.order_uid, so.paid_at, so.created_at
             FROM shop_orders so
-            JOIN paid_entities pe ON pe.product_id = so.product_id
+            LEFT JOIN shop_order_items soi ON soi.order_uid = so.order_uid
+            JOIN paid_entities pe ON pe.product_id = COALESCE(soi.product_id, so.product_id)
             WHERE so.status = 'paid'
               AND pe.type = 'product'
               AND LOWER(so.buyer_email) IN ({placeholders})
@@ -4897,6 +4930,34 @@ def send_product_email(email: str, product: dict[str, str], product_url: str, on
     send_email_message(message)
 
 
+def send_order_email(email: str, products: list[dict[str, str]]) -> None:
+    if len(products) == 1:
+        product = products[0]
+        send_product_email(email, product, product_delivery_url(product), product_online_url(product))
+        return
+    message = EmailMessage()
+    message["Subject"] = f"Ваш заказ: {len(products)} материала"
+    message["From"] = MAIL_FROM
+    message["To"] = email
+    links = []
+    for index, product in enumerate(products, 1):
+        offline_url = product_delivery_url(product)
+        online_url = product_online_url(product)
+        block = [f"{index}. {product['title']}"]
+        if offline_url:
+            block.append(f"Материал: {offline_url}")
+        if online_url and online_url != offline_url:
+            block.append(f"Онлайн-версия: {online_url}")
+        links.append("\n".join(block))
+    message.set_content(
+        "Здравствуйте!\n\nСпасибо за покупку. Все материалы из заказа собраны ниже:\n\n"
+        + "\n\n".join(links)
+        + "\n\nЕсли ссылка не открывается, скопируйте её в адресную строку браузера.\n\n"
+          "С уважением,\nАнастасия Димитриева\n"
+    )
+    send_email_message(message)
+
+
 def send_berry_season_email(email: str, product_url: str) -> None:
     send_product_email(email, PRODUCT_BERRY_SEASON, product_url)
 
@@ -4950,6 +5011,18 @@ def product_by_id(product_id: str) -> dict[str, str] | None:
     return paid_entity_row(row) if row else None
 
 
+def order_products(order_uid: str, fallback_product_id: str = "") -> list[dict[str, str]]:
+    with db() as con:
+        rows = con.execute(
+            "SELECT product_id FROM shop_order_items WHERE order_uid = ? ORDER BY rowid",
+            (order_uid,),
+        ).fetchall()
+    product_ids = [str(row["product_id"] or "") for row in rows]
+    if not product_ids and fallback_product_id:
+        product_ids = [fallback_product_id]
+    return [product for product_id in product_ids if (product := product_by_id(product_id))]
+
+
 def user_can_access_full_game(user: dict[str, Any], slug: str) -> bool:
     """Allow a full game only to an admin or to the teacher who owns its product."""
     if user.get("role") == "admin":
@@ -4966,11 +5039,13 @@ def user_can_access_full_game(user: dict[str, Any], slug: str) -> bool:
             return False
         purchased = con.execute(
             """
-            SELECT 1 FROM shop_orders
-            WHERE product_id = ? AND status = 'paid' AND LOWER(buyer_email) = ?
+            SELECT 1 FROM shop_orders so
+            LEFT JOIN shop_order_items soi ON soi.order_uid = so.order_uid
+            WHERE (so.product_id = ? OR soi.product_id = ?)
+              AND so.status = 'paid' AND LOWER(so.buyer_email) = ?
             LIMIT 1
             """,
-            (product["product_id"], teacher_email),
+            (product["product_id"], product["product_id"], teacher_email),
         ).fetchone()
         if purchased:
             return True
@@ -5020,6 +5095,8 @@ def game_entry_file(slug: str, relative_path: str) -> str:
         return "Синтаксический суп.html"
     if slug == "foxwarts-syntax" and clean_path in {"", "index.html"}:
         return "index (5).html"
+    if slug == "participle-map" and clean_path in {"", "index.html"}:
+        return "karta-prichastie-v36.html"
     return clean_path
 
 
@@ -5027,7 +5104,7 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
     notice = DEMO_GAME_NOTICES.get(slug)
     if not notice:
         return body
-    html = body.decode("utf-8", errors="replace")
+    html = body.decode("utf-8", errors="surrogateescape")
     badge = f"""
 <style>
   .site-demo-ribbon {{
@@ -5091,12 +5168,45 @@ def inject_demo_notice(slug: str, body: bytes) -> bytes:
         html = html.replace("</body>", f"{badge}</body>", 1)
     else:
         html += badge
-    return html.encode("utf-8")
+    return html.encode("utf-8", errors="surrogateescape")
+
+
+def inject_participle_map_demo(body: bytes, limit: int = 30) -> bytes:
+    """Add a persistent answer limit to the public map without changing the paid file."""
+    helpers = f"""
+const demoLimit={limit};
+let demoActions=Number(localStorage.getItem('participle-map-demo-actions')||0);
+function showDemoLimit(){{
+ const quest=$('#quest');if(!quest)return;
+ quest.innerHTML=`<div class="session-result"><div class="big">${{demoLimit}}/${{demoLimit}}</div><h3>Демо завершено</h3><p>Вы выполнили 30 действий. В полной версии доступна вся карта без ограничения.</p><a class="primary" href="/shop/participle-map" target="_top">Открыть полную версию</a></div>`;
+ $('#checkAnswer').style.display='none';showLocationHomeButton(false);
+}}
+function demoActionAllowed(){{
+ if(demoActions>=demoLimit){{showDemoLimit();return false}}
+ demoActions++;localStorage.setItem('participle-map-demo-actions',String(demoActions));
+ if(demoActions===demoLimit)setTimeout(showDemoLimit,700);
+ return true;
+}}
+""".encode("utf-8")
+    marker = b"const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];"
+    body = body.replace(marker, marker + helpers, 1)
+    replacements = (
+        (b"function checkIdentify(){if(run.answered){nextIdentify();return}", b"function checkIdentify(){if(run.answered){nextIdentify();return}if(!demoActionAllowed())return;"),
+        (b"function checkRich(){if(run.answered){nextRich();return}", b"function checkRich(){if(run.answered){nextRich();return}if(!demoActionAllowed())return;"),
+        (b"function check(){if(current.rich&&run){checkRich();return}if(selected===null)", b"function check(){if(current.rich&&run){checkRich();return}if(!demoActionAllowed())return;if(selected===null)"),
+        (b"function completeMemo(t){run.answered=true;", b"function completeMemo(t){if(!demoActionAllowed())return;run.answered=true;"),
+        (b"function completeSpecial(t,message,toastText){run.answered=true;", b"function completeSpecial(t,message,toastText){if(!demoActionAllowed())return;run.answered=true;"),
+        (b"function checkText(t){\r\n  const fields=controls(t),", b"function checkText(t){\r\n  if(!demoActionAllowed())return;\r\n  const fields=controls(t),"),
+        (b"function checkText(t){\n  const fields=controls(t),", b"function checkText(t){\n  if(!demoActionAllowed())return;\n  const fields=controls(t),"),
+    )
+    for source, target in replacements:
+        body = body.replace(source, target, 1)
+    return body
 
 
 def inject_game_menu_link(body: bytes) -> bytes:
     """Add a contextual return link to every served HTML game."""
-    html = body.decode("utf-8", errors="replace")
+    html = body.decode("utf-8", errors="surrogateescape")
     has_menu_link = "game-menu-link" in html
     menu_button = "" if has_menu_link else (
         '<a class="game-menu-link site-game-menu-link" href="/games" target="_top" '
@@ -5164,7 +5274,7 @@ def inject_game_menu_link(body: bytes) -> bytes:
         html = html.replace("</body>", f"{addition}</body>", 1)
     else:
         html += addition
-    return html.encode("utf-8")
+    return html.encode("utf-8", errors="surrogateescape")
 
 
 def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
@@ -5176,7 +5286,8 @@ def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
             SELECT pe.slug, pe.product_id, pe.title, pe.delivery_url, pe.online_url, pe.url_env,
                    so.order_uid, so.paid_at, so.created_at
             FROM shop_orders so
-            JOIN paid_entities pe ON pe.product_id = so.product_id
+            LEFT JOIN shop_order_items soi ON soi.order_uid = so.order_uid
+            JOIN paid_entities pe ON pe.product_id = COALESCE(soi.product_id, so.product_id)
             WHERE so.status = 'paid'
               AND pe.type = 'product'
               AND LOWER(so.buyer_email) = ?
@@ -5344,6 +5455,22 @@ def create_yookassa_payment(shop_id: str, secret_key: str, product: dict[str, st
             "type": product["kind"],
         },
     }
+    items = product.get("items") if isinstance(product.get("items"), list) else []
+    if items:
+        payload["receipt"] = {
+            "customer": {"email": email},
+            "items": [
+                {
+                    "description": str(item["title"])[:128],
+                    "quantity": "1.00",
+                    "amount": {"value": item["amount"], "currency": item["currency"]},
+                    "vat_code": 1,
+                    "payment_mode": "full_payment",
+                    "payment_subject": "commodity",
+                }
+                for item in items
+            ],
+        }
     try:
         return yookassa_api_request(shop_id, secret_key, "/payments", payload, order_uid)
     except HTTPError as error:
@@ -5370,10 +5497,28 @@ def get_yookassa_payment(shop_id: str, secret_key: str, payment_id: str) -> dict
 def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-garden-ik-ek") -> dict[str, Any]:
     email = normalize_email(payload.get("email"))
     validate_email(email)
-    product = product_by_slug(str(payload.get("product") or default_slug))
-    if not product.get("is_active", True):
-        raise RuntimeError("Материал временно недоступен. Попробуйте позже.")
-    shop_id, secret_key, _product_url = yookassa_env(product)
+    requested = payload.get("products")
+    slugs = requested if isinstance(requested, list) else [payload.get("product") or default_slug]
+    slugs = list(dict.fromkeys(str(slug or "").strip() for slug in slugs if str(slug or "").strip()))
+    if not slugs or len(slugs) > 30:
+        raise ValueError("Выберите от 1 до 30 материалов.")
+    products = [product_by_slug(slug) for slug in slugs]
+    if any(not product.get("is_active", True) for product in products):
+        raise RuntimeError("Один из материалов временно недоступен. Попробуйте позже.")
+    currencies = {product["currency"] for product in products}
+    if len(currencies) != 1:
+        raise ValueError("Материалы в разных валютах нельзя оформить одним заказом.")
+    if len(products) > 1 and any(product.get("kind") == "donation" for product in products):
+        raise ValueError("Поддержку проекта оформите отдельно от покупки материалов.")
+    amount = sum((Decimal(product["amount"]) for product in products), Decimal("0.00"))
+    product = {
+        **products[0],
+        "id": products[0]["id"],
+        "title": products[0]["title"] if len(products) == 1 else f"Заказ: {len(products)} материала",
+        "amount": f"{amount:.2f}",
+        "items": products,
+    }
+    shop_id, secret_key, _product_url = yookassa_env(products[0])
     order_uid = secrets.token_urlsafe(18)
     with db() as con:
         con.execute(
@@ -5393,6 +5538,13 @@ def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-g
                 email,
                 now_iso(),
             ),
+        )
+        con.executemany(
+            """
+            INSERT INTO shop_order_items (order_uid, product_id, product_title, amount, currency)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [(order_uid, item["id"], item["title"], item["amount"], item["currency"]) for item in products],
         )
     try:
         payment = create_yookassa_payment(shop_id, secret_key, product, order_uid, email)
@@ -5423,9 +5575,10 @@ def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = ""
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
     if not order:
         raise ValueError("Заказ не найден.")
-    product = product_by_id(str(order["product_id"] or ""))
-    if not product:
+    products = order_products(order_uid, str(order["product_id"] or ""))
+    if not products:
         raise ValueError("Материал не найден.")
+    product = products[0]
 
     shop_id, secret_key, product_url = yookassa_env(product)
     payment = get_yookassa_payment(shop_id, secret_key, payment_id)
@@ -5436,7 +5589,7 @@ def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = ""
 
     with db() as con:
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
-        if not order or order["product_id"] != product["id"]:
+        if not order:
             raise ValueError("Заказ не найден.")
         if payment_status == "canceled":
             con.execute(
@@ -5460,10 +5613,10 @@ def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = ""
             return {"ok": True, "status": "paid", "email_sent": True}
         buyer_email = order["buyer_email"]
 
-    send_product_email(buyer_email, product, product_url, product_online_url(product))
+    send_order_email(buyer_email, products)
     with db() as con:
         con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-    print(f"Product email sent: order_uid={order_uid}, product_id={product['id']}")
+    print(f"Order email sent: order_uid={order_uid}, products={len(products)}")
     return {"ok": True, "status": "paid", "email_sent": True}
 
 
@@ -5508,14 +5661,15 @@ def resend_order_by_email(payload: dict[str, Any], default_slug: str | None = No
             order = con.execute(
                 """
                 SELECT order_uid, yookassa_payment_id, status, email_sent
-                FROM shop_orders
-                WHERE LOWER(buyer_email) = ?
-                  AND product_id = ?
-                  AND yookassa_payment_id IS NOT NULL
-                ORDER BY created_at DESC
+                FROM shop_orders so
+                LEFT JOIN shop_order_items soi ON soi.order_uid = so.order_uid
+                WHERE LOWER(so.buyer_email) = ?
+                  AND (so.product_id = ? OR soi.product_id = ?)
+                  AND so.yookassa_payment_id IS NOT NULL
+                ORDER BY so.created_at DESC
                 LIMIT 1
                 """,
-                (email, product["id"]),
+                (email, product["id"], product["id"]),
             ).fetchone()
         else:
             order = con.execute(
@@ -5558,7 +5712,8 @@ def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[
         if not order:
             print(f"YooKassa webhook ignored: order not found, order_uid={order_uid}")
             return {"ok": True}
-        product = product_by_id(str(order["product_id"] or ""))
+        products = order_products(order_uid, str(order["product_id"] or ""))
+        product = products[0] if products else None
         if not product or product_id != product["id"]:
             print(f"YooKassa webhook ignored: product mismatch, order_uid={order_uid}")
             return {"ok": True}
@@ -5590,14 +5745,13 @@ def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[
                 (payment_id, raw_payload, order_uid),
             )
     if should_send_email:
-        product = product_by_id(product_id)
-        product_url = product_delivery_url(product) if product else ""
-        if not product_url:
+        products = order_products(order_uid, product_id)
+        if not products or any(not product_delivery_url(product) for product in products):
             raise RuntimeError("Материал временно недоступен. Попробуйте позже")
-        send_product_email(buyer_email, product, product_url, product_online_url(product))
+        send_order_email(buyer_email, products)
         with db() as con:
             con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-        print(f"Product email sent by webhook: order_uid={order_uid}, product_id={product_id}")
+        print(f"Order email sent by webhook: order_uid={order_uid}, products={len(products)}")
     return {"ok": True}
 
 
@@ -5773,6 +5927,8 @@ class Handler(SimpleHTTPRequestHandler):
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
             if slug == "karaoke-numerals":
                 body = body.replace(b"<script src=\"app-v10.js\">", b"<script>window.KARAOKE_DEMO_LIMIT=20;</script><script src=\"app-v10.js\">")
+            if slug == "participle-map":
+                body = inject_participle_map_demo(body, 30)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -5786,10 +5942,10 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        if slug == "karaoke-numerals":
+        if slug in {"karaoke-numerals", "participle-map"}:
             user = self.require_user()
             if not user_can_access_full_game(user, slug):
-                raise PermissionError("Полная версия «Караоке числительных» доступна после покупки.")
+                raise PermissionError("Полная версия игры доступна после покупки.")
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)

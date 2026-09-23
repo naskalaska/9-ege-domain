@@ -238,6 +238,18 @@ const miniGames = [
     kindLabel: "игра",
   },
   {
+    slug: "participle-map",
+    title: "Карта причастия",
+    description: "Большое путешествие по морфологии причастия: признаки, формы, суффиксы, Н/НН, НЕ и причастный оборот. В демо — 30 действий.",
+    button: "Демо",
+    path: "/games/participle-map/index.html",
+    demo: true,
+    demoNotice: "В демо доступны 30 действий. Полная версия без ограничения открывается после покупки.",
+    category: "morphology",
+    categoryTitle: "Морфология",
+    kindLabel: "средняя игра",
+  },
+  {
     slug: "butterflies-participial-phrase",
     title: "Бабочки: причастный оборот",
     description: "Освободите бабочек, расставляя запятые в предложениях с причастными оборотами.",
@@ -963,6 +975,37 @@ const shopProducts = [
     requirements: ["современный браузер", "компьютер или ноутбук; для показа классу — интерактивная панель"],
     delivery: "После оплаты ссылка на комплект придёт на указанную электронную почту.",
     important: ["В заданиях на замену на колесе показано исходное словосочетание — ученик превращает его в указанный синонимичный результат."],
+  },
+  {
+    slug: "participle-map",
+    title: "HTML-игра «Карта причастия»",
+    price: "600 ₽",
+    image: "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_27_59-1.png",
+    images: [
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_27_59-1.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_04-2.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_09-3.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_17-1.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_21-2.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_26-3.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_31-4.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_35-5.png",
+      "/games/participle-map/Изображение Codex 23 сент. 2026 г., 18_28_41-6.png",
+    ],
+    demoUrl: "/games/participle-map/index.html",
+    demoLabel: "Открыть демо",
+    kindLabel: "средняя игра по морфологии",
+    shortDescription: "Интерактивная карта по морфологии причастия. В демо доступны 30 действий; полная версия открывает весь маршрут без ограничения.",
+    fullDescription: "Ученики исследуют тематические локации, выполняют задания разных механик и собирают фрагменты герба, последовательно закрепляя все ключевые признаки причастия.",
+    tryBefore: ["Демо на 30 действий доступно в разделе «Игры».", "https://dimitrieva-av.ru/games/participle-map/index.html"],
+    suitableFor: ["для изучения и повторения причастия в 7 классе", "для урока, интерактивной панели и самостоятельной работы", "для систематизации морфологии и орфографии причастия"],
+    howItWorks: ["Ученик перемещается по карте из тематических локаций, выбирает режимы и выполняет интерактивные задания.", "Прогресс, ошибки и освоенные задания сохраняются в браузере."],
+    package: ["Полная HTML-игра без лимита действий.", "Девять иллюстраций для карточек и публикаций.", "PDF с ответами.", "Музыкальное сопровождение."],
+    adaptation: ["Комплект поставляется как готовая игра."],
+    format: "Цифровой комплект: автономный HTML-файл, изображения, музыка и PDF.",
+    requirements: ["современный браузер", "компьютер, планшет или интерактивная панель", "звук — по желанию"],
+    delivery: "После оплаты полная онлайн-версия появится в разделе «Мои игры» учительского аккаунта с тем же email.",
+    important: ["Перед оплатой проверьте email: по нему покупка привязывается к кабинету.", "В общем разделе «Игры» остаётся демо на 30 действий."],
   },
 ];
 
@@ -2135,6 +2178,7 @@ async function renderShopPlaceholder() {
         <button data-shop-rubric="speech" type="button">Культура речи</button>
         <button data-shop-rubric="exam" type="button">ОГЭ / ЕГЭ</button>
       </nav>
+      ${shopCartMarkup()}
       <div class="shop-product-grid">${cards}</div>
     </section>
     ${publicFooter()}
@@ -2252,7 +2296,7 @@ function shopProductCard(product) {
           <button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее</button>
           ${product.maxOnly
             ? `<button class="secondary-button" data-route="/shop/${product.slug}" type="button">${escapeHtml(product.buyLabel || "Подробнее")}</button>`
-            : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить")}</button>`}
+            : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "В корзину")}</button>`}
           ${product.demoUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
         </div>
         <span class="shop-soon-badge">${product.oldPrice ? `<span class="old-price">${escapeHtml(product.oldPrice)}</span> ` : ""}${escapeHtml(product.price)}</span>
@@ -2388,7 +2432,7 @@ async function renderShopProductPage(slug) {
             <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
             ${product.maxOnly
               ? `<a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
-              : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить")}</button>`}
+              : `<button class="secondary-button" data-buy-product="${product.slug}" type="button">${escapeHtml(product.buyLabel || "В корзину")}</button>`}
           </div>
         </div>
       </div>
@@ -2403,6 +2447,7 @@ async function renderShopProductPage(slug) {
         ${renderProductBlock("Помощь с адаптацией", product.adaptation)}
         ${renderProductBlock("Важно", product.important)}
       </div>
+      ${shopCartMarkup()}
     </section>
     ${publicFooter()}
   `;
@@ -2531,7 +2576,15 @@ function openProductGalleryLightbox(images, startIndex = 0, title = "Изобр�
 
 function bindShopPayment(root = document) {
   root.querySelectorAll("[data-buy-product]").forEach((button) => {
-    button.addEventListener("click", () => openPaymentForm(button.dataset.buyProduct));
+    button.addEventListener("click", () => {
+      const slug = button.dataset.buyProduct;
+      if (slug.startsWith("support-")) openPaymentForm([slug]);
+      else addToCart(slug);
+    });
+  });
+  root.querySelector("[data-cart-checkout]")?.addEventListener("click", () => openPaymentForm(shopCart));
+  root.querySelectorAll("[data-cart-remove]").forEach((button) => {
+    button.addEventListener("click", () => removeFromCart(button.dataset.cartRemove));
   });
 }
 
@@ -2549,9 +2602,64 @@ function paymentProductBySlug(slug) {
   return [...currentShopProducts(), ...currentSupportProducts()].find((product) => product.slug === slug);
 }
 
-function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
-  const product = paymentProductBySlug(productSlug) || shopProducts[0];
-  const isSupport = productSlug.startsWith("support-");
+let shopCart = (() => {
+  try { return JSON.parse(localStorage.getItem("shop_cart_v1") || "[]"); }
+  catch (_error) { return []; }
+})().filter((slug) => typeof slug === "string");
+
+function saveShopCart() {
+  localStorage.setItem("shop_cart_v1", JSON.stringify(shopCart));
+}
+
+function cartProducts() {
+  return shopCart.map(paymentProductBySlug).filter(Boolean);
+}
+
+function priceNumber(label) {
+  return Number(String(label || "").replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+}
+
+function shopCartMarkup() {
+  const products = cartProducts();
+  const total = products.reduce((sum, product) => sum + priceNumber(product.price), 0);
+  return `
+    <aside class="shop-cart" aria-label="Корзина">
+      <div class="shop-cart-head"><strong>Корзина</strong><span>${products.length} ${products.length === 1 ? "игра" : "игр"}</span></div>
+      ${products.length ? `<div class="shop-cart-items">${products.map((product) => `
+        <div><span>${escapeHtml(product.title)}</span><b>${escapeHtml(product.price)}</b><button type="button" data-cart-remove="${escapeHtml(product.slug)}" aria-label="Убрать из корзины">×</button></div>
+      `).join("")}</div><div class="shop-cart-total"><strong>Итого: ${total.toLocaleString("ru-RU")} ₽</strong><button class="primary-button" type="button" data-cart-checkout>Оформить одним чеком</button></div>` : `<p class="muted">Добавьте игры — оплатить их можно будет одним чеком.</p>`}
+    </aside>`;
+}
+
+function refreshShopCart() {
+  const current = document.querySelector(".shop-cart");
+  if (!current) return;
+  const holder = document.createElement("div");
+  holder.innerHTML = shopCartMarkup();
+  current.replaceWith(holder.firstElementChild);
+  bindShopPayment(document.querySelector(".shop-cart"));
+}
+
+function addToCart(slug) {
+  if (!paymentProductBySlug(slug) || shopCart.includes(slug)) return;
+  shopCart.push(slug);
+  saveShopCart();
+  refreshShopCart();
+}
+
+function removeFromCart(slug) {
+  shopCart = shopCart.filter((item) => item !== slug);
+  saveShopCart();
+  refreshShopCart();
+}
+
+function openPaymentForm(productSlugs = ["fruit-garden-ik-ek"]) {
+  const slugs = Array.isArray(productSlugs) ? productSlugs : [productSlugs];
+  const products = slugs.map(paymentProductBySlug).filter(Boolean);
+  if (!products.length) return;
+  const product = products[0];
+  const isSupport = products.length === 1 && product.slug.startsWith("support-");
+  const orderLabel = products.length === 1 ? `позиции «${escapeHtml(product.title)}»` : `${products.length} играм из корзины`;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
@@ -2559,7 +2667,7 @@ function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
       <button class="modal-close" type="button" aria-label="Закрыть">×</button>
       <p class="eyebrow">${isSupport ? "поддержка проекта" : "покупка материала"}</p>
       <h2>Куда отправить письмо?</h2>
-      <p>${isSupport ? "Спасибо за вашу поддержку! Напишите здесь свою почту, чтобы получить небольшой подарок от меня." : `После успешной оплаты письмо по позиции «${escapeHtml(product.title)}» придёт на эту почту.`}</p>
+      <p>${isSupport ? "Спасибо за вашу поддержку! Напишите здесь свою почту, чтобы получить небольшой подарок от меня." : `После успешной оплаты письмо по ${orderLabel} придёт на эту почту.`}</p>
       ${isSupport ? "" : `
         <div class="payment-return-instruction">
           <strong>После оплаты покупки не забудьте вернуться в магазин, нажав на синюю кнопку.</strong>
@@ -2609,9 +2717,10 @@ function openPaymentForm(productSlug = "fruit-garden-ik-ek") {
     try {
       const data = await api("/api/shop/create-payment", {
         method: "POST",
-        body: JSON.stringify({ email, product: productSlug }),
+        body: JSON.stringify({ email, products: slugs }),
       });
       if (!data.confirmation_url) throw new Error("Не удалось получить ссылку на оплату.");
+      if (!isSupport) { shopCart = []; saveShopCart(); }
       window.location.href = data.confirmation_url;
     } catch (err) {
       submit.disabled = false;

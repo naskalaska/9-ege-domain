@@ -999,6 +999,37 @@ button {
   width: 100%;
 }
 
+.shop-cart {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(45, 99, 72, 0.24);
+  border-radius: 10px;
+  background: #f7fbf8;
+  box-shadow: 0 10px 26px rgba(26, 75, 51, 0.08);
+}
+
+.shop-cart-head,
+.shop-cart-total,
+.shop-cart-items > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-cart-head span { color: var(--muted); }
+.shop-cart-items { display: grid; gap: 8px; }
+.shop-cart-items > div { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.shop-cart-items span { flex: 1; }
+.shop-cart-items button { width: 30px; height: 30px; padding: 0; border-radius: 50%; }
+.shop-cart-total { flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .shop-cart-total .primary-button { width: 100%; }
+}
+
 .modal-close {
   position: absolute;
   top: 10px;
