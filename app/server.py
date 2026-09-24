@@ -5942,10 +5942,6 @@ class Handler(SimpleHTTPRequestHandler):
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
-        if slug in {"karaoke-numerals", "participle-map"}:
-            user = self.require_user()
-            if not user_can_access_full_game(user, slug):
-                raise PermissionError("Полная версия игры доступна после покупки.")
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)
