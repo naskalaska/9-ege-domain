@@ -53,6 +53,14 @@ class ShopCartTest(unittest.TestCase):
             con.execute("UPDATE shop_orders SET status = 'paid' WHERE order_uid = ?", (captured["order_uid"],))
         self.assertEqual(order_count, 1)
         self.assertEqual(item_count, 2)
+        with server.db() as con:
+            admin_orders = server.receipt_orders_for_admin(con)
+        self.assertEqual(len(admin_orders), 1)
+        self.assertEqual(
+            [item["product_id"] for item in admin_orders[0]["items"]],
+            ["participle_map", "syntactic_soup"],
+        )
+        self.assertTrue(all(item["product_title"] for item in admin_orders[0]["items"]))
         self.assertTrue(
             server.user_can_access_full_game(
                 {"role": "teacher", "email": "teacher@example.ru", "user_id": "teacher-test"},

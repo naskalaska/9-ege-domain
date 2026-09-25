@@ -4492,12 +4492,27 @@ def receipt_orders_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
         ORDER BY COALESCE(so.paid_at, so.created_at) DESC
         """
     ).fetchall()
+    items_by_order: dict[str, list[dict[str, Any]]] = {}
+    if rows:
+        placeholders = ",".join("?" for _ in rows)
+        item_rows = con.execute(
+            f"""
+            SELECT order_uid, product_id, product_title, amount, currency
+            FROM shop_order_items
+            WHERE order_uid IN ({placeholders})
+            ORDER BY rowid
+            """,
+            [row["order_uid"] for row in rows],
+        ).fetchall()
+        for item_row in item_rows:
+            items_by_order.setdefault(item_row["order_uid"], []).append(dict(item_row))
     return [
         {
             **dict(row),
             "email_sent": bool(row["email_sent"]),
             "receipt_sent": bool(row["receipt_sent"]),
             "entity_type": row["entity_type"] or "product",
+            "items": items_by_order.get(row["order_uid"], []),
         }
         for row in rows
     ]

@@ -4840,6 +4840,12 @@ function renderAdminContent(data, closeButton = "") {
   `).join("") : `<tr><td colspan="4">Платные сущности не найдены</td></tr>`;
   const receiptRows = receiptOrders.length ? receiptOrders.map((order) => {
     const isPaid = order.status === "paid";
+    const orderItems = Array.isArray(order.items) ? order.items : [];
+    const productLabel = orderItems.length
+      ? `<strong>${orderItems.length === 1 ? "Материал" : `Материалы (${orderItems.length})`}:</strong><br>${orderItems.map((item) =>
+          `${escapeHtml(item.product_title || item.product_id || "—")} <span class="muted">— ${escapeHtml(item.amount || "0.00")} ${escapeHtml(item.currency || "RUB")}</span>`
+        ).join("<br>")}`
+      : escapeHtml(order.product_title || order.product_id || "—");
     const paymentLabel = isPaid
       ? `<span class="status-ok">оплачено</span>`
       : `<span class="status-bad">требует проверки</span><br><span class="muted">${escapeHtml(order.status || "pending")}</span>`;
@@ -4856,7 +4862,7 @@ function renderAdminContent(data, closeButton = "") {
         <td>${formatAdminDate(order.paid_at || order.created_at)}</td>
         <td>${paymentLabel}</td>
         <td><a href="mailto:${escapeHtml(order.buyer_email || "")}">${escapeHtml(order.buyer_email || "—")}</a></td>
-        <td>${escapeHtml(order.product_title || order.product_id || "—")}</td>
+        <td>${productLabel}</td>
         <td>${escapeHtml(order.amount || "0.00")} ${escapeHtml(order.currency || "RUB")}</td>
         <td>${order.entity_type === "donation" ? "донат" : "товар"}</td>
         <td>Материал отправлен: ${order.email_sent ? "да" : "нет"}</td>
