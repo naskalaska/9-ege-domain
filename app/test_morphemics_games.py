@@ -14,9 +14,9 @@ class MorphemicsGamesTest(unittest.TestCase):
 
     def test_demo_limit_is_injected_only_into_demo_copy(self) -> None:
         source = b"<html><body><button>Play</button></body></html>"
-        demo = server.inject_action_limited_demo("word-architecture", source, 30)
+        demo = server.inject_action_limited_demo("word-architecture", source, 100)
         self.assertIn(b"siteDemoLimit", demo)
-        self.assertIn(b"const limit=30", demo)
+        self.assertIn(b"const limit=100", demo)
         self.assertNotIn(b"siteDemoLimit", source)
 
     def test_restoration_email_contains_teacher_instructions(self) -> None:

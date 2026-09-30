@@ -395,13 +395,13 @@ DEMO_GAME_NOTICES = {
         "shop_url": "/shop/participle-map",
     },
     "word-architecture": {
-        "label": "Демо · 30",
-        "text": "В демо доступны 30 действий. Полная версия морфемного тренажёра без ограничения открывается после покупки.",
+        "label": "Демо · 100",
+        "text": "В демо доступны 100 действий. Полная версия морфемного тренажёра без ограничения открывается после покупки.",
         "shop_url": "/shop/word-architecture",
     },
     "palace-restoration": {
-        "label": "Демо · 30",
-        "text": "В демо доступны 30 действий. Полная версия игры и словарь учителя открываются после покупки.",
+        "label": "Демо · 100",
+        "text": "В демо доступны 100 действий. Полная версия игры и словарь учителя открываются после покупки.",
         "shop_url": "/shop/palace-restoration",
     },
 }
@@ -5301,7 +5301,7 @@ function demoActionAllowed(){{
     return body
 
 
-def inject_action_limited_demo(slug: str, body: bytes, limit: int = 30) -> bytes:
+def inject_action_limited_demo(slug: str, body: bytes, limit: int = 100) -> bytes:
     """Apply a device-local action limit to self-contained demo games."""
     notice = DEMO_GAME_NOTICES.get(slug, {})
     shop_url = str(notice.get("shop_url") or "/shop")
@@ -6107,7 +6107,7 @@ class Handler(SimpleHTTPRequestHandler):
             if slug == "participle-map":
                 body = inject_participle_map_demo(body, 30)
             if slug in {"word-architecture", "palace-restoration"}:
-                body = inject_action_limited_demo(slug, body, 30)
+                body = inject_action_limited_demo(slug, body, 100)
             if slug == "palace-restoration":
                 body = inject_palace_online_read_only(body)
             body = inject_demo_notice(slug, body)
