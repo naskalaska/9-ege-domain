@@ -2313,25 +2313,47 @@ function bindShopCards(root) {
   if (!grid) return;
   const page = grid.closest(".shop-page");
   const cards = [...grid.querySelectorAll("[data-shop-card]")];
-  const closeAll = () => {
-    grid.classList.remove("is-active");
+  let closeTimer = 0;
+  const finishClose = (focusCard = null) => {
+    grid.classList.remove("is-active", "is-visible");
     page?.classList.remove("shop-detail-open");
     cards.forEach((card) => {
-      card.classList.remove("open");
+      card.classList.remove("open", "open-visible");
       card.setAttribute("aria-expanded", "false");
       card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "true");
     });
+    focusCard?.focus();
+  };
+  const closeAll = (immediate = false, focusCard = null) => {
+    window.clearTimeout(closeTimer);
+    grid.classList.remove("is-visible");
+    cards.forEach((card) => {
+      card.classList.remove("open-visible");
+      card.setAttribute("aria-expanded", "false");
+      card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "true");
+    });
+    if (immediate) finishClose(focusCard);
+    else closeTimer = window.setTimeout(() => finishClose(focusCard), 540);
   };
   const toggle = (card) => {
     const willOpen = !card.classList.contains("open");
-    closeAll();
+    closeAll(true);
     if (!willOpen) return;
+    const bounds = card.getBoundingClientRect();
+    const detail = card.querySelector(".shop-product-detail");
+    const originX = Math.max(-220, Math.min(220, bounds.left + bounds.width / 2 - window.innerWidth / 2));
+    const originY = Math.max(-140, Math.min(140, bounds.top + bounds.height / 2 - window.innerHeight / 2));
+    detail?.style.setProperty("--shop-origin-x", `${originX}px`);
+    detail?.style.setProperty("--shop-origin-y", `${originY}px`);
     grid.classList.add("is-active");
     page?.classList.add("shop-detail-open");
     card.classList.add("open");
     card.setAttribute("aria-expanded", "true");
-    card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "false");
-    requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "center" }));
+    detail?.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      grid.classList.add("is-visible");
+      card.classList.add("open-visible");
+    }));
   };
   cards.forEach((card) => {
     card.addEventListener("click", (event) => {
@@ -2347,8 +2369,7 @@ function bindShopCards(root) {
     });
     card.querySelector(".shop-product-close")?.addEventListener("click", (event) => {
       event.stopPropagation();
-      closeAll();
-      card.focus();
+      closeAll(false, card);
     });
   });
   grid.addEventListener("click", (event) => {
