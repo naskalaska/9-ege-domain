@@ -5348,23 +5348,31 @@ def inject_action_limited_demo(slug: str, body: bytes, limit: int = 100) -> byte
     return body.replace(closing, encoded + closing, 1) if closing in body else body + encoded
 
 
-def inject_palace_online_read_only(body: bytes) -> bytes:
+def inject_palace_online_read_only(body: bytes, *, show_purchase_notice: bool) -> bytes:
     """Disable dictionary editing in hosted Palace builds while preserving the offline source."""
-    addition = f"""
-<style>
-  [data-duel-teacher-open],[data-duel-teacher-write],[data-duel-teacher-export],
-  [data-duel-teacher-import],[data-duel-import-commit] {{ display:none !important; }}
-  .site-palace-offline-note {{ position:fixed; z-index:2147483645; right:8px; bottom:8px; width:min(330px,calc(100vw - 16px)); padding:10px 12px; border:1px solid #b7cdbf; border-radius:12px; background:rgba(255,250,235,.97); color:#244d50; box-shadow:0 8px 24px rgba(21,57,56,.2); font:600 12px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif; }}
-  .site-palace-offline-note a {{ display:inline-block; margin-top:6px; color:#164f75; font-weight:850; }}
-  @media(max-width:600px) {{ .site-palace-offline-note {{ font-size:11px; }} }}
+    purchase_notice = """
+  .site-palace-offline-note { position:fixed; z-index:2147483645; right:8px; bottom:8px; width:min(330px,calc(100vw - 16px)); padding:10px 12px; border:1px solid #b7cdbf; border-radius:12px; background:rgba(255,250,235,.97); color:#244d50; box-shadow:0 8px 24px rgba(21,57,56,.2); font:600 12px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif; }
+  .site-palace-offline-note a { display:inline-block; margin-top:6px; color:#164f75; font-weight:850; }
+  @media(max-width:600px) { .site-palace-offline-note { font-size:11px; } }
 </style>
 <aside class="site-palace-offline-note" role="note">
   Редактирование словаря в онлайн-версии отключено. Для добавления слов приобретите офлайн-версию игры.<br>
   <a href="/shop/palace-restoration" target="_top">Купить офлайн-версию</a>
 </aside>
+""" if show_purchase_notice else "</style>"
+    unavailable_handler = (
+        "const unavailable=()=>{ document.querySelector('.site-palace-offline-note')?.scrollIntoView({behavior:'smooth',block:'nearest'}); };"
+        if show_purchase_notice else
+        "const unavailable=()=>{};"
+    )
+    addition = f"""
+<style>
+  [data-duel-teacher-open],[data-duel-teacher-write],[data-duel-teacher-export],
+  [data-duel-teacher-import],[data-duel-import-commit] {{ display:none !important; }}
+{purchase_notice}
 <script>
 (() => {{
-  const unavailable=()=>{{ document.querySelector('.site-palace-offline-note')?.scrollIntoView({{behavior:'smooth',block:'nearest'}}); }};
+  {unavailable_handler}
   for(const name of ['duelOpenTeacher','duelSubmitTeacher','duelReadTeacherFile','duelCommitTeacherImport','duelExportTeacherGame','duelWriteTeacherGame','duelTeacherHtml']){{
     try{{ window[name]=name==='duelTeacherHtml'?()=>'' : unavailable; }}catch{{}}
   }}
@@ -6109,7 +6117,7 @@ class Handler(SimpleHTTPRequestHandler):
             if slug in {"word-architecture", "palace-restoration"}:
                 body = inject_action_limited_demo(slug, body, 100)
             if slug == "palace-restoration":
-                body = inject_palace_online_read_only(body)
+                body = inject_palace_online_read_only(body, show_purchase_notice=True)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -6146,7 +6154,7 @@ class Handler(SimpleHTTPRequestHandler):
         body = file_path.read_bytes()
         if is_entry_file:
             if slug == "palace-restoration":
-                body = inject_palace_online_read_only(body)
+                body = inject_palace_online_read_only(body, show_purchase_notice=False)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))

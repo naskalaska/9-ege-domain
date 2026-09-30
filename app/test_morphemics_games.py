@@ -26,16 +26,22 @@ class MorphemicsGamesTest(unittest.TestCase):
         self.assertIn("Записать словарь в этот HTML", note)
         self.assertIn("Онлайн-версия работает без редактирования", note)
 
-    def test_restoration_online_copies_offer_to_buy_the_offline_version(self) -> None:
+    def test_restoration_demo_offers_offline_version_but_paid_copy_does_not(self) -> None:
         source = b"<html><body><button data-duel-teacher-open>Teacher</button></body></html>"
-        online = server.inject_palace_online_read_only(source)
+        demo = server.inject_palace_online_read_only(source, show_purchase_notice=True)
+        paid = server.inject_palace_online_read_only(source, show_purchase_notice=False)
 
-        self.assertIn("Редактирование словаря в онлайн-версии отключено".encode("utf-8"), online)
-        self.assertIn("Купить офлайн-версию".encode("utf-8"), online)
-        self.assertIn(b"/shop/palace-restoration", online)
-        self.assertNotIn(b"/Full-82057434086961-palace-restoration/offline.html", online)
-        self.assertNotIn("Скачать офлайн-версию".encode("utf-8"), online)
-        self.assertIn(b"data-duel-teacher-open", online)
+        self.assertIn("Редактирование словаря в онлайн-версии отключено".encode("utf-8"), demo)
+        self.assertIn("Купить офлайн-версию".encode("utf-8"), demo)
+        self.assertIn(b"/shop/palace-restoration", demo)
+        self.assertNotIn(b"/Full-82057434086961-palace-restoration/offline.html", demo)
+        self.assertNotIn("Скачать офлайн-версию".encode("utf-8"), demo)
+
+        self.assertNotIn(b"site-palace-offline-note", paid)
+        self.assertNotIn("Купить офлайн-версию".encode("utf-8"), paid)
+        self.assertNotIn(b"/shop/palace-restoration", paid)
+        self.assertIn(b"data-duel-teacher-open", paid)
+        self.assertIn(b"duelWriteTeacherGame", paid)
 
         product = server.SHOP_PRODUCTS["palace-restoration"]
         self.assertTrue(product["default_url"].endswith("/offline.html"))
