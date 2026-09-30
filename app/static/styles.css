@@ -2943,10 +2943,10 @@ input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color:
 .shop-product-card.open:nth-child(3n + 2) { transform: translateX(calc(-100% - 18px)); }
 .shop-product-card.open:nth-child(3n) { transform: translateX(calc(-200% - 36px)); }
 .shop-product-card.open:nth-child(n) {
-  transform: translateX(calc(var(--shop-open-column, 0) * (-100% - 18px)));
+  transform: translateX(var(--shop-open-shift, 0px));
 }
 .support-page .shop-product-card.open:nth-child(n) {
-  transform: translateX(calc(var(--shop-open-column, 0) * (-100% - 18px)));
+  transform: translateX(var(--shop-open-shift, 0px));
 }
 .shop-product-card.open .shop-product-detail {
   opacity: 1;

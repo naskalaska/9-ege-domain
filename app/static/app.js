@@ -2325,10 +2325,15 @@ function bindShopCards(root) {
     closeAll();
     if (!willOpen) return;
     const visibleCards = cards.filter((item) => !item.classList.contains("shop-filtered-out"));
-    const columns = [...new Set(visibleCards.map((item) => Math.round(item.getBoundingClientRect().left)))].sort((a, b) => a - b);
     const bounds = card.getBoundingClientRect();
-    const column = Math.max(0, columns.indexOf(Math.round(bounds.left)));
-    card.style.setProperty("--shop-open-column", String(column));
+    const columnCount = Math.max(
+      1,
+      getComputedStyle(grid).gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+    );
+    const visibleIndex = Math.max(0, visibleCards.indexOf(card));
+    const column = visibleIndex % columnCount;
+    const shifts = ["0px", "calc(-100% - 18px)", "calc(-200% - 36px)"];
+    card.style.setProperty("--shop-open-shift", shifts[column] || shifts[shifts.length - 1]);
     grid.classList.add("is-active");
     card.classList.add("open");
     card.setAttribute("aria-expanded", "true");
