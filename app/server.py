@@ -67,6 +67,14 @@ CURRENT_TERMS_VERSION = os.environ.get("TERMS_VERSION", LEGAL_DOCUMENT_RELEASE).
 CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
+FULL_GAME_ROUTE_TOKENS = {
+    "word-architecture": "19736502168770",
+    "palace-restoration": "82057434086961",
+}
+PROTECTED_FULL_GAME_SLUGS = frozenset(FULL_GAME_ROUTE_TOKENS)
+PROTECTED_FULL_GAME_ROUTES = {
+    f"Full-{token}-{slug}": slug for slug, token in FULL_GAME_ROUTE_TOKENS.items()
+}
 SHOP_PRODUCTS = {
     "fruit-garden-ik-ek": {
         "id": "berry_season",
@@ -273,6 +281,30 @@ SHOP_PRODUCTS = {
         "online_url": f"{APP_BASE_URL}/full-games/participle-map/index.html",
         "kind": "product",
     },
+    "word-architecture": {
+        "id": "word_architecture",
+        "title": "HTML-игра «Архитектура слова»",
+        "short_title": "Архитектура слова",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_06_26-2.png",
+        "url_env": "WORD_ARCHITECTURE_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/Full-19736502168770-word-architecture/index.html",
+        "online_url": f"{APP_BASE_URL}/Full-19736502168770-word-architecture/index.html",
+        "kind": "product",
+    },
+    "palace-restoration": {
+        "id": "palace_restoration",
+        "title": "HTML-игра «Реставрация дворца»",
+        "short_title": "Реставрация дворца",
+        "amount": "500.00",
+        "currency": "RUB",
+        "cover_url": "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_48_30.png",
+        "url_env": "PALACE_RESTORATION_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html",
+        "online_url": f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html",
+        "kind": "product",
+    },
     "support-100": {
         "id": "support_100",
         "title": "Поддержка проекта 100 ₽",
@@ -361,6 +393,16 @@ DEMO_GAME_NOTICES = {
         "label": "Демо · 30",
         "text": "В демо доступны 30 проверенных действий. Полная версия без ограничения открывается после покупки.",
         "shop_url": "/shop/participle-map",
+    },
+    "word-architecture": {
+        "label": "Демо · 30",
+        "text": "В демо доступны 30 действий. Полная версия морфемного тренажёра без ограничения открывается после покупки.",
+        "shop_url": "/shop/word-architecture",
+    },
+    "palace-restoration": {
+        "label": "Демо · 30",
+        "text": "В демо доступны 30 действий. Полная версия игры и словарь учителя открываются после покупки.",
+        "shop_url": "/shop/palace-restoration",
     },
 }
 
@@ -524,6 +566,8 @@ HTML_GAMES = {
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
     "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
     "participle-map": HTML_DIR / "Карта причастия",
+    "word-architecture": HTML_DIR / "Архитектура слова",
+    "palace-restoration": HTML_DIR / "Реставрация дворца",
 }
 
 HTML_GAME_TITLES = {
@@ -546,6 +590,8 @@ HTML_GAME_TITLES = {
     "syntactic-soup": "Синтаксический суп",
     "foxwarts-syntax": "Собираемся в Фоксвартс: синтаксический разбор",
     "participle-map": "Карта причастия",
+    "word-architecture": "Архитектура слова",
+    "palace-restoration": "Реставрация дворца",
 }
 
 PUBLIC_GAMES = {
@@ -571,6 +617,8 @@ PUBLIC_GAMES = {
     "syntactic-soup": HTML_DIR / "Синтаксический суп",
     "foxwarts-syntax": HTML_DIR / "Собираемся в Фоксвартс синтаксический разбор",
     "participle-map": HTML_DIR / "Карта причастия",
+    "word-architecture": HTML_DIR / "Архитектура слова",
+    "palace-restoration": HTML_DIR / "Реставрация дворца",
 }
 
 GAME_SET_MAX_ITEMS = 200
@@ -785,6 +833,8 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
         "foxwarts-syntax": "foxwarts_syntax",
         "summer-gerund-bar": "summer_gerund_bar",
         "participle-map": "participle_map",
+        "word-architecture": "word_architecture",
+        "palace-restoration": "palace_restoration",
     }
     now = now_iso()
     for slug in HTML_GAMES:
@@ -831,7 +881,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 1.2. Оператором персональных данных является Димитриева Анастасия Владимировна, применяющая специальный налоговый режим «Налог на профессиональный доход» / самозанятая.
 
-1.3. Контактный адрес электронной почты по вопросам обработки персональных данных: anastasiasypko@yandex.ru.
+1.3. Контактный адрес электронной почты по вопросам обработки персональных данных: anastasia@dimitrieva-av.ru.
 
 1.4. Актуальная редакция настоящей Политики размещается в свободном доступе на сайте https://dimitrieva-av.ru.
 
@@ -1023,11 +1073,11 @@ def document_seed_data() -> list[dict[str, str]]:
 - потребовать удаления аккаунта и связанных с ним персональных данных, если их дальнейшая обработка не требуется по закону;
 - обжаловать действия или бездействие оператора в уполномоченный орган по защите прав субъектов персональных данных или в суд.
 
-13.2. Для обращения к оператору необходимо написать на адрес: anastasiasypko@yandex.ru.
+13.2. Для обращения к оператору необходимо написать на адрес: anastasia@dimitrieva-av.ru.
 
 14. Отзыв согласия
 
-14.1. Пользователь может отозвать согласие на обработку персональных данных, направив обращение на адрес: anastasiasypko@yandex.ru.
+14.1. Пользователь может отозвать согласие на обработку персональных данных, направив обращение на адрес: anastasia@dimitrieva-av.ru.
 
 14.2. После получения отзыва согласия оператор прекращает обработку персональных данных пользователя, за исключением случаев, когда продолжение обработки допускается законодательством Российской Федерации.
 
@@ -1045,7 +1095,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 Оператор: Димитриева Анастасия Владимировна, самозанятая.
 
-Контактный email по вопросам обработки персональных данных: anastasiasypko@yandex.ru.
+Контактный email по вопросам обработки персональных данных: anastasia@dimitrieva-av.ru.
 
 Сайт: https://dimitrieva-av.ru.
 """,
@@ -1142,7 +1192,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 7. Отзыв согласия
 
-7.1. Я вправе отозвать настоящее согласие, направив обращение на адрес электронной почты: anastasiasypko@yandex.ru.
+7.1. Я вправе отозвать настоящее согласие, направив обращение на адрес электронной почты: anastasia@dimitrieva-av.ru.
 
 7.2. Я понимаю, что отзыв согласия может привести к невозможности дальнейшего использования платформы, так как без обработки email, роли, связей с учителем и учебного прогресса невозможно предоставить доступ к личному аккаунту и учебным активностям.
 
@@ -1160,7 +1210,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 Оператор: Димитриева Анастасия Владимировна, физическое лицо.
 
-Контактный email: anastasiasypko@yandex.ru.
+Контактный email: anastasia@dimitrieva-av.ru.
 
 Сайт: https://dimitrieva-av.ru.
 """,
@@ -1179,7 +1229,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 1.2. Оператор платформы: Димитриева Анастасия Владимировна, применяющая специальный налоговый режим «Налог на профессиональный доход» / самозанятая.
 
-1.3. Контактный email: anastasiasypko@yandex.ru.
+1.3. Контактный email: anastasia@dimitrieva-av.ru.
 
 1.4. Настоящее Соглашение является предложением оператора заключить соглашение об использовании платформы на изложенных ниже условиях.
 
@@ -1384,13 +1434,13 @@ def document_seed_data() -> list[dict[str, str]]:
 
 16.1. Пользователь может прекратить использование платформы в любой момент.
 
-16.2. Пользователь может обратиться к оператору с запросом на удаление аккаунта и персональных данных по адресу: anastasiasypko@yandex.ru.
+16.2. Пользователь может обратиться к оператору с запросом на удаление аккаунта и персональных данных по адресу: anastasia@dimitrieva-av.ru.
 
 16.3. Удаление аккаунта может привести к потере доступа к прогрессу, результатам и связанным учебным данным.
 
 17. Рассмотрение обращений
 
-17.1. Все обращения, вопросы и претензии, связанные с использованием платформы, направляются на адрес: anastasiasypko@yandex.ru.
+17.1. Все обращения, вопросы и претензии, связанные с использованием платформы, направляются на адрес: anastasia@dimitrieva-av.ru.
 
 17.2. Стороны стремятся урегулировать спорные вопросы путём переписки и переговоров.
 
@@ -1400,7 +1450,7 @@ def document_seed_data() -> list[dict[str, str]]:
 
 Оператор: Димитриева Анастасия Владимировна, физическое лицо.
 
-Контактный email: anastasiasypko@yandex.ru.
+Контактный email: anastasia@dimitrieva-av.ru.
 
 Сайт: https://dimitrieva-av.ru.
 """,
@@ -4455,7 +4505,7 @@ def shop_products_public() -> dict[str, Any]:
                 "old_price": format_amount_label(row["amount"], row["currency"]) if pricing["sale_active"] else "",
                 **pricing,
                 "cover_url": row["cover_url"] or "",
-                "online_url": row["online_url"] or "",
+                "online_url": "" if row["slug"] in PROTECTED_FULL_GAME_SLUGS else (row["online_url"] or ""),
                 "description": json.loads(row["description_json"] or "{}"),
                 "is_active": bool(row["is_active"]),
             }
@@ -4906,6 +4956,30 @@ def send_email_message(message: EmailMessage) -> None:
         raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
 
 
+def product_email_note(product: dict[str, str]) -> str:
+    slug = str(product.get("slug") or "")
+    product_id = str(product.get("id") or product.get("product_id") or "")
+    if slug == "word-architecture" or product_id == "word_architecture":
+        return (
+            "\nВ комплект также входит отдельная игра «Реставрация дворца».\n"
+            "Полная версия игры:\n"
+            f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html\n"
+        )
+    if slug == "palace-restoration" or product_id == "palace_restoration":
+        return (
+            "\nКак добавлять новые слова в «Реставрацию дворца»:\n"
+            "1. Откройте в игре «⚙ Словарь» / «Словарь учителя».\n"
+            "2. Введите код учителя: АРХИТЕКТОР-2026.\n"
+            "3. Добавьте одно слово вручную или приложите .txt, скачанный после партии.\n"
+            "4. Для ручного добавления укажите слово и морфемы по порядку. Обозначения: "
+            "P — приставка, R — корень, S — суффикс, E — окончание, Z — нулевое окончание, "
+            "F — формообразующий суффикс, T — постфикс, C — соединительная гласная.\n"
+            "5. Чтобы перенести дополненный словарь на другое устройство, нажмите «Записать словарь в этот HTML» "
+            "или «Скачать копию, если запись недоступна».\n"
+        )
+    return ""
+
+
 def send_product_email(email: str, product: dict[str, str], product_url: str, online_url: str = "") -> None:
     message = EmailMessage()
     if product.get("kind") == "donation" or product.get("type") == "donation":
@@ -4938,6 +5012,7 @@ def send_product_email(email: str, product: dict[str, str], product_url: str, on
             "Здравствуйте!\n\n"
             f"Спасибо за покупку материала «{product.get('short_title') or product['title']}».\n\n"
             f"{link_block}\n"
+            f"{product_email_note(product)}\n"
             "Если ссылка не открывается, скопируйте её и вставьте в адресную строку браузера.\n\n"
             "С уважением,\n"
             "Анастасия Димитриева\n"
@@ -4963,6 +5038,9 @@ def send_order_email(email: str, products: list[dict[str, str]]) -> None:
             block.append(f"Материал: {offline_url}")
         if online_url and online_url != offline_url:
             block.append(f"Онлайн-версия: {online_url}")
+        note = product_email_note(product).strip()
+        if note:
+            block.append(note)
         links.append("\n".join(block))
     message.set_content(
         "Здравствуйте!\n\nСпасибо за покупку. Все материалы из заказа собраны ниже:\n\n"
@@ -5112,6 +5190,10 @@ def game_entry_file(slug: str, relative_path: str) -> str:
         return "index (5).html"
     if slug == "participle-map" and clean_path in {"", "index.html"}:
         return "karta-prichastie-v36.html"
+    if slug == "word-architecture" and clean_path in {"", "index.html"}:
+        return "morfemika_architecture_trainer (28) (2).html"
+    if slug == "palace-restoration" and clean_path in {"", "index.html"}:
+        return "restoration_palace_game_30-09_uch.html"
     return clean_path
 
 
@@ -5217,6 +5299,53 @@ function demoActionAllowed(){{
     for source, target in replacements:
         body = body.replace(source, target, 1)
     return body
+
+
+def inject_action_limited_demo(slug: str, body: bytes, limit: int = 30) -> bytes:
+    """Apply a device-local action limit to self-contained demo games."""
+    notice = DEMO_GAME_NOTICES.get(slug, {})
+    shop_url = str(notice.get("shop_url") or "/shop")
+    storage_key = f"{slug}-demo-actions-v1"
+    addition = f"""
+<style>
+  .site-demo-limit {{ position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:20px; background:rgba(16,28,31,.82); font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }}
+  .site-demo-limit[hidden] {{ display:none; }}
+  .site-demo-limit-card {{ width:min(470px,100%); padding:28px; border-radius:22px; background:#fffaf0; color:#173b3e; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,.38); }}
+  .site-demo-limit-card strong {{ display:block; margin-bottom:10px; font-size:28px; }}
+  .site-demo-limit-card p {{ margin:0 0 18px; line-height:1.5; }}
+  .site-demo-limit-card a {{ display:inline-flex; min-height:44px; align-items:center; justify-content:center; padding:0 18px; border-radius:999px; background:#164f75; color:white; font-weight:800; text-decoration:none; }}
+</style>
+<div class="site-demo-limit" id="siteDemoLimit" hidden role="dialog" aria-modal="true" aria-labelledby="siteDemoLimitTitle">
+  <div class="site-demo-limit-card">
+    <strong id="siteDemoLimitTitle">Демо завершено</strong>
+    <p>Вы выполнили {limit} действий. В полной версии игра доступна без ограничения.</p>
+    <a href="{shop_url}" target="_top">Открыть полную версию</a>
+  </div>
+</div>
+<script>
+(() => {{
+  const limit={limit};
+  const key={json.dumps(storage_key, ensure_ascii=False)};
+  const overlay=document.getElementById('siteDemoLimit');
+  let actions=Number(localStorage.getItem(key)||0);
+  const show=()=>{{ overlay.hidden=false; }};
+  const count=(event)=>{{
+    if(event.target.closest('.site-demo-ribbon,.site-demo-limit,a[href*="/shop/"]'))return;
+    if(actions>=limit){{event.preventDefault();event.stopImmediatePropagation();show();return;}}
+    actions+=1;localStorage.setItem(key,String(actions));
+    if(actions>=limit)setTimeout(show,500);
+  }};
+  document.addEventListener('click',event=>{{
+    if(event.target.closest('button,[role="button"],input[type="button"],input[type="submit"],.btn,[data-action],[data-game],[data-duel-submit],.tile,.card'))count(event);
+  }},true);
+  document.addEventListener('drop',count,true);
+  if(actions>=limit)show();
+}})();
+</script>
+"""
+    closing = b"</body>"
+    encoded = addition.encode("utf-8")
+    return body.replace(closing, encoded + closing, 1) if closing in body else body + encoded
 
 
 def inject_game_menu_link(body: bytes) -> bytes:
@@ -5944,6 +6073,8 @@ class Handler(SimpleHTTPRequestHandler):
                 body = body.replace(b"<script src=\"app-v10.js\">", b"<script>window.KARAOKE_DEMO_LIMIT=20;</script><script src=\"app-v10.js\">")
             if slug == "participle-map":
                 body = inject_participle_map_demo(body, 30)
+            if slug in {"word-architecture", "palace-restoration"}:
+                body = inject_action_limited_demo(slug, body, 30)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -5952,9 +6083,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def send_full_game_file(self, slug: str, relative_path: str) -> None:
+    def send_full_game_file(self, slug: str, relative_path: str, *, protected_route: bool = False) -> None:
         game_dir = HTML_GAMES.get(slug)
-        if not game_dir:
+        if not game_dir or (slug in PROTECTED_FULL_GAME_SLUGS and not protected_route):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
@@ -6111,6 +6242,13 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
                     return
                 self.send_full_game_file(parts[1], parts[2] if len(parts) > 2 else "index.html")
+            elif parsed.path.startswith("/Full-"):
+                parts = parsed.path.strip("/").split("/", 1)
+                slug = PROTECTED_FULL_GAME_ROUTES.get(parts[0])
+                if not slug:
+                    self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
+                    return
+                self.send_full_game_file(slug, parts[1] if len(parts) > 1 else "index.html", protected_route=True)
             elif parsed.path.startswith("/shop-media/"):
                 self.send_shop_media_file(parsed.path.removeprefix("/shop-media/"))
             elif parsed.path.startswith("/images/"):

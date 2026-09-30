@@ -291,10 +291,35 @@ const miniGames = [
     categoryTitle: "Орфография",
     kindLabel: "большая игра",
   },
+  {
+    slug: "word-architecture",
+    title: "Архитектура слова",
+    description: "Морфемный тренажёр для 5–6 классов: 240 заданий, восемь тематических разделов и три уровня сложности.",
+    button: "Демо",
+    path: "/games/word-architecture/index.html",
+    demo: true,
+    demoNotice: "В демо доступны 30 действий. Полная версия без ограничения открывается после покупки.",
+    category: "morphemics",
+    categoryTitle: "Морфемика и словообразование",
+    kindLabel: "большая игра",
+  },
+  {
+    slug: "palace-restoration",
+    title: "Реставрация дворца",
+    description: "Словообразовательный поединок: собирайте слова из морфем, играйте вдвоём или против компьютера и пополняйте словарь.",
+    button: "Демо",
+    path: "/games/palace-restoration/index.html",
+    demo: true,
+    demoNotice: "В демо доступны 30 действий. Полная версия со словарём учителя открывается после покупки.",
+    category: "morphemics",
+    categoryTitle: "Морфемика и словообразование",
+    kindLabel: "игра",
+  },
 ];
 
 const miniGameCategories = [
   { id: "orthography", title: "Орфография" },
+  { id: "morphemics", title: "Морфемика и словообразование" },
   { id: "morphology", title: "Морфология" },
   { id: "syntax", title: "Синтаксис и пунктуация" },
   { id: "speech", title: "Культура речи" },
@@ -346,7 +371,7 @@ const shopProducts = [
       "Промпт для нейросети. Промпт поможет быстро модифицировать игру: добавить новую лексику, изменить количество вариантов, заменить подсказку, адаптировать материал под другую тему или класс.",
     ],
     adaptation: [
-      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia@dimitrieva-av.ru",
       "Я самостоятельно заменю лексику в игре под вашу тему, если она предполагает выбор между Е и И.",
     ],
     format: "Цифровой материал. Физическая доставка не требуется.",
@@ -397,7 +422,7 @@ const shopProducts = [
       "Промпт для нейросети. Промпт поможет быстро модифицировать игру: добавить новую лексику, изменить количество вариантов, заменить подсказки, адаптировать материал под другую тему или класс.",
     ],
     adaptation: [
-      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Если вы хотите использовать игру с другой лексикой, можно написать мне на почту: anastasia@dimitrieva-av.ru",
       "Я самостоятельно заменю лексику в игре под вашу тему, если она подходит для механики выбора правильной буквы из нескольких вариантов.",
     ],
     format: "Цифровой материал. Физическая доставка не требуется.",
@@ -442,7 +467,7 @@ const shopProducts = [
     ],
     adaptation: [
       "Игра поставляется как готовый комплект.",
-      "Если нужна адаптация под другой список слов, можно написать на почту: anastasia041191@rambler.ru",
+      "Если нужна адаптация под другой список слов, можно написать на почту: anastasia@dimitrieva-av.ru",
     ],
     format: "Цифровой материал. Физическая доставка не требуется.",
     requirements: [
@@ -492,7 +517,7 @@ const shopProducts = [
       "Промпт для нейросети. Промпт поможет быстро модифицировать игру: заменить предложения, изменить количество заданий, обновить варианты ответов, скорректировать подсказки и адаптировать материал под ваш класс.",
     ],
     adaptation: [
-      "Если вы хотите использовать игру с другими предложениями, можно написать мне на почту: anastasia041191@rambler.ru",
+      "Если вы хотите использовать игру с другими предложениями, можно написать мне на почту: anastasia@dimitrieva-av.ru",
       "Я самостоятельно заменю предложения внутри игры под вашу тему или нужный материал, если он подходит для этой механики.",
     ],
     format: "Цифровой материал. Физическая доставка не требуется.",
@@ -598,7 +623,7 @@ const shopProducts = [
     ],
     adaptation: [
       "Комплект уже собран под список паронимов ЕГЭ и не требует ручного добавления базы.",
-      "Если нужно изменить оформление, добавить свои изображения или подготовить отдельную версию под курс, можно написать на почту: anastasia041191@rambler.ru",
+      "Если нужно изменить оформление, добавить свои изображения или подготовить отдельную версию под курс, можно написать на почту: anastasia@dimitrieva-av.ru",
     ],
     format: "Цифровой материал. Физическая доставка не требуется.",
     requirements: [
@@ -1007,6 +1032,58 @@ const shopProducts = [
     delivery: "После оплаты полная онлайн-версия появится в разделе «Мои игры» учительского аккаунта с тем же email.",
     important: ["Перед оплатой проверьте email: по нему покупка привязывается к кабинету.", "В общем разделе «Игры» остаётся демо на 30 действий."],
   },
+  {
+    slug: "word-architecture",
+    title: "HTML-игра «Архитектура слова»",
+    price: "500 ₽",
+    image: "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_06_26-2.png",
+    images: [
+      "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_06_26-2.png",
+      "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_06_36-4.png",
+      "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_06_46-6.png",
+      "/games/word-architecture/Изображение ChatGPT 30 сент. 2026 г., 18_07_01-9.png",
+    ],
+    demoUrl: "/games/word-architecture/index.html",
+    demoLabel: "Открыть демо",
+    kindLabel: "морфемный тренажёр",
+    shortDescription: "Большой тренажёр по морфемике для 5–6 классов: 240 заданий, восемь разделов и три уровня сложности. В демо доступны 30 действий.",
+    fullDescription: "«Архитектура слова» помогает последовательно отработать окончание, основу, корень, приставку, суффикс, постфикс и полный морфемный разбор. Задания встроены в яркий игровой маршрут и дают мгновенную обратную связь. В комплект также входит отдельная словообразовательная игра «Реставрация дворца».",
+    tryBefore: ["Демо на 30 действий доступно в разделе «Игры».", "https://dimitrieva-av.ru/games/word-architecture/index.html"],
+    suitableFor: ["для изучения морфемики в 5–6 классах", "для повторения состава слова", "для урока, интерактивной панели и самостоятельной тренировки"],
+    howItWorks: ["Ученик выбирает тематический раздел и уровень сложности.", "В игровых сценах нужно выделять морфемы прямо в слове, сортировать родственные слова и собирать слово по заданной модели.", "Прогресс и результаты сохраняются в браузере."],
+    package: ["Полная автономная HTML-игра «Архитектура слова» без лимита действий.", "Отдельная игра «Реставрация дворца» с полной версией по защищённой ссылке.", "240 заданий в восьми разделах.", "Три уровня сложности.", "Четыре карточки для публикации и магазина."],
+    adaptation: ["Игра поставляется как готовый автономный HTML-файл и открывается в современном браузере."],
+    format: "Цифровой материал. Установка не требуется.",
+    requirements: ["современный браузер", "компьютер, планшет, телефон или интерактивная панель"],
+    delivery: "После оплаты полная ссылка придёт на указанную электронную почту и появится в разделе «Мои игры» аккаунта с тем же email.",
+    important: ["В общем разделе «Игры» остаётся демо на 30 действий.", "Полная версия размещена по отдельной защищённой ссылке с цифровым ключом."],
+  },
+  {
+    slug: "palace-restoration",
+    title: "HTML-игра «Реставрация дворца»",
+    price: "500 ₽",
+    image: "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_48_30.png",
+    images: [
+      "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_48_30.png",
+      "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_54_54-1.png",
+      "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_54_58-2.png",
+      "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_55_12.png",
+    ],
+    demoUrl: "/games/palace-restoration/index.html",
+    demoLabel: "Открыть демо",
+    kindLabel: "словообразовательная игра",
+    shortDescription: "Словообразовательный поединок с 386 словами, 16 стартами, режимом на двоих и игрой против компьютера. В демо доступны 30 действий.",
+    fullDescription: "В «Реставрации дворца» игроки собирают новые слова из плиток-морфем и зажигают окна дворца. Учитель может дополнять постоянный словарь вручную или импортировать проверенные предложения игроков из текстового файла.",
+    tryBefore: ["Демо на 30 действий доступно в разделе «Игры».", "https://dimitrieva-av.ru/games/palace-restoration/index.html"],
+    suitableFor: ["для темы «Словообразование»", "для парной и командной работы", "для урока на интерактивной панели", "для самостоятельной игры против компьютера"],
+    howItWorks: ["Игрок выбирает морфемы с общего стола, из своей руки и из банка окончаний.", "Каждое принятое слово зажигает окно дворца; у каждого участника 12 ходов.", "Подсказки, обмен плиток и варианты морфем помогают продолжать партию."],
+    package: ["Полная автономная HTML-игра без лимита действий.", "Словарь из 386 слов и 16 стартовых позиций.", "Два режима: против компьютера и для двух игроков.", "Инструменты учителя для добавления новых слов."],
+    adaptation: ["Новые слова можно добавлять вручную или из .txt после партии.", "Код учителя и подробная инструкция приходят в письме после оплаты."],
+    format: "Один автономный HTML-файл. Установка и интернет не требуются.",
+    requirements: ["современный браузер", "компьютер, планшет или интерактивная панель"],
+    delivery: "После оплаты полная ссылка и инструкция по добавлению слов придут на указанную электронную почту. Код учителя: АРХИТЕКТОР-2026.",
+    important: ["В общем разделе «Игры» остаётся демо на 30 действий.", "Чтобы передать дополненный словарь, запишите его в HTML или скачайте копию игры."],
+  },
 ];
 
 const supportProducts = [
@@ -1244,6 +1321,13 @@ function escapeHtml(value) {
     '"': "&quot;",
     "'": "&#39;",
   }[char]));
+}
+
+function contactTextHtml(value) {
+  return escapeHtml(value).replaceAll(
+    "anastasia@dimitrieva-av.ru",
+    '<a href="mailto:anastasia@dimitrieva-av.ru">anastasia@dimitrieva-av.ru</a>',
+  );
 }
 
 function escapeWordList(words) {
@@ -1829,7 +1913,7 @@ async function renderDocumentPage(type) {
       </div>
       <p class="muted">Дата редакции: ${new Date(documentData.updated_at).toLocaleDateString()}</p>
       <div class="document-content">
-        ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${escapeHtml(line)}</p>` : "").join("")}
+        ${String(documentData.content || "").split("\n").map((line) => line.trim() ? `<p>${contactTextHtml(line)}</p>` : "").join("")}
       </div>
       ${legalLinks()}
     `;
@@ -2099,7 +2183,7 @@ async function renderPublicTextPage(slug) {
   const content = view.querySelector(".public-doc-content");
   try {
     const data = await api(`/api/public-documents/${slug}`);
-    content.textContent = data.content || "";
+    content.innerHTML = contactTextHtml(data.content || "");
   } catch (err) {
     content.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
   }
@@ -2173,6 +2257,7 @@ async function renderShopPlaceholder() {
       <nav class="shop-rubricator" aria-label="Рубрики магазина">
         <button class="active" data-shop-rubric="all" type="button">Все материалы</button>
         <button data-shop-rubric="orthography" type="button">Орфография</button>
+        <button data-shop-rubric="morphemics" type="button">Морфемика и словообразование</button>
         <button data-shop-rubric="syntax" type="button">Синтаксис и пунктуация</button>
         <button data-shop-rubric="morphology" type="button">Морфология</button>
         <button data-shop-rubric="speech" type="button">Культура речи</button>
@@ -2193,6 +2278,7 @@ function shopProductRubrics(product) {
   const text = `${product.slug || ""} ${product.title || ""} ${product.shortDescription || ""}`.toLocaleLowerCase("ru");
   const rubrics = new Set();
   if (/суффикс|спряж|орфотир|орфограф|причастий/.test(text)) rubrics.add("orthography");
+  if (/морфем|словообраз|архитектура слова|реставрация дворца/.test(text)) rubrics.add("morphemics");
   if (/синтакс|словосочетан|однородн|обособлен|причастн.{0,12}оборот|грамматическ|пунктуац/.test(text)) rubrics.add("syntax");
   if (/част.{0,8}реч|морфолог/.test(text)) rubrics.add("morphology");
   if (/пароним|числительн|культура речи/.test(text)) rubrics.add("speech");
@@ -2429,10 +2515,10 @@ async function renderShopProductPage(slug) {
           <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
           <div class="shop-product-actions">
             ${product.maxOnly
-              ? `<a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
+              ? `<a class="secondary-button public-play-link" href="mailto:anastasia@dimitrieva-av.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
               : `<button class="primary-button" data-buy-now="${product.slug}" type="button">${escapeHtml(product.buyLabel || "Купить сейчас")}</button><button class="secondary-button" data-buy-product="${product.slug}" type="button">Добавить в корзину</button>`}
             ${product.demoUrl ? `<a class="secondary-button public-play-link" href="${escapeHtml(product.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(product.demoLabel || "Играть онлайн")}</a>` : ""}
-            <a class="secondary-button public-play-link" href="mailto:anastasia041191@rambler.ru">Написать по вопросу покупки</a>
+            <a class="secondary-button public-play-link" href="mailto:anastasia@dimitrieva-av.ru">Написать по вопросу покупки</a>
           </div>
         </div>
       </div>

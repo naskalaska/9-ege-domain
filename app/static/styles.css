@@ -3098,11 +3098,20 @@ input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color:
 }
 
 @media (max-width: 560px) {
+  html, body, .app-shell { max-width: 100%; overflow-x: hidden; }
   .topbar { width: 100%; gap: 10px; padding: 9px 12px; }
   .brand { width: 100%; }
-  .top-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
-  .top-actions button { flex: 1 1 auto; min-width: 0; padding: 8px 9px; white-space: normal; }
+  .public-shell .top-actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .top-actions button { width: 100%; min-width: 0; padding: 8px 7px; white-space: normal; overflow-wrap: anywhere; }
   .top-actions > .muted { flex: 1 1 100%; }
+  .public-page { width: calc(100% - 24px); margin-block: 24px 44px; min-width: 0; }
+  .public-placeholder { min-width: 0; padding: 18px 16px; }
+  .public-page h2, .public-placeholder h2 { max-width: 100%; font-size: 34px; line-height: 1.04; overflow-wrap: anywhere; }
+  .public-page-lead, .public-placeholder p { max-width: 100%; font-size: 16px; overflow-wrap: anywhere; }
+  .game-submenu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .game-submenu a { min-width: 0; padding: 8px; white-space: normal; overflow-wrap: anywhere; }
+  .mini-game-card { min-width: 0; padding: 18px; }
+  .mini-game-card h3 { overflow-wrap: anywhere; }
   .redesign-hero { padding: 28px 14px 52px; }
   .redesign-hero-intro h2 { font-size: 32px; }
   .direction-grid { grid-template-columns: 1fr; gap: 22px; }
