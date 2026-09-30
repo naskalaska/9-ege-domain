@@ -301,7 +301,7 @@ SHOP_PRODUCTS = {
         "currency": "RUB",
         "cover_url": "/games/palace-restoration/Изображение ChatGPT 30 сент. 2026 г., 15_48_30.png",
         "url_env": "PALACE_RESTORATION_PRODUCT_URL",
-        "default_url": f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html",
+        "default_url": f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/offline.html",
         "online_url": f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html",
         "kind": "product",
     },
@@ -4968,7 +4968,7 @@ def product_email_note(product: dict[str, str]) -> str:
     if slug == "palace-restoration" or product_id == "palace_restoration":
         return (
             "\nКак добавлять новые слова в «Реставрацию дворца»:\n"
-            "1. Откройте в игре «⚙ Словарь» / «Словарь учителя».\n"
+            "1. Скачайте и откройте офлайн-файл игры, затем выберите «⚙ Словарь» / «Словарь учителя». Онлайн-версия работает без редактирования.\n"
             "2. Введите код учителя: АРХИТЕКТОР-2026.\n"
             "3. Добавьте одно слово вручную или приложите .txt, скачанный после партии.\n"
             "4. Для ручного добавления укажите слово и морфемы по порядку. Обозначения: "
@@ -5340,6 +5340,39 @@ def inject_action_limited_demo(slug: str, body: bytes, limit: int = 30) -> bytes
   }},true);
   document.addEventListener('drop',count,true);
   if(actions>=limit)show();
+}})();
+</script>
+"""
+    closing = b"</body>"
+    encoded = addition.encode("utf-8")
+    return body.replace(closing, encoded + closing, 1) if closing in body else body + encoded
+
+
+def inject_palace_online_read_only(body: bytes) -> bytes:
+    """Disable dictionary editing in hosted Palace builds while preserving the offline source."""
+    addition = f"""
+<style>
+  [data-duel-teacher-open],[data-duel-teacher-write],[data-duel-teacher-export],
+  [data-duel-teacher-import],[data-duel-import-commit] {{ display:none !important; }}
+  .site-palace-offline-note {{ position:fixed; z-index:2147483645; right:8px; bottom:8px; width:min(330px,calc(100vw - 16px)); padding:10px 12px; border:1px solid #b7cdbf; border-radius:12px; background:rgba(255,250,235,.97); color:#244d50; box-shadow:0 8px 24px rgba(21,57,56,.2); font:600 12px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif; }}
+  .site-palace-offline-note a {{ display:inline-block; margin-top:6px; color:#164f75; font-weight:850; }}
+  @media(max-width:600px) {{ .site-palace-offline-note {{ font-size:11px; }} }}
+</style>
+<aside class="site-palace-offline-note" role="note">
+  Редактирование словаря в онлайн-версии отключено. Для добавления слов приобретите офлайн-версию игры.<br>
+  <a href="/shop/palace-restoration" target="_top">Купить офлайн-версию</a>
+</aside>
+<script>
+(() => {{
+  const unavailable=()=>{{ document.querySelector('.site-palace-offline-note')?.scrollIntoView({{behavior:'smooth',block:'nearest'}}); }};
+  for(const name of ['duelOpenTeacher','duelSubmitTeacher','duelReadTeacherFile','duelCommitTeacherImport','duelExportTeacherGame','duelWriteTeacherGame','duelTeacherHtml']){{
+    try{{ window[name]=name==='duelTeacherHtml'?()=>'' : unavailable; }}catch{{}}
+  }}
+  document.addEventListener('click',event=>{{
+    if(event.target.closest('[data-duel-teacher-open],[data-duel-teacher-write],[data-duel-teacher-export],[data-duel-import-commit]')){{
+      event.preventDefault();event.stopImmediatePropagation();unavailable();
+    }}
+  }},true);
 }})();
 </script>
 """
@@ -6075,6 +6108,8 @@ class Handler(SimpleHTTPRequestHandler):
                 body = inject_participle_map_demo(body, 30)
             if slug in {"word-architecture", "palace-restoration"}:
                 body = inject_action_limited_demo(slug, body, 30)
+            if slug == "palace-restoration":
+                body = inject_palace_online_read_only(body)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
@@ -6089,6 +6124,13 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        if slug == "palace-restoration" and protected_route and requested_path == "offline.html":
+            source_path = (game_dir / game_entry_file(slug, "index.html")).resolve()
+            if not source_path.is_file():
+                self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+                return
+            self.send_download(source_path.read_bytes(), "restoration-palace-offline.html", "text/html; charset=utf-8")
+            return
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
@@ -6103,6 +6145,8 @@ class Handler(SimpleHTTPRequestHandler):
             return
         body = file_path.read_bytes()
         if is_entry_file:
+            if slug == "palace-restoration":
+                body = inject_palace_online_read_only(body)
             body = inject_game_menu_link(body)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))

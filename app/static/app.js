@@ -1073,15 +1073,15 @@ const shopProducts = [
     demoLabel: "Открыть демо",
     kindLabel: "словообразовательная игра",
     shortDescription: "Словообразовательный поединок с 386 словами, 16 стартами, режимом на двоих и игрой против компьютера. В демо доступны 30 действий.",
-    fullDescription: "В «Реставрации дворца» игроки собирают новые слова из плиток-морфем и зажигают окна дворца. Учитель может дополнять постоянный словарь вручную или импортировать проверенные предложения игроков из текстового файла.",
+    fullDescription: "В «Реставрации дворца» игроки собирают новые слова из плиток-морфем и зажигают окна дворца. Онлайн-версия работает без редактирования. В офлайн-версии учитель может дополнять постоянный словарь вручную или импортировать проверенные предложения игроков из текстового файла.",
     tryBefore: ["Демо на 30 действий доступно в разделе «Игры».", "https://dimitrieva-av.ru/games/palace-restoration/index.html"],
     suitableFor: ["для темы «Словообразование»", "для парной и командной работы", "для урока на интерактивной панели", "для самостоятельной игры против компьютера"],
     howItWorks: ["Игрок выбирает морфемы с общего стола, из своей руки и из банка окончаний.", "Каждое принятое слово зажигает окно дворца; у каждого участника 12 ходов.", "Подсказки, обмен плиток и варианты морфем помогают продолжать партию."],
     package: ["Полная автономная HTML-игра без лимита действий.", "Словарь из 386 слов и 16 стартовых позиций.", "Два режима: против компьютера и для двух игроков.", "Инструменты учителя для добавления новых слов."],
-    adaptation: ["Новые слова можно добавлять вручную или из .txt после партии.", "Код учителя и подробная инструкция приходят в письме после оплаты."],
+    adaptation: ["Редактирование словаря доступно только в скачанной офлайн-версии.", "Новые слова можно добавлять вручную или из .txt после партии.", "Код учителя и подробная инструкция приходят в письме после оплаты."],
     format: "Один автономный HTML-файл. Установка и интернет не требуются.",
     requirements: ["современный браузер", "компьютер, планшет или интерактивная панель"],
-    delivery: "После оплаты полная ссылка и инструкция по добавлению слов придут на указанную электронную почту. Код учителя: АРХИТЕКТОР-2026.",
+    delivery: "После оплаты придут две ссылки: на полную онлайн-версию без редактирования и на офлайн-файл с редактором словаря. Код учителя: АРХИТЕКТОР-2026.",
     important: ["В общем разделе «Игры» остаётся демо на 30 действий.", "Чтобы передать дополненный словарь, запишите его в HTML или скачайте копию игры."],
   },
 ];
@@ -2311,9 +2311,11 @@ function bindShopRubricator(root) {
 function bindShopCards(root) {
   const grid = root.querySelector(".shop-product-grid");
   if (!grid) return;
+  const page = grid.closest(".shop-page");
   const cards = [...grid.querySelectorAll("[data-shop-card]")];
   const closeAll = () => {
     grid.classList.remove("is-active");
+    page?.classList.remove("shop-detail-open");
     cards.forEach((card) => {
       card.classList.remove("open");
       card.setAttribute("aria-expanded", "false");
@@ -2325,6 +2327,7 @@ function bindShopCards(root) {
     closeAll();
     if (!willOpen) return;
     grid.classList.add("is-active");
+    page?.classList.add("shop-detail-open");
     card.classList.add("open");
     card.setAttribute("aria-expanded", "true");
     card.querySelector(".shop-product-detail")?.setAttribute("aria-hidden", "false");
@@ -2347,6 +2350,12 @@ function bindShopCards(root) {
       closeAll();
       card.focus();
     });
+  });
+  grid.addEventListener("click", (event) => {
+    if (event.target === grid && grid.classList.contains("is-active")) closeAll();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && grid.classList.contains("is-active")) closeAll();
   });
 }
 
