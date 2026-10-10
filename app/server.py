@@ -14,6 +14,8 @@ import secrets
 import smtplib
 import sqlite3
 import sys
+import threading
+from contextlib import closing
 import ege13_module
 import ege10_module
 import ege11_module
@@ -46,6 +48,10 @@ DB_PATH = DATA_DIR / "ege_app.db"
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8088
+PAYMENT_CHECK_MINUTES = (3, 10, 15)
+PAYMENT_CHECK_POLL_SECONDS = 15
+# HTTP callbacks and the background worker share these locks in the server process.
+ORDER_DELIVERY_LOCKS = tuple(threading.RLock() for _ in range(64))
 REPEAT_ON_ERROR = 3
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8088").rstrip("/")
@@ -68,6 +74,8 @@ CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
 FULL_GAME_ROUTE_TOKENS = {
+    "autumn-herbarium": "64093178520648",
+    "autumn-leaves": "79328410563827",
     "word-architecture": "19736502168770",
     "palace-restoration": "82057434086961",
 }
@@ -76,6 +84,30 @@ PROTECTED_FULL_GAME_ROUTES = {
     f"Full-{token}-{slug}": slug for slug, token in FULL_GAME_ROUTE_TOKENS.items()
 }
 SHOP_PRODUCTS = {
+    "autumn-leaves": {
+        "id": "autumn_leaves",
+        "title": "HTML-игра «Осень. И-Ы»",
+        "short_title": "Осень. И-Ы",
+        "amount": "200.00",
+        "currency": "RUB",
+        "cover_url": "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_49-1.png",
+        "url_env": "AUTUMN_LEAVES_PRODUCT_URL",
+        "kind": "product",
+        "default_url": f"{APP_BASE_URL}/Full-79328410563827-autumn-leaves/offline.html",
+        "online_url": f"{APP_BASE_URL}/Full-79328410563827-autumn-leaves/index.html",
+    },
+    "autumn-herbarium": {
+        "id": "autumn_herbarium",
+        "title": "HTML-игра «Осенний Гербарий»",
+        "short_title": "Осенний Гербарий",
+        "amount": "400.00",
+        "currency": "RUB",
+        "cover_url": "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_10-1.png",
+        "url_env": "AUTUMN_HERBARIUM_PRODUCT_URL",
+        "kind": "product",
+        "default_url": f"{APP_BASE_URL}/Full-64093178520648-autumn-herbarium/offline.html",
+        "online_url": f"{APP_BASE_URL}/Full-64093178520648-autumn-herbarium/index.html",
+    },
     "fruit-garden-ik-ek": {
         "id": "berry_season",
         "title": "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
@@ -547,6 +579,8 @@ def first_existing_path(*paths: Path) -> Path:
 
 
 HTML_GAMES = {
+    "autumn-leaves": HTML_DIR / "Осень. И-Ы",
+    "autumn-herbarium": HTML_DIR / "Осенний гербарий",
     "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
     "homogeneous-members-magic": first_existing_path(HTML_DIR / "homogeneous-members-magic", HTML_DIR / "Фокусы"),
     "berry-season-ik-ek": first_existing_path(HTML_DIR / "berry-season-ik-ek", HTML_DIR / "Ягодный сезон ИК-ЕК"),
@@ -571,6 +605,8 @@ HTML_GAMES = {
 }
 
 HTML_GAME_TITLES = {
+    "autumn-leaves": "Осень. И-Ы",
+    "autumn-herbarium": "Осенний Гербарий",
     "suffixes-nouns": "Пушинки: суффиксы существительных",
     "homogeneous-members-magic": "Магия однородных членов предложения",
     "berry-season-ik-ek": "Ягодный сезон: ИК-ЕК",
@@ -595,6 +631,8 @@ HTML_GAME_TITLES = {
 }
 
 PUBLIC_GAMES = {
+    "autumn-leaves": HTML_DIR / "Осень. И-Ы",
+    "autumn-herbarium": HTML_DIR / "Осенний гербарий",
     "fluffs": first_existing_path(HTML_DIR / "fluffs", HTML_DIR / "Пушинки"),
     "butterflies": HTML_DIR / "бабочки-суффиксы-причастий",
     "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
@@ -624,7 +662,7 @@ PUBLIC_GAMES = {
 GAME_SET_MAX_ITEMS = 200
 GAME_SET_MAX_STRING = 600
 GAME_SET_MAX_PAYLOAD_BYTES = 200_000
-GAME_MECHANICS = {"fluffs", "berry-season", "mouse-space", "butterflies"}
+GAME_MECHANICS = {"autumn-leaves", "fluffs", "berry-season", "mouse-space", "butterflies"}
 PUBLIC_DOC_FILES = {
     "contacts": "contacts.txt",
     "delivery": "delivery.txt",
@@ -816,6 +854,8 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
 def seed_gift_only_games(con: sqlite3.Connection) -> None:
     """Keep every platform game giftable without publishing it in the shop."""
     shop_product_by_game_slug = {
+        "autumn-leaves": "autumn_leaves",
+        "autumn-herbarium": "autumn_herbarium",
         "suffixes-nouns": "dandelion_suffixes",
         "homogeneous-members-magic": "focus_homogeneous",
         "berry-season-ik-ek": "berry_season",
@@ -1764,6 +1804,14 @@ def ensure_app_db() -> None:
         ensure_column(con, "shop_orders", "receipt_sent", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "shop_orders", "receipt_sent_at", "TEXT")
         ensure_column(con, "shop_orders", "receipt_note", "TEXT")
+        ensure_column(con, "shop_orders", "payment_check_started_at", "TEXT")
+        ensure_column(con, "shop_orders", "payment_check_count", "INTEGER NOT NULL DEFAULT 0")
+        con.execute("""
+            CREATE INDEX IF NOT EXISTS idx_shop_orders_payment_checks
+            ON shop_orders(payment_check_count, created_at)
+            WHERE status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
+              AND COALESCE(yookassa_payment_id, '') <> '' AND payment_check_count < 3
+        """)
         ensure_column(con, "paid_entities", "cover_url", "TEXT")
         ensure_column(con, "paid_entities", "online_url", "TEXT")
         ensure_column(con, "paid_entities", "description_json", "TEXT")
@@ -3794,6 +3842,8 @@ def normalize_game_payload(payload: Any, default_mechanic: str = "fluffs") -> di
         bad_answers = [item["answer"] for item in normalized_items if item["answer"] not in {"е", "и"}]
         if bad_answers:
             raise ValueError("Для «Ягодного сезона» подходят только ответы «е» и «и».")
+    if mechanic == "autumn-leaves" and any(len(item["options"]) < 2 for item in normalized_items):
+        raise ValueError("Для «Осени» нужны минимум два варианта ответа у каждого задания.")
     if mechanic == "mouse-space" and any(len(item["options"]) < 2 for item in normalized_items):
         raise ValueError("Для «Мышонка в космосе» у каждого задания должны быть минимум два разных варианта ответа.")
     return {
@@ -3814,6 +3864,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
             answers = [normalize_game_answer(word.get("correct_letter") or word.get("answer")) for word in pool]
             rule_item = dict(rule)
             rule_item["mechanic_counts"] = {
+                "autumn-leaves": sum(1 for word in pool if len(normalize_game_options(config["letter_choices"](word), normalize_game_answer(word.get("correct_letter") or word.get("answer")))) >= 2),
                 "fluffs": len(pool),
                 "mouse-space": sum(1 for word in pool if len(normalize_game_options(config["letter_choices"](word), normalize_game_answer(word.get("correct_letter") or word.get("answer")))) >= 2),
                 "butterflies": len(pool),
@@ -3829,6 +3880,7 @@ def game_sources_for_teacher() -> dict[str, Any]:
         )
     return {
         "mechanics": [
+            {"id": "autumn-leaves", "title": "Осень: выберите пропущенное", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
             {"id": "fluffs", "title": "Пушинки", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
             {"id": "berry-season", "title": "Ягодный сезон: ИК-ЕК", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12"]},
             {"id": "mouse-space", "title": "Мышонок в космосе: выбор ответа", "available": True, "compatible_sources": ["ege9", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"]},
@@ -3914,12 +3966,15 @@ def create_game_set_from_base(user: dict[str, Any], payload: dict[str, Any]) -> 
     items = [game_item_from_word(word, config["letter_choices"]) for word in pool]
     if mechanic == "berry-season":
         items = [item for item in items if item["answer"] in {"е", "и"}]
+    if mechanic == "autumn-leaves":
+        items = [item for item in items if len(item["options"]) >= 2]
     items = items[:count]
     if not items:
         raise ValueError("В выбранных рубриках нет заданий для этой механики.")
     selected_rules = [item for item in config["rules"] if item["rule_id"] in set(rule_ids)]
     default_title = selected_rules[0]["rule_name"] if len(selected_rules) == 1 else f"{len(selected_rules)} рубрики"
     mechanic_title = {
+        "autumn-leaves": "Осень",
         "berry-season": "Ягодный сезон",
         "mouse-space": "Мышонок в космосе",
         "butterflies": "Бабочки",
@@ -4959,6 +5014,18 @@ def send_email_message(message: EmailMessage) -> None:
 def product_email_note(product: dict[str, str]) -> str:
     slug = str(product.get("slug") or "")
     product_id = str(product.get("id") or product.get("product_id") or "")
+    if slug == "autumn-herbarium" or product_id == "autumn_herbarium":
+        return (
+            "\nОткройте скачанный HTML-файл в браузере: изображения и полная база уже внутри.\n"
+            "В офлайн-версии доступны режим «Вся база» и загрузка своего JSON через «Настроить».\n"
+            "На сайте доступны до 50 слов на орфограмму и случайные раунды на 12 или 24 слова.\n"
+        )
+    if slug == "autumn-leaves" or product_id == "autumn_leaves":
+        return (
+            "\nСкачанный HTML-файл работает без интернета.\n"
+            "Чтобы создать игру по другим орфограммам, выберите «Осень: выберите пропущенное» "
+            "в конструкторе игр на сайте и используйте базу сайта или свой JSON с вариантами ответа.\n"
+        )
     if slug == "word-architecture" or product_id == "word_architecture":
         return (
             "\nВ комплект также входит отдельная игра «Реставрация дворца».\n"
@@ -5182,6 +5249,8 @@ def product_online_url(product: dict[str, str]) -> str:
 
 def game_entry_file(slug: str, relative_path: str) -> str:
     clean_path = relative_path or "index.html"
+    if slug == "autumn-leaves" and clean_path == "index.html":
+        return "autumn.html"
     if slug == "grammar-zoo" and clean_path in {"", "index.html", "grammar_zoo_engine.html"}:
         return "index.html"
     if slug == "syntactic-soup" and clean_path in {"", "index.html"}:
@@ -5195,6 +5264,30 @@ def game_entry_file(slug: str, relative_path: str) -> str:
     if slug == "palace-restoration" and clean_path in {"", "index.html"}:
         return "restoration_palace_game_30-09_uch.html"
     return clean_path
+
+
+def autumn_web_body(slug: str, body: bytes) -> bytes:
+    if slug != "autumn-herbarium":
+        return body
+    html = body.decode("utf-8")
+    pattern = r'(<script type="application/json" id="gameData">)(.*?)(</script>)'
+    def reduced(match):
+        data = json.loads(match[2])
+        for topic in data["topics"]:
+            topic["items"] = topic["items"][:50]
+            topic["source"] = "онлайн-версия"
+        return match[1] + json.dumps(data, ensure_ascii=False).replace("</", "<\\/") + match[3]
+    html = re.sub(pattern, reduced, html, flags=re.S)
+    html = html.replace('<option value="all">Вся база</option>', '')
+    html = html.replace('>12 слов</option>', '>Случайные 12</option>').replace('>24 слова</option>', '>Случайные 24</option>')
+    html = re.sub(r'<button class="button" id="settingsBtn">.*?</button>', '<a class="button" href="/shop/autumn-herbarium" target="_top">Полная офлайн-версия</a>', html)
+    html = re.sub(r'<dialog id="settingsDialog".*?</dialog>', '', html, flags=re.S)
+    start = html.index('function normalizeCards(')
+    end = html.index("$('topicSelect').onchange", start)
+    html = html[:start] + html[end:]
+    html = html.replace("$('settingsDialog').open||", '')
+    html = html.replace("const count=$('roundSize').value==='all'?t.items.length:Math.min(Number($('roundSize').value),t.items.length)", "const count=Math.min($('roundSize').value==='12'?12:24,t.items.length)")
+    return html.encode("utf-8")
 
 
 def inject_demo_notice(slug: str, body: bytes) -> bytes:
@@ -5745,8 +5838,8 @@ def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-g
         raise RuntimeError("Не удалось создать платёж. Попробуйте позже.")
     with db() as con:
         con.execute(
-            "UPDATE shop_orders SET yookassa_payment_id = ? WHERE order_uid = ?",
-            (payment_id, order_uid),
+            "UPDATE shop_orders SET yookassa_payment_id = ?, payment_check_started_at = ? WHERE order_uid = ?",
+            (payment_id, now_iso(), order_uid),
         )
     return {"confirmation_url": confirmation_url}
 
@@ -5756,6 +5849,11 @@ def create_berry_season_payment(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
+    with ORDER_DELIVERY_LOCKS[hash(order_uid) % len(ORDER_DELIVERY_LOCKS)]:
+        return _deliver_product_order(order_uid, payment_id, raw_payload)
+
+
+def _deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
     with db() as con:
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
     if not order:
@@ -5803,6 +5901,57 @@ def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = ""
         con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
     print(f"Order email sent: order_uid={order_uid}, products={len(products)}")
     return {"ok": True, "status": "paid", "email_sent": True}
+
+
+def check_pending_order_payments(checked_at: str | None = None) -> None:
+    """Run due checks; persisted slots survive restarts and API/SMTP failures."""
+    checked_at = checked_at or now_iso()
+    with closing(db()) as con, con:
+        orders = con.execute(
+            """
+            SELECT order_uid, yookassa_payment_id, payment_check_count
+            FROM shop_orders
+            WHERE status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
+              AND COALESCE(yookassa_payment_id, '') <> ''
+              AND payment_check_count < 3
+              AND julianday(?) >= julianday(COALESCE(payment_check_started_at, created_at))
+                  + (CASE payment_check_count WHEN 0 THEN ? WHEN 1 THEN ? ELSE ? END) / 1440.0
+            ORDER BY COALESCE(payment_check_started_at, created_at)
+            LIMIT 100
+            """,
+            (checked_at, *PAYMENT_CHECK_MINUTES),
+        ).fetchall()
+    for order in orders:
+        order_uid = order["order_uid"]
+        with ORDER_DELIVERY_LOCKS[hash(order_uid) % len(ORDER_DELIVERY_LOCKS)]:
+            with closing(db()) as con, con:
+                claimed = con.execute(
+                    """
+                    UPDATE shop_orders SET payment_check_count = payment_check_count + 1
+                    WHERE order_uid = ? AND payment_check_count = ?
+                      AND status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
+                    """,
+                    (order_uid, order["payment_check_count"]),
+                ).rowcount
+            if not claimed:
+                continue
+            try:
+                result = deliver_product_order(order_uid, order["yookassa_payment_id"])
+                print(f"Automatic payment check: order_uid={order_uid}, "
+                      f"minute={PAYMENT_CHECK_MINUTES[order['payment_check_count']]}, "
+                      f"status={result['status']}, email_sent={result['email_sent']}")
+            except Exception as error:
+                # One failed order must not prevent checks for other customers.
+                print(f"Automatic payment check failed: order_uid={order_uid}, error_type={type(error).__name__}")
+
+
+def payment_check_worker(stop: threading.Event) -> None:
+    while not stop.is_set():
+        try:
+            check_pending_order_payments()
+        except Exception as error:
+            print(f"Payment check worker failed: error_type={type(error).__name__}")
+        stop.wait(PAYMENT_CHECK_POLL_SECONDS)
 
 
 def deliver_berry_season_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
@@ -5880,6 +6029,14 @@ def resend_berry_season_by_email(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[str, Any]:
+    payment = payload.get("object") if isinstance(payload.get("object"), dict) else {}
+    metadata = payment.get("metadata") if isinstance(payment.get("metadata"), dict) else {}
+    order_uid = str(metadata.get("order_uid") or "")
+    with ORDER_DELIVERY_LOCKS[hash(order_uid) % len(ORDER_DELIVERY_LOCKS)]:
+        return _process_yookassa_webhook(payload, raw_payload)
+
+
+def _process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict[str, Any]:
     event = str(payload.get("event") or "")
     payment = payload.get("object") if isinstance(payload.get("object"), dict) else {}
     payment_id = str(payment.get("id") or "")
@@ -6061,6 +6218,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        if slug in {"autumn-herbarium", "autumn-leaves"}:
+            if requested_path == game_entry_file(slug, "index.html"):
+                requested_path = "index.html"
+            if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
+                self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+                return
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
@@ -6075,7 +6238,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if is_entry_file:
             record_public_game_visit(slug, None, self.path)
-        body = file_path.read_bytes()
+        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
         if is_entry_file:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
@@ -6091,6 +6254,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
+        if slug in {"autumn-herbarium", "autumn-leaves"}:
+            if requested_path == game_entry_file(slug, "index.html"):
+                requested_path = "index.html"
+            if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
+                self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+                return
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
@@ -6106,7 +6275,7 @@ class Handler(SimpleHTTPRequestHandler):
         if is_entry_file:
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
-        body = file_path.read_bytes()
+        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
         if is_entry_file:
             if slug == "orthoshooting":
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
@@ -6139,6 +6308,16 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             self.send_download(source_path.read_bytes(), "restoration-palace-offline.html", "text/html; charset=utf-8")
             return
+        if slug in {"autumn-herbarium", "autumn-leaves"} and protected_route and requested_path == "offline.html":
+            source = game_dir / game_entry_file(slug, "index.html")
+            self.send_download(source.read_bytes(), slug + "-offline.html", "text/html; charset=utf-8")
+            return
+        if slug in {"autumn-herbarium", "autumn-leaves"}:
+            if requested_path == game_entry_file(slug, "index.html"):
+                requested_path = "index.html"
+            if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
+                self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+                return
         is_entry_file = requested_path in {"index.html", ""}
         relative_path = game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
@@ -6151,7 +6330,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
-        body = file_path.read_bytes()
+        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
         if is_entry_file:
             if slug == "palace-restoration":
                 body = inject_palace_online_read_only(body, show_purchase_notice=False)
@@ -6519,7 +6698,15 @@ def main() -> int:
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"EGE Russian app: http://{host}:{port}")
     print(f"Words loaded: {len(WORDS)}; rules: {len(RULES)}")
-    server.serve_forever()
+    stop = threading.Event()
+    worker = threading.Thread(target=payment_check_worker, args=(stop,), name="payment-checks", daemon=True)
+    worker.start()
+    try:
+        server.serve_forever()
+    finally:
+        stop.set()
+        server.server_close()
+        worker.join(timeout=20)
     return 0
 
 

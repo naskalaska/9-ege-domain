@@ -88,6 +88,26 @@ const activityMeta = {
 
 const miniGames = [
   {
+    "slug": "autumn-leaves",
+    "title": "Осень. И-Ы",
+    "description": "Ловите летящие листья и выбирайте пропущенные И или Ы после Ц. В конструкторе можно создать игру по другим орфограммам.",
+    "button": "Играть",
+    "path": "/games/autumn-leaves/index.html",
+    "category": "orthography",
+    "categoryTitle": "Орфография",
+    "kindLabel": "мини-игра"
+  },
+  {
+    "slug": "autumn-herbarium",
+    "title": "Осенний Гербарий",
+    "description": "Собирайте листья, жёлуди и ягоды в корзины с нужными буквами. До 50 слов на орфограмму, случайные раунды на 12 и 24 слова.",
+    "button": "Играть",
+    "path": "/games/autumn-herbarium/index.html",
+    "category": "orthography",
+    "categoryTitle": "Орфография",
+    "kindLabel": "большая игра"
+  },
+  {
     slug: "suffixes-nouns",
     title: "Пушинки: суффиксы существительных",
     description: "Поймайте пушинки и выберите правильную букву в словах с суффиксами.",
@@ -335,6 +355,91 @@ function groupedMiniGames() {
 }
 
 const shopProducts = [
+  {
+    "slug": "autumn-leaves",
+    "title": "HTML-игра «Осень. И-Ы»",
+    "price": "200 ₽",
+    "image": "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_49-1.png",
+    "images": [
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_49-1.png",
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_49-2.png",
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_56-1.png",
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_57-2.png",
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_02_58-3.png",
+      "/games/autumn-leaves/Изображение ChatGPT 9 окт. 2026 г., 22_03_02-6.png"
+    ],
+    "demoUrl": "/games/autumn-leaves/index.html",
+    "demoLabel": "Попробовать",
+    "shortDescription": "Ловите летящие листья и выбирайте пропущенные И или Ы после Ц. В конструкторе можно создать игру по другим орфограммам.",
+    "fullDescription": "Ловите летящие листья и выбирайте пропущенные И или Ы после Ц. В конструкторе можно создать игру по другим орфограммам.",
+    "tryBefore": [
+      "Попробуйте игру в разделе «Игры»."
+    ],
+    "suitableFor": [
+      "для урока русского языка",
+      "для самостоятельной тренировки и интерактивной панели"
+    ],
+    "howItWorks": [
+      "Выберите предмет, затем правильный вариант ответа."
+    ],
+    "package": [
+      "Автономный HTML-файл со встроенными изображениями.",
+      "Игра с летящими листьями и встроенной базой И–Ы после Ц."
+    ],
+    "adaptation": [
+      "Для других орфограмм используйте конструктор игр: базу сайта или свой JSON."
+    ],
+    "format": "Цифровая HTML-игра.",
+    "requirements": [
+      "современный браузер"
+    ],
+    "delivery": "После оплаты ссылка на офлайн-файл придёт на почту и появится в «Моих играх».",
+    "important": [
+      "В конструкторе используются варианты ответа выбранного набора."
+    ]
+  },
+  {
+    "slug": "autumn-herbarium",
+    "title": "HTML-игра «Осенний Гербарий»",
+    "price": "400 ₽",
+    "image": "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_10-1.png",
+    "images": [
+      "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_10-1.png",
+      "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_12-2.png",
+      "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_13-3.png",
+      "/games/autumn-herbarium/Изображение ChatGPT 9 окт. 2026 г., 19_54_14-4.png",
+      "/games/autumn-herbarium/Осенний гербарий_ орфографический тренажёр (1).png"
+    ],
+    "demoUrl": "/games/autumn-herbarium/index.html",
+    "demoLabel": "Попробовать",
+    "shortDescription": "Собирайте листья, жёлуди и ягоды в корзины с нужными буквами. До 50 слов на орфограмму, случайные раунды на 12 и 24 слова.",
+    "fullDescription": "Собирайте листья, жёлуди и ягоды в корзины с нужными буквами. До 50 слов на орфограмму, случайные раунды на 12 и 24 слова.",
+    "tryBefore": [
+      "Попробуйте игру в разделе «Игры»."
+    ],
+    "suitableFor": [
+      "для урока русского языка",
+      "для самостоятельной тренировки и интерактивной панели"
+    ],
+    "howItWorks": [
+      "Выберите предмет, затем правильный вариант ответа."
+    ],
+    "package": [
+      "Автономный HTML-файл со встроенными изображениями.",
+      "Полная база слов и загрузка своего JSON в офлайн-версии."
+    ],
+    "adaptation": [
+      "Свои базы можно подключать в полной офлайн-версии."
+    ],
+    "format": "Цифровая HTML-игра.",
+    "requirements": [
+      "современный браузер"
+    ],
+    "delivery": "После оплаты ссылка на офлайн-файл придёт на почту и появится в «Моих играх».",
+    "important": [
+      "На сайте доступны до 50 слов на орфограмму и только случайные 12 или 24; своя база подключается в офлайн-версии."
+    ]
+  },
   {
     slug: "fruit-garden-ik-ek",
     title: "HTML-игра «Фруктовый сад: суффиксы ИК-ЕК»",
@@ -3513,7 +3618,9 @@ async function setupGameBuilder() {
     const submit = builder.querySelector("#baseGameForm button[type='submit']");
     const mechanic = mechanics.find((item) => item.id === mechanicSelect.value);
     const incompatible = !sourceSelect.value || !(mechanic?.compatible_sources || []).includes(sourceSelect.value);
-    if (note) note.textContent = mechanicSelect.value === "butterflies"
+    if (note) note.textContent = mechanicSelect.value === "autumn-leaves"
+        ? "В «Осени» варианты ответа берутся из набора: буквы, части слова или варианты написания. Выбранная механика применяется и при загрузке своего JSON."
+        : mechanicSelect.value === "butterflies"
         ? "В «Бабочках» ученик самостоятельно вписывает букву, часть слова или вариант написания."
         : "Показаны только базы, совместимые с выбранной механикой.";
     if (submit) submit.disabled = incompatible;
@@ -3660,6 +3767,7 @@ async function setupGameBuilder() {
     }
     try {
       const payload = JSON.parse(await file.text());
+      if (mechanicSelect.value === "autumn-leaves") payload.mechanic = "autumn-leaves";
       const data = await api("/api/games/sets/upload-json", {
         method: "POST",
         body: JSON.stringify({ payload }),
