@@ -36,16 +36,18 @@ class PaymentChecksTest(unittest.TestCase):
             return con.execute("SELECT order_uid FROM shop_orders ORDER BY id DESC LIMIT 1").fetchone()[0]
 
     def payment(self, uid, status):
-        return {"id": "payment-test", "status": status, "metadata": {"order_uid": uid, "product_id": "participle_map"}}
+        return {"id": "payment-test", "status": status, "amount": {"value": "900.00", "currency": "RUB"}, "metadata": {"order_uid": uid, "product_id": "participle_map"}}
 
     def check_at(self, minutes=0, seconds=0):
-        server.check_pending_order_payments((self.started + timedelta(minutes=minutes, seconds=seconds)).isoformat())
+        stamp = (self.started + timedelta(minutes=minutes, seconds=seconds)).isoformat()
+        with patch.object(server, "now_iso", return_value=stamp):
+            server.check_pending_order_payments(stamp)
 
     def order(self, uid):
         with server.db() as con:
             return dict(con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (uid,)).fetchone())
 
-    def test_checks_at_3_10_15_minutes_only_and_survive_db_reinitialization(self):
+    def test_checks_continue_after_first_three_and_survive_db_reinitialization(self):
         uid = self.create_order()
         with patch.object(server, "get_yookassa_payment", return_value=self.payment(uid, "pending")) as api, patch.object(
             server, "send_order_email"
@@ -63,8 +65,10 @@ class PaymentChecksTest(unittest.TestCase):
             self.check_at(15)
             self.check_at(60)
             self.assertEqual(api.call_count, 3)
+            self.check_at(75)
+            self.assertEqual(api.call_count, 4)
             mail.assert_not_called()
-        self.assertEqual(self.order(uid)["payment_check_count"], 3)
+        self.assertEqual(self.order(uid)["payment_check_count"], 4)
 
     def test_success_sends_all_materials_without_browser_return(self):
         uid = self.create_order()
@@ -104,7 +108,7 @@ class PaymentChecksTest(unittest.TestCase):
     def test_mail_failure_retries_paid_order_at_next_slot(self):
         uid = self.create_order()
         with patch.object(server, "get_yookassa_payment", return_value=self.payment(uid, "succeeded")), patch.object(
-            server, "send_order_email", side_effect=[RuntimeError("SMTP unavailable"), None]
+            server, "send_order_email", side_effect=[server.MailDeliveryError("SMTP unavailable"), None]
         ) as mail:
             self.check_at(3)
             self.assertEqual(self.order(uid)["status"], "paid")

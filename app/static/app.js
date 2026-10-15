@@ -88,6 +88,16 @@ const activityMeta = {
 
 const miniGames = [
   {
+    "slug": "oh-yo",
+    "title": "Ох, ё! Сказание о шипящих",
+    "description": "О, Е и Ё после шипящих: три сказочных сюжета, четыре уровня помощи, памятки Баюна и работа над ошибками.",
+    "button": "Играть",
+    "path": "/games/oh-yo/index.html",
+    "category": "orthography",
+    "categoryTitle": "Орфография",
+    "kindLabel": "ИГРА"
+  },
+  {
     "slug": "autumn-leaves",
     "title": "Осень. И-Ы",
     "description": "Ловите летящие листья и выбирайте пропущенные И или Ы после Ц. В конструкторе можно создать игру по другим орфограммам.",
@@ -355,6 +365,53 @@ function groupedMiniGames() {
 }
 
 const shopProducts = [
+  {
+    "slug": "oh-yo",
+    "title": "HTML-игра «Ох, ё! Сказание о шипящих»",
+    "price": "400 ₽",
+    "kindLabel": "ИГРА",
+    "image": "/games/oh-yo/Обложка.png",
+    "images": [
+      "/games/oh-yo/Обложка.png",
+      "/games/oh-yo/Офлайн-комплект игры «Ох, ё!»-2.png",
+      "/games/oh-yo/Правила и подсказки кота Баюна-3.png",
+      "/games/oh-yo/Гибкая настройка тренировки по русскому языку-4.png",
+      "/games/oh-yo/Три сказочных сюжета Ох, ё!-5.png"
+    ],
+    "demoUrl": "/games/oh-yo/index.html",
+    "demoLabel": "Играть",
+    "shortDescription": "Орфографическая игра: О, Е и Ё после шипящих в корнях, суффиксах и окончаниях.",
+    "fullDescription": "Три сказочных сюжета: колодец Водяного, молодильные яблоки и сбор хвороста для Бабы-яги. Выбирайте буквы, вспоминайте правила с котом Баюном и закрепляйте тему в коротких раундах.",
+    "tryBefore": [
+      "Откройте игру в разделе «Орфография» и попробуйте её перед покупкой."
+    ],
+    "suitableFor": [
+      "для 5–6 и 7–11 классов",
+      "для урока и самостоятельной тренировки"
+    ],
+    "howItWorks": [
+      "Выберите возрастную группу, один из четырёх уровней помощи и сюжет.",
+      "Пройдите алгоритм и выберите О, Е или Ё. В раунде 12 слов; для победы нужно 9 верных ответов.",
+      "Пользуйтесь памятками и подсказками Баюна, повторяйте слова из копилки ошибок."
+    ],
+    "package": [
+      "Автономный HTML-файл со встроенными изображениями и заданиями.",
+      "Три сюжета, разминка по правилам, памятки, статистика и работа над ошибками."
+    ],
+    "adaptation": [
+      "Две возрастные группы и четыре уровня помощи.",
+      "Адаптировано для компьютеров, планшетов и мобильных телефонов."
+    ],
+    "format": "Цифровая HTML-игра. Один файл для работы без интернета.",
+    "requirements": [
+      "современный браузер",
+      "компьютер, планшет или смартфон"
+    ],
+    "delivery": "После оплаты ссылка на офлайн-файл придёт на почту и появится в «Моих играх».",
+    "important": [
+      "Прогресс сохраняется в браузере на текущем устройстве."
+    ]
+  },
   {
     "slug": "autumn-leaves",
     "title": "HTML-игра «Осень. И-Ы»",
@@ -1199,11 +1256,13 @@ const supportProducts = [
 ];
 
 let shopProductOverrides = null;
+let shopPaymentsEnabled = true;
 
 async function loadShopProductOverrides() {
   if (shopProductOverrides) return shopProductOverrides;
   try {
     const data = await api("/api/shop/products");
+    shopPaymentsEnabled = data.payments_enabled !== false;
     shopProductOverrides = new Map((data.products || []).map((item) => [item.slug, item]));
   } catch (error) {
     shopProductOverrides = new Map();
@@ -2355,6 +2414,7 @@ async function renderShopPlaceholder() {
     <section class="public-placeholder public-page shop-page">
       <p class="eyebrow">магазин</p>
       <h2>Магазин материалов</h2>
+      ${shopPaymentsEnabled ? "" : '<p class="error">Оплата временно отключена. Каталог доступен, оплаченные заказы обрабатываются.</p>'}
       <p>Цифровые материалы по русскому языку для уроков, тренировки и подготовки.</p>
       <div class="shop-notice">
         Игры доступны к покупке. После оплаты ссылка на материал придёт на указанную электронную почту.
@@ -2627,7 +2687,7 @@ async function renderShopProductPage(slug) {
       <div class="product-detail-hero">
         ${renderProductGallery(product)}
         <div class="product-detail-summary">
-          <p class="eyebrow">цифровой материал</p>
+          <p class="eyebrow">${escapeHtml(product.kindLabel || "цифровой материал")}</p>
           <h2>${escapeHtml(product.title)}</h2>
           <p>${escapeHtml(product.shortDescription)}</p>
           <p>${escapeHtml(product.fullDescription)}</p>
@@ -2865,6 +2925,10 @@ function removeFromCart(slug) {
 }
 
 function openPaymentForm(productSlugs = ["fruit-garden-ik-ek"], clearCartOnSuccess = false) {
+  if (!shopPaymentsEnabled) {
+    alert("Оплата временно отключена. Попробуйте позже.");
+    return;
+  }
   const slugs = Array.isArray(productSlugs) ? productSlugs : [productSlugs];
   const products = slugs.map(paymentProductBySlug).filter(Boolean);
   if (!products.length) return;
@@ -5076,7 +5140,17 @@ function renderAdminContent(data, closeButton = "") {
         <td>${productLabel}</td>
         <td>${escapeHtml(order.amount || "0.00")} ${escapeHtml(order.currency || "RUB")}</td>
         <td>${order.entity_type === "donation" ? "донат" : "товар"}</td>
-        <td>Материал отправлен: ${order.email_sent ? "да" : "нет"}</td>
+        <td>
+          ${escapeHtml(({pending: "Ожидает отправки", retry: "Ожидает повтора", sending: "Отправляется", sent: "Принято SMTP-сервером", manual: "Отправлено вручную", unknown: "Результат неизвестен — проверьте почту", attention: "Требуется внимание", legacy_review: "Исторический заказ — требуется проверка"})[order.delivery_status] || order.delivery_status || "—")}
+          <br>Попыток: ${Number(order.delivery_attempts || 0)}
+          <br>Способ: ${escapeHtml(order.delivery_method || "—")}
+          ${order.delivery_last_at ? `<br>Последняя: ${formatAdminDate(order.delivery_last_at)}` : ""}
+          ${order.delivery_next_at ? `<br>Следующая: ${formatAdminDate(order.delivery_next_at)}` : ""}
+          ${order.delivery_error ? `<br><span class="error">${escapeHtml(order.delivery_error)}</span>` : ""}
+          ${isPaid ? `<br><button type="button" class="ghost-button delivery-action" data-action="retry" data-order-uid="${escapeHtml(order.order_uid)}">Повторить отправку</button>
+          <button type="button" class="ghost-button delivery-action" data-action="manual" data-order-uid="${escapeHtml(order.order_uid)}">Отметить как отправленное вручную</button>` : ""}
+          <button type="button" class="ghost-button delivery-action" data-action="history" data-order-uid="${escapeHtml(order.order_uid)}">Посмотреть историю отправок</button>
+        </td>
         <td>
           <span class="${order.receipt_sent ? "status-ok" : "status-bad"}">Чек отправлен: ${order.receipt_sent ? "да" : "нет"}</span>
           ${order.receipt_sent_at ? `<br><span class="muted">${formatAdminDate(order.receipt_sent_at)}</span>` : ""}
@@ -5278,10 +5352,11 @@ function renderAdminContent(data, closeButton = "") {
       <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
       <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>
       <button class="secondary-button admin-tab" data-admin-section="delivery" type="button">Товары магазина</button>
-      <button class="secondary-button admin-tab" data-admin-section="receipts" type="button">Чеки самозанятого</button>
+      <button class="secondary-button admin-tab" data-admin-section="receipts" type="button">Заказы и чеки</button>
       <button class="secondary-button admin-tab" data-admin-section="users" type="button">Пользователи</button>
       <button class="secondary-button admin-tab" data-admin-section="mail" type="button">Почта</button>
     </div>
+    ${receiptOrders.some(order => ["attention", "unknown", "legacy_review"].includes(order.delivery_status)) ? '<p class="error" role="alert">Есть заказы, требующие внимания. Откройте «Заказы и чеки» → «Все оплаченные» и проверьте доставку.</p>' : ""}
     <section class="admin-section" data-admin-panel="online">
       <div class="table-head"><h3>Кто сейчас на сайте</h3><span class="muted">последние 5 минут</span></div>
       <table class="table admin-table"><tr><th>Пользователь</th><th>Где находится</th><th>Был</th></tr>${onlineRows}</table>
@@ -5377,6 +5452,11 @@ function renderAdminContent(data, closeButton = "") {
       </details>
     </section>
     <section class="admin-section hidden" data-admin-panel="mail">
+      <div class="admin-card">
+        <p>Новые платежи: ${data.payments_enabled === false ? "отключены" : "включены"}. Оплаченные заказы продолжают обрабатываться.</p>
+        <p class="error">Заказов, требующих внимания: ${receiptOrders.filter(order => ["attention", "unknown", "legacy_review"].includes(order.delivery_status)).length}</p>
+        <button type="button" class="ghost-button" id="toggleShopPayments">${data.payments_enabled === false ? "Включить" : "Отключить"} новые платежи</button>
+      </div>
       <form class="admin-card smtp-test-panel" id="smtpTestForm">
         <div>
           <p class="eyebrow">почта</p>
@@ -5667,6 +5747,32 @@ function bindAdminActions(root) {
       }
     });
   });
+  root.querySelector("#toggleShopPayments")?.addEventListener("click", async () => {
+    if (!confirm("Изменить доступность новых платежей?")) return;
+    try {
+      await api("/api/admin/payments-enabled", { method: "POST", body: JSON.stringify({enabled: data.payments_enabled === false}) });
+      shopProductOverrides = null;
+      await reloadAdminPanel("receipts", activeReceiptFilter());
+    } catch (err) { alert(err.message); }
+  });
+  root.querySelectorAll(".delivery-action").forEach(button => button.addEventListener("click", async () => {
+    const action = button.dataset.action;
+    const prompt = action === "manual"
+      ? "Подтверждаете, что вы уже успешно отправили покупателю все материалы вручную?"
+      : "Повторить отправку? Проверьте историю и почту: при неизвестном результате возможен дубликат.";
+    if (action !== "history" && !confirm(prompt)) return;
+    button.disabled = true;
+    try {
+      const result = await api("/api/admin/orders/delivery", {method: "POST", body: JSON.stringify({order_uid: button.dataset.orderUid, action, confirmed: true})});
+      if (action === "history") {
+        alert((result.history || []).map(item => `${formatAdminDate(item.attempted_at)} | ${item.method} | ${item.actor || "система"} | ${item.result}${item.error ? ` | ${item.error}` : ""}`).join("\n") || "Попыток пока нет.");
+      } else {
+        if (["attention", "unknown", "retry", "sending"].includes(result.delivery_status)) alert("Отправка не подтверждена. Проверьте статус и историю заказа.");
+        await reloadAdminPanel("receipts", activeReceiptFilter());
+      }
+    } catch (err) { alert(err.message); }
+    finally { button.disabled = false; }
+  }));
   root.querySelector("#smtpTestForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;

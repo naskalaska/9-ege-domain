@@ -12,6 +12,10 @@ import random
 import re
 import secrets
 import smtplib
+import ssl
+import logging
+import ipaddress
+import socket
 import sqlite3
 import sys
 import threading
@@ -32,7 +36,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, build_opener, HTTPRedirectHandler, ProxyHandler
 from urllib.parse import parse_qs, unquote, urlparse
 
 
@@ -74,6 +78,7 @@ CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
 FULL_GAME_ROUTE_TOKENS = {
+    "oh-yo": "58310947265028",
     "autumn-herbarium": "64093178520648",
     "autumn-leaves": "79328410563827",
     "word-architecture": "19736502168770",
@@ -84,6 +89,18 @@ PROTECTED_FULL_GAME_ROUTES = {
     f"Full-{token}-{slug}": slug for slug, token in FULL_GAME_ROUTE_TOKENS.items()
 }
 SHOP_PRODUCTS = {
+    "oh-yo": {
+        "id": "oh_yo",
+        "title": "HTML-игра «Ох, ё! Сказание о шипящих»",
+        "short_title": "Ох, ё! Сказание о шипящих",
+        "amount": "400.00",
+        "currency": "RUB",
+        "cover_url": "/games/oh-yo/Обложка.png",
+        "url_env": "OH_YO_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/Full-58310947265028-oh-yo/offline.html",
+        "online_url": f"{APP_BASE_URL}/Full-58310947265028-oh-yo/index.html",
+        "kind": "product",
+    },
     "autumn-leaves": {
         "id": "autumn_leaves",
         "title": "HTML-игра «Осень. И-Ы»",
@@ -579,6 +596,7 @@ def first_existing_path(*paths: Path) -> Path:
 
 
 HTML_GAMES = {
+    "oh-yo": HTML_DIR / "Ох, ё! Сказание о шипящих",
     "autumn-leaves": HTML_DIR / "Осень. И-Ы",
     "autumn-herbarium": HTML_DIR / "Осенний гербарий",
     "suffixes-nouns": first_existing_path(HTML_DIR / "suffixes-nouns", HTML_DIR / "Лето. Суффиксы"),
@@ -605,6 +623,7 @@ HTML_GAMES = {
 }
 
 HTML_GAME_TITLES = {
+    "oh-yo": "Ох, ё! Сказание о шипящих",
     "autumn-leaves": "Осень. И-Ы",
     "autumn-herbarium": "Осенний Гербарий",
     "suffixes-nouns": "Пушинки: суффиксы существительных",
@@ -631,6 +650,7 @@ HTML_GAME_TITLES = {
 }
 
 PUBLIC_GAMES = {
+    "oh-yo": HTML_DIR / "Ох, ё! Сказание о шипящих",
     "autumn-leaves": HTML_DIR / "Осень. И-Ы",
     "autumn-herbarium": HTML_DIR / "Осенний гербарий",
     "fluffs": first_existing_path(HTML_DIR / "fluffs", HTML_DIR / "Пушинки"),
@@ -854,6 +874,7 @@ def seed_paid_entities(con: sqlite3.Connection) -> None:
 def seed_gift_only_games(con: sqlite3.Connection) -> None:
     """Keep every platform game giftable without publishing it in the shop."""
     shop_product_by_game_slug = {
+        "oh-yo": "oh_yo",
         "autumn-leaves": "autumn_leaves",
         "autumn-herbarium": "autumn_herbarium",
         "suffixes-nouns": "dandelion_suffixes",
@@ -1801,16 +1822,37 @@ def ensure_app_db() -> None:
         ensure_column(con, "game_sets", "is_deleted", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "game_sets", "deleted_at", "TEXT")
         ensure_column(con, "game_sets", "deleted_by", "TEXT")
+        # Additive, idempotent migration; historical unsent orders require review.
+        for name, definition in {
+            "delivery_status": "TEXT NOT NULL DEFAULT 'legacy_review'",
+            "delivery_attempts": "INTEGER NOT NULL DEFAULT 0",
+            "delivery_last_at": "TEXT", "delivery_next_at": "TEXT",
+            "delivery_error": "TEXT", "delivery_method": "TEXT",
+            "delivery_token": "TEXT", "delivery_lease_at": "TEXT", "payment_verified_id": "TEXT",
+        }.items():
+            ensure_column(con, "shop_orders", name, definition)
+        ensure_column(con, "shop_order_items", "snapshot_json", "TEXT")
+        con.executescript("""
+            CREATE TABLE IF NOT EXISTS shop_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS shop_delivery_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, order_uid TEXT NOT NULL,
+                attempted_at TEXT NOT NULL, finished_at TEXT, method TEXT NOT NULL,
+                actor TEXT, result TEXT NOT NULL, error TEXT, token TEXT UNIQUE
+            );
+            CREATE INDEX IF NOT EXISTS idx_delivery_due ON shop_orders(delivery_status, delivery_next_at);
+        """)
+        con.execute("UPDATE shop_orders SET delivery_status = 'sent' WHERE email_sent = 1 AND delivery_status = 'legacy_review'")
         ensure_column(con, "shop_orders", "receipt_sent", "INTEGER NOT NULL DEFAULT 0")
         ensure_column(con, "shop_orders", "receipt_sent_at", "TEXT")
         ensure_column(con, "shop_orders", "receipt_note", "TEXT")
         ensure_column(con, "shop_orders", "payment_check_started_at", "TEXT")
         ensure_column(con, "shop_orders", "payment_check_count", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(con, "shop_orders", "payment_next_at", "TEXT")
         con.execute("""
-            CREATE INDEX IF NOT EXISTS idx_shop_orders_payment_checks
+            CREATE INDEX IF NOT EXISTS idx_shop_orders_payment_checks_v2
             ON shop_orders(payment_check_count, created_at)
-            WHERE status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
-              AND COALESCE(yookassa_payment_id, '') <> '' AND payment_check_count < 3
+            WHERE (status = 'pending' OR (status = 'paid' AND payment_verified_id IS NULL)) AND COALESCE(email_sent, 0) = 0
+              AND COALESCE(yookassa_payment_id, '') <> ''
         """)
         ensure_column(con, "paid_entities", "cover_url", "TEXT")
         ensure_column(con, "paid_entities", "online_url", "TEXT")
@@ -3398,6 +3440,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
         },
         "paid_entities": paid_entities,
         "receipt_orders": receipt_orders,
+        "payments_enabled": payments_enabled(),
         "suspicious_users": suspicious_users,
         "teachers": [
             {
@@ -4565,7 +4608,7 @@ def shop_products_public() -> dict[str, Any]:
                 "is_active": bool(row["is_active"]),
             }
         )
-    return {"products": products}
+    return {"products": products, "payments_enabled": payments_enabled()}
 
 
 def format_amount_label(amount: str, currency: str = "RUB") -> str:
@@ -4585,6 +4628,8 @@ def receipt_orders_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
         SELECT so.order_uid, so.product_id, so.product_title, so.amount, so.currency,
                so.buyer_email, so.status, so.email_sent, so.paid_at, so.created_at,
                so.receipt_sent, so.receipt_sent_at, so.receipt_note,
+               so.delivery_status, so.delivery_attempts, so.delivery_last_at, so.delivery_next_at,
+               so.delivery_error, so.delivery_method,
                pe.type AS entity_type
         FROM shop_orders so
         LEFT JOIN paid_entities pe ON pe.product_id = so.product_id
@@ -4945,12 +4990,6 @@ def reset_token_hash(token: str) -> str:
 
 
 def send_password_reset_email(email: str, link: str) -> None:
-    if not SMTP_HOST or not MAIL_FROM:
-        if not production_mode():
-            print(f"Password reset link for {email}: {link}")
-            return
-        raise RuntimeError("SMTP is not configured.")
-
     message = EmailMessage()
     message["Subject"] = "Восстановление пароля"
     message["From"] = MAIL_FROM
@@ -4962,58 +5001,64 @@ def send_password_reset_email(email: str, link: str) -> None:
         "Если вы не запрашивали восстановление пароля, просто игнорируйте это письмо.\n"
     )
 
-    try:
-        if SMTP_USE_SSL:
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
-                if SMTP_USER:
-                    smtp.login(SMTP_USER, SMTP_PASSWORD)
-                smtp.send_message(message)
-            return
+    send_email_message(message)
 
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-            smtp.starttls()
-            if SMTP_USER:
-                smtp.login(SMTP_USER, SMTP_PASSWORD)
-            smtp.send_message(message)
-    except smtplib.SMTPAuthenticationError as error:
-        print(f"SMTP authentication failed: code={error.smtp_code}, debug={smtp_debug_info()}")
-        raise RuntimeError("SMTP: неверный логин или пароль. Проверьте SMTP_USER и SMTP_PASSWORD.") from error
-    except smtplib.SMTPException as error:
-        print(f"SMTP password reset send failed: {error}")
-        raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
+
+class MailDeliveryError(RuntimeError):
+    def __init__(self, message: str, uncertain: bool = False):
+        super().__init__(message)
+        self.uncertain = uncertain
 
 
 def send_email_message(message: EmailMessage) -> None:
     if not SMTP_HOST or not MAIL_FROM:
-        if not production_mode():
-            print(message.as_string())
-            return
-        raise RuntimeError("SMTP is not configured.")
-
+        raise MailDeliveryError("SMTP не настроен. Обратитесь к администратору.")
+    stage = "connect"
+    smtp = None
     try:
-        if SMTP_USE_SSL:
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
-                if SMTP_USER:
-                    smtp.login(SMTP_USER, SMTP_PASSWORD)
-                smtp.send_message(message)
-            return
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
-            smtp.starttls()
-            if SMTP_USER:
-                smtp.login(SMTP_USER, SMTP_PASSWORD)
-            smtp.send_message(message)
-    except smtplib.SMTPAuthenticationError as error:
-        print(f"SMTP authentication failed: code={error.smtp_code}, debug={smtp_debug_info()}")
-        raise RuntimeError("SMTP: неверный логин или пароль. Проверьте SMTP_USER и SMTP_PASSWORD.") from error
-    except smtplib.SMTPException as error:
-        print(f"SMTP send failed: {error}")
-        raise RuntimeError("SMTP: не удалось отправить письмо. Проверьте настройки почты.") from error
+        context = ssl.create_default_context()
+        smtp = (smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10, context=context)
+                if SMTP_USE_SSL else smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10))
+        if not SMTP_USE_SSL:
+            stage = "tls"
+            smtp.starttls(context=context)
+        if SMTP_USER:
+            stage = "auth"
+            smtp.login(SMTP_USER, SMTP_PASSWORD)
+        stage = "send"
+        refused = smtp.send_message(message)
+        if refused:
+            raise smtplib.SMTPRecipientsRefused(refused)
+        stage = "accepted"
+    except (OSError, smtplib.SMTPException) as error:
+        logging.error("SMTP failure stage=%s type=%s code=%s errno=%s", stage,
+                      type(error).__name__, getattr(error, "smtp_code", None), getattr(error, "errno", None))
+        uncertain = stage == "send" and not isinstance(error, (
+            smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, smtplib.SMTPDataError))
+        message_text = ("SMTP: неверный логин или пароль." if isinstance(error, smtplib.SMTPAuthenticationError)
+                        else "Не удалось передать письмо почтовому серверу. Администратор уведомлён в панели заказов.")
+        raise MailDeliveryError(message_text, uncertain) from error
+    finally:
+        if smtp is not None:
+            # QUIT failures cannot invalidate the already received DATA acknowledgement.
+            try:
+                smtp.quit()
+            except (OSError, smtplib.SMTPException):
+                smtp.close()
 
 
 def product_email_note(product: dict[str, str]) -> str:
+    if "email_note" in product:
+        return str(product["email_note"])
     slug = str(product.get("slug") or "")
     product_id = str(product.get("id") or product.get("product_id") or "")
+    if slug == "oh-yo" or product_id == "oh_yo":
+        return (
+            "\nСкачайте HTML-файл и откройте его в современном браузере: интернет и установка не нужны.\n"
+            "Выберите возрастную группу, уровень помощи и один из трёх сюжетов. "
+            "Внутри — памятки, подсказки Баюна, статистика и работа над ошибками.\n"
+            "Прогресс сохраняется в браузере на этом устройстве.\n"
+        )
     if slug == "autumn-herbarium" or product_id == "autumn_herbarium":
         return (
             "\nОткройте скачанный HTML-файл в браузере: изображения и полная база уже внутри.\n"
@@ -5136,10 +5181,9 @@ def send_admin_smtp_test(admin: dict[str, Any], payload: dict[str, Any]) -> dict
         "Если вы получили это письмо, отправка почты работает.\n"
     )
     send_email_message(message)
-    print(f"SMTP test email sent: to={email}")
     return {
         "ok": True,
-        "message": "Тестовое письмо отправлено.",
+        "message": "SMTP-сервер принял тестовое письмо. Получение адресатом не подтверждено.",
         "smtp": smtp_debug_info(),
     }
 
@@ -5173,14 +5217,46 @@ def product_by_id(product_id: str) -> dict[str, str] | None:
 
 def order_products(order_uid: str, fallback_product_id: str = "") -> list[dict[str, str]]:
     with db() as con:
-        rows = con.execute(
-            "SELECT product_id FROM shop_order_items WHERE order_uid = ? ORDER BY rowid",
-            (order_uid,),
-        ).fetchall()
-    product_ids = [str(row["product_id"] or "") for row in rows]
-    if not product_ids and fallback_product_id:
-        product_ids = [fallback_product_id]
-    return [product for product_id in product_ids if (product := product_by_id(product_id))]
+        rows = con.execute("SELECT * FROM shop_order_items WHERE order_uid = ? ORDER BY rowid", (order_uid,)).fetchall()
+    if not rows:
+        product = product_by_id(fallback_product_id) if fallback_product_id else None
+        return [product] if product else []
+    products = []
+    for row in rows:
+        if row["snapshot_json"]:
+            product = json.loads(row["snapshot_json"])
+        else:
+            product = product_by_id(row["product_id"])
+            if not product:
+                raise ValueError("Состав заказа требует проверки администратором.")
+            product.update(title=row["product_title"], amount=row["amount"], currency=row["currency"])
+        products.append(product)
+    return products
+
+
+def delivery_snapshot(product: dict[str, Any]) -> str:
+    return json.dumps({key: value for key, value in {
+        "id": product["id"], "slug": product["slug"], "title": product["title"],
+        "amount": product["amount"], "currency": product["currency"], "kind": product["kind"],
+        "delivery_url": product_delivery_url(product), "online_url": product_online_url(product),
+        "email_note": product_email_note(product),
+        "bonus_urls": [f"{APP_BASE_URL}/Full-82057434086961-palace-restoration/index.html"] if product["slug"] == "word-architecture" else [],
+    }.items()}, ensure_ascii=False)
+
+
+def payments_enabled() -> bool:
+    with db() as con:
+        row = con.execute("SELECT value FROM shop_settings WHERE key = 'payments_enabled'").fetchone()
+    return not row or row[0] == '1'
+
+
+def admin_payment_availability(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    if not isinstance(payload.get("enabled"), bool):
+        raise ValueError("Укажите enabled: true или false.")
+    with db() as con:
+        con.execute("INSERT OR REPLACE INTO shop_settings VALUES ('payments_enabled', ?)", ('1' if payload['enabled'] else '0',))
+    return {"ok": True, "payments_enabled": payments_enabled()}
 
 
 def user_can_access_full_game(user: dict[str, Any], slug: str) -> bool:
@@ -5249,6 +5325,8 @@ def product_online_url(product: dict[str, str]) -> str:
 
 def game_entry_file(slug: str, relative_path: str) -> str:
     clean_path = relative_path or "index.html"
+    if slug == "oh-yo" and clean_path in {"", "index.html"}:
+        return "Ох_ё_сказание о шипящих.html"
     if slug == "autumn-leaves" and clean_path == "index.html":
         return "autumn.html"
     if slug == "grammar-zoo" and clean_path in {"", "index.html", "grammar_zoo_engine.html"}:
@@ -5684,10 +5762,6 @@ def yookassa_env(product: dict[str, str] | None = None) -> tuple[str, str, str]:
             f"YOOKASSA_SECRET_KEY={'yes' if secret_key else 'no'}"
         )
         raise RuntimeError("Оплата временно недоступна. Попробуйте позже")
-    if not product_url:
-        env_name = (product or PRODUCT_BERRY_SEASON)["url_env"]
-        print(f"YooKassa env missing: {env_name}=no")
-        raise RuntimeError("Материал временно недоступен. Попробуйте позже")
     return shop_id, secret_key, product_url
 
 
@@ -5773,6 +5847,8 @@ def get_yookassa_payment(shop_id: str, secret_key: str, payment_id: str) -> dict
 
 
 def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-garden-ik-ek") -> dict[str, Any]:
+    if not payments_enabled():
+        raise RuntimeError("Оплата временно отключена. Каталог доступен, оплаченные заказы обрабатываются.")
     email = normalize_email(payload.get("email"))
     validate_email(email)
     requested = payload.get("products")
@@ -5819,11 +5895,13 @@ def create_product_payment(payload: dict[str, Any], default_slug: str = "fruit-g
         )
         con.executemany(
             """
-            INSERT INTO shop_order_items (order_uid, product_id, product_title, amount, currency)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO shop_order_items (order_uid, product_id, product_title, amount, currency, snapshot_json)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            [(order_uid, item["id"], item["title"], item["amount"], item["currency"]) for item in products],
+            [(order_uid, item["id"], item["title"], item["amount"], item["currency"], delivery_snapshot(item)) for item in products],
         )
+    with db() as con:
+        con.execute("UPDATE shop_orders SET delivery_status = 'pending' WHERE order_uid = ?", (order_uid,))
     try:
         payment = create_yookassa_payment(shop_id, secret_key, product, order_uid, email)
     except RuntimeError:
@@ -5853,69 +5931,265 @@ def deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = ""
         return _deliver_product_order(order_uid, payment_id, raw_payload)
 
 
-def _deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "") -> dict[str, Any]:
+def _deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "", *, verify_only: bool = False) -> dict[str, Any]:
     with db() as con:
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
-    if not order:
-        raise ValueError("Заказ не найден.")
-    products = order_products(order_uid, str(order["product_id"] or ""))
-    if not products:
-        raise ValueError("Материал не найден.")
-    product = products[0]
-
-    shop_id, secret_key, product_url = yookassa_env(product)
-    payment = get_yookassa_payment(shop_id, secret_key, payment_id)
-    payment_status = str(payment.get("status") or "")
-    metadata = payment.get("metadata") if isinstance(payment.get("metadata"), dict) else {}
-    if str(metadata.get("order_uid") or "") != order_uid:
+    if not order or not payment_id or payment_id != order["yookassa_payment_id"]:
         raise ValueError("Платёж не найден.")
+    if not verify_only and (order["email_sent"] or order["delivery_status"] in {"sent", "manual"}):
+        return delivery_result(order_uid)
+    if order["status"] != "paid" or order["payment_verified_id"] != payment_id:
+        # Notifications are hints only; verify the object through the merchant API.
+        shop_id, secret_key, _ = yookassa_env()
+        payment = get_yookassa_payment(shop_id, secret_key, payment_id)
+        metadata = payment.get("metadata") or {}
+        amount = payment.get("amount") or {}
+        if (payment.get("id") != payment_id or metadata.get("order_uid") != order_uid
+                or metadata.get("product_id") != order["product_id"]
+                or amount.get("currency") != order["currency"]
+                or Decimal(str(amount.get("value", "-1"))) != Decimal(order["amount"])):
+            raise ValueError("Платёж не соответствует заказу.")
+        status = payment.get("status")
+        if status != "succeeded":
+            if status == "canceled" and order["status"] != "paid":
+                with db() as con:
+                    con.execute("UPDATE shop_orders SET status = 'canceled' WHERE order_uid = ? AND status <> 'paid'", (order_uid,))
+            return {"ok": True, "status": order["status"] if order["status"] == "paid" else status, "email_sent": bool(order["email_sent"])}
+        with db() as con:
+            con.execute("""UPDATE shop_orders SET status = 'paid', paid_at = COALESCE(paid_at, ?),
+                           payment_verified_id = ?, raw_webhook = COALESCE(?, raw_webhook) WHERE order_uid = ?""",
+                        (now_iso(), payment_id, raw_payload or None, order_uid))
+    return delivery_result(order_uid) if verify_only else attempt_order_delivery(order_uid)
 
+
+def delivery_result(order_uid: str) -> dict[str, Any]:
     with db() as con:
+        row = con.execute("SELECT status, email_sent, delivery_status FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
+    return {"ok": True, "status": row["status"], "email_sent": bool(row["email_sent"]),
+            "delivery_status": row["delivery_status"]}
+
+
+def finish_delivery_attempt(order_uid: str, token: str, result: str, error: str = "", next_at: str | None = None) -> None:
+    with closing(db()) as con, con:
+        changed = con.execute("""UPDATE shop_orders SET delivery_status = ?, delivery_error = ?, delivery_next_at = ?,
+                       email_sent = CASE WHEN ? = 'sent' THEN 1 ELSE email_sent END,
+                       delivery_token = NULL WHERE order_uid = ? AND delivery_token = ?""",
+                    (result, error, next_at, result, order_uid, token)).rowcount
+        if not changed:
+            return
+        con.execute("UPDATE shop_delivery_history SET result = ?, error = ?, finished_at = ? WHERE token = ?",
+                    (result, error, now_iso(), token))
+
+
+def validate_delivery_link(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("Некорректная ссылка на материал.")
+    if parsed.netloc == urlparse(APP_BASE_URL).netloc:
+        parts = unquote(parsed.path).strip('/').split('/', 2)
+        route = parts[0]
+        root = None
+        relative = ''
+        if route == 'shop-media':
+            root, relative = SHOP_MEDIA_DIR, '/'.join(parts[1:])
+        elif route == 'full-games' or route.startswith('Full-'):
+            protected = route.startswith('Full-')
+            slug = PROTECTED_FULL_GAME_ROUTES.get(route) if protected else (parts[1] if len(parts) > 1 else '')
+            if slug in PROTECTED_FULL_GAME_SLUGS and not protected:
+                raise ValueError("Неверный маршрут полной игры.")
+            root = HTML_GAMES.get(slug)
+            requested = ('/'.join(parts[1:]) if protected else (parts[2] if len(parts) > 2 else '')) or 'index.html'
+            if protected and requested == 'offline.html' and slug in {'oh-yo', 'autumn-herbarium', 'autumn-leaves', 'palace-restoration'}:
+                requested = 'index.html'
+            relative = game_entry_file(slug, requested)
+        if root is None:
+            raise ValueError("Неизвестный локальный маршрут материала.")
+        asset = (root / relative).resolve()
+        if not asset.is_relative_to(root.resolve()) or not asset.is_file():
+            raise ValueError("Файл материала недоступен.")
+        return
+    # Admin-configured external links: bounded availability check, no private
+    # addresses, no environment proxy, and redirects validated individually.
+    class NoRedirect(HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    opener = build_opener(ProxyHandler({}), NoRedirect())
+    from urllib.parse import urljoin, quote
+    for _ in range(4):
+        parsed = urlparse(url)
+        if parsed.scheme not in {'http', 'https'} or parsed.username or parsed.password:
+            raise ValueError("Некорректное перенаправление материала.")
+        try:
+            addresses = socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == 'https' else 80), type=socket.SOCK_STREAM)
+            if not addresses or any(not ipaddress.ip_address(address[4][0]).is_global for address in addresses):
+                raise ValueError("Ссылка должна вести на публичный сервер.")
+            request = Request(quote(url, safe=":/?&=%#@+;,$!~*'()-_"), method='HEAD')
+            try:
+                response = opener.open(request, timeout=10)
+            except HTTPError as error:
+                if error.code in {301, 302, 303, 307, 308}:
+                    url = urljoin(url, error.headers.get('Location', ''))
+                    error.close()
+                    continue
+                if error.code == 405:
+                    error.close()
+                    response = opener.open(Request(request.full_url, headers={'Range': 'bytes=0-0'}), timeout=10)
+                else:
+                    error.close()
+                    raise ValueError("Ссылка на материал недоступна.") from None
+            response.close()
+            return
+        except (OSError, URLError) as error:
+            raise MailDeliveryError("Не удалось проверить доступность ссылки.") from error
+    raise ValueError("Слишком много перенаправлений материала.")
+
+
+def fail_delivery_attempt(order: sqlite3.Row, token: str, error: Exception) -> None:
+    uncertain = not isinstance(error, MailDeliveryError) or error.uncertain
+    count = order["delivery_attempts"]
+    result = 'unknown' if uncertain else ('attention' if count >= 5 else 'retry')
+    next_at = (datetime.fromisoformat(order['delivery_last_at']) + timedelta(seconds=min(86400, 60 * 2 ** min(count, 10)))).isoformat() if result == 'retry' else None
+    finish_delivery_attempt(order['order_uid'], token, result, type(error).__name__ + ": " + (str(error) if isinstance(error, MailDeliveryError) else "Неопределённый результат отправки"), next_at)
+    if result in {'unknown', 'attention'}:
+        logging.error("Delivery requires admin attention order=%s result=%s", order['order_uid'], result)
+
+
+def renew_delivery_claim(order_uid: str, token: str) -> bool:
+    with closing(db()) as con, con:
+        return bool(con.execute("UPDATE shop_orders SET delivery_lease_at = ? WHERE order_uid = ? AND delivery_token = ? AND delivery_status = 'sending'",
+                                (now_iso(), order_uid, token)).rowcount)
+
+
+def attempt_order_delivery(order_uid: str, method: str = "automatic", actor: str = "", force: bool = False) -> dict[str, Any]:
+    token = secrets.token_hex(16)
+    stamp = now_iso()
+    with closing(db()) as con, con:
+        # A persistent conditional UPDATE serializes all processes sharing SQLite.
+        eligible = "COALESCE(email_sent, 0) = 0 AND delivery_status IN ('pending', 'retry') AND (delivery_next_at IS NULL OR julianday(delivery_next_at) <= julianday(?))"
+        args: list[Any] = [token, stamp, method, stamp, order_uid]
+        if force:
+            eligible = "delivery_status <> 'sending'"
+        else:
+            args.append(stamp)
+        claimed = con.execute(f"""UPDATE shop_orders SET delivery_status = 'sending', delivery_token = ?,
+                                 delivery_last_at = ?, delivery_method = ?, delivery_attempts = delivery_attempts + 1,
+                                 delivery_next_at = NULL, delivery_lease_at = ?
+                                 WHERE order_uid = ? AND status = 'paid' AND payment_verified_id = yookassa_payment_id
+                                 AND {eligible}""", args).rowcount
+        if not claimed:
+            return delivery_result(order_uid)
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
-        if not order:
-            raise ValueError("Заказ не найден.")
-        if payment_status == "canceled":
-            con.execute(
-                "UPDATE shop_orders SET status = 'canceled', raw_webhook = COALESCE(?, raw_webhook) WHERE order_uid = ?",
-                (raw_payload or None, order_uid),
-            )
-            return {"ok": True, "status": "canceled", "email_sent": bool(order["email_sent"])}
-        if payment_status != "succeeded":
-            return {"ok": True, "status": payment_status or order["status"], "email_sent": bool(order["email_sent"])}
-        con.execute(
-            """
-            UPDATE shop_orders
-            SET status = 'paid',
-                paid_at = COALESCE(paid_at, ?),
-                raw_webhook = COALESCE(?, raw_webhook)
-            WHERE order_uid = ?
-            """,
-            (now_iso(), raw_payload or None, order_uid),
-        )
-        if int(order["email_sent"] or 0):
-            return {"ok": True, "status": "paid", "email_sent": True}
-        buyer_email = order["buyer_email"]
+        con.execute("INSERT INTO shop_delivery_history(order_uid, attempted_at, method, actor, result, token) VALUES (?, ?, ?, ?, 'sending', ?)",
+                    (order_uid, stamp, method, actor, token))
+    try:
+        products = order_products(order_uid, order["product_id"])
+        if not products:
+            raise ValueError("Состав заказа пуст.")
+        for product in products:
+            urls = [product_delivery_url(product), product_online_url(product), *product.get('bonus_urls', [])]
+            if not any(urls):
+                raise ValueError("Отсутствует ссылка на материал.")
+            for url in filter(None, urls):
+                if not renew_delivery_claim(order_uid, token):
+                    return delivery_result(order_uid)
+                validate_delivery_link(url)
+        # Individually reviewed legacy purchases retain this reviewed version.
+        with closing(db()) as con, con:
+            for product in products:
+                con.execute("UPDATE shop_order_items SET snapshot_json = ? WHERE order_uid = ? AND product_id = ? AND snapshot_json IS NULL",
+                            (delivery_snapshot(product), order_uid, product['id']))
+    except MailDeliveryError as error:
+        fail_delivery_attempt(order, token, error)
+        return delivery_result(order_uid)
+    except Exception as error:
+        finish_delivery_attempt(order_uid, token, 'attention', "Подготовка: " + type(error).__name__)
+        return delivery_result(order_uid)
+    try:
+        if not renew_delivery_claim(order_uid, token):
+            return delivery_result(order_uid)
+        send_order_email(order["buyer_email"], products)
+    except Exception as error:
+        fail_delivery_attempt(order, token, error)
+        return delivery_result(order_uid)
+    # If this commit fails, 'sending' remains durable. Recovery marks it unknown,
+    # never eligible for automatic re-send, even after a process crash.
+    finish_delivery_attempt(order_uid, token, 'sent')
+    return delivery_result(order_uid)
 
-    send_order_email(buyer_email, products)
-    with db() as con:
-        con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-    print(f"Order email sent: order_uid={order_uid}, products={len(products)}")
-    return {"ok": True, "status": "paid", "email_sent": True}
+
+def recover_and_deliver_orders(checked_at: str) -> None:
+    with closing(db()) as con, con:
+        stale = con.execute("""SELECT order_uid, delivery_token FROM shop_orders WHERE delivery_status = 'sending'
+                               AND julianday(COALESCE(delivery_lease_at, delivery_last_at)) < julianday(?) - 5.0 / 1440""", (checked_at,)).fetchall()
+        for row in stale:
+            changed = con.execute("""UPDATE shop_orders SET delivery_status = 'unknown', delivery_error = 'Прерванная отправка: требуется проверка', delivery_token = NULL
+                                     WHERE order_uid = ? AND delivery_token = ? AND delivery_status = 'sending'
+                                     AND julianday(COALESCE(delivery_lease_at, delivery_last_at)) < julianday(?) - 5.0 / 1440""",
+                                  (row['order_uid'], row['delivery_token'], checked_at)).rowcount
+            if changed:
+                con.execute("UPDATE shop_delivery_history SET result = 'unknown', error = 'Прерванная отправка', finished_at = ? WHERE token = ?", (checked_at, row['delivery_token']))
+        orders = con.execute("""SELECT order_uid FROM shop_orders WHERE status = 'paid' AND delivery_status IN ('pending', 'retry')
+                                AND (delivery_next_at IS NULL OR julianday(delivery_next_at) <= julianday(?)) LIMIT 100""", (checked_at,)).fetchall()
+    for row in orders:
+        try:
+            attempt_order_delivery(row['order_uid'])
+        except Exception as error:
+            logging.error("Delivery worker failure order=%s type=%s", row['order_uid'], type(error).__name__)
+
+
+def admin_order_delivery(admin: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    require_admin(admin)
+    uid = str(payload.get('order_uid') or '')
+    action = payload.get('action')
+    if action == 'history':
+        with db() as con:
+            history = [dict(row) for row in con.execute("SELECT attempted_at, finished_at, method, actor, result, error FROM shop_delivery_history WHERE order_uid = ? ORDER BY id DESC", (uid,))]
+        return {'ok': True, 'history': history}
+    if payload.get('confirmed') is not True:
+        raise ValueError("Подтвердите действие.")
+    if action not in {'retry', 'manual'}:
+        raise ValueError("Неизвестное действие.")
+    with ORDER_DELIVERY_LOCKS[hash(uid) % len(ORDER_DELIVERY_LOCKS)]:
+        with db() as con:
+            order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (uid,)).fetchone()
+        if not order or order['status'] != 'paid':
+            raise ValueError("Заказ должен быть оплачен.")
+        actor = str(admin.get('user_id') or admin.get('username') or 'admin')
+        if action == 'manual':
+            with closing(db()) as con, con:
+                changed = con.execute("""UPDATE shop_orders SET email_sent = 1, delivery_status = 'manual', delivery_method = 'manual',
+                                         delivery_last_at = ?, delivery_next_at = NULL, delivery_error = NULL
+                                         WHERE order_uid = ? AND delivery_status <> 'sending'""", (now_iso(), uid)).rowcount
+                if not changed:
+                    raise ValueError("Отправка ещё выполняется. Дождитесь результата.")
+                con.execute("INSERT INTO shop_delivery_history(order_uid, attempted_at, finished_at, method, actor, result) VALUES (?, ?, ?, 'manual', ?, 'manual')", (uid, now_iso(), now_iso(), actor))
+            return delivery_result(uid)
+        if order['payment_verified_id'] != order['yookassa_payment_id']:
+            # Legacy orders are reviewed individually; do not bulk-send them.
+            _deliver_product_order(uid, order['yookassa_payment_id'], verify_only=True)
+            with db() as con:
+                refreshed = con.execute("SELECT payment_verified_id FROM shop_orders WHERE order_uid = ?", (uid,)).fetchone()
+            if refreshed[0] != order['yookassa_payment_id']:
+                raise ValueError("Оплата не подтверждена.")
+        return attempt_order_delivery(uid, 'admin_retry', actor, force=True)
+
 
 
 def check_pending_order_payments(checked_at: str | None = None) -> None:
     """Run due checks; persisted slots survive restarts and API/SMTP failures."""
     checked_at = checked_at or now_iso()
+    recover_and_deliver_orders(checked_at)
     with closing(db()) as con, con:
         orders = con.execute(
             """
             SELECT order_uid, yookassa_payment_id, payment_check_count
             FROM shop_orders
-            WHERE status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
+            WHERE (status = 'pending' OR (status = 'paid' AND payment_verified_id IS NULL)) AND COALESCE(email_sent, 0) = 0
               AND COALESCE(yookassa_payment_id, '') <> ''
-              AND payment_check_count < 3
-              AND julianday(?) >= julianday(COALESCE(payment_check_started_at, created_at))
-                  + (CASE payment_check_count WHEN 0 THEN ? WHEN 1 THEN ? ELSE ? END) / 1440.0
+              AND julianday(?) >= CASE WHEN payment_check_count >= 3
+                  THEN julianday(COALESCE(payment_next_at, created_at)) ELSE
+                  julianday(COALESCE(payment_check_started_at, created_at))
+                  + (CASE payment_check_count WHEN 0 THEN ? WHEN 1 THEN ? ELSE ? END) / 1440.0 END
             ORDER BY COALESCE(payment_check_started_at, created_at)
             LIMIT 100
             """,
@@ -5927,18 +6201,18 @@ def check_pending_order_payments(checked_at: str | None = None) -> None:
             with closing(db()) as con, con:
                 claimed = con.execute(
                     """
-                    UPDATE shop_orders SET payment_check_count = payment_check_count + 1
+                    UPDATE shop_orders SET payment_check_count = payment_check_count + 1, payment_next_at = ?
                     WHERE order_uid = ? AND payment_check_count = ?
                       AND status IN ('pending', 'paid') AND COALESCE(email_sent, 0) = 0
                     """,
-                    (order_uid, order["payment_check_count"]),
+                    ((datetime.fromisoformat(checked_at) + timedelta(minutes=min(1440, 15 * 2 ** min(order["payment_check_count"], 7)))).isoformat(), order_uid, order["payment_check_count"]),
                 ).rowcount
             if not claimed:
                 continue
             try:
                 result = deliver_product_order(order_uid, order["yookassa_payment_id"])
                 print(f"Automatic payment check: order_uid={order_uid}, "
-                      f"minute={PAYMENT_CHECK_MINUTES[order['payment_check_count']]}, "
+                      f"attempt={order['payment_check_count'] + 1}, "
                       f"status={result['status']}, email_sent={result['email_sent']}")
             except Exception as error:
                 # One failed order must not prevent checks for other customers.
@@ -6047,54 +6321,13 @@ def _process_yookassa_webhook(payload: dict[str, Any], raw_payload: str) -> dict
     if not payment_id or not order_uid:
         return {"ok": True}
 
-    should_send_email = False
-    buyer_email = ""
-    with db() as con:
-        order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
-        if not order:
-            print(f"YooKassa webhook ignored: order not found, order_uid={order_uid}")
-            return {"ok": True}
-        products = order_products(order_uid, str(order["product_id"] or ""))
-        product = products[0] if products else None
-        if not product or product_id != product["id"]:
-            print(f"YooKassa webhook ignored: product mismatch, order_uid={order_uid}")
-            return {"ok": True}
-
-        if event == "payment.succeeded":
-            con.execute(
-                """
-                UPDATE shop_orders
-                SET status = 'paid',
-                    paid_at = COALESCE(paid_at, ?),
-                    yookassa_payment_id = COALESCE(yookassa_payment_id, ?),
-                    raw_webhook = ?
-                WHERE order_uid = ?
-                """,
-                (now_iso(), payment_id, raw_payload, order_uid),
-            )
-            if not int(order["email_sent"] or 0):
-                should_send_email = True
-                buyer_email = order["buyer_email"]
-        elif event == "payment.canceled":
-            con.execute(
-                """
-                UPDATE shop_orders
-                SET status = 'canceled',
-                    yookassa_payment_id = COALESCE(yookassa_payment_id, ?),
-                    raw_webhook = ?
-                WHERE order_uid = ?
-                """,
-                (payment_id, raw_payload, order_uid),
-            )
-    if should_send_email:
-        products = order_products(order_uid, product_id)
-        if not products or any(not product_delivery_url(product) for product in products):
-            raise RuntimeError("Материал временно недоступен. Попробуйте позже")
-        send_order_email(buyer_email, products)
-        with db() as con:
-            con.execute("UPDATE shop_orders SET email_sent = 1 WHERE order_uid = ?", (order_uid,))
-        print(f"Order email sent by webhook: order_uid={order_uid}, products={len(products)}")
-    return {"ok": True}
+    if event not in {"payment.succeeded", "payment.canceled"}:
+        return {"ok": True}
+    try:
+        return deliver_product_order(order_uid, payment_id, raw_payload)
+    except ValueError:
+        # Unknown or mismatched callbacks must never mutate an order.
+        return {"ok": True}
 
 
 def request_password_reset(payload: dict[str, Any]) -> dict[str, Any]:
@@ -6218,7 +6451,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
-        if slug in {"autumn-herbarium", "autumn-leaves"}:
+        if slug in {"oh-yo", "autumn-herbarium", "autumn-leaves"}:
             if requested_path == game_entry_file(slug, "index.html"):
                 requested_path = "index.html"
             if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
@@ -6254,7 +6487,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
             return
         requested_path = unquote(relative_path).lstrip("/") or "index.html"
-        if slug in {"autumn-herbarium", "autumn-leaves"}:
+        if slug in {"oh-yo", "autumn-herbarium", "autumn-leaves"}:
             if requested_path == game_entry_file(slug, "index.html"):
                 requested_path = "index.html"
             if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
@@ -6308,11 +6541,11 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             self.send_download(source_path.read_bytes(), "restoration-palace-offline.html", "text/html; charset=utf-8")
             return
-        if slug in {"autumn-herbarium", "autumn-leaves"} and protected_route and requested_path == "offline.html":
+        if slug in {"oh-yo", "autumn-herbarium", "autumn-leaves"} and protected_route and requested_path == "offline.html":
             source = game_dir / game_entry_file(slug, "index.html")
             self.send_download(source.read_bytes(), slug + "-offline.html", "text/html; charset=utf-8")
             return
-        if slug in {"autumn-herbarium", "autumn-leaves"}:
+        if slug in {"oh-yo", "autumn-herbarium", "autumn-leaves"}:
             if requested_path == game_entry_file(slug, "index.html"):
                 requested_path = "index.html"
             if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
@@ -6674,6 +6907,10 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(update_paid_entity_description(self.require_user(), payload))
             elif parsed.path == "/api/admin/teacher-gift":
                 self.send_json(update_teacher_product_gift(self.require_user(), payload))
+            elif parsed.path == "/api/admin/orders/delivery":
+                self.send_json(admin_order_delivery(self.require_user(), payload))
+            elif parsed.path == "/api/admin/payments-enabled":
+                self.send_json(admin_payment_availability(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/mark-receipt-sent":
                 self.send_json(mark_order_receipt_sent(self.require_user(), payload))
             elif parsed.path == "/api/admin/orders/sync-payment":

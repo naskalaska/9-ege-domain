@@ -1,0 +1,125 @@
+[
+  {
+    "url": "/games",
+    "width": 320,
+    "scroll": 320,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop",
+    "width": 320,
+    "scroll": 320,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop/oh-yo",
+    "width": 320,
+    "scroll": 320,
+    "text": true,
+    "price": true,
+    "gallery": 5,
+    "badImages": []
+  },
+  {
+    "url": "/games",
+    "width": 390,
+    "scroll": 390,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop",
+    "width": 390,
+    "scroll": 390,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop/oh-yo",
+    "width": 390,
+    "scroll": 390,
+    "text": true,
+    "price": true,
+    "gallery": 5,
+    "badImages": []
+  },
+  {
+    "url": "/games",
+    "width": 768,
+    "scroll": 753,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop",
+    "width": 768,
+    "scroll": 753,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop/oh-yo",
+    "width": 768,
+    "scroll": 753,
+    "text": true,
+    "price": true,
+    "gallery": 5,
+    "badImages": []
+  },
+  {
+    "url": "/games",
+    "width": 1440,
+    "scroll": 1425,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop",
+    "width": 1440,
+    "scroll": 1425,
+    "text": true,
+    "price": false,
+    "gallery": 0,
+    "badImages": []
+  },
+  {
+    "url": "/shop/oh-yo",
+    "width": 1440,
+    "scroll": 1425,
+    "text": true,
+    "price": true,
+    "gallery": 5,
+    "badImages": []
+  },
+  {
+    "mode": 0,
+    "correct": 1,
+    "answered": true
+  },
+  {
+    "mode": 1,
+    "correct": 1,
+    "answered": true
+  },
+  {
+    "mode": 2,
+    "correct": 1,
+    "answered": true
+  }
+]
