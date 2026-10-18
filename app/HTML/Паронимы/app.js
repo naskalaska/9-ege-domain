@@ -2,8 +2,9 @@
   "use strict";
 
   const MAX_CARDS = 20;
-  const DEMO_MODE = !window.location.pathname.startsWith("/full-games/");
-  const DEMO_CARD_LIMIT = 20;
+  const DEMO_MODE = window.location.protocol !== "file:" && !window.location.pathname.startsWith("/full-games/");
+  const DEMO_ACTION_LIMIT = 40;
+  const DEMO_ACTION_KEY = "paronyms-demo-actions-v1";
   const HISTORY_KEY = "paronyms-picture-game-issued-v1";
   const TURN_EFFECT_MS = 1080;
   const PRAISES = [
@@ -16,7 +17,7 @@
 
   const cards = Array.isArray(window.PARONIMS_ASSETS) ? window.PARONIMS_ASSETS : [];
   const allPlayableCards = cards.filter((card) => card && card.words && card.words.length >= 2 && card.images);
-  const playableCards = DEMO_MODE ? allPlayableCards.slice(0, DEMO_CARD_LIMIT) : allPlayableCards;
+  const playableCards = allPlayableCards;
   const letters = Array.from(new Set(playableCards.map((card) => firstLetter(card)).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
   const state = {
     mode: "fresh",
@@ -365,15 +366,6 @@
   function finishGame() {
     el.finishGroups.textContent = `Групп: ${state.totalGroups}`;
     el.finishErrors.textContent = `Ошибок: ${state.errors}`;
-    if (DEMO_MODE && !el.finishScreen.querySelector(".demo-offer")) {
-      const offer = document.createElement("div");
-      offer.className = "demo-offer";
-      offer.innerHTML = `
-        <p><b>Демо-версия завершена.</b> В полной версии доступны все группы паронимов.</p>
-        <a class="primary-button" href="/shop/paronyms-game">Купить полный комплект</a>
-      `;
-      el.finishScreen.append(offer);
-    }
     showOnly(el.finishScreen);
   }
 
@@ -515,8 +507,44 @@
     if (cardNode) assignWord(cardNode.dataset.target);
   });
 
+  function setupDemoLimit() {
+    if (!DEMO_MODE) return;
+    const status = document.querySelector("#demoStatus");
+    const overlay = document.querySelector("#demoLimit");
+    let actions = 0;
+    try {
+      const saved = Number(localStorage.getItem(DEMO_ACTION_KEY) || 0);
+      if (Number.isFinite(saved)) actions = Math.max(0, Math.min(DEMO_ACTION_LIMIT, saved));
+    } catch {}
+    const update = () => {
+      status.classList.remove("hidden");
+      status.textContent = `Демо: все ${playableCards.length} групп · действий ${actions} из ${DEMO_ACTION_LIMIT}`;
+    };
+    const showLimit = () => {
+      overlay.classList.remove("hidden");
+      overlay.querySelector("a").focus();
+    };
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("#demoLimit, #gameMenuLink, a")) return;
+      if (!event.target.closest("button, input, select, textarea")) return;
+      if (actions >= DEMO_ACTION_LIMIT) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showLimit();
+        return;
+      }
+      actions += 1;
+      try { localStorage.setItem(DEMO_ACTION_KEY, String(actions)); } catch {}
+      update();
+      if (actions >= DEMO_ACTION_LIMIT) window.setTimeout(showLimit, 500);
+    }, true);
+    update();
+    if (actions >= DEMO_ACTION_LIMIT) showLimit();
+  }
+
+  setupDemoLimit();
   renderGroupPicker();
   el.startStatus.textContent = playableCards.length
-    ? `Доступно групп: ${playableCards.length}${DEMO_MODE ? " из демо-набора" : ""}.`
+    ? `Доступно групп: ${playableCards.length}.`
     : "Manifest не найден.";
 }());

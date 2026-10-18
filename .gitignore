@@ -14,6 +14,9 @@ backup/
 tmp/
 temp/
 archive_before_refactor/
+можно убрать из проекта/
+HTML-игры — полные офлайн-версии/
+maintenance/offline-qa/
 *.out.log
 *.err.log
 node_modules/

@@ -3125,3 +3125,12 @@ input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color:
   .role-choice { grid-template-columns: 1fr; }
   .services-page { width: min(100% - 24px,1180px); }
 }
+.assignment-notice{position:fixed;right:20px;bottom:20px;z-index:1500;max-width:min(520px,calc(100vw - 40px));padding:18px;background:var(--panel,#fff);color:var(--text,#222);border:2px solid var(--accent,#8d583d);border-radius:16px;box-shadow:0 8px 40px #0003;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.assignment-recipients{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;max-height:300px;overflow:auto;margin:16px 0}
+.assignment-recipient{display:flex;align-items:center;gap:10px;padding:8px}
+.assignment-recipient input[type=checkbox]{width:auto;flex:0 0 auto}
+[data-content]>.question{margin:16px 0}
+[data-content] input[data-title]{display:block;width:100%;margin:10px 0}
+.assignment-workspace{max-width:1100px;width:calc(100% - 40px);margin:24px auto 48px;padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.assignment-workspace .panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+@media(max-width:600px){.assignment-workspace{width:calc(100% - 24px);padding:16px;margin-top:16px}.assignment-workspace h2{font-size:1.35rem;overflow-wrap:anywhere}}

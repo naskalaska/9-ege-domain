@@ -1699,6 +1699,22 @@ function renderTopActions() {
   home.addEventListener("click", () => navigate("/"));
   topActions.append(home);
   if (!state.user) return;
+  if (["teacher", "student"].includes(state.user.role)) {
+    const assignments = document.createElement("button");
+    assignments.id = "assignmentsButton";
+    assignments.className = "secondary-button";
+    assignments.textContent = state.user.role === "teacher" ? "Тесты и группы" : "Назначенные тесты";
+    assignments.onclick = showAssignments;
+    topActions.append(assignments);
+    const statistics = document.createElement("button");
+    statistics.className = "ghost-button";
+    statistics.textContent = "Статистика";
+    statistics.onclick = showProgress;
+    topActions.append(statistics);
+    clearInterval(assignmentNoticeTimer);
+    refreshAssignmentButton();
+    assignmentNoticeTimer = setInterval(refreshAssignmentButton, 30000);
+  }
   if (state.currentActivity) {
     const catalog = document.createElement("button");
     catalog.className = "ghost-button";
@@ -1731,6 +1747,9 @@ function renderTopActions() {
   logout.textContent = "Выйти";
   logout.addEventListener("click", async () => {
     stopTeacherStatsRefresh();
+    clearInterval(assignmentNoticeTimer);
+    clearTimeout(assignmentSaveTimer);
+    document.querySelector("#assignmentNotice")?.remove();
     await api("/api/logout", { method: "POST", body: "{}" }).catch(() => null);
     localStorage.removeItem("ege_token");
     state.token = null;
@@ -3316,6 +3335,8 @@ async function restoreSession() {
 }
 
 function renderDashboard() {
+  clearTimeout(assignmentSaveTimer);
+  if (state.currentSession?.assignment_id) state.currentSession = null;
   renderTopActions();
   stopTeacherStatsRefresh();
   if (state.user.role === "admin") {
@@ -4082,6 +4103,7 @@ function bindRuleSelector(root, rerenderCategories) {
 }
 
 async function startPractice() {
+  clearTimeout(assignmentSaveTimer);
   const count = state.questionCount;
   const payload = { mode: state.mode, count };
   if (state.currentActivity === "orthography-ege") {
@@ -4209,8 +4231,14 @@ function renderQuestions() {
       <button class="primary-button" id="submitPractice" type="button">Проверить</button>
     </div>
   `;
-  practice.querySelector("#backPractice").addEventListener("click", backToMenu);
-  practice.querySelector("#cancelPractice").addEventListener("click", renderMode);
+  if (state.currentSession?.assignment_id) {
+    practice.querySelector("#backPractice").remove();
+    practice.querySelector("#cancelPractice").remove();
+    practice.querySelector("#submitPractice").textContent = "Завершить тест";
+  } else {
+    practice.querySelector("#backPractice").addEventListener("click", backToMenu);
+    practice.querySelector("#cancelPractice").addEventListener("click", renderMode);
+  }
   practice.querySelector("#submitPractice").addEventListener("click", submitPractice);
   practice.querySelectorAll("[data-manual-answer]").forEach((input) => {
     input.addEventListener("input", () => {
@@ -4531,6 +4559,7 @@ function answerIsComplete(question) {
 }
 
 async function submitPractice() {
+  clearTimeout(assignmentSaveTimer);
   const total = state.currentSession.questions.length;
   const answered = state.currentSession.questions.every(answerIsComplete);
   if (!answered) {
@@ -4538,15 +4567,27 @@ async function submitPractice() {
     return;
   }
   const elapsed = Math.round((Date.now() - state.startedAt) / 1000);
-  const data = await api(activityApi("/practice/submit"), {
-    method: "POST",
-    body: JSON.stringify({
-      session_id: state.currentSession.session_id,
-      answers: state.answers,
-      time_spent_sec: elapsed,
-    }),
-  });
-  renderResults(data);
+  const button = document.querySelector("#submitPractice");
+  button.disabled = true;
+  try {
+    const data = await api(state.currentSession.assignment_id ? "/api/assignments/submit" : activityApi("/practice/submit"), {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: state.currentSession.session_id,
+        test_id: state.currentSession.assignment_id,
+        answers: state.answers,
+        time_spent_sec: elapsed,
+      }),
+    });
+    if (state.currentSession.assignment_id) {
+      state.currentSession.result = data;
+      refreshAssignmentButton();
+    }
+    renderResults(data);
+  } catch (err) {
+    button.disabled = false;
+    alert(err.message);
+  }
 }
 
 function renderResults(data) {
@@ -4570,6 +4611,11 @@ function renderResults(data) {
       <button class="primary-button" type="button" id="againButton">Новая тренировка</button>
     </div>
   `;
+  if (state.currentSession?.assignment_id) {
+    result.querySelector("#againButton").remove();
+    result.querySelector("#backFromResults").onclick = () => { renderDashboard(); showAssignments(); };
+    return;
+  }
   result.querySelector("#backFromResults").addEventListener("click", backToMenu);
   result.querySelector("#againButton").addEventListener("click", renderMode);
 }
@@ -4753,6 +4799,8 @@ async function showProgress() {
         </div>
       ` : ""}
       ${teacherOverview}
+      <h3>Результаты в играх</h3>
+      <table class="table"><tr><th>Ученик</th><th>Игра</th><th>Решений</th><th>Верно</th><th>Точность</th><th>Последняя игра</th></tr>${(data.by_game || []).map(row => `<tr><td>${escapeHtml(row.display_name)}</td><td>${escapeHtml(row.game)}</td><td>${row.total}</td><td>${row.correct}</td><td>${pct(row.correct, row.total)}</td><td>${new Date(row.last_played).toLocaleString('ru-RU')}</td></tr>`).join('') || '<tr><td colspan="6">Пока нет решений в играх.</td></tr>'}</table>
       ${state.user.role === "teacher" ? `<div class="table-head"><h3>Ученики</h3>${downloadButton("students", "Скачать статистику")}</div><table class="table"><tr><th>Имя</th><th>Ответов</th><th>Точность</th></tr>${studentRows}</table>` : ""}
       <div class="table-head"><h3>Группы</h3>${downloadButton("categories", "Скачать статистику")}</div>
       <table class="table"><tr><th>Группа</th><th>Ответов</th><th>Точность</th></tr>${categoryRows}</table>
@@ -4806,6 +4854,7 @@ function showTestComposer() {
       </section>
     `;
     document.body.append(backdrop);
+    attachAssignmentComposer(backdrop);
     backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
     backdrop.querySelector("#downloadTest").addEventListener("click", async () => {
       const error = backdrop.querySelector("#testComposerError");
@@ -4888,6 +4937,7 @@ function showTestComposer() {
     </section>
   `;
   document.body.append(backdrop);
+  attachAssignmentComposer(backdrop);
   const mountTestRuleSelector = () => {
     backdrop.querySelector("#testRuleSelector").innerHTML = renderRuleSelector();
     bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
@@ -4896,6 +4946,10 @@ function showTestComposer() {
   const refreshRules = () => {
     const mode = backdrop.querySelector("#testMode").value;
     backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice" || mode === "word_context" || mode === "word_ne" || mode === "word_nn"));
+    const errors = backdrop.querySelector("#testIncludeErrors");
+    const supportsErrorWords = !["paronym_exam", "line_ne", "line_spelling", "exam", "sentence_nn", "errors"].includes(mode);
+    errors.closest("label").classList.toggle("hidden", !supportsErrorWords);
+    if (!supportsErrorWords) errors.checked = false;
   };
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#testMode").value = defaultMode;

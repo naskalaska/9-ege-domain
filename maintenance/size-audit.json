@@ -1,0 +1,1438 @@
+{
+  "total_bytes": 1233255652,
+  "top": {
+    ".dockerignore": [
+      309,
+      1
+    ],
+    ".env.example": [
+      822,
+      1
+    ],
+    ".gitignore": [
+      318,
+      1
+    ],
+    "docker-compose.yml": [
+      1373,
+      1
+    ],
+    "Dockerfile": [
+      303,
+      1
+    ],
+    "ege10_words_by_orthogram.json": [
+      619072,
+      1
+    ],
+    "ege11_suffix_words_v4.json": [
+      407425,
+      1
+    ],
+    "ege12_trainer_grouped_final.json": [
+      465113,
+      1
+    ],
+    "ege9_final_grouped_by_orthogram_v4.json": [
+      541462,
+      1
+    ],
+    "PROJECT_PASSPORT.md": [
+      19135,
+      1
+    ],
+    "README.md": [
+      8168,
+      1
+    ],
+    "README_RENDER.md": [
+      722,
+      1
+    ],
+    "render.yaml": [
+      181,
+      1
+    ],
+    "requirements.txt": [
+      63,
+      1
+    ],
+    "task5_paronyms_lines_bank_augmented_batch03.json": [
+      1123011,
+      1
+    ],
+    "task_13_standard_lines_v7_sterpimo_fixed.json": [
+      434625,
+      1
+    ],
+    "task_14_trainer_navigation.json": [
+      2237982,
+      1
+    ],
+    "task_15_word_cards_v10_checked.json": [
+      503112,
+      1
+    ],
+    "app": [
+      1115379270,
+      961
+    ],
+    "data": [
+      286720,
+      1
+    ],
+    "images": [
+      209928,
+      1
+    ],
+    "maintenance": [
+      111016538,
+      1270
+    ]
+  },
+  "extensions": {
+    "": [
+      8654547,
+      229
+    ],
+    ".example": [
+      822,
+      1
+    ],
+    ".yml": [
+      1373,
+      1
+    ],
+    ".json": [
+      10094361,
+      218
+    ],
+    ".md": [
+      172353,
+      11
+    ],
+    ".yaml": [
+      181,
+      1
+    ],
+    ".txt": [
+      857658,
+      14
+    ],
+    ".py": [
+      720204,
+      23
+    ],
+    ".js": [
+      11446085,
+      139
+    ],
+    ".db": [
+      417792,
+      6
+    ],
+    ".jpg": [
+      1195321,
+      5
+    ],
+    ".cjs": [
+      27314,
+      5
+    ],
+    ".png": [
+      1023993960,
+      1122
+    ],
+    ".pma": [
+      2097152,
+      2
+    ],
+    ".db-journal": [
+      0,
+      4
+    ],
+    ".webp": [
+      4076318,
+      20
+    ],
+    ".dat": [
+      40,
+      1
+    ],
+    ".old": [
+      4442,
+      29
+    ],
+    ".pb": [
+      15142,
+      8
+    ],
+    ".tflite": [
+      41200610,
+      9
+    ],
+    ".model": [
+      794346,
+      1
+    ],
+    ".binarypb": [
+      126746,
+      18
+    ],
+    ".db-wal": [
+      0,
+      1
+    ],
+    ".journal": [
+      0,
+      1
+    ],
+    ".log": [
+      222224,
+      15
+    ],
+    ".css": [
+      1341613,
+      61
+    ],
+    ".html": [
+      61573274,
+      74
+    ],
+    ".gif": [
+      70364,
+      1
+    ],
+    ".wasm": [
+      2113742,
+      2
+    ],
+    ".woff2": [
+      438404,
+      9
+    ],
+    ".svg": [
+      7172009,
+      194
+    ],
+    ".baj": [
+      4,
+      1
+    ],
+    ".baf": [
+      20,
+      1
+    ],
+    ".ico": [
+      268286,
+      1
+    ],
+    ".pyc": [
+      801801,
+      11
+    ],
+    ".mp3": [
+      48883349,
+      8
+    ],
+    ".pdf": [
+      541588,
+      2
+    ],
+    ".docx": [
+      3932207,
+      2
+    ]
+  },
+  "duplicates": [
+    {
+      "bytes": 3201108,
+      "waste": 3201108,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\фон.png",
+        "app\\HTML\\Игра-знакомство\\assets\\фон.png"
+      ]
+    },
+    {
+      "bytes": 2389369,
+      "waste": 2389369,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\butterfly-garden.png",
+        "app\\HTML\\бабочки\\assets\\butterfly-garden.png"
+      ]
+    },
+    {
+      "bytes": 2329890,
+      "waste": 2329890,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\карточка_сюрприз.png",
+        "app\\HTML\\Игра-знакомство\\assets\\карточка_сюрприз.png"
+      ]
+    },
+    {
+      "bytes": 2320621,
+      "waste": 2320621,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\финал.png",
+        "app\\HTML\\Игра-знакомство\\assets\\финал.png"
+      ]
+    },
+    {
+      "bytes": 2158025,
+      "waste": 2158025,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\Карточка_правда.png",
+        "app\\HTML\\Игра-знакомство\\assets\\Карточка_правда.png"
+      ]
+    },
+    {
+      "bytes": 2132022,
+      "waste": 2132022,
+      "files": [
+        "app\\HTML\\suffixes-nouns\\Фон.png",
+        "app\\HTML\\Пушинки\\Фон.png"
+      ]
+    },
+    {
+      "bytes": 2029051,
+      "waste": 2029051,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\карточка_действие.png",
+        "app\\HTML\\Игра-знакомство\\assets\\карточка_действие.png"
+      ]
+    },
+    {
+      "bytes": 1871734,
+      "waste": 1871734,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\blue-morpho.png",
+        "app\\HTML\\бабочки\\assets\\blue-morpho.png"
+      ]
+    },
+    {
+      "bytes": 1804089,
+      "waste": 1804089,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\pink-fantasy.png",
+        "app\\HTML\\бабочки\\assets\\pink-fantasy.png"
+      ]
+    },
+    {
+      "bytes": 1790147,
+      "waste": 1790147,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\yellow-swallowtail.png",
+        "app\\HTML\\бабочки\\assets\\yellow-swallowtail.png"
+      ]
+    },
+    {
+      "bytes": 1686239,
+      "waste": 1686239,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\purple-emperor.png",
+        "app\\HTML\\бабочки\\assets\\purple-emperor.png"
+      ]
+    },
+    {
+      "bytes": 1602415,
+      "waste": 1602415,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\orange-monarch.png",
+        "app\\HTML\\бабочки\\assets\\orange-monarch.png"
+      ]
+    },
+    {
+      "bytes": 1296423,
+      "waste": 1296423,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\subtitleUpgrade.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\subtitleUpgrade.png"
+      ]
+    },
+    {
+      "bytes": 1258157,
+      "waste": 1258157,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\zebra-longwing.png",
+        "app\\HTML\\бабочки\\assets\\zebra-longwing.png"
+      ]
+    },
+    {
+      "bytes": 270336,
+      "waste": 1081344,
+      "files": [
+        "maintenance\\offline-qa\\browser\\GrShaderCache\\data_1",
+        "maintenance\\offline-qa\\browser\\ShaderCache\\data_1",
+        "maintenance\\offline-qa\\browser\\Default\\DawnGraphiteCache\\data_1",
+        "maintenance\\offline-qa\\browser\\Default\\DawnWebGPUCache\\data_1",
+        "maintenance\\offline-qa\\browser\\Default\\GPUCache\\data_1"
+      ]
+    },
+    {
+      "bytes": 1048576,
+      "waste": 1048576,
+      "files": [
+        "maintenance\\offline-qa\\browser\\CrashpadMetrics-active.pma",
+        "maintenance\\offline-qa\\browser\\CrashpadMetrics.pma"
+      ]
+    },
+    {
+      "bytes": 854385,
+      "waste": 854385,
+      "files": [
+        "app\\HTML\\бабочки-суффиксы-причастий\\assets\\grumpy-caterpillar.png",
+        "app\\HTML\\бабочки\\assets\\grumpy-caterpillar.png"
+      ]
+    },
+    {
+      "bytes": 270336,
+      "waste": 540672,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnGraphiteCache\\data_1",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnWebGPUCache\\data_1",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\GPUCache\\data_1"
+      ]
+    },
+    {
+      "bytes": 332110,
+      "waste": 332110,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\книжка.png",
+        "app\\HTML\\Игра-знакомство\\assets\\книжка.png"
+      ]
+    },
+    {
+      "bytes": 325509,
+      "waste": 325509,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\учитель_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\учитель_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 321176,
+      "waste": 321176,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\подарочек.png",
+        "app\\HTML\\Игра-знакомство\\assets\\подарочек.png"
+      ]
+    },
+    {
+      "bytes": 317435,
+      "waste": 317435,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\yandex.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\yandex.svg"
+      ]
+    },
+    {
+      "bytes": 297814,
+      "waste": 297814,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\hoverball-onboarding.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\hoverball-onboarding.png"
+      ]
+    },
+    {
+      "bytes": 290873,
+      "waste": 290873,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\карандаш.png",
+        "app\\HTML\\Игра-знакомство\\assets\\карандаш.png"
+      ]
+    },
+    {
+      "bytes": 287716,
+      "waste": 287716,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\конверт.png",
+        "app\\HTML\\Игра-знакомство\\assets\\конверт.png"
+      ]
+    },
+    {
+      "bytes": 286769,
+      "waste": 286769,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\серый_кот_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\серый_кот_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 277228,
+      "waste": 277228,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\ёжик_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\ёжик_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 268528,
+      "waste": 268528,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\енот_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\енот_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 260011,
+      "waste": 260011,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\лисица_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\лисица_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 239442,
+      "waste": 239442,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\login-tip.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\login-tip.png"
+      ]
+    },
+    {
+      "bytes": 239071,
+      "waste": 239071,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\сова_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\сова_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 227985,
+      "waste": 227985,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\кот_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\кот_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 225630,
+      "waste": 225630,
+      "files": [
+        "app\\HTML\\Игра-знакомство\\зайчик_без_фона.png",
+        "app\\HTML\\Игра-знакомство\\assets\\зайчик_без_фона.png"
+      ]
+    },
+    {
+      "bytes": 209928,
+      "waste": 209928,
+      "files": [
+        "images\\logo.jpg",
+        "app\\static\\logo.jpg"
+      ]
+    },
+    {
+      "bytes": 145427,
+      "waste": 145427,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\microsoft.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\microsoft.svg"
+      ]
+    },
+    {
+      "bytes": 108908,
+      "waste": 108908,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\google.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\google.svg"
+      ]
+    },
+    {
+      "bytes": 101389,
+      "waste": 101389,
+      "files": [
+        "app\\HTML\\suffixes-nouns\\перо.png",
+        "app\\HTML\\Пушинки\\перо.png"
+      ]
+    },
+    {
+      "bytes": 93818,
+      "waste": 93818,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\deepseek.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\deepseek.svg"
+      ]
+    },
+    {
+      "bytes": 8192,
+      "waste": 65536,
+      "files": [
+        "maintenance\\offline-qa\\browser\\GrShaderCache\\data_3",
+        "maintenance\\offline-qa\\browser\\ShaderCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\DawnGraphiteCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\DawnWebGPUCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\GPUCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnGraphiteCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnWebGPUCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\GPUCache\\data_3",
+        "maintenance\\offline-qa\\browser\\Default\\Cache\\Cache_Data\\data_3"
+      ]
+    },
+    {
+      "bytes": 8192,
+      "waste": 57344,
+      "files": [
+        "maintenance\\offline-qa\\browser\\GrShaderCache\\data_0",
+        "maintenance\\offline-qa\\browser\\ShaderCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\DawnGraphiteCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\DawnWebGPUCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\GPUCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnGraphiteCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnWebGPUCache\\data_0",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\GPUCache\\data_0"
+      ]
+    },
+    {
+      "bytes": 8192,
+      "waste": 57344,
+      "files": [
+        "maintenance\\offline-qa\\browser\\GrShaderCache\\data_2",
+        "maintenance\\offline-qa\\browser\\ShaderCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\DawnGraphiteCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\DawnWebGPUCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\GPUCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnGraphiteCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\DawnWebGPUCache\\data_2",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\GPUCache\\data_2"
+      ]
+    },
+    {
+      "bytes": 46413,
+      "waste": 46413,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\gemini.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\gemini.svg"
+      ]
+    },
+    {
+      "bytes": 45056,
+      "waste": 45056,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Shared Dictionary\\db",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\Shared Dictionary\\db"
+      ]
+    },
+    {
+      "bytes": 44135,
+      "waste": 44135,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\comment.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\comment.png"
+      ]
+    },
+    {
+      "bytes": 40960,
+      "waste": 40960,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Login Data",
+        "maintenance\\offline-qa\\browser\\Default\\Login Data For Account"
+      ]
+    },
+    {
+      "bytes": 36864,
+      "waste": 36864,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Network\\Trust Tokens",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\Network\\Trust Tokens"
+      ]
+    },
+    {
+      "bytes": 11670,
+      "waste": 35010,
+      "files": [
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\writing_assistance_gemma4_12b_solution_config.binarypb",
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\writing_assistance_gemma4_4b_solution_config.binarypb",
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\writing_assistance_gemma4_solution_config.binarypb",
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\writing_assistance_solution_config.binarypb"
+      ]
+    },
+    {
+      "bytes": 32768,
+      "waste": 32768,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\declarative_performance_observer.db",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\declarative_performance_observer.db"
+      ]
+    },
+    {
+      "bytes": 15298,
+      "waste": 30596,
+      "files": [
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\summarizer_gemma4_12b_solution_config.binarypb",
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\summarizer_gemma4_4b_solution_config.binarypb",
+        "maintenance\\offline-qa\\browser\\OptimizationGuideModelsManifest\\1.20261011.2\\summarizer_gemma4_solution_config.binarypb"
+      ]
+    },
+    {
+      "bytes": 30010,
+      "waste": 30010,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 29566,
+      "waste": 29566,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 26383,
+      "waste": 26383,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 1188,
+      "waste": 23760,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\advanced_protection_signal.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\advanced_protection_signal_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\download_scan_popup.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\dws.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\esd_enrolled_consent_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\esd_enrolled_detection_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\esd_enrolled_intro_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\esd_enrolled_opt_in_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\esd_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\interactive_balloon.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\mb_activate_banner.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\mb_page_banner.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\mcafee_fonts.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\no_native_toast.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_esd.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_home.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_main.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_mb.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_mb_faq.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\sidebar_rat_detection.js",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\topbar_iframe_block.js"
+      ]
+    },
+    {
+      "bytes": 22941,
+      "waste": 22941,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 22274,
+      "waste": 22274,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 21836,
+      "waste": 21836,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 21355,
+      "waste": 21355,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\256.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\256.png"
+      ]
+    },
+    {
+      "bytes": 20480,
+      "waste": 20480,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Network\\Device Bound Sessions",
+        "maintenance\\offline-qa\\browser\\Default\\Storage\\ext\\nmmhkkegccagdldgiimedpiccmgmieda\\def\\Network\\Device Bound Sessions"
+      ]
+    },
+    {
+      "bytes": 17049,
+      "waste": 17049,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\gift.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\gift.png"
+      ]
+    },
+    {
+      "bytes": 10369,
+      "waste": 10369,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 10277,
+      "waste": 10277,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 10243,
+      "waste": 10243,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 10103,
+      "waste": 10103,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 10085,
+      "waste": 10085,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 8958,
+      "waste": 8958,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 8591,
+      "waste": 8591,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 8310,
+      "waste": 8310,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 8296,
+      "waste": 8296,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\dark-limited-free.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\dark-limited-free.svg"
+      ]
+    },
+    {
+      "bytes": 8277,
+      "waste": 8277,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\limited-free.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\limited-free.svg"
+      ]
+    },
+    {
+      "bytes": 7998,
+      "waste": 7998,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 7564,
+      "waste": 7564,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 7388,
+      "waste": 7388,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\images\\site_status\\logo.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\fheoggkfdfchfphceeifdbepaooicaho\\8.2.0.1196_0\\images\\web_advisor\\mcafee_webadvisor_no_symbol_logo.svg"
+      ]
+    },
+    {
+      "bytes": 7313,
+      "waste": 7313,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 7291,
+      "waste": 7291,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\128.png"
+      ]
+    },
+    {
+      "bytes": 7081,
+      "waste": 7081,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 7042,
+      "waste": 7042,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_exit_large.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_exit_large.png"
+      ]
+    },
+    {
+      "bytes": 7033,
+      "waste": 7033,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 7000,
+      "waste": 7000,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_large.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_large.png"
+      ]
+    },
+    {
+      "bytes": 6955,
+      "waste": 6955,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 6710,
+      "waste": 6710,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\192.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\192.png"
+      ]
+    },
+    {
+      "bytes": 6371,
+      "waste": 6371,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 6314,
+      "waste": 6314,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 5693,
+      "waste": 5693,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 5149,
+      "waste": 5149,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 5110,
+      "waste": 5110,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\upgrade.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\upgrade.png"
+      ]
+    },
+    {
+      "bytes": 4911,
+      "waste": 4911,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\96.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\96.png"
+      ]
+    },
+    {
+      "bytes": 4896,
+      "waste": 4896,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\google.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\google.png"
+      ]
+    },
+    {
+      "bytes": 4648,
+      "waste": 4648,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\deepseek.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\deepseek.png"
+      ]
+    },
+    {
+      "bytes": 4159,
+      "waste": 4159,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 4026,
+      "waste": 4026,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\small\\gpt5.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\small\\gpt5.svg"
+      ]
+    },
+    {
+      "bytes": 3966,
+      "waste": 3966,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 3945,
+      "waste": 3945,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 3937,
+      "waste": 3937,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\gemini.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\gemini.png"
+      ]
+    },
+    {
+      "bytes": 3642,
+      "waste": 3642,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 3605,
+      "waste": 3605,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 3581,
+      "waste": 3581,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\celebration.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\celebration.png"
+      ]
+    },
+    {
+      "bytes": 3399,
+      "waste": 3399,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\dark-free.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\dark-free.svg"
+      ]
+    },
+    {
+      "bytes": 3370,
+      "waste": 3370,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\tencent.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\tencent.png"
+      ]
+    },
+    {
+      "bytes": 3309,
+      "waste": 3309,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\gpt5.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\gpt5.png"
+      ]
+    },
+    {
+      "bytes": 3286,
+      "waste": 3286,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\free.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\free.svg"
+      ]
+    },
+    {
+      "bytes": 3175,
+      "waste": 3175,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\pro.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\pro.svg"
+      ]
+    },
+    {
+      "bytes": 2982,
+      "waste": 2982,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2960,
+      "waste": 2960,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 2921,
+      "waste": 2921,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\64.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\64.png"
+      ]
+    },
+    {
+      "bytes": 2790,
+      "waste": 2790,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2751,
+      "waste": 2751,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2733,
+      "waste": 2733,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\claude-haiku.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\claude-haiku.png"
+      ]
+    },
+    {
+      "bytes": 2690,
+      "waste": 2690,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\logo\\icon-gray-128.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\logo\\icon-gray-128.png"
+      ]
+    },
+    {
+      "bytes": 2607,
+      "waste": 2607,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\free-trial.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\free-trial.svg"
+      ]
+    },
+    {
+      "bytes": 2579,
+      "waste": 2579,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\microsoft.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\microsoft.png"
+      ]
+    },
+    {
+      "bytes": 2572,
+      "waste": 2572,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2568,
+      "waste": 2568,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2372,
+      "waste": 2372,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\yandex.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\yandex.png"
+      ]
+    },
+    {
+      "bytes": 2157,
+      "waste": 2157,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\model.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\model.png"
+      ]
+    },
+    {
+      "bytes": 2149,
+      "waste": 2149,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2132,
+      "waste": 2132,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\48.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\48.png"
+      ]
+    },
+    {
+      "bytes": 2059,
+      "waste": 2059,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\hot.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\hot.svg"
+      ]
+    },
+    {
+      "bytes": 1987,
+      "waste": 1987,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_exit_icon_38.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_exit_icon_38.png"
+      ]
+    },
+    {
+      "bytes": 1967,
+      "waste": 1967,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_icon_38.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_icon_38.png"
+      ]
+    },
+    {
+      "bytes": 1918,
+      "waste": 1918,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\gpt.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\gpt.png"
+      ]
+    },
+    {
+      "bytes": 1863,
+      "waste": 1863,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\deepseek.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\deepseek.png"
+      ]
+    },
+    {
+      "bytes": 1854,
+      "waste": 1854,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\aghbiahbpaijignceidepookljebhfak\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1793,
+      "waste": 1793,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\icon_checked.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\safe_icon_38.png"
+      ]
+    },
+    {
+      "bytes": 1784,
+      "waste": 1784,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\aimodel.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\aimodel.png"
+      ]
+    },
+    {
+      "bytes": 1741,
+      "waste": 1741,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\pommaclcbfghclhalboakcipcmmndhcj\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1736,
+      "waste": 1736,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\gemini.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\gemini.png"
+      ]
+    },
+    {
+      "bytes": 1650,
+      "waste": 1650,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fmgjjmmmlfnkbppncabfkddbjimcfncm\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1650,
+      "waste": 1650,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\capture\\capturing.svg",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\capture\\capturing.svg"
+      ]
+    },
+    {
+      "bytes": 1576,
+      "waste": 1576,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\icon_risky.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\risk_icon_38.png"
+      ]
+    },
+    {
+      "bytes": 1572,
+      "waste": 1572,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\agimnkijcaahngcdmfeangaknmldooml\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1559,
+      "waste": 1559,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\kefjledonklijopmnomlcbpllchaibag\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1506,
+      "waste": 1506,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\aws.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\aws.png"
+      ]
+    },
+    {
+      "bytes": 1470,
+      "waste": 1470,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\google.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\google.png"
+      ]
+    },
+    {
+      "bytes": 1437,
+      "waste": 1437,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_icon_19.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_icon_19.png"
+      ]
+    },
+    {
+      "bytes": 1422,
+      "waste": 1422,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\pay_exit_icon_19.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\glcimepnljoholdmjchkloafkggfoijh\\2.1.60_0\\images\\shopping_exit_icon_19.png"
+      ]
+    },
+    {
+      "bytes": 1288,
+      "waste": 1288,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\mpnpojknpmmopombnjdcgaaiekajbnjb\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1273,
+      "waste": 1273,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Icons\\32.png",
+        "maintenance\\offline-qa\\browser\\Default\\Web Applications\\Manifest Resources\\fhihpiojkbmbpdjeoajapmgkhlnakfjf\\Trusted Icons\\Icons\\32.png"
+      ]
+    },
+    {
+      "bytes": 1206,
+      "waste": 1206,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\images\\login-icon.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\images\\login-icon.png"
+      ]
+    },
+    {
+      "bytes": 1190,
+      "waste": 1190,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\modelIcons\\iciba.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\modelIcons\\iciba.png"
+      ]
+    },
+    {
+      "bytes": 1165,
+      "waste": 1165,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\writingstyles.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\writingstyles.png"
+      ]
+    },
+    {
+      "bytes": 1090,
+      "waste": 1090,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\explain.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\explain.png"
+      ]
+    },
+    {
+      "bytes": 1083,
+      "waste": 1083,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\ppt.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\ppt.png"
+      ]
+    },
+    {
+      "bytes": 1082,
+      "waste": 1082,
+      "files": [
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\buypopup\\pdf.png",
+        "maintenance\\offline-qa\\browser\\Default\\Extensions\\aopddeflghjljihihabdclejbojaomaf\\1.4.29_0\\public\\buypopup\\pdf.png"
+      ]
+    }
+  ]
+}

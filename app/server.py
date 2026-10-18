@@ -28,6 +28,8 @@ import ege14_module
 import ege15_module
 import ege_orthography_module
 import ege5_module
+import learning_module
+import game_tracking
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
@@ -425,7 +427,7 @@ DEMO_GAME_NOTICES = {
     },
     "paronyms": {
         "label": "Демо",
-        "text": "Можно попробовать механику на ограниченном наборе групп. Полная версия доступна после покупки и остаётся в кабинетах тех, кто уже купил игру.",
+        "text": "Доступны все 140 групп паронимов и 40 действий. В полной версии ограничения действий нет; она остаётся в кабинетах тех, кто уже купил игру.",
         "shop_url": "/shop/paronyms-game",
     },
     "parts-of-speech-kingdom": {
@@ -1620,6 +1622,7 @@ def ensure_app_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as con:
         con.row_factory = sqlite3.Row
+        learning_module.ensure_schema(con)
         con.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -2755,46 +2758,6 @@ def update_word_progress(
     )
 
 
-LINE_PAIRS = {
-    "а/о": {"letters": ("а", "о"), "label": "А/О"},
-    "и/е": {"letters": ("и", "е"), "label": "И/Е"},
-    "и/ы после ц": {"letters": ("и", "ы"), "label": "И/Ы после Ц"},
-    "о/ё после шипящих": {"letters": ("о", "ё"), "label": "О/Ё после шипящих"},
-}
-
-
-def line_pair_key(word: dict[str, Any]) -> str | None:
-    letter = word["correct_letter"]
-    marker = f"{word['category']} {word['rule_name']} {word['dependency']}".lower()
-    if "ц" in marker and letter in {"и", "ы"}:
-        return "и/ы после ц"
-    if "шип" in marker and letter in {"о", "ё"}:
-        return "о/ё после шипящих"
-    if letter in {"а", "о"}:
-        return "а/о"
-    if letter in {"и", "е"}:
-        return "и/е"
-    return None
-
-
-def line_pair_pools() -> dict[str, dict[str, list[dict[str, Any]]]]:
-    pools: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    for word in WORDS:
-        key = line_pair_key(word)
-        if not key:
-            continue
-        pools.setdefault(key, {}).setdefault(word["correct_letter"], []).append(word)
-    return pools
-
-
-def sample_words(pool: list[dict[str, Any]], count: int, used_ids: set[str]) -> list[dict[str, Any]]:
-    fresh = [word for word in pool if word["id"] not in used_ids]
-    source = fresh if len(fresh) >= count else pool
-    picked = random.sample(source, count)
-    used_ids.update(word["id"] for word in picked)
-    return picked
-
-
 def shuffle_line_rows(rows: list[dict[str, Any]]) -> None:
     random.SystemRandom().shuffle(rows)
     if rows and rows[0]["is_correct"] and random.random() < 0.5:
@@ -2804,38 +2767,56 @@ def shuffle_line_rows(rows: list[dict[str, Any]]) -> None:
             rows[0], rows[swap_index] = rows[swap_index], rows[0]
 
 
-def make_line_question() -> dict[str, Any]:
-    pools = line_pair_pools()
-    viable_pairs = [
-        pair_key
-        for pair_key, by_letter in pools.items()
-        if all(len(by_letter.get(letter, [])) >= 3 for letter in LINE_PAIRS[pair_key]["letters"])
-    ]
-    pair_key = random.choice(viable_pairs)
-    letters = LINE_PAIRS[pair_key]["letters"]
-    by_letter = pools[pair_key]
+def make_line_question(source_words: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    by_letter: dict[str, list[dict[str, Any]]] = {}
+    for word in WORDS:
+        by_letter.setdefault(word["correct_letter"], []).append(word)
     used_ids: set[str] = set()
+    category_counts: dict[str, int] = {}
+    focus_ids = {word["id"] for word in source_words or []}
+    focused_picks = 0
+
+    def available_letters(count: int = 1) -> list[str]:
+        return [letter for letter, pool in by_letter.items()
+                if sum(word["id"] not in used_ids for word in pool) >= count]
+
+    def pick(letter: str) -> dict[str, Any]:
+        nonlocal focused_picks
+        fresh = [word for word in by_letter[letter] if word["id"] not in used_ids]
+        if not fresh:
+            raise ValueError("Недостаточно разных слов для строк задания 9.")
+        focused = [word for word in fresh if word["id"] in focus_ids]
+        if focused and focused_picks < 3:
+            fresh = focused
+            focused_picks += 1
+        least = min(category_counts.get(word["category"], 0) for word in fresh)
+        word = random.choice([word for word in fresh if category_counts.get(word["category"], 0) == least])
+        used_ids.add(word["id"])
+        category_counts[word["category"]] = category_counts.get(word["category"], 0) + 1
+        return word
 
     rows: list[dict[str, Any]] = []
     correct_row_count = random.choice([2, 3])
     for _ in range(correct_row_count):
-        letter = random.choice(letters)
+        letter = random.choice(available_letters(3))
         rows.append(
             {
                 "is_correct": True,
                 "letter": letter,
-                "words": sample_words(by_letter[letter], 3, used_ids),
+                "words": [pick(letter) for _ in range(3)],
             }
         )
 
     for _ in range(5 - correct_row_count):
-        first, second = letters
-        pattern = random.choice([(first, first, second), (first, second, second)])
-        words: list[dict[str, Any]] = []
-        for letter in pattern:
-            words.extend(sample_words(by_letter[letter], 1, used_ids))
+        first, second = random.sample(available_letters(), 2)
+        words = [pick(first), pick(second)]
+        words.append(pick(random.choice(available_letters())))
         random.SystemRandom().shuffle(words)
         rows.append({"is_correct": False, "letter": None, "words": words})
+
+    # A block must cover several spelling groups, including when rare letters were drawn.
+    if len(category_counts) < 3:
+        return make_line_question(source_words)
 
     shuffle_line_rows(rows)
     correct_indexes = [str(index + 1) for index, row in enumerate(rows) if row["is_correct"]]
@@ -2850,9 +2831,9 @@ def make_line_question() -> dict[str, Any]:
         "choices": [str(number) for number in range(1, len(rows) + 1)],
         "category": "Строка",
         "rule_id": "line_same_letter",
-        "rule_name": f"Строка: {LINE_PAIRS[pair_key]['label']}",
+        "rule_name": "Строки: разные орфограммы",
         "explanation": (
-            f"В этом варианте работала пара {LINE_PAIRS[pair_key]['label']}. "
+            "В строках смешаны разные орфограммы задания 9. "
             f"Правильные строки: {', '.join(correct_indexes)}."
         ),
         "correct_spelling": "; ".join(
@@ -3478,6 +3459,11 @@ def suspicious_users_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
+    con.execute("DELETE FROM game_results WHERE user_id=?", (user_id,))
+    con.execute("DELETE FROM assigned_test_students WHERE student_id=? OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)", (user_id, user_id))
+    con.execute("DELETE FROM assigned_tests WHERE teacher_id=?", (user_id,))
+    con.execute("DELETE FROM student_group_members WHERE student_id=? OR group_id IN (SELECT id FROM student_groups WHERE teacher_id=?)", (user_id, user_id))
+    con.execute("DELETE FROM student_groups WHERE teacher_id=?", (user_id,))
     con.execute("DELETE FROM attempts WHERE user_id = ?", (user_id,))
     con.execute("DELETE FROM word_progress WHERE user_id = ?", (user_id,))
     con.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
@@ -3721,6 +3707,7 @@ def progress_for(user: dict[str, Any]) -> dict[str, Any]:
         "error_bank_count": int(error_bank["total"]),
         "teacher_dashboard": teacher_dashboard(con, user["user_id"]) if user["role"] == "teacher" else None,
         "by_student": [dict(row) for row in by_student],
+        "by_game": learning_module.game_stats(con, user),
         "by_category": [dict(row) for row in by_category],
         "by_rule": [dict(row) for row in by_rule],
         "recent": [dict(row) for row in recent],
@@ -6475,6 +6462,8 @@ class Handler(SimpleHTTPRequestHandler):
         if is_entry_file:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
+        if is_entry_file or file_path.suffix.lower() == ".js":
+            body = game_tracking.transform(slug, body, html=is_entry_file)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
@@ -6522,6 +6511,8 @@ class Handler(SimpleHTTPRequestHandler):
                 body = inject_palace_online_read_only(body, show_purchase_notice=True)
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
+        if is_entry_file or file_path.suffix.lower() == ".js":
+            body = game_tracking.transform(slug, body, html=is_entry_file)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
@@ -6568,6 +6559,8 @@ class Handler(SimpleHTTPRequestHandler):
             if slug == "palace-restoration":
                 body = inject_palace_online_read_only(body, show_purchase_notice=False)
             body = inject_game_menu_link(body)
+        if is_entry_file or file_path.suffix.lower() == ".js":
+            body = game_tracking.transform(slug, body, html=is_entry_file)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Content-Length", str(len(body)))
@@ -6663,6 +6656,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(consent_status(user["user_id"]))
             elif parsed.path == "/api/progress":
                 self.send_json(progress_for(self.require_user_with_consents()))
+            elif parsed.path == "/api/assignments":
+                self.send_json(learning_module.overview(sys.modules[__name__], self.require_user_with_consents()))
             elif parsed.path == "/api/progress/export":
                 query = parse_qs(parsed.query)
                 body, filename, content_type = progress_export(self.require_user(), query.get("section", ["recent"])[0])
@@ -6850,6 +6845,20 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
+            elif parsed.path in {"/api/assignments/create", "/api/assignments/open", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
+                user = self.require_user_with_consents()
+                host = sys.modules[__name__]
+                actions = {
+                    "/api/assignments/create": learning_module.create_test,
+                    "/api/assignments/open": learning_module.open_test,
+                    "/api/assignments/save": learning_module.save_answers,
+                    "/api/teacher/groups": learning_module.save_group,
+                    "/api/games/result": learning_module.game_result,
+                }
+                if parsed.path == "/api/assignments/submit":
+                    self.send_json(learning_module.save_answers(host, user, payload, submit=True))
+                else:
+                    self.send_json(actions[parsed.path](host, user, payload))
             elif parsed.path == "/api/games/sets/from-base":
                 self.send_json(create_game_set_from_base(self.require_user_with_consents(), payload))
             elif parsed.path == "/api/games/sets/upload-json":
