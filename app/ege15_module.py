@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from attempt_content import describe_question
+
 import hashlib
 import json
 import random
@@ -156,10 +158,19 @@ def word_question(word: dict[str, Any]) -> dict[str, Any]:
 
 
 def combined_sentence(items: list[dict[str, Any]]) -> str:
-    sentence = items[0]["context"]
-    for item in items[1:]:
+    # A source task can span several sentences. Every card stores just its own
+    # sentence with one gap, so taking the first card silently dropped later gaps.
+    contexts = []
+    for item in items:
+        label = item.get('gap_label') or item['variant']
+        restored = label.replace('..',item['answer'].lower())
+        context = item['context'].replace(label,restored,1)
+        if context not in contexts:
+            contexts.append(context)
+    sentence = ' '.join(contexts)
+    for item in items:
         label = item.get("gap_label") or ""
-        spelling = item.get("correct_spelling") or ""
+        spelling = label.replace('..',item['answer'].lower())
         if label and spelling and spelling in sentence:
             sentence = sentence.replace(spelling, label, 1)
     return sentence
@@ -170,6 +181,9 @@ def sentence_parts(sentence: str, items: list[dict[str, Any]]) -> list[dict[str,
     for item in items:
         label = item.get("gap_label") or item["variant"]
         index = sentence.find(label)
+        while index >= 0 and any(index < start+len(other) and index+len(label) > start
+                                 for start,other,_ in targets):
+            index = sentence.find(label,index+1)
         if index >= 0:
             targets.append((index, label, item))
     targets.sort(key=lambda value: value[0])
@@ -282,7 +296,7 @@ def insert_attempt(con: sqlite3.Connection, user_id: str, session: dict[str, Any
         (secrets.token_hex(12), user_id, session["mode"] + mode_suffix, session["scope_id"], word_id,
          word["rule_id"] if word else question.get("rule_id"), word["category"] if word else question.get("category"),
          word["rule_name"] if word else question.get("rule_name"), question_id,
-         word["context"] if word else question.get("prompt"), given, correct, int(is_correct), now_iso(), elapsed),
+         word["context"] if word else describe_question(question), given, correct, int(is_correct), now_iso(), elapsed),
     )
 
 

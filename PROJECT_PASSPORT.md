@@ -359,7 +359,7 @@
 - маршрутизацию practice API: `activity_post`;
 - генерацию вопросов: `make_word_question`, `make_line_question`;
 - учет попыток: `record_attempt`;
-- прогресс и статистику: `progress_for`, `progress_export`;
+- прогресс и статистику: `progress_for`, `progress_export`; общая страница `/apps/statistics` использует `app/statistics_module.py` и `app/static/statistics.js` (сводка всех заданий и игр, ученики сначала свёрнуты, полный журнал с фильтрами, выгрузка всех записей);
 - админку: `admin_overview`;
 - конструктор игр: `create_game_set_from_base`, `create_game_set_from_upload`;
 - магазин: `create_berry_season_payment`, `deliver_berry_season_order`, `process_yookassa_webhook`;

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from attempt_content import describe_question
+
 import hashlib
 import csv
 import io
@@ -663,94 +665,10 @@ def shuffle_line_rows(rows: list[dict[str, Any]]) -> None:
 
 
 def make_line_question(source_words: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    pools = category_pools()
-    focus_pools = category_pools(source_words) if source_words else {}
-    viable_categories = [category for category in pools if len(pools[category]) >= 2]
-    focus_categories = [category for category in focus_pools if category in viable_categories]
-    random.shuffle(focus_categories)
-    random.shuffle(viable_categories)
-    categories = list(dict.fromkeys(focus_categories + viable_categories))[:5]
-    if len(categories) < 5:
-        raise ValueError("Для режима строки в копилке нужно больше ошибок из разных орфограмм.")
-    used_ids: set[str] = set()
-    correct_targets = set(random.sample(range(len(categories)), k=random.choice([2, 3])))
-
-    def pool_for(category: str, letter: str) -> list[dict[str, Any]]:
-        focused = focus_pools.get(category, {}).get(letter, [])
-        focused_ids = {word["id"] for word in focused}
-        rest = [word for word in pools[category][letter] if word["id"] not in focused_ids]
-        return focused + rest
-
-    rows: list[dict[str, Any]] = []
-    for index, category in enumerate(categories):
-        by_letter = pools[category]
-        letters = [letter for letter, words in by_letter.items() if len(words) >= 1]
-        same_letter_options = [letter for letter, words in by_letter.items() if len(words) >= 3]
-        should_be_correct = index in correct_targets and bool(same_letter_options)
-
-        if should_be_correct:
-            letter = random.choice(same_letter_options)
-            rows.append(
-                {
-                    "category": category,
-                    "is_correct": True,
-                    "letter": letter,
-                    "words": sample_words(pool_for(category, letter), 3, used_ids),
-                }
-            )
-            continue
-
-        if len(letters) < 2:
-            letter = random.choice(same_letter_options or letters)
-            rows.append(
-                {
-                    "category": category,
-                    "is_correct": True,
-                    "letter": letter,
-                    "words": sample_words(pool_for(category, letter), 3, used_ids),
-                }
-            )
-            continue
-
-        first, second = random.sample(letters, 2)
-        third = random.choice([first, second])
-        pattern = [first, second, third]
-        words: list[dict[str, Any]] = []
-        for letter in pattern:
-            words.extend(sample_words(pool_for(category, letter), 1, used_ids))
-        random.SystemRandom().shuffle(words)
-        rows.append({"category": category, "is_correct": False, "letter": None, "words": words})
-
-    shuffle_line_rows(rows)
-    correct_indexes = [str(index + 1) for index, row in enumerate(rows) if row["is_correct"]]
-    correct_rows = [row for row in rows if row["is_correct"]]
-
-    return {
-        "question_id": secrets.token_hex(8),
-        "kind": "line",
-        "prompt": "Выберите все строки, где во всех трех словах пропущена одна и та же буква.",
-        "rows": [[word["variant"] for word in row["words"]] for row in rows],
-        "_line_rows": [
-            {
-                "is_correct": row["is_correct"],
-                "word_ids": [word["id"] for word in row["words"]],
-            }
-            for row in rows
-        ],
-        "choices": [str(number) for number in range(1, len(rows) + 1)],
-        "category": "Строка",
-        "rule_id": "line_same_letter",
-        "rule_name": "Строка: 5 орфограмм",
-        "explanation": (
-            "Каждая строка собрана из отдельной крупной группы задания 10. "
-            f"Правильные строки: {', '.join(correct_indexes)}."
-        ),
-        "correct_spelling": "; ".join(
-            word["correct_spelling"] for row in correct_rows for word in row["words"]
-        ),
-        "address": "",
-        "_correct_answer": "".join(correct_indexes),
-    }
+    from ege_line_builder import make_question
+    question = make_question(11, WORDS, source_words)
+    question.pop("row_word_ids", None)
+    return question
 
 
 def normalize_given_answer(question: dict[str, Any], value: Any) -> str:
@@ -793,7 +711,7 @@ def record_attempt(
             question.get("category"),
             question.get("rule_name"),
             question_id,
-            question.get("prompt"),
+            describe_question(question),
             given,
             correct,
             is_correct,

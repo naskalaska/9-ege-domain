@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from attempt_content import describe_question
+
 import hashlib
 import hmac
 import base64
@@ -28,6 +30,7 @@ import ege14_module
 import ege15_module
 import ege_orthography_module
 import ege5_module
+import statistics_module
 import learning_module
 import game_tracking
 from datetime import datetime, timedelta, timezone
@@ -2768,80 +2771,10 @@ def shuffle_line_rows(rows: list[dict[str, Any]]) -> None:
 
 
 def make_line_question(source_words: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    by_letter: dict[str, list[dict[str, Any]]] = {}
-    for word in WORDS:
-        by_letter.setdefault(word["correct_letter"], []).append(word)
-    used_ids: set[str] = set()
-    category_counts: dict[str, int] = {}
-    focus_ids = {word["id"] for word in source_words or []}
-    focused_picks = 0
-
-    def available_letters(count: int = 1) -> list[str]:
-        return [letter for letter, pool in by_letter.items()
-                if sum(word["id"] not in used_ids for word in pool) >= count]
-
-    def pick(letter: str) -> dict[str, Any]:
-        nonlocal focused_picks
-        fresh = [word for word in by_letter[letter] if word["id"] not in used_ids]
-        if not fresh:
-            raise ValueError("Недостаточно разных слов для строк задания 9.")
-        focused = [word for word in fresh if word["id"] in focus_ids]
-        if focused and focused_picks < 3:
-            fresh = focused
-            focused_picks += 1
-        least = min(category_counts.get(word["category"], 0) for word in fresh)
-        word = random.choice([word for word in fresh if category_counts.get(word["category"], 0) == least])
-        used_ids.add(word["id"])
-        category_counts[word["category"]] = category_counts.get(word["category"], 0) + 1
-        return word
-
-    rows: list[dict[str, Any]] = []
-    correct_row_count = random.choice([2, 3])
-    for _ in range(correct_row_count):
-        letter = random.choice(available_letters(3))
-        rows.append(
-            {
-                "is_correct": True,
-                "letter": letter,
-                "words": [pick(letter) for _ in range(3)],
-            }
-        )
-
-    for _ in range(5 - correct_row_count):
-        first, second = random.sample(available_letters(), 2)
-        words = [pick(first), pick(second)]
-        words.append(pick(random.choice(available_letters())))
-        random.SystemRandom().shuffle(words)
-        rows.append({"is_correct": False, "letter": None, "words": words})
-
-    # A block must cover several spelling groups, including when rare letters were drawn.
-    if len(category_counts) < 3:
-        return make_line_question(source_words)
-
-    shuffle_line_rows(rows)
-    correct_indexes = [str(index + 1) for index, row in enumerate(rows) if row["is_correct"]]
-    correct_rows = [row for row in rows if row["is_correct"]]
-
-    return {
-        "question_id": secrets.token_hex(8),
-        "kind": "line",
-        "prompt": "Выберите все строки, где во всех трех словах пропущена одна и та же буква.",
-        "rows": [[word["variant"] for word in row["words"]] for row in rows],
-        "row_word_ids": [[word["id"] for word in row["words"]] for row in rows],
-        "choices": [str(number) for number in range(1, len(rows) + 1)],
-        "category": "Строка",
-        "rule_id": "line_same_letter",
-        "rule_name": "Строки: разные орфограммы",
-        "explanation": (
-            "В строках смешаны разные орфограммы задания 9. "
-            f"Правильные строки: {', '.join(correct_indexes)}."
-        ),
-        "correct_spelling": "; ".join(
-            word["correct_spelling"] for row in correct_rows for word in row["words"]
-        ),
-        "address": "",
-        "_correct_answer": "".join(correct_indexes),
-    }
+    from ege_line_builder import make_question
+    question = make_question(9, WORDS, source_words)
+    question.pop("_line_rows", None)
+    return question
 
 
 def normalize_given_answer(question: dict[str, Any], value: Any) -> str:
@@ -2886,7 +2819,7 @@ def record_attempt(
             question.get("category"),
             question.get("rule_name"),
             question_id,
-            question.get("prompt"),
+            describe_question(question),
             given,
             correct,
             is_correct,
@@ -4140,6 +4073,10 @@ def csv_bytes(rows: list[dict[str, Any]], headers: list[tuple[str, str]]) -> byt
 
 
 def progress_export(user: dict[str, Any], section: str) -> tuple[bytes, str, str]:
+    if section in {'correct','incorrect','recent'} and user['role'] in {'teacher','student'}:
+        body,_,content_type = statistics_module.export(sys.modules[__name__],user,
+            {'status':section if section != 'recent' else 'all'})
+        return body,f'ege_statistics_{section}.csv',content_type
     data = progress_for(user)
     if section == "students":
         rows = [
@@ -6656,6 +6593,17 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(consent_status(user["user_id"]))
             elif parsed.path == "/api/progress":
                 self.send_json(progress_for(self.require_user_with_consents()))
+            elif parsed.path in {"/api/statistics", "/api/statistics/history", "/api/statistics/export"}:
+                user = self.require_user_with_consents()
+                params = {key:values[0] for key,values in parse_qs(parsed.query).items()}
+                host = sys.modules[__name__]
+                if parsed.path.endswith('/export'):
+                    body,filename,content_type = statistics_module.export(host,user,params)
+                    self.send_download(body,filename,content_type)
+                elif parsed.path.endswith('/history'):
+                    self.send_json(statistics_module.history(host,user,params))
+                else:
+                    self.send_json(statistics_module.overview(host,user,params))
             elif parsed.path == "/api/assignments":
                 self.send_json(learning_module.overview(sys.modules[__name__], self.require_user_with_consents()))
             elif parsed.path == "/api/progress/export":
@@ -6845,12 +6793,13 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
-            elif parsed.path in {"/api/assignments/create", "/api/assignments/open", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
+            elif parsed.path in {"/api/assignments/create", "/api/assignments/open", "/api/assignments/check", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
                 user = self.require_user_with_consents()
                 host = sys.modules[__name__]
                 actions = {
                     "/api/assignments/create": learning_module.create_test,
                     "/api/assignments/open": learning_module.open_test,
+                    "/api/assignments/check": learning_module.check_question,
                     "/api/assignments/save": learning_module.save_answers,
                     "/api/teacher/groups": learning_module.save_group,
                     "/api/games/result": learning_module.game_result,

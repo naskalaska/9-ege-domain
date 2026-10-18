@@ -29,7 +29,26 @@ def ensure_schema(con):
       public_id TEXT, created_at TEXT NOT NULL, PRIMARY KEY(user_id, event_id));
     CREATE INDEX IF NOT EXISTS idx_assigned_student ON assigned_test_students(student_id, completed_at);
     CREATE INDEX IF NOT EXISTS idx_assigned_teacher ON assigned_tests(teacher_id, created_at);
+    CREATE TABLE IF NOT EXISTS assigned_test_checks (
+      test_id TEXT NOT NULL, student_id TEXT NOT NULL, question_id TEXT NOT NULL,
+      answer_json TEXT NOT NULL, result_json TEXT NOT NULL, checked_at TEXT NOT NULL,
+      PRIMARY KEY(test_id, student_id, question_id));
     """)
+
+
+def test_outline(snapshots):
+    counts = {}
+    for snap in snapshots:
+        key = snap['activity']
+        counts[key] = counts.get(key, 0) + 1
+    return [{'activity':key, 'title':'Задание ' + key.removeprefix('ege'), 'count':n}
+            for key,n in counts.items()]
+
+
+def checks_for(con, test_id, student_id):
+    return {r['question_id']:json.loads(r['result_json']) for r in con.execute(
+        'SELECT question_id,result_json FROM assigned_test_checks WHERE test_id=? AND student_id=?',
+        (test_id,student_id))}
 
 
 def module_for(s, activity):
@@ -58,20 +77,30 @@ def overview(s, user):
             groups = [dict(r) for r in con.execute("SELECT * FROM student_groups WHERE teacher_id=? ORDER BY title", (user["user_id"],))]
             for group in groups:
                 group["student_ids"] = [r[0] for r in con.execute("SELECT student_id FROM student_group_members WHERE group_id=?", (group["id"],))]
-            tests = [dict(r) for r in con.execute("SELECT id,title,created_at FROM assigned_tests WHERE teacher_id=? ORDER BY created_at DESC", (user["user_id"],))]
+            tests = [dict(r) for r in con.execute("SELECT id,title,created_at,questions_json FROM assigned_tests WHERE teacher_id=? ORDER BY created_at DESC", (user["user_id"],))]
             for test in tests:
+                snapshots = json.loads(test.pop('questions_json'))
+                test['total'] = len(snapshots)
+                test['outline'] = test_outline(snapshots)
                 test["students"] = [dict(r) for r in con.execute("""SELECT a.student_id,u.display_name,a.started_at,a.completed_at,a.result_json
                   FROM assigned_test_students a JOIN users u ON u.user_id=a.student_id WHERE a.test_id=?""", (test["id"],))]
                 for student in test["students"]:
                     result = json.loads(student.pop("result_json") or "null")
                     student["result"] = result
+                    checks = checks_for(con, test['id'], student['student_id'])
+                    student['checked'] = result['total'] if result else len(checks)
+                    student['correct'] = result['correct'] if result else sum(bool(r['is_correct']) for r in checks.values())
             return {"students": students, "groups": groups, "tests": tests}
         tests = [dict(r) for r in con.execute("""SELECT t.id,t.title,t.created_at,u.display_name AS teacher_name,
-          a.seen_at,a.started_at,a.completed_at,a.result_json FROM assigned_tests t
+          a.seen_at,a.started_at,a.completed_at,a.result_json,t.questions_json FROM assigned_tests t
           JOIN assigned_test_students a ON a.test_id=t.id JOIN users u ON u.user_id=t.teacher_id
           WHERE a.student_id=? ORDER BY t.created_at DESC""", (user["user_id"],))]
         for test in tests:
             test["result"] = json.loads(test.pop("result_json") or "null")
+            snapshots = json.loads(test.pop('questions_json'))
+            test['total'] = len(snapshots)
+            test['outline'] = test_outline(snapshots)
+            test['checked'] = test['total'] if test['completed_at'] else len(checks_for(con,test['id'],user['user_id']))
         return {"tests": tests, "unread": sum(not t["seen_at"] and not t["completed_at"] for t in tests),
                 "pending": sum(not t["completed_at"] for t in tests)}
 
@@ -174,6 +203,8 @@ def class_error_variant(s, module, user, activity, config, count):
 def snapshot_question(module, activity, mode, question):
     private = dict(question)
     private["correct_answer"] = private.pop("_correct_answer")
+    if '_line_rows' in private:
+        private['line_rows'] = private.pop('_line_rows')
     public = {k: v for k, v in question.items() if not k.startswith('_') and k not in {'explanation', 'correct_spelling', 'row_word_ids'}}
     return {"activity": activity, "mode": mode, "scope_id": module.scope_id_for(mode),
             "question_id": question["question_id"], "question": private, "public": public}
@@ -193,9 +224,85 @@ def open_test(s, user, payload):
         con.execute("UPDATE assigned_test_students SET seen_at=COALESCE(seen_at,?),started_at=COALESCE(started_at,?) WHERE test_id=? AND student_id=?", (s.now_iso(), s.now_iso(), row["test_id"], user["user_id"]))
         questions = []
         for snap in json.loads(row["questions_json"]):
-            questions.append(snap["public"])
+            public = dict(snap['public'])
+            # Older frozen tests can contain a multi-sentence task with only its
+            # first sentence visible. Restore its presentation, retaining its key.
+            if public.get('kind') == 'ege15_sentence':
+                key = snap['question']['correct_answer']
+                visible = {part['target']['id'] for part in public['parts'] if 'target' in part}
+                if visible != set(key):
+                    module = s.ege15_module
+                    if all(item_id in module.WORD_BY_ID for item_id in key):
+                        items = [{**module.WORD_BY_ID[item_id],'answer':answer} for item_id,answer in key.items()]
+                        public['parts'] = module.sentence_parts(module.combined_sentence(items),items)
+            questions.append({**public, 'assignment_activity':snap['activity']})
         return {"assignment_id": row["test_id"], "title": row["title"], "questions": questions,
-                "answers": json.loads(row["answers_json"] or "{}"), "result": json.loads(row["result_json"] or "null")}
+                "answers": json.loads(row["answers_json"] or "{}"), "result": json.loads(row["result_json"] or "null"),
+                "checked_results":checks_for(con,row['test_id'],user['user_id']),
+                "outline":test_outline(json.loads(row['questions_json']))}
+
+
+def answer_complete(question, answer):
+    kind = question['kind']
+    if kind == 'paronym_exam':
+        return isinstance(answer,dict) and str(answer.get('row') or '').strip() and str(answer.get('word') or '').strip()
+    if kind == 'paronym_tf':
+        return isinstance(answer,dict) and (answer.get('verdict') == 'true' or
+            (answer.get('verdict') == 'false' and str(answer.get('word') or '').strip()))
+    if kind == 'ege14_line':
+        return isinstance(answer,dict) and answer.get('mode') and (answer['mode'] != 'разное' or
+            (isinstance(answer.get('words'),dict) and all(answer['words'].get(t['id']) for t in question['targets'])))
+    if kind == 'ege15_sentence':
+        return isinstance(answer,dict) and all(answer.get(i) for i in question['sentence_items'])
+    return isinstance(answer,(str,int)) and bool(str(answer).strip())
+
+
+def record_check(s, con, user, row, snap, answer, elapsed):
+    module = module_for(s, snap['activity'])
+    given = module.normalize_given_answer(snap['question'],answer) if snap['activity'] in {'ege5','ege9','ege10','ege11','ege12'} else answer
+    result = module.record_attempt(con,user['user_id'],snap,snap['question_id'],snap['question'],given,elapsed)
+    con.execute('INSERT INTO assigned_test_checks VALUES(?,?,?,?,?,?)',
+        (row['test_id'],user['user_id'],snap['question_id'],json.dumps(answer,ensure_ascii=False),
+         json.dumps(result,ensure_ascii=False),s.now_iso()))
+    return result
+
+
+def finish_if_complete(s, con, user, row, snapshots, answers, checks):
+    if len(checks) != len(snapshots):
+        return None
+    results = [checks[snap['question_id']] for snap in snapshots]
+    result = {'results':results,'correct':sum(bool(r['is_correct']) for r in results),'total':len(results)}
+    con.execute('UPDATE assigned_test_students SET completed_at=?,answers_json=?,result_json=? WHERE test_id=? AND student_id=?',
+        (s.now_iso(),json.dumps(answers,ensure_ascii=False),json.dumps(result,ensure_ascii=False),row['test_id'],user['user_id']))
+    return result
+
+
+def check_question(s, user, payload):
+    with connection(s) as con:
+        con.execute('BEGIN IMMEDIATE')
+        row = assigned_row(con,user,str(payload.get('test_id') or ''))
+        snapshots = json.loads(row['questions_json'])
+        question_id = str(payload.get('question_id') or '')
+        snap = next((snap for snap in snapshots if snap['question_id'] == question_id),None)
+        if not snap:
+            raise ValueError('Задание не найдено в назначенном тесте.')
+        checks = checks_for(con,row['test_id'],user['user_id'])
+        if row['completed_at']:
+            result = json.loads(row['result_json'])
+            item = next(r for r in result['results'] if r['question_id'] == question_id)
+            return {'checked_result':item,'checked_results':checks,'result':result}
+        answers = json.loads(row['answers_json'] or '{}')
+        if question_id not in checks:
+            answer = payload.get('answer')
+            if not answer_complete(snap['question'],answer):
+                raise ValueError('Сначала ответьте на задание.')
+            elapsed = max(0,min(int(payload.get('time_spent_sec') or 0),86400))
+            checks[question_id] = record_check(s,con,user,row,snap,answer,elapsed)
+            answers[question_id] = answer
+            con.execute('UPDATE assigned_test_students SET answers_json=?,started_at=COALESCE(started_at,?) WHERE test_id=? AND student_id=?',
+                (json.dumps(answers,ensure_ascii=False),s.now_iso(),row['test_id'],user['user_id']))
+        result = finish_if_complete(s,con,user,row,snapshots,answers,checks)
+        return {'checked_result':checks[question_id],'checked_results':checks,'result':result}
 
 
 def save_answers(s, user, payload, submit=False):
@@ -208,21 +315,24 @@ def save_answers(s, user, payload, submit=False):
         answers = payload.get("answers")
         if not isinstance(answers, dict):
             raise ValueError("Некорректные ответы.")
+        snapshots = json.loads(row['questions_json'])
+        valid_ids = {snap['question_id'] for snap in snapshots}
+        if set(answers) - valid_ids:
+            raise ValueError('В ответах есть задания из другого теста.')
+        merged = json.loads(row['answers_json'] or '{}')
+        checked_rows = con.execute('SELECT question_id,answer_json FROM assigned_test_checks WHERE test_id=? AND student_id=?',
+            (row['test_id'],user['user_id'])).fetchall()
+        locked = {r['question_id']:json.loads(r['answer_json']) for r in checked_rows}
+        answers = {**merged,**answers,**locked}
         if not submit:
             con.execute("UPDATE assigned_test_students SET answers_json=? WHERE test_id=? AND student_id=?", (json.dumps(answers, ensure_ascii=False), row["test_id"], user["user_id"]))
             return {"ok": True}
         elapsed = max(0, min(int(payload.get("time_spent_sec") or 0), 86400))
-        results = []
-        for snap in json.loads(row["questions_json"]):
-            module = module_for(s, snap["activity"])
-            question = snap["question"]
-            given = answers.get(snap["question_id"], "")
-            if snap["activity"] in {"ege5", "ege9", "ege10", "ege11", "ege12"}:
-                given = module.normalize_given_answer(question, given)
-            results.append(module.record_attempt(con, user["user_id"], snap, snap["question_id"], question, given, elapsed))
-        result = {"results": results, "correct": sum(bool(r["is_correct"]) for r in results), "total": len(results)}
-        con.execute("UPDATE assigned_test_students SET completed_at=?,answers_json=?,result_json=? WHERE test_id=? AND student_id=?", (s.now_iso(), json.dumps(answers, ensure_ascii=False), json.dumps(result, ensure_ascii=False), row["test_id"], user["user_id"]))
-        return result
+        checks = checks_for(con,row['test_id'],user['user_id'])
+        for snap in snapshots:
+            if snap['question_id'] not in checks:
+                checks[snap['question_id']] = record_check(s,con,user,row,snap,answers.get(snap['question_id'],''),elapsed)
+        return finish_if_complete(s,con,user,row,snapshots,answers,checks)
 
 
 def game_result(s, user, payload):
@@ -232,7 +342,7 @@ def game_result(s, user, payload):
     event_id = str(payload.get("event_id") or "")[:100]
     if not event_id or not isinstance(payload.get("is_correct"), bool):
         raise ValueError("Некорректный результат игры.")
-    text = lambda key: str(payload.get(key) or "")[:2000]
+    text = lambda key: str(payload.get(key) if payload.get(key) is not None else "")[:20000 if key == 'prompt' else 12000]
     with connection(s) as con:
         public_id = text("public_id")
         title = s.HTML_GAME_TITLES.get(slug, slug)

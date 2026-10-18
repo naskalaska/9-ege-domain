@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from attempt_content import describe_question
+
 import hashlib
 import json
 import random
@@ -352,7 +354,7 @@ def record_attempt(
             question.get("category"),
             question.get("rule_name"),
             question_id,
-            question.get("prompt"),
+            describe_question(question),
             given,
             correct,
             is_correct,

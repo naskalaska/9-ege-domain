@@ -17,6 +17,7 @@ from unittest.mock import patch
 import server
 import learning_module as learning
 import game_tracking
+from ege_line_builder import spelling_group
 
 
 class LearningTest(unittest.TestCase):
@@ -54,6 +55,117 @@ class LearningTest(unittest.TestCase):
                 if len({server.WORD_BY_ID[i]['correct_letter'] for i in row}) == 1)
             self.assertEqual(correct, q['_correct_answer'])
             self.assertIn(len(correct), (2,3))
+
+    def test_each_ege_row_has_one_family_and_one_pair(self):
+        for task in (9,10,11,12):
+            module = server if task == 9 else getattr(server,f'ege{task}_module')
+            for _ in range(150):
+                question = module.make_line_question()
+                rows = question.get('row_word_ids') or [r['word_ids'] for r in question['_line_rows']]
+                self.assertEqual(len(rows),5)
+                ids = [i for row in rows for i in row]
+                row_size = 3 if task in (9,10) else 2
+                self.assertEqual(len(set(ids)),5*row_size)
+                key = ''
+                for index,row in enumerate(rows):
+                    self.assertEqual(len(row),row_size)
+                    words = [module.WORD_BY_ID[i] for i in row]
+                    groups = {spelling_group(task,w) for w in words}
+                    self.assertEqual(len(groups),1,(task,words))
+                    family,pair = groups.pop()
+                    self.assertEqual(len(pair),2)
+                    self.assertTrue(all(w['correct_letter'] in pair for w in words))
+                    if len({w['correct_letter'] for w in words}) == 1:
+                        key += str(index+1)
+                self.assertEqual(key,question['_correct_answer'])
+                self.assertIn(len(key),(2,3))
+
+        def find(text):
+            return next(w for w in server.WORDS if w['correct_spelling'] == text)
+        self.assertNotEqual(spelling_group(9,find('(на) цыпочках')),spelling_group(9,find('плывун (грунт)')))
+        self.assertNotEqual(spelling_group(9,find('жираф')),spelling_group(9,find('брошюровать')))
+        self.assertNotEqual(spelling_group(9,find('блестеть')),spelling_group(9,find('бесшовный')))
+
+    def snapshots(self, test_id):
+        with server.db() as con:
+            return json.loads(con.execute('SELECT questions_json FROM assigned_tests WHERE id=?',(test_id,)).fetchone()[0])
+
+    def test_partial_check_resume_locking_and_completion(self):
+        test = self.create({'activity':'ege9','mode':'mix','count':3})
+        payload = {'test_id':test['id']}
+        snapshots = self.snapshots(test['id'])
+        first,second,last = snapshots
+        first_payload = {**payload,'question_id':first['question_id'],'answer':first['question']['correct_answer']}
+        checked = learning.check_question(server,self.student,first_payload)
+        self.assertTrue(checked['checked_result']['is_correct'])
+        self.assertIsNone(checked['result'])
+        total = server.progress_for(self.student)['summary']['total']
+        self.assertEqual(total,1)
+        # Retries, including another answer, cannot overwrite a checked attempt.
+        self.assertEqual(learning.check_question(server,self.student,{**first_payload,'answer':'wrong'}),checked)
+        learning.save_answers(server,self.student,{**payload,'answers':{first['question_id']:'wrong',second['question_id']:'о'}})
+        server.PRACTICE_SESSIONS.clear()
+        opened = learning.open_test(server,self.student,payload)
+        self.assertEqual(opened['answers'][first['question_id']],first_payload['answer'])
+        self.assertEqual(opened['answers'][second['question_id']],'о')
+        self.assertEqual(len(opened['checked_results']),1)
+        self.assertNotIn('correct_answer',json.dumps([q for q in opened['questions'] if q['question_id'] != first['question_id']]))
+        overview = learning.overview(server,self.student)['tests'][0]
+        self.assertEqual((overview['checked'],overview['total']),(1,3))
+        teacher = learning.overview(server,self.teacher)['tests'][0]['students'][0]
+        self.assertEqual((teacher['checked'],teacher['correct']),(1,1))
+        for snap in (last,second):
+            checked = learning.check_question(server,self.student,{**payload,'question_id':snap['question_id'],'answer':snap['question']['correct_answer']})
+        self.assertEqual((checked['result']['correct'],checked['result']['total']),(3,3))
+        self.assertEqual(server.progress_for(self.student)['summary']['total'],3)
+        self.assertEqual(learning.save_answers(server,self.student,{**payload,'answers':{}},submit=True),checked['result'])
+        learning.check_question(server,self.student,first_payload)
+        self.assertEqual(server.progress_for(self.student)['summary']['total'],3)
+
+    def test_question_check_all_formats_and_ownership(self):
+        for activity,mode in [('ege5','paronym_exam'),('ege9','line'),('ege10','line'),('ege11','line'),('ege12','line'),
+                              ('ege13','line_ne'),('ege14','exam'),('ege14','line_spelling'),('ege15','sentence_nn')]:
+            test = self.create({'activity':activity,'mode':mode,'count':1})
+            snap = self.snapshots(test['id'])[0]
+            key = snap['question']['correct_answer']
+            if snap['question']['kind'] == 'paronym_exam':
+                row,word = key.split('|',1)
+                key = {'row':row,'word':word}
+            elif snap['question']['kind'] == 'ege14_line':
+                key = {'mode':key,'words':snap['question']['word_answers']}
+            payload = {'test_id':test['id'],'question_id':snap['question_id'],'answer':key}
+            with self.assertRaises(PermissionError):
+                learning.check_question(server,{**self.student,'user_id':'other'},payload)
+            with self.assertRaises(ValueError):
+                learning.check_question(server,self.student,{**payload,'question_id':'wrong-id'})
+            with self.assertRaises(ValueError):
+                learning.check_question(server,self.student,{**payload,'answer':None})
+            result = learning.check_question(server,self.student,payload)
+            self.assertTrue(result['checked_result']['is_correct'],(activity,mode,key,result))
+            self.assertEqual(result['result']['total'],1)
+
+    def test_all_ege15_gaps_visible_and_legacy_assignments_repaired(self):
+        module = server.ege15_module
+        for group in module.SENTENCES:
+            question = module.sentence_question(group)
+            visible = [p['target']['id'] for p in question['parts'] if 'target' in p]
+            self.assertEqual(set(visible),set(question['_correct_answer']))
+            self.assertEqual(len(visible),len(question['_correct_answer']))
+        test = self.create({'activity':'ege15','mode':'sentence_nn','count':1})
+        snaps = self.snapshots(test['id'])
+        snap = snaps[0]
+        # Simulate the incomplete rendering saved by the previous release.
+        first = next(p for p in snap['public']['parts'] if 'target' in p)
+        snap['public']['parts'] = [first]
+        snap['question']['parts'] = [first]
+        with server.db() as con:
+            con.execute('UPDATE assigned_tests SET questions_json=? WHERE id=?',(json.dumps(snaps),test['id']))
+        opened = learning.open_test(server,self.student,{'test_id':test['id']})
+        visible = {p['target']['id'] for p in opened['questions'][0]['parts'] if 'target' in p}
+        self.assertEqual(visible,set(snap['question']['correct_answer']))
+        result = learning.check_question(server,self.student,{'test_id':test['id'],'question_id':snap['question_id'],
+            'answer':snap['question']['correct_answer']})
+        self.assertEqual(result['result']['correct'],1)
 
     def test_groups_ownership_and_notifications(self):
         group = learning.save_group(server, self.teacher, {'title':'Группа А','student_ids':[self.student['user_id']]})

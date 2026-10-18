@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from attempt_content import describe_question
+
 import hashlib
 import json
 import random
@@ -245,7 +247,7 @@ def insert_attempt(con: sqlite3.Connection, user_id: str, session: dict[str, Any
         (secrets.token_hex(12), user_id, session["mode"] + mode_suffix, session["scope_id"], word_id,
          word["rule_id"] if word else question.get("rule_id"), word["category"] if word else question.get("category"),
          word["rule_name"] if word else question.get("rule_name"), question_id,
-         word["context"] if word else question.get("prompt"), given, correct, int(is_correct), now_iso(), elapsed),
+         word["context"] if word else describe_question(question), given, correct, int(is_correct), now_iso(), elapsed),
     )
 
 

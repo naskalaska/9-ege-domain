@@ -52,12 +52,11 @@ HOOKS = {
         ('state.parseCharacteristicComplete = CHARACTERISTIC_FIELDS.every(field => state.parseCharacteristics[field.key] === task.features[field.key]);',report('state.parseCharacteristicComplete','task.sentence','state.parseCharacteristics','task.features')),
     ],
     'participle-map': [
-        ('function recordTaskResult(locationId,taskId,ok){',report('ok','locationId+": "+taskId')),
+        ('function recordTaskResult(locationId,taskId,ok){', "const learningTask=run?.tasks?.[run.index]?.task;if(learningTask?.kind!=='memo'){" + report('ok',"document.querySelector('#quest')?.innerText || learningTask?.text || learningTask?.prompt || locationId+': '+taskId", "selected instanceof Set ? [...selected].map(i=>learningTask?.tokens?.[i] ?? i).join(', ') : (typeof selected==='number' ? (learningTask?.options?.[selected] ?? learningTask?.answers?.[selected] ?? selected) : selected) ?? document.activeElement?.textContent ?? ''", "learningTask?.explain || (learningTask?.correct ?? learningTask?.answer ?? '')") + "}"),
         ("run.answered=true;$('#feedback').textContent=detail+",None),
-        ('function completeMemo(t){',report('true','t.title || t.id')),
     ],
     'word-architecture': [
-        ('let t=statsFor(q.skill);t.total++;',report('ok','q.word || q.prompt || q.id','state.mark','q.answer')),
+        ('let t=statsFor(q.skill);t.total++;',report('ok',"q.prompt+' '+q.word", "q.type==='parse' ? state.parseMarks.map(m=>m.role+': '+q.word.slice(m.start,m.end)).join('; ')+'; Окончание: '+state.endingKind : state.mark.ranges.map(([a,b])=>q.word.slice(a,b)).join(', ')+'; '+(state.mark.special==='zero'?'нулевое окончание':state.mark.special==='none'?'нет окончания':'')+'; '+state.proofInput", "q.type==='parse' ? q.segments.map((part,i)=>q.roles[i]+': '+part).join('; ') : Array.isArray(q.answer) ? (Array.isArray(q.answer[0])?q.answer:[q.answer]).map(([a,b])=>q.word.slice(a,b)).join(', ') : q.answer==='zero'?'нулевое окончание':q.answer==='none'?'нет окончания':q.answer")),
         ("if(correct){x.solved=true;",None),
     ],
     'palace-restoration': [("let ids=d.assembly.map(t=>t.id),candidate=duelCandidate(ids);",report("!!candidate&&!d.built.has(candidate.lemma)","'Сборка слова из морфем'",'duelWritten(ids)',"candidate?.word || ''"))],
@@ -93,11 +92,11 @@ def transform(slug, body, html=False):
         elif slug == 'orthoshooting':
             text = text.replace(anchor, 'function answer(v){' + report('v===q.correct','q.word || q.question','v','q.correct') + 'let ok=v===q.correct,')
         elif slug == 'participle-map':
-            text = text.replace(anchor, report('ok','t.text || t.title || t.id','Array.from(selected || [])','t.correct') + anchor)
+            text = text.replace(anchor, report('ok',"document.querySelector('#quest')?.innerText || t.text || t.title || t.id", "selected instanceof Set ? [...selected].map(i=>t.tokens?.[i] ?? i).join(', ') : selected",'t.explain || t.correct || t.forms || t.items') + anchor)
         elif slug == 'summer-gerund-bar':
             text = text.replace(anchor, report('ok','t.text || t.question','got','expected || t.answers') + anchor)
         elif slug == 'word-architecture':
-            text = text.replace(anchor, report('correct',"'Мини-игра: '+id",'value','q') + anchor)
+            text = text.replace(anchor, report('correct',"q.word || q.prompt || q.text || q[0] || 'Мини-игра: '+id",'value',"q.answer ?? q.correct ?? (id==='suffix'?q.forms[x.suffixChoice][1]:q)") + anchor)
         elif slug == 'butterflies-participial-phrase':
             code = report('true' if 'good' in anchor else 'false','u.text || u.sentence || u.id','d','C.commas').rstrip(';')
             text = text.replace(anchor, code + ',' + anchor)
@@ -105,6 +104,6 @@ def transform(slug, body, html=False):
         anchor = 'if (value === answer) {'
         text = text.replace(anchor, report('value===answer','items[current].variant','value','answer') + anchor)
     if html:
-        tag = f'<script src="/game-tracker.js?v=20261018" data-game="{escape(slug, quote=True)}"></script>'
+        tag = f'<script src="/game-tracker.js?v=statistics-20261019" data-game="{escape(slug, quote=True)}"></script>'
         text = re.sub(r'(<head[^>]*>)', lambda m: m[0] + tag, text, count=1, flags=re.I)
     return text.encode('utf-8')

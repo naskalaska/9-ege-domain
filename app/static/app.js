@@ -1558,6 +1558,7 @@ function isPublicPage(path = window.location.pathname) {
 
 function setShellMode(mode = "app") {
   appShell.classList.toggle("public-shell", mode === "public");
+  if (mode === "public") document.querySelector("#workspaceNavigation")?.remove();
   if (brand) {
     brand.innerHTML = mode === "public"
       ? `<div class="brand-mark">А</div><div><h1>Русский язык</h1><p>и нейросети</p></div>`
@@ -1566,6 +1567,13 @@ function setShellMode(mode = "app") {
 }
 
 function navigate(path) {
+  if (state.currentSession?.assignment_id && !state.currentSession.result) {
+    return leaveAssignedWorkspace().then(() => {
+      state.currentSession = null;
+      navigate(path);
+    }).catch(err => alert(err.message));
+  }
+  statisticsRequest++;
   stopTeacherStatsRefresh();
   document.querySelectorAll(".modal-backdrop").forEach((item) => item.remove());
   state.activityLoadRequestId += 1;
@@ -1693,10 +1701,11 @@ async function copyTextToClipboard(text) {
 function renderTopActions() {
   setShellMode("app");
   topActions.innerHTML = "";
+  renderPlatformNavigation();
   const home = document.createElement("button");
   home.className = "ghost-button";
-  home.textContent = "На главную";
-  home.addEventListener("click", () => navigate("/"));
+  home.textContent = state.user ? "Кабинет" : "На главную";
+  home.addEventListener("click", () => navigate(state.user ? "/apps" : "/"));
   topActions.append(home);
   if (!state.user) return;
   if (["teacher", "student"].includes(state.user.role)) {
@@ -1708,23 +1717,12 @@ function renderTopActions() {
     topActions.append(assignments);
     const statistics = document.createElement("button");
     statistics.className = "ghost-button";
-    statistics.textContent = "Статистика";
+    statistics.textContent = "Общая статистика";
     statistics.onclick = showProgress;
     topActions.append(statistics);
     clearInterval(assignmentNoticeTimer);
     refreshAssignmentButton();
     assignmentNoticeTimer = setInterval(refreshAssignmentButton, 30000);
-  }
-  if (state.currentActivity) {
-    const catalog = document.createElement("button");
-    catalog.className = "ghost-button";
-    catalog.textContent = "Каталог";
-    catalog.addEventListener("click", () => {
-      state.currentActivity = null;
-      history.pushState(null, "", "/apps");
-      renderDashboard();
-    });
-    topActions.append(catalog);
   }
   if (state.user.role === "teacher") {
     const teacherGames = document.createElement("button");
@@ -3172,6 +3170,7 @@ async function loadActivity(slug, updateUrl = true) {
     state.currentMiniGame = null;
     if (updateUrl) history.pushState(null, "", "/apps/mini");
     renderMiniActivity();
+    window.scrollTo(0,0);
     return;
   }
   const bootstrap = await api(`/api/apps/${slug}/bootstrap`);
@@ -3199,6 +3198,7 @@ async function loadActivity(slug, updateUrl = true) {
   ensureRuleSelection();
   if (updateUrl) history.pushState(null, "", `/apps/${slug}`);
   renderDashboard();
+  window.scrollTo(0,0);
 }
 
 function activityFromPath() {
@@ -3312,6 +3312,10 @@ async function restoreSession() {
   if (window.location.pathname === "/login") {
     history.replaceState(null, "", "/apps");
   }
+  if (window.location.pathname === "/apps/statistics") {
+    await showOverallStatistics(false);
+    return;
+  }
   if (window.location.pathname === "/apps/my-games") {
     state.currentActivity = null;
     state.currentMiniGame = null;
@@ -3416,10 +3420,7 @@ function renderCatalog() {
   view.querySelectorAll(".open-activity").forEach((button) => {
     button.addEventListener("click", () => loadActivity(button.dataset.activity));
   });
-  view.querySelector("#teacherCabinet")?.addEventListener("click", async () => {
-    await loadActivity("ege9");
-    showProgress();
-  });
+  view.querySelector("#teacherCabinet")?.addEventListener("click", showProgress);
   view.querySelector("#teacherGames")?.addEventListener("click", renderTeacherGamesPage);
 }
 
@@ -4219,6 +4220,7 @@ function renderLiveQuestion(feedback = null) {
 }
 
 function renderQuestions() {
+  if (state.currentSession?.assignment_id) return renderAssignedQuestion();
   const practice = document.querySelector("#practiceView");
   practice.classList.remove("hidden");
   practice.innerHTML = `
@@ -4231,15 +4233,13 @@ function renderQuestions() {
       <button class="primary-button" id="submitPractice" type="button">Проверить</button>
     </div>
   `;
-  if (state.currentSession?.assignment_id) {
-    practice.querySelector("#backPractice").remove();
-    practice.querySelector("#cancelPractice").remove();
-    practice.querySelector("#submitPractice").textContent = "Завершить тест";
-  } else {
-    practice.querySelector("#backPractice").addEventListener("click", backToMenu);
-    practice.querySelector("#cancelPractice").addEventListener("click", renderMode);
-  }
+  practice.querySelector("#backPractice").addEventListener("click", backToMenu);
+  practice.querySelector("#cancelPractice").addEventListener("click", renderMode);
   practice.querySelector("#submitPractice").addEventListener("click", submitPractice);
+  bindQuestionAnswers(practice);
+}
+
+function bindQuestionAnswers(practice) {
   practice.querySelectorAll("[data-manual-answer]").forEach((input) => {
     input.addEventListener("input", () => {
       state.answers[input.dataset.manualAnswer] = input.dataset.kind === "line"
@@ -4620,74 +4620,6 @@ function renderResults(data) {
   result.querySelector("#againButton").addEventListener("click", renderMode);
 }
 
-function renderTeacherStudentCards(students) {
-  if (!students.length) {
-    return `<p class="muted">Пока нет учеников, зарегистрированных по вашему коду.</p>`;
-  }
-  return students.map((student) => {
-    const teacher = { consent_accepted: student.consent_accepted };
-    const topErrors = student.top_errors.length
-      ? student.top_errors.map((item) => `<li>${escapeHtml(item.rule_name)}: ${escapeHtml(item.errors)}</li>`).join("")
-      : "<li>ошибок пока нет</li>";
-    const pending = student.not_worked_out.length
-      ? student.not_worked_out.slice(0, 5).map((item) => `<li>${escapeHtml(item.correct_spelling || item.word)}</li>`).join("")
-      : "<li>очередь повторения пуста</li>";
-    const errorBank = student.error_bank.length
-      ? student.error_bank.slice(0, 6).map((item) => `<li>${escapeHtml(item.correct_spelling || item.word)}</li>`).join("")
-      : "<li>копилка пуста</li>";
-    const categoryRows = (student.category_stats || []).length
-      ? student.category_stats.map((row) => `
-        <tr>
-          <td>${escapeHtml(row.category || "")}</td>
-          <td>${row.total}</td>
-          <td>${pct(row.correct, row.total)}</td>
-        </tr>
-      `).join("")
-      : `<tr><td colspan="3">Пока нет решённых заданий.</td></tr>`;
-    const recentRows = (student.recent_attempts || []).length
-      ? student.recent_attempts.map((row) => `
-        <tr>
-          <td>${new Date(row.created_at).toLocaleString()}</td>
-          <td>${escapeHtml(row.category || "")}</td>
-          <td>${escapeHtml(row.rule_name || "")}</td>
-          <td>${escapeHtml(row.prompt || "")}</td>
-          <td>${escapeHtml(row.given_answer || "—")} / ${escapeHtml(row.correct_answer || "")}</td>
-          <td>${row.is_correct ? "да" : "нет"}</td>
-        </tr>
-      `).join("")
-      : `<tr><td colspan="6">Пока нет попыток.</td></tr>`;
-    return `
-      <article class="student-card">
-        <div class="student-card-head">
-          <div>
-            <b>${escapeHtml(student.display_name)}</b>
-            <span class="muted">${escapeHtml(student.email || student.username)}</span>
-          </div>
-          <div class="mini-stat"><b>${pct(student.correct, student.total)}</b><span>точность</span></div>
-        </div>
-        <div class="teacher-metrics">
-          <div class="stat"><b>${teacher.consent_accepted ? "да" : "нет"}</b><span>согласие принято</span></div>
-          <div class="stat"><b>${student.total}</b><span>заданий решено</span></div>
-          <div class="stat"><b>${student.untouched}</b><span>слов не затронуто</span></div>
-          <div class="stat"><b>${student.error_bank.length}</b><span>в копилке ошибок</span></div>
-        </div>
-        <div class="student-lists">
-          <div><h4>Больше ошибок</h4><ul>${topErrors}</ul></div>
-          <div><h4>Не отработано</h4><ul>${pending}</ul></div>
-          <div><h4>Копилка</h4><ul>${errorBank}</ul></div>
-        </div>
-        <details class="student-details">
-          <summary>Подробно по ученику</summary>
-          <div class="table-head"><h4>Группы этого ученика</h4></div>
-          <table class="table"><tr><th>Группа</th><th>Ответов</th><th>Точность</th></tr>${categoryRows}</table>
-          <div class="table-head"><h4>Последние ответы этого ученика</h4></div>
-          <table class="table"><tr><th>Дата</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th><th>Верно</th></tr>${recentRows}</table>
-        </details>
-      </article>
-    `;
-  }).join("");
-}
-
 async function renderTeacherDashboardPreview() {
   const main = document.querySelector(".main-panel");
   const old = document.querySelector("#teacherQuickPanel");
@@ -4709,118 +4641,19 @@ async function renderTeacherDashboardPreview() {
 }
 
 async function refreshTeacherDashboardPreview(panel, silent = false) {
-  if (!silent) {
-    panel.innerHTML = `<p class="muted">Загружаю быструю статистику...</p>`;
-  }
   try {
-    const data = await api("/api/progress");
-    const updatedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    panel.innerHTML = `
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">быстрая статистика</p>
-          <h3>Ученики и зоны отработки</h3>
-          <span class="muted">Обновлено: ${updatedAt}</span>
-        </div>
-        <div class="button-row">
-          <button class="secondary-button" id="refreshTeacherStats" type="button">Обновить</button>
-          <button class="secondary-button" id="makeTestButton" type="button">Составить тест</button>
-          <button class="secondary-button" id="downloadStudents" type="button">Скачать статистику</button>
-          <button class="secondary-button" id="openFullProgress" type="button">Полная активность</button>
-        </div>
-      </div>
-      <div class="student-card-grid">${renderTeacherStudentCards(data.teacher_dashboard.students)}</div>
-    `;
-    panel.querySelector("#openFullProgress").addEventListener("click", showProgress);
-    panel.querySelector("#makeTestButton").addEventListener("click", showTestComposer);
-    panel.querySelector("#downloadStudents").addEventListener("click", () => downloadRequest("/api/progress/export?section=students", "ege_students.csv"));
-    panel.querySelector("#refreshTeacherStats").addEventListener("click", () => refreshTeacherDashboardPreview(panel));
-  } catch (err) {
-    panel.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
-  }
-}
-
-function downloadButton(section, label) {
-  return `<button class="ghost-button download-stat" data-section="${escapeHtml(section)}" type="button">${escapeHtml(label)}</button>`;
+    const data = await api('/api/statistics');
+    if (!panel.isConnected) return;
+    const openIds = new Set([...panel.querySelectorAll('details[open]')].map(el => el.dataset.quickStudent));
+    panel.innerHTML = `<div class="section-head"><h3>Ученики · общая статистика</h3><div class="button-row"><button class="secondary-button" data-all-statistics>Открыть общую статистику</button><button class="secondary-button" data-compose-test>Составить тест</button></div></div><div class="statistics-quick-students">${data.students.map(student => `<details data-quick-student="${escapeHtml(student.user_id)}" ${openIds.has(student.user_id) ? 'open' : ''}><summary>${escapeHtml(student.display_name)} · ${student.total} решений · ${student.total ? student.accuracy+'%' : '—'}</summary><p>Ошибочных ответов: ${student.errors}</p><button class="ghost-button" data-student-statistics="${escapeHtml(student.user_id)}">Все задания, игры и ошибки ученика</button></details>`).join('') || '<p>Пока нет прикреплённых учеников.</p>'}</div>`;
+    panel.querySelector('[data-all-statistics]').onclick = showProgress;
+    panel.querySelector('[data-compose-test]').onclick = showTestComposer;
+    panel.querySelectorAll('[data-student-statistics]').forEach(button => button.onclick = () => showOverallStatistics(true,button.dataset.studentStatistics));
+  } catch (err) { if (panel.isConnected) panel.textContent = err.message; }
 }
 
 async function showProgress() {
-  const data = await api("/api/progress");
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const summary = data.summary;
-  const studentRows = data.by_student.map((row) => `
-    <tr><td>${escapeHtml(row.display_name)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
-  `).join("");
-  const ruleRows = data.by_rule.map((row) => `
-    <tr><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.rule_name)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
-  `).join("");
-  const categoryRows = data.by_category.map((row) => `
-    <tr><td>${escapeHtml(row.category)}</td><td>${row.total}</td><td>${pct(row.correct, row.total)}</td></tr>
-  `).join("");
-  const answerListRows = (rows) => rows.slice(0, 30).map((row) => `
-    <tr>
-      <td>${escapeHtml(row.display_name)}</td>
-      <td>${escapeHtml(row.category || "")}</td>
-      <td>${escapeHtml(row.rule_name || "")}</td>
-      <td>${escapeHtml(row.prompt)}</td>
-      <td>${escapeHtml(row.given_answer || "—")} / ${escapeHtml(row.correct_answer)}</td>
-    </tr>
-  `).join("");
-  const recentRows = data.recent.map((row) => `
-    <tr>
-      <td>${new Date(row.created_at).toLocaleString()}</td>
-      <td>${escapeHtml(row.display_name)}</td>
-      <td>${escapeHtml(row.category || "")}</td>
-      <td>${escapeHtml(row.rule_name || "")}</td>
-      <td>${escapeHtml(row.prompt)}</td>
-      <td>${escapeHtml(row.given_answer)} / ${escapeHtml(row.correct_answer)}</td>
-      <td>${row.is_correct ? "да" : "нет"}</td>
-    </tr>
-  `).join("");
-  const teacherOverview = state.user.role === "teacher" && data.teacher_dashboard
-    ? `<h3>Быстрая статистика учеников</h3><div class="student-card-grid">${renderTeacherStudentCards(data.teacher_dashboard.students)}</div>`
-    : "";
-  backdrop.innerHTML = `
-    <section class="progress-modal">
-      <div class="panel-head">
-        <div><p class="eyebrow">прогресс</p><h2>${state.user.role === "teacher" ? "Журнал класса" : "Мои результаты"}</h2></div>
-        <button class="secondary-button" id="closeProgress" type="button">Закрыть</button>
-      </div>
-      <div class="progress-grid">
-        <div class="stat"><b>${summary.total}</b><span>ответов</span></div>
-        <div class="stat"><b>${summary.correct}</b><span>верно</span></div>
-        <div class="stat"><b>${pct(summary.correct, summary.total)}</b><span>точность</span></div>
-      </div>
-      ${state.user.role !== "teacher" ? `
-        <div class="progress-grid">
-          <div class="stat"><b>${data.due_reviews}</b><span>слов в очереди повторения</span></div>
-          <div class="stat"><b>${data.error_bank_count}</b><span>слов в копилке ошибок</span></div>
-        </div>
-      ` : ""}
-      ${teacherOverview}
-      <h3>Результаты в играх</h3>
-      <table class="table"><tr><th>Ученик</th><th>Игра</th><th>Решений</th><th>Верно</th><th>Точность</th><th>Последняя игра</th></tr>${(data.by_game || []).map(row => `<tr><td>${escapeHtml(row.display_name)}</td><td>${escapeHtml(row.game)}</td><td>${row.total}</td><td>${row.correct}</td><td>${pct(row.correct, row.total)}</td><td>${new Date(row.last_played).toLocaleString('ru-RU')}</td></tr>`).join('') || '<tr><td colspan="6">Пока нет решений в играх.</td></tr>'}</table>
-      ${state.user.role === "teacher" ? `<div class="table-head"><h3>Ученики</h3>${downloadButton("students", "Скачать статистику")}</div><table class="table"><tr><th>Имя</th><th>Ответов</th><th>Точность</th></tr>${studentRows}</table>` : ""}
-      <div class="table-head"><h3>Группы</h3>${downloadButton("categories", "Скачать статистику")}</div>
-      <table class="table"><tr><th>Группа</th><th>Ответов</th><th>Точность</th></tr>${categoryRows}</table>
-      <table class="table"><tr><th>Группа</th><th>Подгруппа</th><th>Ответов</th><th>Точность</th></tr>${ruleRows}</table>
-      <details class="activity-details">
-        <summary>Развернуть полную активность</summary>
-        <div class="table-head"><h3>Решено верно</h3>${downloadButton("correct", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Ученик</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th></tr>${answerListRows(data.correct_attempts)}</table>
-        <div class="table-head"><h3>Решено неверно</h3>${downloadButton("incorrect", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Ученик</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th></tr>${answerListRows(data.incorrect_attempts)}</table>
-        <div class="table-head"><h3>Последние попытки</h3>${downloadButton("recent", "Скачать статистику")}</div>
-        <table class="table"><tr><th>Дата</th><th>Пользователь</th><th>Группа</th><th>Подгруппа</th><th>Задание</th><th>Ответ</th><th>Верно</th></tr>${recentRows}</table>
-      </details>
-    </section>
-  `;
-  document.body.append(backdrop);
-  backdrop.querySelector("#closeProgress").addEventListener("click", () => backdrop.remove());
-  backdrop.querySelectorAll(".download-stat").forEach((button) => {
-    button.addEventListener("click", () => downloadRequest(`/api/progress/export?section=${button.dataset.section}`, `ege_${button.dataset.section}.csv`));
-  });
+  return showOverallStatistics();
 }
 
 function showTestComposer() {
@@ -5986,6 +5819,7 @@ function startHeartbeat() {
 }
 
 window.addEventListener("popstate", async () => {
+  try { await leaveAssignedWorkspace(); } catch (err) { alert(err.message);return; }
   await restoreSession();
   sendHeartbeat();
 });

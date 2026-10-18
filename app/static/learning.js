@@ -21,7 +21,7 @@ async function refreshAssignmentButton() {
     button.classList.toggle('primary-button', Boolean(data.unread));
     button.setAttribute('aria-label', data.unread ? `Новых назначенных тестов: ${data.unread}` : button.textContent);
     const newTests = (data.tests || []).filter(test => !test.seen_at && !test.completed_at && !dismissedAssignmentNotices.has(test.id));
-    if (state.user.role === 'student' && newTests.length && !document.querySelector('#assignmentNotice')) {
+    if (state.user.role === 'student' && !state.currentSession?.assignment_id && newTests.length && !document.querySelector('#assignmentNotice')) {
       const notice = document.createElement('div');
       notice.id = 'assignmentNotice';
       notice.className = 'assignment-notice';
@@ -52,7 +52,7 @@ async function showAssignments() {
       root.innerHTML = `<p>Соберите вариант в тренажёре через «Составить тест», затем выберите «Назначить ученикам».</p>
         <div class="setup-grid"><label>Тренажёр<select data-activity>${Object.entries(activityMeta).filter(([id]) => /^ege(5|9|10|11|12|13|14|15)$/.test(id) || id === 'orthography-ege').map(([id, meta]) => `<option value="${id}">${escapeHtml(meta.shortTitle || meta.title)}</option>`).join('')}</select></label><button class="primary-button" data-compose>Собрать тест</button></div>
         <details><summary>Группы учеников (${data.groups.length})</summary><div data-groups></div><button class="secondary-button" data-new-group>Создать группу</button></details>
-        <h3>Назначенные тесты</h3>${data.tests.map(t => `<article class="question"><h3>${escapeHtml(t.title)}</h3><p class="muted">${new Date(t.created_at).toLocaleString('ru-RU')}</p><table class="table"><tr><th>Ученик</th><th>Статус</th><th>Результат</th></tr>${t.students.map(s => `<tr><td>${escapeHtml(s.display_name)}</td><td>${s.completed_at ? 'Завершён' : s.started_at ? 'Начат' : 'Назначен'}</td><td>${s.result ? `${s.result.correct}/${s.result.total} · ${pct(s.result.correct, s.result.total)}` : '—'}</td></tr>`).join('')}</table></article>`).join('') || '<p>Назначенных тестов пока нет.</p>'}`;
+        <h3>Назначенные тесты</h3>${data.tests.map(t => `<article class="question"><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(assignmentOutline(t))}</p><p class="muted">${new Date(t.created_at).toLocaleString('ru-RU')}</p><table class="table"><tr><th>Ученик</th><th>Статус</th><th>Результат</th></tr>${t.students.map(s => `<tr><td>${escapeHtml(s.display_name)}</td><td>${s.completed_at ? 'Завершён' : s.started_at ? 'Начат' : 'Назначен'}</td><td>${s.result ? `${s.result.correct}/${s.result.total} · ${pct(s.result.correct, s.result.total)}` : `Проверено ${s.checked} из ${t.total}; верно: ${s.correct}`}</td></tr>`).join('')}</table></article>`).join('') || '<p>Назначенных тестов пока нет.</p>'}`;
       root.querySelector('[data-compose]').onclick = async () => {
         const activity = root.querySelector('[data-activity]').value;
         modal.remove();
@@ -68,7 +68,7 @@ async function showAssignments() {
       });
       root.querySelector('[data-new-group]').onclick = () => editStudentGroup(data, null, modal);
     } else {
-      root.innerHTML = data.tests.map(t => `<article class="question"><h3>${escapeHtml(t.title)}</h3><p>Учитель: ${escapeHtml(t.teacher_name)}</p><p>${t.completed_at ? `Выполнен: ${t.result.correct}/${t.result.total}` : t.started_at ? 'Начат — можно продолжить' : 'Ожидает выполнения'}</p><button class="${t.completed_at ? 'secondary' : 'primary'}-button" data-open-test="${escapeHtml(t.id)}">${t.completed_at ? 'Результаты' : t.started_at ? 'Продолжить' : 'Начать тест'}</button></article>`).join('') || '<p>Учитель пока не назначил тесты.</p>';
+      root.innerHTML = data.tests.map(t => `<article class="question"><h3>${escapeHtml(t.title)}</h3><p>Учитель: ${escapeHtml(t.teacher_name)}</p><p>${escapeHtml(assignmentOutline(t))}</p><p>Проверено ${t.checked} из ${t.total}</p><progress aria-label="Прогресс теста" value="${t.checked}" max="${t.total}"></progress><p>${t.completed_at ? `Выполнен: ${t.result.correct}/${t.result.total}` : t.started_at ? 'Начат — можно продолжить' : 'Ожидает выполнения'}</p><button class="${t.completed_at ? 'secondary' : 'primary'}-button" data-open-test="${escapeHtml(t.id)}">${t.completed_at ? 'Результаты' : t.started_at ? 'Продолжить' : 'Открыть тест'}</button></article>`).join('') || '<p>Учитель пока не назначил тесты.</p>';
       root.querySelectorAll('[data-open-test]').forEach(button => button.onclick = async () => {
         button.disabled = true;
         try { await openAssignedTest(button.dataset.openTest); modal.remove(); }
@@ -123,6 +123,8 @@ async function openAssignedTest(id) {
   stopTeacherStatsRefresh();
   state.currentSession = data;
   state.answers = data.answers || {};
+  state.assignmentIndex = Math.max(0, data.questions.findIndex(q => !data.checked_results?.[q.question_id]));
+  state.assignmentChecking = false;
   state.startedAt = Date.now();
   view.innerHTML = `<section class="assignment-workspace"><div class="panel-head"><h2>${escapeHtml(data.title)}</h2><button class="secondary-button" data-exit-assignment>К списку тестов</button></div><p data-assignment-save role="status"></p><div id="practiceView"></div><div id="resultView" class="hidden"></div></section>`;
   view.querySelector('[data-exit-assignment]').onclick = async () => {
@@ -134,12 +136,86 @@ async function openAssignedTest(id) {
   refreshAssignmentButton();
 }
 
+function assignmentOutline(test) {
+  return (test.outline || []).map(part => `${part.title}: ${part.count}`).join(' · ');
+}
+
+function renderAssignedQuestion() {
+  const session = state.currentSession;
+  const practice = document.querySelector('#practiceView');
+  const index = state.assignmentIndex || 0;
+  const question = session.questions[index];
+  const checks = session.checked_results || {};
+  const checked = Object.keys(checks).length;
+  const result = checks[question.question_id];
+  const busy = state.assignmentChecking;
+  document.querySelector('[data-exit-assignment]').disabled = busy;
+  practice.classList.remove('hidden');
+  practice.innerHTML = `<div class="assignment-progress"><label for="assignmentProgress">Проверено ${checked} из ${session.questions.length}</label><progress id="assignmentProgress" value="${checked}" max="${session.questions.length}"></progress></div>
+    <details class="assignment-contents"><summary>Состав теста · ${session.questions.length} заданий</summary><p>${escapeHtml(assignmentOutline(session))}</p><ol>${session.questions.map((q,i) => `<li><button class="ghost-button" type="button" data-assignment-index="${i}" ${busy ? 'disabled' : ''} ${i === index ? 'aria-current="step"' : ''}>${i+1}. Задание ${escapeHtml(q.assignment_activity?.replace('ege','') || '')} · ${escapeHtml(q.rule_name || q.prompt)} · ${checks[q.question_id] ? 'Проверено' : answerIsComplete(q) ? 'Ответ сохранён' : 'Не решено'}</button></li>`).join('')}</ol></details>
+    <p class="muted">Задание ${index+1} из ${session.questions.length}. Можно прерваться и продолжить позже. После проверки ответ изменить нельзя.</p>
+    ${renderQuestion(question,index)}
+    ${result ? `<div class="result-item ${result.is_correct ? 'ok' : 'bad'}" role="status"><b>${result.is_correct ? 'Верно' : 'Есть ошибка'}</b><p>Ваш ответ: ${escapeHtml(formatAssignedAnswer(result.given_answer))} · правильный: ${escapeHtml(formatAssignedAnswer(result.correct_answer))}</p><p>${escapeHtml(result.correct_spelling || '')}</p><p>${escapeHtml(result.explanation || '')}</p></div>` : ''}
+    <p class="error" data-assignment-error role="alert"></p>
+    <div class="practice-actions"><button type="button" class="ghost-button" data-assignment-prev ${index === 0 || busy ? 'disabled' : ''}>Предыдущее</button>
+    ${!result ? `<button type="button" class="primary-button" data-assignment-check ${busy ? 'disabled' : ''}>${busy ? 'Проверяем…' : 'Проверить ответ'}</button>` : ''}
+    ${session.result ? '<button type="button" class="primary-button" data-assignment-results>Итоги теста</button>' : `<button type="button" class="secondary-button" data-assignment-next ${busy ? 'disabled' : ''}>${result ? 'Следующее задание' : 'Пропустить пока'}</button>`}</div>`;
+  bindQuestionAnswers(practice);
+  if (result || busy) practice.querySelectorAll('.question button,.question input,.question select').forEach(el => el.disabled = true);
+  practice.querySelector('[data-assignment-check]')?.addEventListener('click', checkAssignedQuestion);
+  practice.querySelector('[data-assignment-results]')?.addEventListener('click', () => renderResults(session.result));
+  const navigate = next => { state.assignmentIndex = next; state.startedAt = Date.now(); renderAssignedQuestion(); };
+  practice.querySelectorAll('[data-assignment-index]').forEach(button => button.onclick = () => navigate(Number(button.dataset.assignmentIndex)));
+  practice.querySelector('[data-assignment-prev]').onclick = () => navigate(Math.max(0,index-1));
+  practice.querySelector('[data-assignment-next]')?.addEventListener('click', () => {
+    const next = session.questions.findIndex((q,i) => i > index && !checks[q.question_id]);
+    const first = session.questions.findIndex(q => !checks[q.question_id]);
+    navigate(next >= 0 ? next : first >= 0 ? first : (index+1)%session.questions.length);
+  });
+  queueAssignedSave();
+}
+
+function formatAssignedAnswer(answer) {
+  if (answer && typeof answer === 'object') return Object.entries(answer).map(([key,value]) => `${key}: ${formatAssignedAnswer(value)}`).join(', ');
+  return String(answer || '—');
+}
+
+async function checkAssignedQuestion() {
+  const session = state.currentSession;
+  const question = session.questions[state.assignmentIndex || 0];
+  if (state.assignmentChecking || session.checked_results?.[question.question_id]) return;
+  if (!answerIsComplete(question)) {
+    document.querySelector('[data-assignment-error]').textContent = 'Сначала ответьте на задание.';
+    return;
+  }
+  clearTimeout(assignmentSaveTimer);
+  const answer = state.answers[question.question_id];
+  const elapsed = Math.round((Date.now()-state.startedAt)/1000);
+  state.assignmentChecking = true;
+  renderAssignedQuestion();
+  clearTimeout(assignmentSaveTimer);
+  try {
+    const data = await api('/api/assignments/check', {method:'POST',body:JSON.stringify({test_id:session.assignment_id,question_id:question.question_id,answer,time_spent_sec:elapsed})});
+    session.checked_results = data.checked_results;
+    session.result = data.result;
+    if (session.result) refreshAssignmentButton();
+  } catch (err) {
+    state.assignmentChecking = false;
+    if (state.currentSession !== session) return;
+    renderAssignedQuestion();
+    document.querySelector('[data-assignment-error]').textContent = err.message;
+    return;
+  }
+  state.assignmentChecking = false;
+  if (state.currentSession === session) renderAssignedQuestion();
+}
+
 async function persistAssignedAnswers() {
   const session = state.currentSession;
   if (!session?.assignment_id || session.result) return;
   await api('/api/assignments/save', {method:'POST',body:JSON.stringify({test_id:session.assignment_id,answers:state.answers})});
   const status = document.querySelector('[data-assignment-save]');
-  if (status) status.textContent = 'Ответы сохранены';
+  if (status && state.currentSession === session) status.textContent = 'Ответы сохранены';
 }
 
 function queueAssignedSave() {

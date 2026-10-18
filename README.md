@@ -46,6 +46,7 @@ python app/server.py 127.0.0.1 8088
 - `/teacher` - кабинет учителя;
 - `/apps/ege9` - модуль задания 9;
 - `/apps/ege10` - модуль задания 10;
+- `/apps/statistics` - общая статистика ученика или класса, журнал всех решений и ошибок;
 - `/apps/mini/<slug>` - HTML-мини-приложение внутри платформенной обертки.
 
 ## API
@@ -59,6 +60,7 @@ python app/server.py 127.0.0.1 8088
 - `/api/apps/ege10/bootstrap`
 - `/api/apps/ege10/practice/start`, `/submit`, `/check`
 - `/api/progress`, `/api/progress/export`
+- `/api/statistics`, `/api/statistics/history`, `/api/statistics/export`
 - `/api/admin`, `/api/admin/reset-password`
 - `/api/teacher/test`
 
