@@ -32,6 +32,7 @@ import ege_orthography_module
 import ege5_module
 import statistics_module
 import learning_module
+import student_workspace
 import game_tracking
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -3131,6 +3132,7 @@ def record_visitor_heartbeat(user: dict[str, Any] | None, payload: dict[str, Any
 
 
 def recent_attempts_for_admin(con: sqlite3.Connection, limit: int = 60) -> list[dict[str, Any]]:
+    statistics_module.configure(sys.modules[__name__], con)
     rows = con.execute(
         """
         SELECT a.created_at, a.mode, a.scope_id, a.category, a.rule_name, a.prompt,
@@ -3138,7 +3140,8 @@ def recent_attempts_for_admin(con: sqlite3.Connection, limit: int = 60) -> list[
                u.display_name, u.username, u.email, u.role
         FROM attempts a
         JOIN users u ON u.user_id = a.user_id
-        ORDER BY a.created_at DESC
+        WHERE stats_detail(a.mode, a.question_id) = 0
+        ORDER BY a.created_at DESC, a.attempt_id DESC
         LIMIT ?
         """,
         (limit,),
@@ -3163,6 +3166,7 @@ def teacher_errors_for_admin(
     if not teacher_ids:
         return {}
     placeholders = ",".join("?" for _ in teacher_ids)
+    statistics_module.configure(sys.modules[__name__], con)
     rows = con.execute(
         f"""
         WITH ranked_errors AS (
@@ -3176,7 +3180,7 @@ def teacher_errors_for_admin(
                    ) AS error_rank
             FROM attempts a
             JOIN users u ON u.user_id = a.user_id
-            WHERE a.is_correct = 0
+            WHERE a.is_correct = 0 AND stats_detail(a.mode, a.question_id) = 0
         )
         SELECT *
         FROM ranked_errors
@@ -3252,11 +3256,13 @@ def record_public_game_visit(slug: str, public_id: str | None, path: str) -> Non
 def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
     require_admin(user)
     with db() as con:
+        statistics_module.configure(sys.modules[__name__], con)
         platform = con.execute(
             """
             SELECT COUNT(*) AS total, COALESCE(SUM(is_correct), 0) AS correct,
                    COUNT(DISTINCT user_id) AS active_users
             FROM attempts
+            WHERE stats_detail(mode, question_id) = 0
             """
         ).fetchone()
         teachers = con.execute(
@@ -3265,21 +3271,21 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                    t.last_seen_at,
                    uc.accepted_at AS consent_accepted_at,
                    COUNT(DISTINCT s.user_id) AS students,
-                   (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS teacher_attempts,
-                   (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS teacher_correct,
+                   (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id AND stats_detail(own_a.mode, own_a.question_id) = 0) AS teacher_attempts,
+                   (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id AND stats_detail(own_a.mode, own_a.question_id) = 0) AS teacher_correct,
                    COUNT(a.attempt_id) AS student_attempts,
                    COALESCE(SUM(a.is_correct), 0) AS student_correct,
                    COUNT(a.attempt_id) +
-                       (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS attempts,
+                       (SELECT COUNT(*) FROM attempts own_a WHERE own_a.user_id = t.user_id AND stats_detail(own_a.mode, own_a.question_id) = 0) AS attempts,
                    COALESCE(SUM(a.is_correct), 0) +
-                       (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id) AS correct
+                       (SELECT COALESCE(SUM(own_a.is_correct), 0) FROM attempts own_a WHERE own_a.user_id = t.user_id AND stats_detail(own_a.mode, own_a.question_id) = 0) AS correct
             FROM users t
             LEFT JOIN user_consents uc
                 ON uc.user_id = t.user_id
                AND uc.consent_type = ?
                AND uc.document_version = ?
             LEFT JOIN users s ON s.teacher_id = t.user_id AND s.role = 'student'
-            LEFT JOIN attempts a ON a.user_id = s.user_id
+            LEFT JOIN attempts a ON a.user_id = s.user_id AND stats_detail(a.mode, a.question_id) = 0
             WHERE t.role = 'teacher'
             GROUP BY t.user_id
             ORDER BY t.display_name
@@ -3302,7 +3308,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                     ON uc.user_id = s.user_id
                    AND uc.consent_type = ?
                    AND uc.document_version = ?
-                LEFT JOIN attempts a ON a.user_id = s.user_id
+                LEFT JOIN attempts a ON a.user_id = s.user_id AND stats_detail(a.mode, a.question_id) = 0
                 WHERE s.role = 'student' AND s.teacher_id IN ({placeholders})
                 GROUP BY s.user_id
                 ORDER BY s.display_name
@@ -3318,7 +3324,7 @@ def admin_overview(user: dict[str, Any]) -> dict[str, Any]:
                 """
                 SELECT mode, COUNT(*) AS attempts, COALESCE(SUM(is_correct), 0) AS correct
                 FROM attempts
-                WHERE user_id = ?
+                WHERE user_id = ? AND stats_detail(mode, question_id) = 0
                 GROUP BY mode
                 ORDER BY attempts DESC
                 """,
@@ -3392,6 +3398,10 @@ def suspicious_users_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
+    con.execute('''DELETE FROM error_repetitions WHERE student_id=? OR created_by=?
+        OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)''',(user_id,user_id,user_id))
+    con.execute('''DELETE FROM assigned_test_checks WHERE student_id=?
+        OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)''',(user_id,user_id))
     con.execute("DELETE FROM game_results WHERE user_id=?", (user_id,))
     con.execute("DELETE FROM assigned_test_students WHERE student_id=? OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)", (user_id, user_id))
     con.execute("DELETE FROM assigned_tests WHERE teacher_id=?", (user_id,))
@@ -3472,6 +3482,8 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
     else:
         raise ValueError("Неизвестный режим тренировки.")
 
+    from exam_variants import vary_row_answers
+    vary_row_answers(questions)
     session_id = secrets.token_hex(12)
     answer_key: dict[str, dict[str, Any]] = {}
     public_questions = []
@@ -6604,6 +6616,11 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json(statistics_module.history(host,user,params))
                 else:
                     self.send_json(statistics_module.overview(host,user,params))
+            elif parsed.path in {'/api/students/profile','/api/assignments/calendar'}:
+                user = self.require_user_with_consents()
+                params = {key:values[0] for key,values in parse_qs(parsed.query).items()}
+                action = student_workspace.profile if parsed.path.endswith('/profile') else student_workspace.calendar
+                self.send_json(action(sys.modules[__name__],user,params))
             elif parsed.path == "/api/assignments":
                 self.send_json(learning_module.overview(sys.modules[__name__], self.require_user_with_consents()))
             elif parsed.path == "/api/progress/export":
@@ -6701,7 +6718,10 @@ class Handler(SimpleHTTPRequestHandler):
                     self.path = "/index.html"
                 super().do_GET()
         except PermissionError as error:
-            self.send_json({"error": str(error)}, HTTPStatus.UNAUTHORIZED)
+            data = {"error": str(error)}
+            if getattr(error, 'code', None):
+                data['code'] = error.code
+            self.send_json(data, HTTPStatus.UNAUTHORIZED)
         except LookupError as error:
             self.send_json({"error": str(error)}, HTTPStatus.NOT_FOUND)
         except Exception as error:
@@ -6793,10 +6813,14 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
-            elif parsed.path in {"/api/assignments/create", "/api/assignments/open", "/api/assignments/check", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
+            elif parsed.path in {"/api/assignments/deadline", "/api/errors/repeat", "/api/assignments/revoke", "/api/assignments/results", "/api/assignments/create", "/api/assignments/open", "/api/assignments/check", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
                 user = self.require_user_with_consents()
                 host = sys.modules[__name__]
                 actions = {
+                    '/api/assignments/deadline':learning_module.set_deadline,
+                    '/api/errors/repeat':student_workspace.repeat_error,
+                    "/api/assignments/revoke": learning_module.revoke_test,
+                    "/api/assignments/results": learning_module.test_results,
                     "/api/assignments/create": learning_module.create_test,
                     "/api/assignments/open": learning_module.open_test,
                     "/api/assignments/check": learning_module.check_question,
@@ -6880,7 +6904,10 @@ class Handler(SimpleHTTPRequestHandler):
             else:
                 self.send_json({"error": "Unknown endpoint"}, HTTPStatus.NOT_FOUND)
         except PermissionError as error:
-            self.send_json({"error": str(error)}, HTTPStatus.UNAUTHORIZED)
+            data = {"error": str(error)}
+            if getattr(error, 'code', None):
+                data['code'] = error.code
+            self.send_json(data, HTTPStatus.UNAUTHORIZED)
         except Exception as error:
             self.send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
 

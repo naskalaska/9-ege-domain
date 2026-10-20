@@ -964,6 +964,8 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
     else:
         raise ValueError("Неизвестный режим тренировки.")
 
+    from exam_variants import vary_row_answers
+    vary_row_answers(questions)
     session_id = secrets.token_hex(12)
     answer_key: dict[str, dict[str, Any]] = {}
     public_questions = []

@@ -224,6 +224,7 @@ EXAM_GROUPS = exam_groups()
 
 def exam_question(lines: list[dict[str, Any]]) -> dict[str, Any]:
     target = instruction_target(lines[0].get("instruction") or "")
+    lines = random.sample(lines, len(lines))
     correct_indexes = [str(index + 1) for index, line in enumerate(lines) if line.get("line_answer_type") == target]
     return {
         "question_id": secrets.token_hex(8),
@@ -280,6 +281,8 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
     else:
         raise ValueError("Неизвестный режим тренировки.")
 
+    from exam_variants import vary_row_answers
+    vary_row_answers(questions)
     session_id = secrets.token_hex(12)
     private: dict[str, dict[str, Any]] = {}
     public = []

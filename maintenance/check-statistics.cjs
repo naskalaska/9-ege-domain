@@ -35,6 +35,16 @@ const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',[
   await until(`Boolean(document.querySelector('[data-student-body] .statistics-answer'))`);
   assert.equal(await evaluate(`document.querySelectorAll('[data-student-body] tbody tr').length>=10`),true);
   const total=await evaluate(`Number(document.querySelector('[data-history-results] b').textContent)`);assert(total>80);
+  await evaluate(`(()=>{const f=document.querySelector('.statistics-history-filters');f.elements.activity.value='ege11';f.elements.kind.value='details';f.requestSubmit()})()`);
+  await until(`Boolean(document.querySelector('[data-history-results]')?.textContent.includes('Правильный ответ (номера строк)'))`);
+  const diagnostic=await evaluate(`(()=>{const a=document.querySelector('.statistics-answer');return {labels:[...a.querySelectorAll('dt')].map(e=>e.textContent),values:[...a.querySelectorAll('dd')].map(e=>e.textContent),prompt:a.querySelector('.statistics-prompt').textContent}})()`);
+  assert.deepEqual(diagnostic.values.slice(0,2),[fixture.row_given || '15',fixture.row_key]);
+  assert.equal(diagnostic.labels[2],'Буква в этом слове');
+  assert(!diagnostic.prompt.includes('Выберите все строки'));
+  await evaluate(`document.querySelector('.statistics-answer').scrollIntoView({block:'center'})`);
+  await screenshot('statistics-row-answer');
+  await evaluate(`(()=>{const f=document.querySelector('.statistics-history-filters');f.elements.activity.value='';f.elements.kind.value='all';f.requestSubmit()})()`);
+  await until(`Number(document.querySelector('[data-history-results] b')?.textContent)>80`);
   await evaluate(`document.querySelector('[data-history-next]').click()`);await until(`document.querySelector('[data-history-page]').textContent.includes('2 из')`);
   await evaluate(`(()=>{const f=document.querySelector('.statistics-history-filters');f.elements.search.value='Самая старая';f.requestSubmit()})()`);
   await until(`Boolean(document.querySelector('[data-history-results]')?.textContent.includes('л..сной'))`);
@@ -56,6 +66,38 @@ const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',[
   assert.match(await evaluate(`document.body.innerText`),/Уверенная тема/);
   assert.equal(await evaluate(`document.querySelectorAll('.statistics-student').length`),0);
   await screenshot('statistics-student');
+  // Required letters: cannot bypass, survive resuming, and are checked separately.
+  await evaluate(`openAssignedTest(${JSON.stringify(fixture.letter_test_id)})`);
+  await evaluate(`document.querySelector('[data-assignment-check]').click()`);
+  assert.match(await evaluate(`document.querySelector('[data-assignment-error]').textContent`),/Вставьте буквы/);
+  await evaluate(`(()=>{const letters=${JSON.stringify(fixture.letters)};for(const input of document.querySelectorAll('[data-line-letter]')){input.value=letters[input.dataset.lineLetter];input.dispatchEvent(new Event('input',{bubbles:true}))}for(const row of ${JSON.stringify(fixture.letter_key)}) document.querySelector('[data-answer="'+row+'"]').click()})()`);
+  await evaluate(`persistAssignedAnswers()`);
+  await evaluate(`openAssignedTest(${JSON.stringify(fixture.letter_test_id)})`);
+  assert.equal(await evaluate(`document.querySelector('[data-line-letter="0"]').value`),fixture.letters['0']);
+  await evaluate(`document.querySelector('[data-assignment-check]').click()`);
+  await until(`Boolean(document.querySelector('.letter-results'))`);
+  assert.match(await evaluate(`document.querySelector('.letter-results summary').textContent`),/15 из 15 верно/);
+  await evaluate(`document.querySelector('.question').scrollIntoView({block:'start'})`);
+  await screenshot('assigned-required-letters');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  assert(await evaluate(`document.documentElement.scrollWidth<=innerWidth+2`));
+  await screenshot('assigned-required-letters-mobile');
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+  // Teacher can always close the long menu, and revoke without losing checked answers.
+  await evaluate(`(async()=>{const d=await api('/api/login',{method:'POST',body:JSON.stringify({email:'teacher',password:'teacher123'})});state.user=d.user;state.token=d.token;localStorage.setItem('ege_token',d.token);await showAssignments()})()`);
+  await until(`Boolean(document.querySelector('[data-revoke-test]'))`);
+  assert(await evaluate(`(()=>{const b=document.querySelector('.learning-modal [data-close]'),r=b.getBoundingClientRect();return r.top>=0&&r.bottom<innerHeight&&b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()`));
+  await evaluate(`document.querySelector('.learning-modal [data-content]').scrollTop=99999`);
+  assert(await evaluate(`document.querySelector('.learning-modal [data-close]').getBoundingClientRect().top>=0`));
+  await screenshot('assigned-menu-visible-close');
+  await evaluate(`window.confirm=()=>true;document.querySelector('[data-revoke-test="${fixture.letter_test_id}"][data-student-id]').click()`);
+  await until(`Boolean(document.querySelector('.learning-modal [data-content]')?.textContent.includes('Отозван'))`);
+  const kept=await evaluate(`api('/api/assignments/results',{method:'POST',body:JSON.stringify({test_id:${JSON.stringify(fixture.letter_test_id)},student_id:${JSON.stringify(fixture.student_id)}})})`);
+  assert.equal(kept.checked,1);assert(kept.revoked_at);
+  await evaluate(`document.querySelector('.learning-modal [data-close]').click()`);
+  await evaluate(`(async()=>{const d=await api('/api/login',{method:'POST',body:JSON.stringify({email:'student',password:'student123'})});state.user=d.user;state.token=d.token;localStorage.setItem('ege_token',d.token)})()`);
+  const blocked=await evaluate(`api('/api/assignments/open',{method:'POST',body:JSON.stringify({test_id:${JSON.stringify(fixture.letter_test_id)}})}).then(()=>false,e=>e.code)`);
+  assert.equal(blocked,'assignment_revoked');
   // A direct change of trainer must save a pupil's assignment draft first.
   await evaluate(`openAssignedTest(${JSON.stringify(fixture.test_id)})`);
   const questionId=await evaluate(`state.currentSession.questions[0].question_id`);
@@ -66,7 +108,7 @@ const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',[
   await evaluate(`document.querySelector('#practiceView [data-answer="2"]').click();[...document.querySelectorAll('#topActions button')].find(b=>b.textContent==='Кабинет').click()`);
   await until(`location.pathname==='/apps' && Boolean(document.querySelector('.catalog-page'))`);
   await evaluate(`openAssignedTest(${JSON.stringify(fixture.test_id)})`);
-  assert(await evaluate(`state.answers[${JSON.stringify(questionId)}].includes('2')`));
+  assert(await evaluate(`lineDraft(${JSON.stringify(questionId)}).rows.includes('2')`));
   // Reloading the statistics URL must restore the page directly.
   await evaluate(`showOverallStatistics()`);await send('Page.reload');
   await until(`Boolean(document.querySelector('[data-own-history] .statistics-answer'))`);

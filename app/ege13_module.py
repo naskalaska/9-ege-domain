@@ -150,7 +150,7 @@ def word_question(word: dict[str, Any]) -> dict[str, Any]:
 
 def line_question(line: dict[str, Any]) -> dict[str, Any]:
     target = random.choice(SPELLING_TYPES)
-    items = line["items"]
+    items = random.sample(line["items"], len(line["items"]))
     correct = "".join(str(index + 1) for index, item in enumerate(items) if item["answer"] == target)
     return {
         "question_id": secrets.token_hex(8),
@@ -197,6 +197,8 @@ def start_practice(user: dict[str, Any], payload: dict[str, Any]) -> dict[str, A
         questions = [word_question(word) for word in pick_words(user["user_id"], scope, pool, min(count, len(pool)))]
     else:
         raise ValueError("Неизвестный режим тренировки.")
+    from exam_variants import vary_row_answers
+    vary_row_answers(questions)
     session_id = secrets.token_hex(12)
     private: dict[str, dict[str, Any]] = {}
     public = []

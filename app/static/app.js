@@ -1720,6 +1720,14 @@ function renderTopActions() {
     statistics.textContent = "Общая статистика";
     statistics.onclick = showProgress;
     topActions.append(statistics);
+    if (state.user.role === 'student') {
+      const profile = document.createElement('button');
+      profile.className='ghost-button';profile.textContent='Моя карточка';
+      profile.onclick=()=>showStudentProfile();topActions.append(profile);
+    }
+    const calendar = document.createElement('button');
+    calendar.className='ghost-button';calendar.textContent='Календарь';
+    calendar.onclick=()=>showAssignmentCalendar();topActions.append(calendar);
     clearInterval(assignmentNoticeTimer);
     refreshAssignmentButton();
     assignmentNoticeTimer = setInterval(refreshAssignmentButton, 30000);
@@ -3316,6 +3324,14 @@ async function restoreSession() {
     await showOverallStatistics(false);
     return;
   }
+  if (window.location.pathname === '/apps/profile' || window.location.pathname.startsWith('/apps/student/')) {
+    await showStudentProfile(window.location.pathname.startsWith('/apps/student/') ? decodeURIComponent(window.location.pathname.slice('/apps/student/'.length)) : '',false);
+    return;
+  }
+  if (window.location.pathname === '/apps/calendar') {
+    await showAssignmentCalendar(new URLSearchParams(location.search).get('student_id') || '',false);
+    return;
+  }
   if (window.location.pathname === "/apps/my-games") {
     state.currentActivity = null;
     state.currentMiniGame = null;
@@ -4239,12 +4255,31 @@ function renderQuestions() {
   bindQuestionAnswers(practice);
 }
 
+function lineDraft(id) {
+  const answer = state.answers[id];
+  return answer && typeof answer === 'object' ? answer : {rows:String(answer || ''),letters:state.lineLetterDrafts?.[id] || {}};
+}
+
+function storeLineDraft(id,draft) {
+  state.lineLetterDrafts ||= {};
+  state.lineLetterDrafts[id] = draft.letters;
+  state.answers[id] = state.currentSession?.assignment_id ? draft : draft.rows;
+}
+
 function bindQuestionAnswers(practice) {
+  practice.querySelectorAll('[data-review-answer]').forEach(input=>input.oninput=()=>{state.answers[input.dataset.questionId]=input.value;});
+  practice.querySelectorAll('[data-review-part]').forEach(input=>input.oninput=()=>{
+    state.answers[input.dataset.questionId]={...(state.answers[input.dataset.questionId]||{}),[input.dataset.reviewPart]:input.value};
+  });
+  practice.querySelectorAll('[data-line-letter]').forEach(input => input.addEventListener('input', () => {
+    const draft = lineDraft(input.dataset.questionId);
+    input.value = input.value.toLowerCase().replace(/[^а-яёьъ]/g,'').slice(0,1);
+    storeLineDraft(input.dataset.questionId,{...draft,letters:{...draft.letters,[input.dataset.lineLetter]:input.value}});
+  }));
   practice.querySelectorAll("[data-manual-answer]").forEach((input) => {
     input.addEventListener("input", () => {
-      state.answers[input.dataset.manualAnswer] = input.dataset.kind === "line"
-        ? input.value
-        : normalizeLetter(input.value);
+      if (input.dataset.kind === 'line') storeLineDraft(input.dataset.manualAnswer,{...lineDraft(input.dataset.manualAnswer),rows:input.value});
+      else state.answers[input.dataset.manualAnswer] = normalizeLetter(input.value);
     });
   });
   practice.querySelectorAll("[data-paronym-exam-row]").forEach((button) => {
@@ -4315,13 +4350,16 @@ function bindQuestionAnswers(practice) {
   practice.querySelectorAll("[data-answer]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.multi === "true") {
-        const current = new Set((state.answers[button.dataset.questionId] || "").split("").filter(Boolean));
+        const line = state.currentSession.questions.find(q => q.question_id === button.dataset.questionId)?.kind === 'line';
+        const current = new Set((line ? lineDraft(button.dataset.questionId).rows : state.answers[button.dataset.questionId] || '').split('').filter(Boolean));
         if (current.has(button.dataset.answer)) {
           current.delete(button.dataset.answer);
         } else {
           current.add(button.dataset.answer);
         }
-        state.answers[button.dataset.questionId] = [...current].sort().join("");
+        const rows = [...current].sort().join('');
+        if (line) storeLineDraft(button.dataset.questionId,{...lineDraft(button.dataset.questionId),rows});
+        else state.answers[button.dataset.questionId] = rows;
       } else {
         state.answers[button.dataset.questionId] = button.dataset.answer;
       }
@@ -4331,6 +4369,10 @@ function bindQuestionAnswers(practice) {
 }
 
 function renderQuestion(question, index) {
+  if (question.kind === 'error_review') {
+    const answer=state.answers[question.question_id];
+    return `<article class="question"><h3>Повторение ошибки</h3><p class="statistics-prompt">${escapeHtml(question.prompt)}</p>${question.review_type==='paronym' ? `<label>Номер строки<input data-review-part="row" data-question-id="${escapeHtml(question.question_id)}" inputmode="numeric" value="${escapeHtml(answer?.row || '')}"></label><label>Исправленное слово<input data-review-part="word" data-question-id="${escapeHtml(question.question_id)}" value="${escapeHtml(answer?.word || '')}"></label>` : `<label>${question.review_type==='rows'?'Номера строк':'Ваш ответ'}<input data-review-answer data-question-id="${escapeHtml(question.question_id)}" autocomplete="off" value="${escapeHtml(answer || '')}"></label>`}</article>`;
+  }
   if (question.kind === "ege13_word") {
     const selected = state.answers[question.question_id] || "";
     return `
@@ -4464,43 +4506,18 @@ function renderQuestion(question, index) {
     `;
   }
   if (question.kind === "line") {
-    if (state.manualInput) {
-      return `
-        <article class="question">
-          <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
-          <div>${escapeHtml(question.prompt)}</div>
-          ${question.rows.map((row, rowIndex) => `
-            <div class="line-row static-line-row">
-              <b>${rowIndex + 1}</b>
-              <span class="line-words">${escapeWordList(row)}</span>
-            </div>
-          `).join("")}
-          <label class="answer-input-label">
-            Ответ вручную
-            <input data-manual-answer="${escapeHtml(question.question_id)}" data-kind="line" placeholder="например, 135" value="${escapeHtml(state.answers[question.question_id] || "")}" />
-          </label>
-        </article>
-      `;
-    }
-    const rows = question.rows
-      .map((row, rowIndex) => {
-        const answer = String(rowIndex + 1);
-        const selected = (state.answers[question.question_id] || "").includes(answer);
-        return `
-          <button class="line-row ${selected ? "selected" : ""}" data-multi="true" data-question-id="${question.question_id}" data-answer="${answer}" type="button">
-            <b>${answer}</b>
-            <span class="line-words">${escapeWordList(row)}</span>
-          </button>
-        `;
-      })
-      .join("");
-    return `
-      <article class="question">
-        <div class="question-head"><span>Вопрос ${index + 1}</span><span>${escapeHtml(question.rule_name)}</span></div>
-        <div>${escapeHtml(question.prompt)}</div>
-        ${rows}
-      </article>
-    `;
+    const draft = lineDraft(question.question_id);
+    let gap = 0;
+    const rows = question.rows.map((row, rowIndex) => {
+      const number = String(rowIndex+1);
+      const words = row.map(word => {
+        const key = String(gap++);
+        const segments = String(word).split(/(\.{2,}|…)/);
+        return `<span class="line-fill-word">${segments.map((part,i) => i%2 ? `<input class="line-letter-input" data-line-letter="${key}" data-question-id="${escapeHtml(question.question_id)}" aria-label="Буква: ${escapeHtml(word)}" maxlength="1" autocomplete="off" value="${escapeHtml(draft.letters[key] || '')}">` : escapeHtml(part)).join('')}</span>`;
+      }).join('<span>, </span>');
+      return `<div class="line-row line-fill-row ${draft.rows.includes(number) ? 'selected' : ''}"><button type="button" class="secondary-button" data-multi="true" data-question-id="${escapeHtml(question.question_id)}" data-answer="${number}" aria-label="Выбрать строку ${number}" aria-pressed="${draft.rows.includes(number)}" ${state.manualInput ? 'disabled' : ''}>${number}</button><span class="line-words">${words}</span></div>`;
+    }).join('');
+    return `<article class="question"><div class="question-head"><span>Вопрос ${index+1}</span><span>${escapeHtml(question.rule_name)}</span></div><div>${escapeHtml(question.prompt)}</div><p class="muted">${question.require_letters ? 'Обязательно вставьте буквы во все слова, затем выберите номера строк. Проверяются и буквы, и строки.' : 'Можно вставить буквы в слова для самопроверки, затем выбрать номера строк. Оценивается выбор строк.'}</p>${rows}${state.manualInput ? `<label>Номера строк<input data-manual-answer="${escapeHtml(question.question_id)}" data-kind="line" value="${escapeHtml(draft.rows)}" placeholder="например, 135"></label>` : ''}</article>`;
   }
   const choices = question.choices
     .map((choice) => {
@@ -4540,6 +4557,11 @@ function renderQuestion(question, index) {
 
 function answerIsComplete(question) {
   const answer = state.answers[question.question_id];
+  if (question.kind==='error_review' && question.review_type==='paronym') return Boolean(answer?.row && String(answer?.word || '').trim());
+  if (question.kind === 'line') {
+    const draft = lineDraft(question.question_id);
+    return Boolean(draft.rows.trim()) && (!question.require_letters || question.rows.flat().every((_,i) => Boolean(draft.letters[String(i)])));
+  }
   if (question.kind === "ege14_line") {
     if (!answer?.mode) return false;
     return answer.mode !== "разное" || question.targets.every((target) => answer.words?.[target.id]);
@@ -4602,6 +4624,8 @@ function renderResults(data) {
           <b>${index + 1}. ${item.is_correct ? "Верно" : "Повторим еще"}</b>
           <p>Ответ: ${escapeHtml(item.given_answer || "—")} · правильно: ${escapeHtml(item.correct_answer)}</p>
           <p>${escapeHtml(item.correct_spelling || "")}</p>
+          ${renderLetterResults(item.letter_results)}
+          ${!item.is_correct && state.user.role==='student' ? `<button class="secondary-button" data-repeat-question="${escapeHtml(item.question_id)}">Повторить ошибку</button>` : ''}
           ${item.is_correct ? "" : `<p class="muted">${escapeHtml(item.explanation || "")}</p>`}
         </div>
       `).join("")}
@@ -4648,7 +4672,7 @@ async function refreshTeacherDashboardPreview(panel, silent = false) {
     panel.innerHTML = `<div class="section-head"><h3>Ученики · общая статистика</h3><div class="button-row"><button class="secondary-button" data-all-statistics>Открыть общую статистику</button><button class="secondary-button" data-compose-test>Составить тест</button></div></div><div class="statistics-quick-students">${data.students.map(student => `<details data-quick-student="${escapeHtml(student.user_id)}" ${openIds.has(student.user_id) ? 'open' : ''}><summary>${escapeHtml(student.display_name)} · ${student.total} решений · ${student.total ? student.accuracy+'%' : '—'}</summary><p>Ошибочных ответов: ${student.errors}</p><button class="ghost-button" data-student-statistics="${escapeHtml(student.user_id)}">Все задания, игры и ошибки ученика</button></details>`).join('') || '<p>Пока нет прикреплённых учеников.</p>'}</div>`;
     panel.querySelector('[data-all-statistics]').onclick = showProgress;
     panel.querySelector('[data-compose-test]').onclick = showTestComposer;
-    panel.querySelectorAll('[data-student-statistics]').forEach(button => button.onclick = () => showOverallStatistics(true,button.dataset.studentStatistics));
+    panel.querySelectorAll('[data-student-statistics]').forEach(button => button.onclick = () => showStudentProfile(button.dataset.studentStatistics));
   } catch (err) { if (panel.isConnected) panel.textContent = err.message; }
 }
 

@@ -169,8 +169,29 @@ def history_query(s, con, user, params):
 def enrich(s, rows, con=None):
     rows = [dict(row) for row in rows]
     contents = {}
+    letter_checks = {}
+    # Diagnostic records can share the exercise ID (tasks 10–12), or append
+    # a row/word suffix (task 9). Resolve within the same pupil only, including
+    # when filters or pagination have excluded the exercise's own record.
+    def exercise_key(row):
+        return row['user_id'], re.split(r':row\d+:', str(row['question_id']), maxsplit=1)[0]
+
+    detail_keys = {exercise_key(row) for row in rows if row['is_detail']}
+    parents = {}
+    if con is not None and detail_keys:
+        students = list({key[0] for key in detail_keys})
+        questions = list({key[1] for key in detail_keys})
+        candidates = con.execute(f'''SELECT * FROM attempts
+            WHERE user_id IN ({','.join('?' for _ in students)})
+              AND question_id IN ({','.join('?' for _ in questions)})
+            ORDER BY created_at DESC,attempt_id DESC''', [*students,*questions])
+        for candidate in candidates:
+            key = (candidate['user_id'],candidate['question_id'])
+            if key in detail_keys and not diagnostic(candidate['mode'],candidate['question_id']):
+                parents.setdefault(key,dict(candidate))
     unresolved = {(row['user_id'],row['question_id']) for row in rows
-                  if not row['is_detail'] and not row.get('word_id') and not row['activity'].startswith('game:')}
+                  if not row['is_detail'] and not row['activity'].startswith('game:')}
+    unresolved |= detail_keys
     if con is not None and unresolved:
         students = list({key[0] for key in unresolved})
         placeholders = ','.join('?' for _ in students)
@@ -181,6 +202,14 @@ def enrich(s, rows, con=None):
                 key = (assignment['student_id'],snap['question_id'])
                 if key in unresolved:
                     contents[key] = snap
+        checks = con.execute(f'''SELECT student_id,question_id,result_json FROM assigned_test_checks
+            WHERE student_id IN ({placeholders})''',students)
+        for check in checks:
+            key = (check['student_id'],check['question_id'])
+            if key in unresolved:
+                result = json.loads(check['result_json'])
+                if result.get('letter_results'):
+                    letter_checks[key] = result['letter_results']
     result = []
     for row in rows:
         item = dict(row)
@@ -191,12 +220,50 @@ def enrich(s, rows, con=None):
         if word:
             item['explanation'] = word.get('explanation') or ''
             item['correct_spelling'] = word.get('correct_spelling') or ''
-        snapshot = contents.get((item['user_id'],item['question_id']))
+        snapshot = contents.get((item['user_id'],item['question_id'])) if not item['is_detail'] else None
         if snapshot:
             item['prompt'] = describe_question(snapshot['public'])
             item['explanation'] = snapshot['question'].get('explanation') or ''
             item['correct_spelling'] = snapshot['question'].get('correct_spelling') or ''
+        if not item['is_detail']:
+            item['letter_results'] = letter_checks.get((item['user_id'],item['question_id']),[])
+        # Row-selection diagnostics inherit the whole exercise answer. They
+        # are not evidence that the pupil entered that answer for this word.
+        given = str(item.get('given_answer') or '')
+        row_detail = item['is_detail'] and (
+            bool(re.fullmatch(r'[1-5]+|—', given))
+            or bool(re.search(r':row\d+:', str(item.get('question_id')))))
+        if row_detail:
+            # Never replace a word's prompt with the five-row exercise.
+            if word:
+                item['prompt'] = word.get('variant') or item['prompt']
+            item['detail_kind'] = 'row_selection'
+            item['answer_label'] = 'Ответ на задание'
+            item['correct_answer_label'] = 'Эталон слова'
+            item['answer_note'] = ('Слово из строки, выбор которой отмечен в этой записи. '
+                                   'Отдельный ответ на слово не вводился.')
+            item['given_answer'] = ('Выбор строки: ' + given if given.startswith('строка ')
+                                    else 'Выбранные строки: ' + (given or '—'))
+            item['correct_answer'] = 'Эталон слова: ' + str(item.get('correct_answer') or '—')
+            parent = parents.get(exercise_key(item))
+            snap = contents.get(exercise_key(item))
+            key = (parent or {}).get('correct_answer') or (snap or {}).get('question',{}).get('correct_answer')
+            answer = (parent or {}).get('given_answer')
+            if answer is None and re.fullmatch(r'[1-5]*|—', given):
+                answer = given
+            if key is not None and re.fullmatch(r'[1-5]+', str(key)) and answer is not None:
+                item['exercise_given_answer'] = str(answer) or '—'
+                item['exercise_correct_answer'] = str(key)
+                item['word_correct_answer'] = str(row.get('correct_answer') or '—')
+                item['answer_note'] = ('Ответ на всё задание указан номерами строк. '
+                                       'Ниже — эталон буквы для этого слова; отдельный ответ на слово не вводился.')
         item['content_available'] = bool(item.get('given_answer') and item.get('correct_answer'))
+        from student_workspace import repeat_kind
+        item['can_repeat'] = not item['is_correct'] and bool(repeat_kind(s,row,snapshot))
+        if item['activity'].startswith('game:'):
+            slug = item['activity'].split(':',1)[1]
+            if slug in s.HTML_GAMES or slug in s.PUBLIC_GAMES:
+                item['repeat_game_url'] = '/games/'+slug+'/index.html'
         result.append(item)
     return result
 
@@ -222,11 +289,13 @@ def export(s, user, params=None):
         query,args = history_query(s,con,user,params or {})
         rows = enrich(s,con.execute(query+' ORDER BY created_at DESC,attempt_id DESC',args).fetchall(),con)
         out = io.StringIO(newline='');writer = csv.writer(out,delimiter=';')
-        writer.writerow(['Дата','Ученик','Задание / игра','Тема','Текст задания','Ответ ученика','Правильный ответ','Верно','Тип записи'])
+        writer.writerow(['Дата','Ученик','Задание / игра','Тема','Текст задания','Ответ ученика','Правильный ответ','Верно','Тип записи','Эталон буквы в слове','Проверка вставленных букв'])
         for row in rows:
             values = [row['created_at'],row['display_name'],title(s,row['activity']),row['rule_name'],row['prompt'],
-                      row['given_answer'],row['correct_answer'],'да' if row['is_correct'] else 'нет',
-                      'Подробность по слову' if row['is_detail'] else 'Ответ на задание']
+                      row.get('exercise_given_answer',row['given_answer']),
+                      row.get('exercise_correct_answer',row['correct_answer']),'да' if row['is_correct'] else 'нет',
+                      'Подробность по слову' if row['is_detail'] else 'Ответ на задание',row.get('word_correct_answer',''),
+                      '; '.join(f"{r['prompt']}: {r['given_answer']} → {r['correct_answer']}" for r in row.get('letter_results',[]))]
             # Keep user-generated text as text when opened in spreadsheet programs.
             writer.writerow(["'"+str(v) if str(v or '').startswith(('=','+','-','@')) else v for v in values])
         return out.getvalue().encode('utf-8-sig'),'statistics.csv','text/csv; charset=utf-8'

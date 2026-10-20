@@ -2,7 +2,13 @@
 import json
 import secrets
 import random
+from datetime import datetime, timezone
 from contextlib import contextmanager, closing
+from attempt_content import describe_question
+
+
+class RevokedTestError(PermissionError):
+    code = 'assignment_revoked'
 
 
 @contextmanager
@@ -34,6 +40,33 @@ def ensure_schema(con):
       answer_json TEXT NOT NULL, result_json TEXT NOT NULL, checked_at TEXT NOT NULL,
       PRIMARY KEY(test_id, student_id, question_id));
     """)
+    columns = {r[1] for r in con.execute('PRAGMA table_info(assigned_test_students)')}
+    if 'revoked_at' not in columns:
+        con.execute('ALTER TABLE assigned_test_students ADD COLUMN revoked_at TEXT')
+    if 'due_at' not in columns:
+        con.execute('ALTER TABLE assigned_test_students ADD COLUMN due_at TEXT')
+    con.execute('''CREATE TABLE IF NOT EXISTS error_repetitions (
+        test_id TEXT PRIMARY KEY, student_id TEXT NOT NULL, attempt_id TEXT NOT NULL, created_by TEXT NOT NULL)''')
+
+
+def parse_due(value):
+    if value in (None,''):
+        return None
+    try:
+        due = datetime.fromisoformat(str(value).replace('Z','+00:00'))
+        if due.tzinfo is None:
+            raise ValueError()
+        return due.astimezone(timezone.utc).isoformat()
+    except (ValueError,TypeError,OverflowError):
+        raise ValueError('Укажите корректный срок с часовым поясом.') from None
+
+
+def deadline_status(item, now=None):
+    now = now or datetime.now(timezone.utc)
+    due = datetime.fromisoformat(item['due_at']) if item.get('due_at') else None
+    item['overdue'] = bool(due and not item.get('completed_at') and not item.get('revoked_at') and due < now)
+    item['submitted_late'] = bool(due and item.get('completed_at') and datetime.fromisoformat(item['completed_at']) > due)
+    return item
 
 
 def test_outline(snapshots):
@@ -41,7 +74,7 @@ def test_outline(snapshots):
     for snap in snapshots:
         key = snap['activity']
         counts[key] = counts.get(key, 0) + 1
-    return [{'activity':key, 'title':'Задание ' + key.removeprefix('ege'), 'count':n}
+    return [{'activity':key, 'title':'Игра' if key.startswith('game:') else 'Задание ' + key.removeprefix('ege'), 'count':n}
             for key,n in counts.items()]
 
 
@@ -82,7 +115,7 @@ def overview(s, user):
                 snapshots = json.loads(test.pop('questions_json'))
                 test['total'] = len(snapshots)
                 test['outline'] = test_outline(snapshots)
-                test["students"] = [dict(r) for r in con.execute("""SELECT a.student_id,u.display_name,a.started_at,a.completed_at,a.result_json
+                test["students"] = [dict(r) for r in con.execute("""SELECT a.student_id,u.display_name,a.started_at,a.completed_at,a.result_json,a.revoked_at,a.due_at
                   FROM assigned_test_students a JOIN users u ON u.user_id=a.student_id WHERE a.test_id=?""", (test["id"],))]
                 for student in test["students"]:
                     result = json.loads(student.pop("result_json") or "null")
@@ -90,9 +123,11 @@ def overview(s, user):
                     checks = checks_for(con, test['id'], student['student_id'])
                     student['checked'] = result['total'] if result else len(checks)
                     student['correct'] = result['correct'] if result else sum(bool(r['is_correct']) for r in checks.values())
+                    deadline_status(student)
             return {"students": students, "groups": groups, "tests": tests}
-        tests = [dict(r) for r in con.execute("""SELECT t.id,t.title,t.created_at,u.display_name AS teacher_name,
-          a.seen_at,a.started_at,a.completed_at,a.result_json,t.questions_json FROM assigned_tests t
+        tests = [dict(r) for r in con.execute("""SELECT t.id,t.title,t.created_at,
+          CASE WHEN t.teacher_id=a.student_id THEN 'Самостоятельное повторение' ELSE u.display_name END AS teacher_name,
+          a.seen_at,a.started_at,a.completed_at,a.result_json,a.revoked_at,a.due_at,t.questions_json FROM assigned_tests t
           JOIN assigned_test_students a ON a.test_id=t.id JOIN users u ON u.user_id=t.teacher_id
           WHERE a.student_id=? ORDER BY t.created_at DESC""", (user["user_id"],))]
         for test in tests:
@@ -101,8 +136,9 @@ def overview(s, user):
             test['total'] = len(snapshots)
             test['outline'] = test_outline(snapshots)
             test['checked'] = test['total'] if test['completed_at'] else len(checks_for(con,test['id'],user['user_id']))
-        return {"tests": tests, "unread": sum(not t["seen_at"] and not t["completed_at"] for t in tests),
-                "pending": sum(not t["completed_at"] for t in tests)}
+            deadline_status(test)
+        return {"tests": tests, "unread": sum(not t["revoked_at"] and not t["seen_at"] and not t["completed_at"] for t in tests),
+                "pending": sum(not t["revoked_at"] and not t["completed_at"] for t in tests)}
 
 
 def save_group(s, user, payload):
@@ -123,6 +159,7 @@ def save_group(s, user, payload):
 
 def create_test(s, user, payload):
     s.require_teacher(user)
+    due_at = parse_due(payload.get('due_at'))
     with connection(s) as con:
         ids = list(payload.get("student_ids") or [])
         if payload.get("all_students"):
@@ -135,6 +172,7 @@ def create_test(s, user, payload):
         ids = own_students(s, con, user, ids)
     title = str(payload.get("title") or "Назначенный тест").strip()[:160]
     config = payload.get("config") or {}
+    require_letters = bool(config.get('require_letters'))
     activity = str(config.get("activity") or "ege9")
     specs = [(activity, config)]
     if activity == "orthography-ege":
@@ -163,10 +201,14 @@ def create_test(s, user, payload):
             count -= batch
     if not snapshots or len(snapshots) > 210:
         raise ValueError("В тесте должно быть от 1 до 210 вопросов.")
+    for snap in snapshots:
+        if snap['question']['kind'] == 'line':
+            snap['question']['require_letters'] = require_letters
+            snap['public']['require_letters'] = require_letters
     test_id = secrets.token_hex(12)
     with connection(s) as con:
         con.execute("INSERT INTO assigned_tests VALUES(?,?,?,?,?)", (test_id, user["user_id"], title, json.dumps(snapshots, ensure_ascii=False), s.now_iso()))
-        con.executemany("INSERT INTO assigned_test_students(test_id,student_id) VALUES(?,?)", [(test_id, i) for i in ids])
+        con.executemany("INSERT INTO assigned_test_students(test_id,student_id,due_at) VALUES(?,?,?)", [(test_id, i,due_at) for i in ids])
     return {"id": test_id, "recipients": len(ids), "total": len(snapshots)}
 
 
@@ -210,33 +252,127 @@ def snapshot_question(module, activity, mode, question):
             "question_id": question["question_id"], "question": private, "public": public}
 
 
-def assigned_row(con, user, test_id):
+def assigned_row(con, user, test_id, allow_revoked=False):
     row = con.execute("""SELECT a.*,t.questions_json,t.title FROM assigned_test_students a
       JOIN assigned_tests t ON t.id=a.test_id WHERE a.test_id=? AND a.student_id=?""", (test_id, user["user_id"])).fetchone()
     if not row:
         raise PermissionError("Этот тест вам не назначен.")
+    if row['revoked_at'] and not allow_revoked:
+        raise RevokedTestError('Учитель отозвал этот тест. Новые ответы не принимаются.')
     return row
+
+
+def teacher_test(con, s, user, test_id):
+    s.require_teacher(user)
+    test = con.execute('SELECT * FROM assigned_tests WHERE id=? AND teacher_id=?',
+                       (test_id,user['user_id'])).fetchone()
+    if not test:
+        raise PermissionError('Этот тест принадлежит другому учителю или не существует.')
+    return test
+
+
+def revoke_test(s, user, payload):
+    with connection(s) as con:
+        con.execute('BEGIN IMMEDIATE')
+        test_id = str(payload.get('test_id') or '')
+        teacher_test(con,s,user,test_id)
+        student_id = str(payload.get('student_id') or '')
+        where = 'test_id=?'
+        args = [test_id]
+        if student_id:
+            where += ' AND student_id=?'
+            args.append(student_id)
+            if not con.execute('SELECT 1 FROM assigned_test_students WHERE '+where,args).fetchone():
+                raise PermissionError('Ученику не назначен этот тест.')
+        con.execute('UPDATE assigned_test_students SET revoked_at=COALESCE(revoked_at,?) WHERE '+where,
+                    [s.now_iso(),*args])
+    return {'ok':True}
+
+
+def set_deadline(s, user, payload):
+    due = parse_due(payload.get('due_at'))
+    with connection(s) as con:
+        test_id = str(payload.get('test_id') or '')
+        teacher_test(con,s,user,test_id)
+        student = str(payload.get('student_id') or '')
+        where,args = 'test_id=?',[test_id]
+        if student:
+            where += ' AND student_id=?'
+            args.append(student)
+        if not con.execute('SELECT 1 FROM assigned_test_students WHERE '+where,args).fetchone():
+            raise PermissionError('Назначение не найдено.')
+        con.execute('UPDATE assigned_test_students SET due_at=? WHERE '+where,[due,*args])
+    return {'ok':True,'due_at':due}
+
+
+def public_question(s, snap):
+    public = {k:v for k,v in snap['public'].items() if not k.startswith('_')
+              and k not in {'correct_answer','correct_spelling','explanation','row_word_ids'}}
+    # Recover all visible gaps in older frozen task 15 variants, retaining the key.
+    if public.get('kind') == 'ege15_sentence':
+        key = snap['question']['correct_answer']
+        visible = {part['target']['id'] for part in public['parts'] if 'target' in part}
+        if visible != set(key):
+            module = s.ege15_module
+            if all(item_id in module.WORD_BY_ID for item_id in key):
+                items = [{**module.WORD_BY_ID[item_id],'answer':answer} for item_id,answer in key.items()]
+                public['parts'] = module.sentence_parts(module.combined_sentence(items),items)
+    return public
+
+
+def test_results(s, user, payload):
+    with connection(s) as con:
+        test_id = str(payload.get('test_id') or '')
+        test = teacher_test(con,s,user,test_id)
+        student_id = str(payload.get('student_id') or '')
+        row = con.execute('''SELECT a.*,u.display_name FROM assigned_test_students a
+            JOIN users u ON u.user_id=a.student_id WHERE a.test_id=? AND a.student_id=?''',
+            (test_id,student_id)).fetchone()
+        if not row:
+            raise PermissionError('Ученику не назначен этот тест.')
+        snapshots = json.loads(test['questions_json'])
+        answers = json.loads(row['answers_json'] or '{}')
+        result = json.loads(row['result_json'] or 'null')
+        # Completed assignments from older versions may predate per-question checks.
+        checks = {r['question_id']:r for r in (result or {}).get('results',[])}
+        checks.update(checks_for(con,test_id,student_id))
+        items = []
+        for index,snap in enumerate(snapshots,1):
+            qid = snap['question_id']
+            check = checks.get(qid)
+            public = public_question(s,snap)
+            items.append({'number':index,'question_id':qid,'activity':snap['activity'],
+                'prompt':describe_question(public),'question':public,
+                'rule_name':snap['question'].get('rule_name') or '',
+                'status':'checked' if check else 'draft' if qid in answers else 'unanswered',
+                'given_answer':check.get('given_answer') if check else answers.get(qid),
+                'correct_answer':snap['question']['correct_answer'],
+                'is_correct':bool(check['is_correct']) if check else None,
+                'explanation':snap['question'].get('explanation') or '',
+                'correct_spelling':snap['question'].get('correct_spelling') or ''})
+            items[-1]['letter_results'] = (check or {}).get('letter_results',[])
+            attempt = con.execute('''SELECT attempt_id FROM attempts WHERE user_id=? AND question_id=?
+                AND mode NOT LIKE '%:line_word' AND mode NOT LIKE '%:exam_word'
+                AND mode NOT LIKE '%:sentence_word' ORDER BY created_at DESC LIMIT 1''',(student_id,qid)).fetchone()
+            items[-1]['attempt_id'] = attempt[0] if attempt else None
+        return {'test_id':test_id,'title':test['title'],'student_id':student_id,
+            'student_name':row['display_name'],'completed_at':row['completed_at'],
+            'revoked_at':row['revoked_at'],'total':len(snapshots),'checked':len(checks),
+            'correct':sum(bool(r['is_correct']) for r in checks.values()),'items':items}
 
 
 def open_test(s, user, payload):
     with connection(s) as con:
-        row = assigned_row(con, user, str(payload.get("test_id") or ""))
+        row = assigned_row(con, user, str(payload.get("test_id") or ""), allow_revoked=True)
+        if row['revoked_at'] and not row['completed_at']:
+            raise RevokedTestError('Учитель отозвал этот тест. Продолжить выполнение нельзя.')
         con.execute("UPDATE assigned_test_students SET seen_at=COALESCE(seen_at,?),started_at=COALESCE(started_at,?) WHERE test_id=? AND student_id=?", (s.now_iso(), s.now_iso(), row["test_id"], user["user_id"]))
         questions = []
         for snap in json.loads(row["questions_json"]):
-            public = dict(snap['public'])
-            # Older frozen tests can contain a multi-sentence task with only its
-            # first sentence visible. Restore its presentation, retaining its key.
-            if public.get('kind') == 'ege15_sentence':
-                key = snap['question']['correct_answer']
-                visible = {part['target']['id'] for part in public['parts'] if 'target' in part}
-                if visible != set(key):
-                    module = s.ege15_module
-                    if all(item_id in module.WORD_BY_ID for item_id in key):
-                        items = [{**module.WORD_BY_ID[item_id],'answer':answer} for item_id,answer in key.items()]
-                        public['parts'] = module.sentence_parts(module.combined_sentence(items),items)
+            public = public_question(s,snap)
             questions.append({**public, 'assignment_activity':snap['activity']})
         return {"assignment_id": row["test_id"], "title": row["title"], "questions": questions,
+                'due_at':row['due_at'],'overdue':deadline_status(dict(row))['overdue'],
                 "answers": json.loads(row["answers_json"] or "{}"), "result": json.loads(row["result_json"] or "null"),
                 "checked_results":checks_for(con,row['test_id'],user['user_id']),
                 "outline":test_outline(json.loads(row['questions_json']))}
@@ -244,6 +380,16 @@ def open_test(s, user, payload):
 
 def answer_complete(question, answer):
     kind = question['kind']
+    if kind == 'error_review' and question.get('review_type') == 'paronym':
+        return isinstance(answer,dict) and str(answer.get('row') or '').strip() and str(answer.get('word') or '').strip()
+    if kind == 'line':
+        rows = answer.get('rows') if isinstance(answer,dict) else answer
+        letters = answer.get('letters',{}) if isinstance(answer,dict) else {}
+        if question.get('require_letters'):
+            size = sum(len(row) for row in question['rows'])
+            if not isinstance(letters,dict) or any(not str(letters.get(str(i),'')).strip() for i in range(size)):
+                return False
+        return isinstance(rows,(str,int)) and bool(str(rows).strip())
     if kind == 'paronym_exam':
         return isinstance(answer,dict) and str(answer.get('row') or '').strip() and str(answer.get('word') or '').strip()
     if kind == 'paronym_tf':
@@ -258,9 +404,42 @@ def answer_complete(question, answer):
 
 
 def record_check(s, con, user, row, snap, answer, elapsed):
-    module = module_for(s, snap['activity'])
-    given = module.normalize_given_answer(snap['question'],answer) if snap['activity'] in {'ege5','ege9','ege10','ege11','ege12'} else answer
-    result = module.record_attempt(con,user['user_id'],snap,snap['question_id'],snap['question'],given,elapsed)
+    if snap['question']['kind'] == 'error_review':
+        from student_workspace import record_review
+        result = record_review(s,con,user,snap,answer,elapsed)
+    else:
+        module = module_for(s, snap['activity'])
+        row_answer = answer.get('rows','') if snap['question']['kind'] == 'line' and isinstance(answer,dict) else answer
+        given = module.normalize_given_answer(snap['question'],row_answer) if snap['activity'] in {'ege5','ege9','ege10','ege11','ege12'} else answer
+        result = module.record_attempt(con,user['user_id'],snap,snap['question_id'],snap['question'],given,elapsed)
+    if snap['question']['kind'] == 'line' and isinstance(answer,dict):
+        letters = answer.get('letters') or {}
+        if not isinstance(letters,dict):
+            raise ValueError('Некорректные буквы в строках.')
+        ids = snap['question'].get('row_word_ids') or [r['word_ids'] for r in snap['question'].get('line_rows',[])]
+        details = []
+        for index,word_id in enumerate(i for group in ids for i in group):
+            value = str(letters.get(str(index),'')).strip().lower()
+            if not value:
+                continue
+            word = module.WORD_BY_ID[word_id]
+            correct = value == word['correct_letter']
+            details.append({'prompt':word['variant'],'given_answer':value,
+                            'correct_answer':word['correct_letter'],'is_correct':correct})
+            con.execute('''INSERT INTO attempts (attempt_id,user_id,mode,scope_id,word_id,rule_id,
+                category,rule_name,question_id,prompt,given_answer,correct_answer,is_correct,created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                (secrets.token_hex(12),user['user_id'],'line:line_word',snap['activity']+':letters',word_id,
+                 word['rule_id'],word['category'],word['rule_name'],snap['question_id'],word['variant'],
+                 value,word['correct_letter'],int(correct),s.now_iso()))
+            if not correct:
+                module.update_word_progress(con,user['user_id'],module.scope_id_for('errors'),word_id,0)
+        result['letter_results'] = details
+        if snap['question'].get('require_letters') and any(not d['is_correct'] for d in details):
+            result['is_correct'] = False
+            result['explanation'] = (result.get('explanation') or '') + ' В обязательной вставке букв есть ошибки.'
+            con.execute('''UPDATE attempts SET is_correct=0 WHERE user_id=? AND question_id=?
+                AND word_id IS NULL''',(user['user_id'],snap['question_id']))
     con.execute('INSERT INTO assigned_test_checks VALUES(?,?,?,?,?,?)',
         (row['test_id'],user['user_id'],snap['question_id'],json.dumps(answer,ensure_ascii=False),
          json.dumps(result,ensure_ascii=False),s.now_iso()))
@@ -331,6 +510,8 @@ def save_answers(s, user, payload, submit=False):
         checks = checks_for(con,row['test_id'],user['user_id'])
         for snap in snapshots:
             if snap['question_id'] not in checks:
+                if snap['question'].get('require_letters') and not answer_complete(snap['question'],answers.get(snap['question_id'])):
+                    raise ValueError('Вставьте буквы во все слова и выберите строки.')
                 checks[snap['question_id']] = record_check(s,con,user,row,snap,answers.get(snap['question_id'],''),elapsed)
         return finish_if_complete(s,con,user,row,snapshots,answers,checks)
 

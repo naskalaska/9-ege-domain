@@ -101,12 +101,103 @@ class StatisticsTest(unittest.TestCase):
         self.assertEqual(data['items'][0]['correct_spelling'],word['correct_spelling'])
         self.assertEqual(statistics.overview(server,self.student)['summary']['total'],0)
 
+    def test_admin_ignores_legacy_and_current_word_details(self):
+        self.add_attempt(correct=False, mode='line')
+        self.add_attempt(correct=True)
+        self.add_attempt(correct=False, mode='line:line_word')
+        self.add_attempt(correct=True, question_id='exercise:row1:word')
+        self.add_attempt('ege14',False,mode='exam:exam_word')
+        self.add_attempt('ege15',False,mode='exam:sentence_word')
+        self.add_attempt(correct=False,question_id='teacher-answer')
+        with server.db() as con:
+            con.execute("UPDATE attempts SET user_id=? WHERE question_id='teacher-answer' OR mode='exam:sentence_word'",
+                        (self.teacher['user_id'],))
+            recent = server.recent_attempts_for_admin(con)
+            errors = server.teacher_errors_for_admin(con,[self.teacher['user_id']],1)
+        self.assertEqual(len(recent),3)
+        self.assertEqual(len(errors[self.teacher['user_id']]),1)
+        self.assertIn(errors[self.teacher['user_id']][0]['mode'],('line','mix'))
+        data = server.admin_overview({'role':'admin'})
+        self.assertEqual((data['platform']['total'],data['platform']['correct']),(3,1))
+        teacher = next(t for t in data['teachers'] if t['user_id']==self.teacher['user_id'])
+        self.assertEqual((teacher['attempts'],teacher['correct']),(3,1))
+        self.assertEqual((teacher['teacher_attempts'],teacher['student_attempts']),(1,2))
+        self.assertEqual(len(teacher['error_attempts']),2)
+        student = next(s for s in teacher['students_list'] if s['user_id']==self.student['user_id'])
+        self.assertEqual((student['attempts'],student['correct']),(2,1))
+        self.assertEqual(sum(m['attempts'] for m in student['mode_summary']),2)
+
+    def test_legacy_row_answers_are_contextualized_without_rewriting_history(self):
+        word = server.ege11_module.WORDS[0]
+        self.add_attempt('ege11',False,mode='line:line_word',word_id=word['id'])
+        with server.db() as con:
+            con.execute("UPDATE attempts SET given_answer='15',correct_answer='е'")
+        row = statistics.history(server,self.student,{'kind':'details'})['items'][0]
+        self.assertEqual(row['given_answer'],'Выбранные строки: 15')
+        self.assertEqual(row['correct_answer'],'Эталон слова: е')
+        self.assertEqual(row['detail_kind'],'row_selection')
+        self.assertIn('Отдельный ответ на слово не вводился',row['answer_note'])
+        body,_,_ = statistics.export(server,self.student,{'kind':'details'})
+        self.assertIn('Выбранные строки: 15',body.decode('utf-8-sig'))
+        with server.db() as con:
+            stored = con.execute('SELECT given_answer,correct_answer FROM attempts').fetchone()
+            self.assertEqual(tuple(stored),('15','е'))
+        self.add_attempt('ege14',False,mode='line:line_word')
+        rows = statistics.history(server,self.student,{'kind':'details'})['items']
+        literal = next(r for r in rows if r['activity']=='ege14')
+        self.assertEqual((literal['given_answer'],literal['correct_answer']),('о','и'))
+        self.assertNotIn('detail_kind',literal)
+
     def test_assigned_contents_and_csv_keep_complete_text(self):
         self.add_attempt(prompt='=текст\nвторая строка')
         body,_,_=statistics.export(server,self.student)
         rows=list(csv.reader(io.StringIO(body.decode('utf-8-sig')),delimiter=';'))
         self.assertEqual(rows[1][4],"'=текст\nвторая строка")
         self.assertEqual(describe_question({'prompt':'Н/НН','parts':[{'text':'Дом '},{'target':{'label':'построе..ый'}}]}),'Н/НН\nДом построе..ый')
+
+    def test_row_diagnostic_keeps_numeric_key_separate_from_word_letter(self):
+        for activity in ('ege9','ege10','ege11','ege12'):
+            with self.subTest(activity=activity):
+                test = self.case.create({'activity':activity,'mode':'line','count':1})
+                snap = self.case.snapshots(test['id'])[0]
+                key = snap['question']['correct_answer']
+                wrong = '1' if key != '1' else '2'
+                learning_module.check_question(server,self.student,{'test_id':test['id'],
+                    'question_id':snap['question_id'],'answer':wrong})
+                # Reproduce the old collision, including an already mixed prompt.
+                with server.db() as con:
+                    con.execute("UPDATE attempts SET prompt=? WHERE question_id=? AND word_id IS NOT NULL",
+                                (describe_question(snap['public']),snap['question_id']))
+                # The main answer is deliberately excluded from this page.
+                data = statistics.history(server,self.student,{'kind':'details','activity':activity,'page_size':1})
+                item = data['items'][0]
+                module = server if activity == 'ege9' else getattr(server,activity+'_module')
+                word = module.WORD_BY_ID[item['word_id']]
+                self.assertEqual(item['prompt'],word['variant'])
+                self.assertEqual(item['exercise_given_answer'],wrong)
+                self.assertEqual(item['exercise_correct_answer'],key)
+                self.assertEqual(item['word_correct_answer'],word['correct_letter'])
+                self.assertEqual(item['correct_spelling'],word['correct_spelling'])
+                main = statistics.history(server,self.student,{'kind':'answers','activity':activity})['items'][0]
+                self.assertEqual((main['given_answer'],main['correct_answer']),(wrong,key))
+                self.assertIn('5)',main['prompt'])
+                body,_,_ = statistics.export(server,self.student,{'kind':'details','activity':activity})
+                csv_rows = list(csv.reader(io.StringIO(body.decode('utf-8-sig')),delimiter=';'))
+                self.assertTrue(all(r[5:7]==[wrong,key] for r in csv_rows[1:]))
+                self.assertTrue(all(r[9] for r in csv_rows[1:]))
+
+    def test_row_diagnostic_uses_frozen_key_without_parent_and_never_other_pupil(self):
+        test = self.case.create({'activity':'ege11','mode':'line','count':1})
+        snap = self.case.snapshots(test['id'])[0]
+        learning_module.check_question(server,self.student,{'test_id':test['id'],
+            'question_id':snap['question_id'],'answer':'1'})
+        with server.db() as con:
+            con.execute('UPDATE attempts SET user_id=? WHERE question_id=? AND word_id IS NULL',
+                        (self.teacher['user_id'],snap['question_id']))
+            con.execute("UPDATE attempts SET correct_answer='5' WHERE user_id=?",(self.teacher['user_id'],))
+        item = statistics.history(server,self.student,{'kind':'details'})['items'][0]
+        self.assertEqual(item['exercise_correct_answer'],snap['question']['correct_answer'])
+        self.assertEqual(item['exercise_given_answer'],'1')
 
     @unittest.skipUnless(shutil.which('node'),'Node.js is required')
     def test_early_game_answer_survives_slow_auth_and_anonymous_is_not_recorded(self):

@@ -24,7 +24,18 @@ with server.db() as con:
     con.execute("UPDATE attempts SET rule_name='Уверенная тема',rule_id='qa-strong' WHERE prompt LIKE 'Уверенная тема%'")
 con.close()
 test=case.case.create({'activity':'ege9','mode':'line','count':2})
+letter_test=case.case.create({'activity':'ege9','mode':'line','count':2,'require_letters':True})
+letter_snap=case.case.snapshots(letter_test['id'])[0]
+letter_ids=[w for row in letter_snap['question']['row_word_ids'] for w in row]
+row_test=case.case.create({'activity':'ege11','mode':'line','count':1})
+snap=case.case.snapshots(row_test['id'])[0]
+row_given='15' if snap['question']['correct_answer'] != '15' else '1'
+learning_module.check_question(server,case.student,{'test_id':row_test['id'],
+    'question_id':snap['question_id'],'answer':row_given})
 fixture={'student_id':case.student['user_id'],'empty_id':empty['user_id'],'test_id':test['id'],
+         'letter_test_id':letter_test['id'],'letter_key':letter_snap['question']['correct_answer'],
+         'letters':{str(i):server.WORD_BY_ID[w]['correct_letter'] for i,w in enumerate(letter_ids)},
+         'row_key':snap['question']['correct_answer'],'row_given':row_given,
          'summary':statistics_module.overview(server,case.student)['summary'],'database':str(case.case.path)}
 qa=Path(__file__).resolve().parent/'offline-qa';qa.mkdir(exist_ok=True)
 (qa/'statistics-fixtures.json').write_text(json.dumps(fixture,ensure_ascii=False),encoding='utf-8')
