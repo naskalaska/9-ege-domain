@@ -15,14 +15,14 @@ function dueFrom(root) {
   return value ? new Date(value).toISOString() : null;
 }
 
-async function editAssignmentDeadline(testId,studentId='',value='',refresh=showAssignments) {
+async function editAssignmentDeadline(testId,studentId='',value='',refresh=showAssignments,kind='test') {
   const modal = learningModal('Срок выполнения');
   const root = modal.querySelector('[data-content]');
   root.innerHTML = `${deadlineFields(value)}<p class="error" role="alert"></p><button class="primary-button" data-save-deadline>Сохранить срок</button>`;
   root.querySelector('button').onclick = async event => {
     event.target.disabled = true;
     try {
-      await api('/api/assignments/deadline',{method:'POST',body:JSON.stringify({test_id:testId,student_id:studentId,due_at:dueFrom(root)})});
+      await api(kind==='game'?'/api/assigned-games/update':'/api/assignments/deadline',{method:'POST',body:JSON.stringify({...(kind==='game'?{game_id:testId}:{test_id:testId}),student_id:studentId,due_at:dueFrom(root)})});
       modal.remove();await refresh();
     } catch (err) { root.querySelector('.error').textContent=err.message;event.target.disabled=false; }
   };
@@ -54,12 +54,14 @@ document.addEventListener('click',event => {
 });
 
 function workspaceAssignmentCard(test) {
+  if(test.assignment_kind==='game')return assignedGameCard(test);
   const teacher = state.user.role === 'teacher';
   const status = test.revoked_at ? 'Отозван' : test.completed_at ? 'Завершён' : test.overdue ? 'Просрочен · можно выполнить' : test.started_at ? 'Начат' : 'Назначен';
   return `<article class="question workspace-assignment"><h3>${escapeHtml(test.title)}</h3>${teacher && test.display_name ? `<p>${escapeHtml(test.display_name)}</p>` : ''}<p>${escapeHtml(assignmentOutline(test))}</p><p>${deadlineHtml(test)}</p><p>${status} · проверено ${test.checked} из ${test.total}</p><div class="practice-actions">${teacher ? `<button class="secondary-button" data-work-results="${escapeHtml(test.id)}" data-student="${escapeHtml(test.student_id)}">Ответы ученика</button><button class="ghost-button" data-work-deadline="${escapeHtml(test.id)}" data-student="${escapeHtml(test.student_id)}" data-due="${escapeHtml(test.due_at || '')}">Изменить срок</button>` : !test.revoked_at || test.completed_at ? `<button class="primary-button" data-work-open="${escapeHtml(test.id)}">${test.completed_at ? 'Результаты' : test.started_at ? 'Продолжить' : 'Открыть'}</button>` : ''}</div></article>`;
 }
 
 function bindWorkspaceAssignments(root,refresh) {
+  bindAssignedGames(root,refresh);
   root.querySelectorAll('[data-work-results]').forEach(b=>b.onclick=()=>showAssignedResults(b.dataset.workResults,b.dataset.student));
   root.querySelectorAll('[data-work-deadline]').forEach(b=>b.onclick=()=>editAssignmentDeadline(b.dataset.workDeadline,b.dataset.student,b.dataset.due,refresh));
   root.querySelectorAll('[data-work-open]').forEach(b=>b.onclick=async()=>{

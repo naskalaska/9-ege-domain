@@ -1,0 +1,25 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Демо приложения · Русский язык ЕГЭ</title><style>body{margin:0;background:#f8f5ee;color:#243d38;font:15px system-ui}header{padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}select{border:1px solid #859b7e;border-radius:10px;padding:9px;background:#fffdf6;color:inherit}button,a{color:inherit}button{border:1px solid #859b7e;background:#fffdf6;border-radius:12px;padding:10px 16px;cursor:pointer}iframe{width:100%;height:calc(100vh - 115px);border:0}p{margin:4px 20px 12px}#status{font-size:13px}</style><header><b>Культура речи · тренажёры 1–8</b><label>Тренажёр <select id="activity"><option value="speech-ege">Весь раздел 1–8</option><option value="ege1-3">Задания 1–3</option><option value="ege4">Задание 4</option><option value="ege5">Задание 5</option><option value="ege6">Задание 6</option><option value="ege7">Задание 7 · новое</option><option value="ege8">Задание 8</option></select></label><button data-role="student">Кабинет ученика</button><button data-role="teacher">Кабинет учителя</button><a id="direct" href="http://127.0.0.1:8090/apps/speech-ege" target="_blank">Открыть отдельно</a></header><p id="status">Перед просмотром запустите «Запустить демо.cmd» в папке проекта. Демо использует отдельную базу.</p><iframe title="Приложение ЕГЭ" id="preview" src="about:blank"></iframe><script>
+if(location.protocol!=='file:'){
+ const picker=document.querySelector('#activity');
+ const saved=localStorage.getItem('ege_demo_activity');if([...picker.options].some(o=>o.value===saved))picker.value=saved;
+ const openActivity=()=>{const path='/apps/'+picker.value;document.querySelector('#direct').href=path;document.querySelector('#preview').src=path;localStorage.setItem('ege_demo_activity',picker.value);};
+ picker.onchange=openActivity;
+ document.querySelector('#direct').href='/apps/'+picker.value;
+ document.querySelectorAll('[data-role]').forEach(b=>b.onclick=async()=>{try{
+  document.querySelectorAll('[data-role]').forEach(b=>b.disabled=true);
+  const role=b.dataset.role;
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:role,password:role+'123'})}),d=await r.json();if(!r.ok)throw Error(d.error);
+  localStorage.setItem('ege_token',d.token);localStorage.setItem('ege_demo_role',role);
+  openActivity();
+  document.querySelector('#status').textContent='Открыт кабинет '+(role==='student'?'ученика':'учителя')+'. Все тренажёры и статистика работают на локальной демобазе.';
+ }catch(e){document.querySelector('#status').textContent=e.message}
+ finally{document.querySelectorAll('[data-role]').forEach(b=>b.disabled=false)}});
+ if(['127.0.0.1','localhost'].includes(location.hostname)){
+  const role=localStorage.getItem('ege_demo_role')==='teacher'?'teacher':'student';
+  document.querySelector('[data-role="'+role+'"]').click();
+ }
+}else{
+ document.querySelector('#preview').src='http://127.0.0.1:8090/demo.html';
+ document.querySelectorAll('[data-role],label').forEach(b=>b.hidden=true);
+}
+</script></html>

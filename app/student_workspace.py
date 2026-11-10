@@ -19,13 +19,13 @@ def student_for(con,user,student_id=''):
 def assignments_for(s,user,student_id=''):
     data = learning.overview(s,user)
     if user['role'] == 'student':
-        return data['tests']
+        return data['tests']+data.get('games',[])
     result = []
     for test in data['tests']:
         for pupil in test['students']:
             if not student_id or pupil['student_id'] == student_id:
                 result.append({**{k:v for k,v in test.items() if k != 'students'},**pupil})
-    return result
+    return result+[g for g in data.get('games',[]) if not student_id or g['student_id']==student_id]
 
 
 def profile(s,user,params):

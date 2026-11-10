@@ -13,7 +13,7 @@ function renderPlatformNavigation() {
   if (!state.user || !['teacher','student'].includes(state.user.role)) return;
   const nav = document.createElement('nav');
   nav.id = 'workspaceNavigation';nav.className = 'workspace-navigation';nav.setAttribute('aria-label','Быстрый переход между тренажёрами');
-  nav.innerHTML = Object.entries(activityMeta).map(([slug,meta]) => `<a href="${slug === 'html-games' ? '/apps/mini' : '/apps/'+slug}" data-platform-activity="${slug}" ${state.currentActivity === slug && location.pathname !== '/apps/statistics' ? 'aria-current="page"' : ''}>${escapeHtml(meta.shortTitle || meta.title)}</a>`).join('');
+  nav.innerHTML = Object.entries(activityMeta).sort(([a],[b])=>{const rank=s=>s==='ege1-3'?1:s.startsWith('ege')?Number(s.slice(3)):s==='speech-ege'?8.5:s==='orthography-ege'?15.5:99;return rank(a)-rank(b)}).map(([slug,meta]) => `<a href="${slug === 'html-games' ? '/apps/mini' : '/apps/'+slug}" data-platform-activity="${slug}" ${state.currentActivity === slug && location.pathname !== '/apps/statistics' ? 'aria-current="page"' : ''}>${escapeHtml(meta.shortTitle || meta.title)}</a>`).join('');
   document.querySelector('.topbar').after(nav);
   const header = document.querySelector('.topbar');
   const setOffset = () => document.documentElement.style.setProperty('--workspace-header-height',header.offsetHeight+'px');

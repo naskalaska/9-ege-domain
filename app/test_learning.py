@@ -24,7 +24,7 @@ class LearningTest(unittest.TestCase):
     def setUp(self):
         self.path = server.ROOT / 'app' / 'test_data' / ('learning-' + uuid.uuid4().hex + '.db')
         self.addCleanup(self.remove_database)
-        modules = [server] + [getattr(server, f'ege{n}_module') for n in (5,10,11,12,13,14,15)]
+        modules = [server, server.ege1_3_module] + [getattr(server, f'ege{n}_module') for n in (5,10,11,12,13,14,15)]
         for module in modules:
             p = patch.object(module, 'DB_PATH', self.path)
             p.start(); self.addCleanup(p.stop)

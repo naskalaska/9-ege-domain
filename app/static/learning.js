@@ -17,16 +17,16 @@ async function refreshAssignmentButton() {
   try {
     const data = await api('/api/assignments');
     if (!button.isConnected) return;
-    button.textContent = state.user.role === 'teacher' ? 'Тесты и группы' : `Назначенные тесты${data.pending ? ` (${data.pending})` : ''}`;
+    button.textContent = state.user.role === 'teacher' ? 'Тесты и группы' : `Задания и игры${data.pending ? ` (${data.pending})` : ''}`;
     button.classList.toggle('primary-button', Boolean(data.unread));
-    button.setAttribute('aria-label', data.unread ? `Новых назначенных тестов: ${data.unread}` : button.textContent);
-    const newTests = (data.tests || []).filter(test => !test.revoked_at && !test.seen_at && !test.completed_at && !dismissedAssignmentNotices.has(test.id));
+    button.setAttribute('aria-label', data.unread ? `Новых назначенных работ: ${data.unread}` : button.textContent);
+    const newTests = [...(data.tests || []),...(data.games || [])].filter(test => !test.revoked_at && !test.seen_at && !test.completed_at && !dismissedAssignmentNotices.has(test.id));
     if (state.user.role === 'student' && !state.currentSession?.assignment_id && newTests.length && !document.querySelector('#assignmentNotice')) {
       const notice = document.createElement('div');
       notice.id = 'assignmentNotice';
       notice.className = 'assignment-notice';
       notice.setAttribute('role', 'status');
-      notice.innerHTML = `<span>Учитель назначил вам тест. Новых: ${data.unread}.</span><button class="secondary-button" type="button">Открыть тесты</button><button class="ghost-button" aria-label="Скрыть уведомление" type="button">×</button>`;
+      notice.innerHTML = `<span>Учитель назначил вам работу или игру. Новых: ${data.unread}.</span><button class="secondary-button" type="button">Открыть задания и игры</button><button class="ghost-button" aria-label="Скрыть уведомление" type="button">×</button>`;
       notice.querySelector('.secondary-button').onclick = () => { notice.remove(); showAssignments(); };
       notice.querySelector('.ghost-button').onclick = () => { newTests.forEach(test => dismissedAssignmentNotices.add(test.id)); notice.remove(); };
       document.body.append(notice);
@@ -63,6 +63,8 @@ function teacherAssignmentCard(test) {
 
 function formatTestAnswer(answer, question) {
   if (answer === null || answer === undefined || answer === '') return '—';
+  if (Array.isArray(answer)) return answer.join(' / ');
+  if (['text_lab_bool','speech_choice'].includes(question.kind) && (answer === 'true' || answer === 'false')) return answer === 'true' ? 'Верно' : 'Неверно';
   if (typeof answer === 'object' && 'rows' in answer) return `Строки: ${answer.rows || '—'}; буквы: ${Object.values(answer.letters || {}).join(', ')}`;
   const labels = new Map((question.targets || []).map(target => [target.id,target.label]));
   (question.parts || []).forEach(part => { if (part.target) labels.set(part.target.id,part.target.label); });
@@ -88,15 +90,15 @@ async function showAssignedResults(testId, studentId) {
 }
 
 async function showAssignments() {
-  const modal = learningModal(state.user.role === 'teacher' ? 'Тесты и группы' : 'Назначенные тесты');
+  const modal = learningModal(state.user.role === 'teacher' ? 'Тесты и группы' : 'Задания и игры');
   const root = modal.querySelector('[data-content]');
   try {
     const data = await api('/api/assignments');
     if (state.user.role === 'teacher') {
       root.innerHTML = `<p>Соберите вариант в тренажёре через «Составить тест», затем выберите «Назначить ученикам».</p>
-        <div class="setup-grid"><label>Тренажёр<select data-activity>${Object.entries(activityMeta).filter(([id]) => /^ege(5|9|10|11|12|13|14|15)$/.test(id) || id === 'orthography-ege').map(([id, meta]) => `<option value="${id}">${escapeHtml(meta.shortTitle || meta.title)}</option>`).join('')}</select></label><button class="primary-button" data-compose>Собрать тест</button></div>
+        <div class="setup-grid"><label>Тренажёр<select data-activity>${Object.entries(activityMeta).filter(([id]) => id !== 'html-games').map(([id, meta]) => `<option value="${id}">${escapeHtml(meta.shortTitle || meta.title)}</option>`).join('')}</select></label><button class="primary-button" data-compose>Собрать тест</button></div>
         <details><summary>Группы учеников (${data.groups.length})</summary><div data-groups></div><button class="secondary-button" data-new-group>Создать группу</button></details>
-        <button class="secondary-button" data-open-calendar>Открыть календарь работ</button><h3>Назначенные тесты</h3>${data.tests.map(teacherAssignmentCard).join('') || '<p>Назначенных тестов пока нет.</p>'}`;
+        <button class="secondary-button" data-open-calendar>Открыть календарь работ</button><h3>Задания и игры</h3>${data.tests.map(teacherAssignmentCard).join('') || '<p>Назначенных тестов пока нет.</p>'}`;
       root.querySelector('[data-open-calendar]').onclick=()=>showAssignmentCalendar();
       root.querySelectorAll('[data-edit-deadline]').forEach(b=>b.onclick=()=>editAssignmentDeadline(b.dataset.editDeadline,b.dataset.studentId,b.dataset.due,()=>{modal.remove();return showAssignments();}));
       root.querySelector('[data-compose]').onclick = async () => {
@@ -130,6 +132,8 @@ async function showAssignments() {
         catch (err) { button.disabled = false; alert(err.message); }
       });
     }
+    root.insertAdjacentHTML('beforeend','<h3>Назначенные игры</h3>'+((data.games || []).map(assignedGameCard).join('') || '<p>Назначенных игр пока нет.</p>'));
+    bindAssignedGames(root,()=>{modal.remove();return showAssignments();});
   } catch (err) { root.textContent = err.message; }
 }
 
@@ -150,8 +154,8 @@ function editStudentGroup(data, group, parent) {
 }
 
 async function assignComposedTest(composer) {
-  const config = {activity:state.currentActivity, mode:composer.querySelector('#testMode')?.value, count:Number(composer.querySelector('#testCount')?.value || 10), rule_ids:[...state.selectedRuleIds], include_errors:Boolean(composer.querySelector('#testIncludeErrors')?.checked)};
-  if (config.activity === 'orthography-ege') {
+  const config = state.currentActivity === 'ege1-3' ? collectTextLabTestConfig(composer) : {activity:state.currentActivity, mode:composer.querySelector('#testMode')?.value, count:Number(composer.querySelector('#testCount')?.value || 10), rule_ids:[...state.selectedRuleIds], include_errors:Boolean(composer.querySelector('#testIncludeErrors')?.checked)};
+  if (['orthography-ege','speech-ege'].includes(config.activity)) {
     config.task_counts = Object.fromEntries([...composer.querySelectorAll('[data-test-orthography-count]')].map(i=>[i.dataset.testOrthographyCount,Number(i.value)]));
   }
   const modal = learningModal('Назначить тест');
@@ -239,6 +243,9 @@ function renderLetterResults(results) {
 }
 
 function formatAssignedAnswer(answer) {
+  if (Array.isArray(answer)) return answer.join(' / ');
+  if (answer === 'true') return 'Верно';
+  if (answer === 'false') return 'Неверно';
   if (answer && typeof answer === 'object' && 'rows' in answer) return String(answer.rows || '—');
   if (answer && typeof answer === 'object') return Object.entries(answer).map(([key,value]) => `${key}: ${formatAssignedAnswer(value)}`).join(', ');
   return String(answer || '—');

@@ -1,0 +1,23 @@
+{
+  "pass": true,
+  "checks": [
+    "aggregate 1–8",
+    "exact selected counts",
+    "vowel selection and submit",
+    "rule filter",
+    "SVG matching",
+    "mobile 390px",
+    "all 86 task 6 cards",
+    "single question",
+    "instant server checks",
+    "no boxed vowels",
+    "next only after feedback",
+    "teacher composer",
+    "connected HTML demo",
+    "login before iframe load",
+    "role switching",
+    "remembered demo role",
+    "no login dialogs"
+  ],
+  "errors": []
+}

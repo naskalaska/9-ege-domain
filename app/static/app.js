@@ -24,6 +24,15 @@ const state = {
 const fallbackTeacherCode = "T-DDC378";
 
 const activityMeta = {
+  ege4: {title:'ЕГЭ. Задание 4: ударение',shortTitle:'Задание 4',description:'Ударение, верно/неверно, формат ЕГЭ.',mark:'4'},
+  ege6: {title:'ЕГЭ. Задание 6: лексические нормы',shortTitle:'Задание 6',description:'Редактирование предложений.',mark:'6'},
+  ege7: {title:'ЕГЭ. Задание 7: морфологические нормы',shortTitle:'Задание 7',description:'Формы слов по частям речи.',mark:'7'},
+  ege8: {title:'ЕГЭ. Задание 8: грамматические нормы',shortTitle:'Задание 8',description:'Виды ошибок и соответствия.',mark:'8'},
+  'speech-ege': {title:'Культура речи',shortTitle:'Культура речи',description:'Сборная тренировка по заданиям 1–8.',mark:'1–8'},
+  'ege1-3': {
+    title: 'ЕГЭ. Задания 1–3: лаборатория текста', shortTitle: 'Задания 1–3',
+    description: 'Средства связи, лексика и характеристики текста.', mark: '1–3',
+  },
   ege5: {
     title: "ЕГЭ. Задание 5: паронимы",
     shortTitle: "Задание 5",
@@ -1451,10 +1460,12 @@ const orthographyEgeTasks = [
 ];
 
 function activityModes() {
+  if (speechModes[state.currentActivity]) return speechModes[state.currentActivity];
+  if (state.currentActivity === 'ege1-3') return textLabModes;
   if (state.currentActivity === "ege13") return ege13Modes;
   if (state.currentActivity === "ege14") return ege14Modes;
   if (state.currentActivity === "ege15") return ege15Modes;
-  if (state.currentActivity === "orthography-ege") return orthographyEgeModes;
+  if (["orthography-ege","speech-ege"].includes(state.currentActivity)) return orthographyEgeModes;
   return state.currentActivity === "ege5" ? paronymModes : modes;
 }
 
@@ -1712,7 +1723,7 @@ function renderTopActions() {
     const assignments = document.createElement("button");
     assignments.id = "assignmentsButton";
     assignments.className = "secondary-button";
-    assignments.textContent = state.user.role === "teacher" ? "Тесты и группы" : "Назначенные тесты";
+    assignments.textContent = state.user.role === "teacher" ? "Тесты и группы" : "Задания и игры";
     assignments.onclick = showAssignments;
     topActions.append(assignments);
     const statistics = document.createElement("button");
@@ -3185,7 +3196,7 @@ async function loadActivity(slug, updateUrl = true) {
   if (requestId !== state.activityLoadRequestId) return;
   state.currentActivity = slug;
   state.bootstrap = bootstrap;
-  state.mode = slug === "ege5"
+  state.mode = speechModes[slug] ? Object.keys(speechModes[slug])[0] : slug === 'ege1-3' ? 'gap' : slug === "ege5"
     ? "paronym_choice"
     : slug === "ege13"
       ? "word_ne"
@@ -3202,7 +3213,7 @@ async function loadActivity(slug, updateUrl = true) {
   state.ruleSelectionTouched = false;
   state.currentSession = null;
   state.answers = {};
-  state.orthographyTaskCounts = { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 };
+  state.orthographyTaskCounts = slug==='speech-ege' ? Object.fromEntries(speechTasks.map(t=>[t.id,t.disabled?0:1])) : { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 };
   ensureRuleSelection();
   if (updateUrl) history.pushState(null, "", `/apps/${slug}`);
   renderDashboard();
@@ -3211,6 +3222,8 @@ async function loadActivity(slug, updateUrl = true) {
 
 function activityFromPath() {
   const path = window.location.pathname;
+  if (/^\/apps\/(ege4|ege6|ege7|ege8|speech-ege)$/.test(path)) return path.split('/').pop();
+  if (path === '/apps/ege1-3') return 'ege1-3';
   if (path === "/apps/ege5") return "ege5";
   if (path === "/apps/ege9") return "ege9";
   if (path === "/apps/ege10") return "ege10";
@@ -3402,7 +3415,8 @@ function renderCatalog() {
     (groups[group] ||= []).push(activity);
     return groups;
   }, {});
-  const groupOrder = ["Орфография", "орфоэпия, грамматика, речь", "Игры"];
+  if(groupedActivities['Культура речи']) groupedActivities['Культура речи'].sort((a,b)=>(parseInt(a.slug.replace('ege',''))||99)-(parseInt(b.slug.replace('ege',''))||99));
+  const groupOrder = ["Орфография", "Культура речи", "Игры"];
   const groupsHtml = [...groupOrder, ...Object.keys(groupedActivities).filter((group) => !groupOrder.includes(group))]
     .filter((group) => groupedActivities[group]?.length)
     .map((group) => `
@@ -3492,6 +3506,10 @@ async function renderTeacherGamesPage(updateUrl = true) {
         <div class="mini-game-grid">${createdHtml}</div>
       </section>
     `;
+    list.querySelectorAll('[data-assign-cabinet-game]').forEach(button=>button.onclick=()=>{
+      const game=[...purchased,...created].find(g=>(g.public_id||g.slug)===button.dataset.assignCabinetGame);
+      if(game)assignTeacherGame(game);
+    });
     list.querySelectorAll("[data-copy-url]").forEach((button) => {
       button.addEventListener("click", async () => {
         const copied = await copyTextToClipboard(button.dataset.copyUrl);
@@ -3517,6 +3535,7 @@ function teacherGameCard(game, eyebrow, status) {
         <p>${escapeHtml(game.description || status || "")}</p>
         ${game.note ? `<p class="muted">${escapeHtml(game.note)}</p>` : ""}
       </div>
+      ${game.can_assign ? `<button class="secondary-button" data-assign-cabinet-game="${escapeHtml(game.public_id||game.slug)}" type="button">Назначить ученикам</button>`:''}
       ${url ? `
         <a class="primary-button public-play-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Открыть онлайн</a>
         <button class="secondary-button" data-copy-url="${escapeHtml(url)}" type="button">Скопировать</button>
@@ -3769,7 +3788,7 @@ async function setupGameBuilder() {
             <label class="rule-check">
               <input type="checkbox" data-game-rule-id="${escapeHtml(rule.rule_id)}" ${selectedGameRuleIds.has(rule.rule_id) ? "checked" : ""} />
               <span>${escapeHtml(rule.rule_name)}</span>
-              <b>${rule.count}</b>
+              <b>${rule.count}</b>${state.bootstrap.rule_progress?.[rule.rule_id] ? `<small>${state.bootstrap.rule_progress[rule.rule_id].solved}/${state.bootstrap.rule_progress[rule.rule_id].total} · ${pct(state.bootstrap.rule_progress[rule.rule_id].solved,state.bootstrap.rule_progress[rule.rule_id].total)}</small>` : ''}
             </label>
           `).join("")}
         </div>
@@ -3918,8 +3937,10 @@ function renderSidebar() {
     list.append(button);
   });
   document.querySelector("#quickStats").innerHTML = `
-    <div class="stat"><b>${state.bootstrap.word_count}</b><span>${state.currentActivity === "ege5" ? "строк в базе" : "слов в базе"}</span></div>
-    <div class="stat"><b>${state.currentActivity === "orthography-ege" ? orthographyEgeTasks.length : Object.values(state.bootstrap.rules).flat().length}</b><span>${state.currentActivity === "orthography-ege" ? "типов заданий" : ["ege13", "ege15"].includes(state.currentActivity) ? "части речи" : state.currentActivity === "ege5" ? "групп паронимов" : "подправила"}</span></div>
+    <div class="stat"><b>${state.currentActivity === "ege8" ? state.bootstrap.error_sentence_count : state.bootstrap.word_count}</b><span>${state.currentActivity === "speech-ege" ? "карточек в базе" : state.currentActivity === "ege1-3" ? "текстов в базе" : state.currentActivity === "ege7" ? "сочетаний в базе" : state.currentActivity === "ege5" ? "строк в базе" : state.currentActivity === "ege8" ? "предложений с ошибками" : "слов в базе"}</span></div>
+    <div class="stat"><b>${["orthography-ege","speech-ege"].includes(state.currentActivity) ? currentMixTasks().length : Object.values(state.bootstrap.rules).flat().length}</b><span>${["orthography-ege","speech-ege"].includes(state.currentActivity) ? "типов заданий" : state.currentActivity === "ege1-3" ? "темы" : ["ege7", "ege13", "ege15"].includes(state.currentActivity) ? "части речи" : state.currentActivity === "ege5" ? "групп паронимов" : state.currentActivity === "ege8" ? "видов ошибок" : "подправила"}</span></div>
+    ${state.user?.role==='student' && state.bootstrap.bank_progress ? `<div class="stat"><b>${state.bootstrap.bank_progress.solved}/${state.bootstrap.bank_progress.total}</b><span>освоено по всей базе · ${pct(state.bootstrap.bank_progress.solved,state.bootstrap.bank_progress.total)}</span></div>` : ''}
+    ${state.currentActivity === 'ege8' ? `<div class="stat"><b>${state.bootstrap.correct_sentence_count}</b><span>верных предложений</span></div>` : ''}
   `;
 }
 
@@ -3933,7 +3954,9 @@ function renderMode() {
   renderSetup();
 }
 
-function backToMenu() {
+async function backToMenu() {
+  const activity=state.currentActivity;
+  try { const data=await api(activityApi("/bootstrap")); if(state.currentActivity!==activity)return; state.bootstrap=data;renderSidebar(); } catch {}
   state.currentSession = null;
   state.answers = {};
   renderMode();
@@ -3942,17 +3965,19 @@ function backToMenu() {
 
 function renderSetup() {
   const setup = document.querySelector("#setupView");
-  if (state.currentActivity === "orthography-ege") {
+  if (['ege4','ege6','ege7','ege8'].includes(state.currentActivity)) { renderSpeechSetup(); return; }
+  if (state.currentActivity === 'ege1-3') { renderTextLabSetup(); return; }
+  if (["orthography-ege","speech-ege"].includes(state.currentActivity)) {
     const counts = state.orthographyTaskCounts || {};
-    const total = orthographyEgeTasks.reduce((sum, task) => sum + Number(counts[task.id] || 0), 0);
+    const total = currentMixTasks().reduce((sum, task) => sum + Number(counts[task.id] || 0), 0);
     setup.innerHTML = `
       <section class="rule-picker">
         <div class="rule-warning" role="note">Ошибки из сборной тренировки попадут в копилку того задания, где была ошибка.</div>
         <div class="orthography-task-grid">
-          ${orthographyEgeTasks.map((task) => `
+          ${currentMixTasks().map((task) => `
             <label class="orthography-task-row">
               <span><b>${escapeHtml(task.title)}</b><small>${escapeHtml(task.hint)}</small></span>
-              <input data-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="30" value="${Number(counts[task.id] || 0)}" />
+              <input data-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="30" value="${Number(counts[task.id] || 0)}" ${task.disabled ? "disabled" : ""} />
             </label>
           `).join("")}
         </div>
@@ -3970,7 +3995,7 @@ function renderSetup() {
       input.addEventListener("input", () => {
         state.orthographyTaskCounts = state.orthographyTaskCounts || {};
         state.orthographyTaskCounts[input.dataset.orthographyCount] = Math.max(0, Math.min(30, Number(input.value || 0)));
-        setup.querySelector("[data-orthography-total]").textContent = orthographyEgeTasks.reduce((sum, task) => sum + Number(state.orthographyTaskCounts[task.id] || 0), 0);
+        setup.querySelector("[data-orthography-total]").textContent = currentMixTasks().reduce((sum, task) => sum + Number(state.orthographyTaskCounts[task.id] || 0), 0);
       });
     });
     setup.querySelector("#startPractice").addEventListener("click", startPractice);
@@ -4050,15 +4075,15 @@ function renderRuleSelector() {
       <label class="rule-check">
         <input type="checkbox" data-rule-id="${escapeHtml(rule.rule_id)}" ${selected.has(rule.rule_id) ? "checked" : ""} />
         <span>${escapeHtml(rule.rule_name)}</span>
-        <b>${rule.count}</b>
+        <b>${rule.count}</b>${state.bootstrap.rule_progress?.[rule.rule_id] ? `<small>${state.bootstrap.rule_progress[rule.rule_id].solved}/${state.bootstrap.rule_progress[rule.rule_id].total} · ${pct(state.bootstrap.rule_progress[rule.rule_id].solved,state.bootstrap.rule_progress[rule.rule_id].total)}</small>` : ''}
       </label>
     `)
     .join("");
   const ege14GroupWarning = state.currentActivity === "ege14"
     ? `<div class="rule-warning" role="note">!!!В группе будут не только слова выбранной части речи, которые пишутся раздельно, но и омонимичные им конструкции, которые могут писаться по-разному</div>`
     : "";
-  const ruleNoun = ["ege13", "ege15"].includes(state.currentActivity) ? "части речи" : "подгруппы";
-  const selectedNoun = ["ege13", "ege15"].includes(state.currentActivity) ? "слов в выбранных частях речи" : "слов в выбранных подгруппах";
+  const ruleNoun = ["ege7", "ege13", "ege15"].includes(state.currentActivity) ? "части речи" : "подгруппы";
+  const selectedNoun = ["ege7", "ege13", "ege15"].includes(state.currentActivity) ? "слов в выбранных частях речи" : "слов в выбранных подгруппах";
   return `
     <section class="rule-picker">
       <div class="category-grid">${categoryButtons}</div>
@@ -4123,11 +4148,16 @@ async function startPractice() {
   clearTimeout(assignmentSaveTimer);
   const count = state.questionCount;
   const payload = { mode: state.mode, count };
-  if (state.currentActivity === "orthography-ege") {
+  if (state.currentActivity === 'ege1-3') {
+    const topic = state.textLabTopics?.[state.mode];
+    payload.rule_ids = Array.isArray(topic) ? topic : topic ? [topic] : [];
+  }
+  if (["orthography-ege","speech-ege"].includes(state.currentActivity)) {
     payload.task_counts = state.orthographyTaskCounts || {};
   }
+  if (["ege7","ege8"].includes(state.currentActivity)) payload.rule_ids = state.speechTopics?.[state.currentActivity] || [];
   if (state.mode === "errors") payload.error_training_mode = state.errorTrainingMode;
-  if (["rule", "word_letter", "paronym_choice", "word_context", "word_ne", "word_nn"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
+  if (!["ege7","ege8"].includes(state.currentActivity) && ["rule", "word_letter", "paronym_choice", "word_context", "word_ne", "word_nn"].includes(state.mode)) payload.rule_ids = state.selectedRuleIds;
   const setup = document.querySelector("#setupView");
   try {
     const data = await api(activityApi("/practice/start"), {
@@ -4140,7 +4170,9 @@ async function startPractice() {
     state.currentQuestionIndex = 0;
     state.startedAt = Date.now();
     setup.innerHTML = "";
-    if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter" && !["ege5", "ege14"].includes(state.currentActivity))) {
+    if (state.currentActivity === 'ege1-3') {
+      renderTextLabPractice();
+    } else if (state.mode === "word_letter" || (state.mode === "errors" && state.errorTrainingMode === "word_letter" && !["ege4","ege6","ege7","ege8","ege5", "ege14"].includes(state.currentActivity))) {
       renderLiveQuestion();
     } else {
       renderQuestions();
@@ -4237,6 +4269,8 @@ function renderLiveQuestion(feedback = null) {
 
 function renderQuestions() {
   if (state.currentSession?.assignment_id) return renderAssignedQuestion();
+  if (state.currentActivity === 'ege1-3') return renderTextLabPractice();
+  if (isSpeechPractice()) return renderSpeechPractice();
   const practice = document.querySelector("#practiceView");
   practice.classList.remove("hidden");
   practice.innerHTML = `
@@ -4267,6 +4301,8 @@ function storeLineDraft(id,draft) {
 }
 
 function bindQuestionAnswers(practice) {
+  bindSpeechAnswers(practice);
+  bindTextLabAnswers(practice);
   practice.querySelectorAll('[data-review-answer]').forEach(input=>input.oninput=()=>{state.answers[input.dataset.questionId]=input.value;});
   practice.querySelectorAll('[data-review-part]').forEach(input=>input.oninput=()=>{
     state.answers[input.dataset.questionId]={...(state.answers[input.dataset.questionId]||{}),[input.dataset.reviewPart]:input.value};
@@ -4364,11 +4400,14 @@ function bindQuestionAnswers(practice) {
         state.answers[button.dataset.questionId] = button.dataset.answer;
       }
       renderQuestions();
+      autoCheckSpeechChoice(button.dataset.questionId);
     });
   });
 }
 
 function renderQuestion(question, index) {
+  if (question.kind?.startsWith("speech_")) return renderSpeechQuestion(question,index);
+  if (question.kind?.startsWith('text_lab_')) return renderTextLabQuestion(question,index);
   if (question.kind === 'error_review') {
     const answer=state.answers[question.question_id];
     return `<article class="question"><h3>Повторение ошибки</h3><p class="statistics-prompt">${escapeHtml(question.prompt)}</p>${question.review_type==='paronym' ? `<label>Номер строки<input data-review-part="row" data-question-id="${escapeHtml(question.question_id)}" inputmode="numeric" value="${escapeHtml(answer?.row || '')}"></label><label>Исправленное слово<input data-review-part="word" data-question-id="${escapeHtml(question.question_id)}" value="${escapeHtml(answer?.word || '')}"></label>` : `<label>${question.review_type==='rows'?'Номера строк':'Ваш ответ'}<input data-review-answer data-question-id="${escapeHtml(question.question_id)}" autocomplete="off" value="${escapeHtml(answer || '')}"></label>`}</article>`;
@@ -4557,6 +4596,11 @@ function renderQuestion(question, index) {
 
 function answerIsComplete(question) {
   const answer = state.answers[question.question_id];
+  if(question.kind==='speech_truth') return answer?.verdict==='true'||(answer?.verdict==='false'&&Boolean(answer?.word?.trim()));
+  if (question.kind === "speech_match") return question.types.every(t=>answer?.[t.id]) && new Set(Object.values(answer||{})).size===question.types.length;
+  if (question.kind === 'text_lab_bool') return answer === 'true' || answer === 'false';
+  if (question.kind === 'text_lab_multi') return typeof answer === 'string' && /^[1-5]+$/.test(answer);
+  if (question.kind === 'text_lab_gap') return typeof answer === 'string' && Boolean(answer.trim());
   if (question.kind==='error_review' && question.review_type==='paronym') return Boolean(answer?.row && String(answer?.word || '').trim());
   if (question.kind === 'line') {
     const draft = lineDraft(question.question_id);
@@ -4681,25 +4725,29 @@ async function showProgress() {
 }
 
 function showTestComposer() {
+  if (state.currentActivity === 'ege1-3') return showTextLabTestComposer();
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
-  const ruleSelector = renderRuleSelector();
+  const speechTopicPicker=['ege7','ege8'].includes(state.currentActivity);
+  const topicRules=Object.values(state.bootstrap.rules).flat();
+  if(speechTopicPicker)state.selectedRuleIds=state.speechTopics?.[state.currentActivity] || topicRules.map(r=>r.rule_id);
+  const ruleSelector = speechTopicPicker ? renderTopicPicker(topicRules,state.selectedRuleIds,state.currentActivity==='ege7'?'Части речи':'Виды ошибок') : renderRuleSelector();
   const isParonyms = state.currentActivity === "ege5";
-  if (state.currentActivity === "orthography-ege") {
-    const counts = state.orthographyTaskCounts || { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 };
+  if (["orthography-ege","speech-ege"].includes(state.currentActivity)) {
+    const counts = state.orthographyTaskCounts || (state.currentActivity==='speech-ege' ? Object.fromEntries(currentMixTasks().map(t=>[t.id,1])) : { ege9: 1, ege10: 1, ege11: 1, ege12: 1, ege13: 1, ege14: 1, ege15: 1 });
     backdrop.innerHTML = `
       <section class="progress-modal">
         <div class="panel-head">
-          <div><p class="eyebrow">тест</p><h2>Составить тест: Орфография. Режимы ЕГЭ</h2></div>
+          <div><p class="eyebrow">тест</p><h2>Составить тест: ${escapeHtml(activityMeta[state.currentActivity].title)}</h2></div>
           <button class="secondary-button" id="closeTestComposer" type="button">Закрыть</button>
         </div>
         <section class="rule-picker">
           <div class="rule-warning" role="note">Выберите типы заданий и количество. Ошибки учеников после тренировки уйдут в копилки соответствующих заданий.</div>
           <div class="orthography-task-grid">
-            ${orthographyEgeTasks.map((task) => `
+            ${currentMixTasks().map((task) => `
               <label class="orthography-task-row">
                 <span><b>${escapeHtml(task.title)}</b><small>${escapeHtml(task.hint)}</small></span>
-                <input data-test-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="60" value="${Number(counts[task.id] || 0)}" />
+                <input data-test-orthography-count="${escapeHtml(task.id)}" type="number" min="0" max="${state.currentActivity==='speech-ege'?30:60}" value="${Number(counts[task.id] || 0)}" ${task.disabled ? "disabled" : ""} />
               </label>
             `).join("")}
           </div>
@@ -4724,7 +4772,7 @@ function showTestComposer() {
         await downloadRequest("/api/teacher/test", "orthography_ege_test.txt", {
           method: "POST",
           body: JSON.stringify({
-            activity: "orthography-ege",
+            activity: state.currentActivity,
             task_counts: taskCounts,
           }),
         });
@@ -4737,11 +4785,12 @@ function showTestComposer() {
   const isEge13 = state.currentActivity === "ege13";
   const isEge14 = state.currentActivity === "ege14";
   const isEge15 = state.currentActivity === "ege15";
-  const defaultMode = isParonyms ? "paronym_exam" : isEge13 ? "line_ne" : isEge14 ? "exam" : isEge15 ? "sentence_nn" : "line";
-  const modeOptions = isParonyms
+  const defaultMode = speechModes[state.currentActivity] ? state.mode : isParonyms ? "paronym_exam" : isEge13 ? "line_ne" : isEge14 ? "exam" : isEge15 ? "sentence_nn" : "line";
+  const modeOptions = speechModes[state.currentActivity] ? Object.entries(speechModes[state.currentActivity]).map(([id,m])=>`<option value="${id}">${escapeHtml(m.title)}</option>`).join('') : isParonyms
     ? `
             <option value="paronym_exam">Формат ЕГЭ</option>
             <option value="paronym_choice">Выбранные группы</option>
+            <option value="paronym_tf">Верно/неверно с исправлением</option>
             <option value="errors">Копилка ошибок</option>
       `
     : isEge13 ? `
@@ -4796,13 +4845,14 @@ function showTestComposer() {
   document.body.append(backdrop);
   attachAssignmentComposer(backdrop);
   const mountTestRuleSelector = () => {
-    backdrop.querySelector("#testRuleSelector").innerHTML = renderRuleSelector();
-    bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
+    backdrop.querySelector("#testRuleSelector").innerHTML = speechTopicPicker ? renderTopicPicker(topicRules,state.selectedRuleIds,state.currentActivity==='ege7'?'Части речи':'Виды ошибок') : renderRuleSelector();
+    if(speechTopicPicker)bindTopicPicker(backdrop.querySelector("#testRuleSelector"),topicRules,ids=>{state.selectedRuleIds=ids;mountTestRuleSelector();});
+    else bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
     refreshRules();
   };
   const refreshRules = () => {
     const mode = backdrop.querySelector("#testMode").value;
-    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(mode === "rule" || mode === "paronym_choice" || mode === "word_context" || mode === "word_ne" || mode === "word_nn"));
+    backdrop.querySelector("#testRuleSelector").classList.toggle("hidden", !(speechTopicPicker || mode === "rule" || mode === "paronym_choice" || mode === "word_context" || mode === "word_ne" || mode === "word_nn"));
     const errors = backdrop.querySelector("#testIncludeErrors");
     const supportsErrorWords = !["paronym_exam", "line_ne", "line_spelling", "exam", "sentence_nn", "errors"].includes(mode);
     errors.closest("label").classList.toggle("hidden", !supportsErrorWords);
@@ -4811,7 +4861,8 @@ function showTestComposer() {
   backdrop.querySelector("#closeTestComposer").addEventListener("click", () => backdrop.remove());
   backdrop.querySelector("#testMode").value = defaultMode;
   backdrop.querySelector("#testMode").addEventListener("change", refreshRules);
-  bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
+  if(speechTopicPicker)mountTestRuleSelector();
+  else bindRuleSelector(backdrop.querySelector("#testRuleSelector"), mountTestRuleSelector);
   backdrop.querySelector("#downloadTest").addEventListener("click", async () => {
     const error = backdrop.querySelector("#testComposerError");
     error.textContent = "";
@@ -4869,7 +4920,7 @@ function adminStudentSummary(student) {
   const total = Number(student.attempts || 0);
   if (!total) return "Пока нет попыток.";
   const parts = (student.mode_summary || []).map((item) => {
-    const modeTitle = modes[item.mode]?.title || paronymModes[item.mode]?.title || ege13Modes[item.mode]?.title || ege14Modes[item.mode]?.title || ege15Modes[item.mode]?.title || item.mode || "режим";
+    const modeTitle = (state.currentActivity === "ege1-3" ? textLabModes[item.mode]?.title : null) || modes[item.mode]?.title || paronymModes[item.mode]?.title || ege13Modes[item.mode]?.title || ege14Modes[item.mode]?.title || ege15Modes[item.mode]?.title || item.mode || "режим";
     return `${item.attempts} в режиме «${escapeHtml(modeTitle)}»`;
   });
   return `Решил ${parts.join(", ")}. Верных ответов: ${student.correct || 0} из ${total}.`;

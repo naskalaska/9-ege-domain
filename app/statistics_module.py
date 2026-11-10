@@ -8,7 +8,8 @@ import math
 import re
 from attempt_content import describe_question
 
-TASKS = {f'ege{n}':f'Задание {n}' for n in (5,9,10,11,12,13,14,15)}
+TASKS = {f'ege{n}':f'Задание {n}' for n in (4,5,6,7,8,9,10,11,12,13,14,15)}
+TASKS = {'ege1-3': 'Задания 1–3', **TASKS}
 
 
 def diagnostic(mode, question_id):
@@ -19,7 +20,7 @@ def diagnostic(mode, question_id):
 def configure(s, con):
     words, rules = {}, {}
     for activity in TASKS:
-        module = s if activity == 'ege9' else getattr(s,activity+'_module')
+        module = s if activity == 'ege9' else getattr(s,activity.replace('-', '_')+'_module')
         for word_id in getattr(module,'WORD_BY_ID',getattr(module,'GROUP_BY_ID',{})):
             words[word_id] = activity
         for rule in module.RULES:
@@ -215,7 +216,7 @@ def enrich(s, rows, con=None):
         item = dict(row)
         activity = item['activity']
         item['activity_title'] = title(s,activity)
-        module = s if activity == 'ege9' else getattr(s,activity+'_module',None)
+        module = s if activity == 'ege9' else getattr(s,activity.replace('-', '_')+'_module',None)
         word = getattr(module,'WORD_BY_ID',{}).get(item.get('word_id')) if module else None
         if word:
             item['explanation'] = word.get('explanation') or ''

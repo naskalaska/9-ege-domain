@@ -27,13 +27,17 @@
       while (queue.length) {
         const response = await fetch('/api/games/result', {method:'POST',credentials:'same-origin',keepalive:true,
           headers:{'Content-Type':'application/json'},body:JSON.stringify(queue[0])});
-        if (!response.ok && response.status !== 400) break;
+        if (!response.ok && response.status !== 400) {
+          const error=await response.json().catch(()=>({}));
+          if (!(queue[0].assignment_id && error.code==='game_assignment_unavailable')) break;
+        }
         queue.shift(); save();
       }
     } catch {} finally { busy = false; }
   }
   window.recordLearningGameAnswer = (ok, prompt = '', given = '', correct = '') => {
     const event = {slug, event_id:crypto.randomUUID(), public_id:new URLSearchParams(location.search).get('set') || '',
+      assignment_id:new URLSearchParams(location.search).get('assignment_id') || '',
       is_correct:Boolean(ok),prompt:asText(prompt).slice(0,20000),given_answer:asText(given).slice(0,12000),
       correct_answer:asText(correct).slice(0,12000),time_spent_sec:Math.round((Date.now()-started)/1000)};
     if (!owner) { if (awaitingAuthentication) pendingAnswers.push(event);return; }

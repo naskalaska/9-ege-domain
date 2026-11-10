@@ -34,7 +34,7 @@ class StatisticsTest(unittest.TestCase):
         data = statistics.overview(server,self.student)
         self.assertEqual(data['summary']['total'],127)
         self.assertEqual(data['summary']['correct'],43)
-        self.assertEqual(len([r for r in data['by_activity'] if r['activity'].startswith('ege')]),8)
+        self.assertEqual({r['activity'] for r in data['by_activity'] if r['activity'].startswith('ege')},set(statistics.TASKS))
         ids=[]
         for page in range(1,6):
             data=statistics.history(server,self.teacher,{'student_id':self.student['user_id'],'page':page})

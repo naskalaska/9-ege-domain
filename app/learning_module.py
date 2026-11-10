@@ -47,6 +47,8 @@ def ensure_schema(con):
         con.execute('ALTER TABLE assigned_test_students ADD COLUMN due_at TEXT')
     con.execute('''CREATE TABLE IF NOT EXISTS error_repetitions (
         test_id TEXT PRIMARY KEY, student_id TEXT NOT NULL, attempt_id TEXT NOT NULL, created_by TEXT NOT NULL)''')
+    import game_assignments
+    game_assignments.ensure_schema(con)
 
 
 def parse_due(value):
@@ -74,7 +76,7 @@ def test_outline(snapshots):
     for snap in snapshots:
         key = snap['activity']
         counts[key] = counts.get(key, 0) + 1
-    return [{'activity':key, 'title':'Игра' if key.startswith('game:') else 'Задание ' + key.removeprefix('ege'), 'count':n}
+    return [{'activity':key, 'title':'Игра' if key.startswith('game:') else 'Задания 1–3' if key == 'ege1-3' else 'Задание ' + key.removeprefix('ege'), 'count':n}
             for key,n in counts.items()]
 
 
@@ -85,9 +87,11 @@ def checks_for(con, test_id, student_id):
 
 
 def module_for(s, activity):
+    if activity == "ege1-3":
+        return s.ege1_3_module
     if activity == "ege9":
         return s
-    if activity not in {"ege5", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"}:
+    if activity not in {"ege4", "ege6", "ege7", "ege8", "ege5", "ege10", "ege11", "ege12", "ege13", "ege14", "ege15"}:
         raise ValueError("Выберите учебное задание.")
     return getattr(s, activity + "_module")
 
@@ -124,7 +128,8 @@ def overview(s, user):
                     student['checked'] = result['total'] if result else len(checks)
                     student['correct'] = result['correct'] if result else sum(bool(r['is_correct']) for r in checks.values())
                     deadline_status(student)
-            return {"students": students, "groups": groups, "tests": tests}
+            import game_assignments
+            return {"students": students, "groups": groups, "tests": tests,'games':game_assignments.overview(s,user)}
         tests = [dict(r) for r in con.execute("""SELECT t.id,t.title,t.created_at,
           CASE WHEN t.teacher_id=a.student_id THEN 'Самостоятельное повторение' ELSE u.display_name END AS teacher_name,
           a.seen_at,a.started_at,a.completed_at,a.result_json,a.revoked_at,a.due_at,t.questions_json FROM assigned_tests t
@@ -137,8 +142,10 @@ def overview(s, user):
             test['outline'] = test_outline(snapshots)
             test['checked'] = test['total'] if test['completed_at'] else len(checks_for(con,test['id'],user['user_id']))
             deadline_status(test)
-        return {"tests": tests, "unread": sum(not t["revoked_at"] and not t["seen_at"] and not t["completed_at"] for t in tests),
-                "pending": sum(not t["revoked_at"] and not t["completed_at"] for t in tests)}
+        import game_assignments
+        games=game_assignments.overview(s,user)
+        return {"tests": tests,'games':games, "unread": sum(not t["revoked_at"] and not t["seen_at"] and not t["completed_at"] for t in [*tests,*games]),
+                "pending": sum(not t["revoked_at"] and not t["completed_at"] for t in [*tests,*games])}
 
 
 def save_group(s, user, payload):
@@ -175,12 +182,22 @@ def create_test(s, user, payload):
     require_letters = bool(config.get('require_letters'))
     activity = str(config.get("activity") or "ege9")
     specs = [(activity, config)]
-    if activity == "orthography-ege":
-        counts = s.ege_orthography_module.task_counts_from_payload(config)
-        specs = [(a, {"mode": s.ege_orthography_module.TASKS[a]["mode"], "count": n}) for a, n in counts.items()]
+    if activity in {'orthography-ege','speech-ege'}:
+        mix = s.ege_speech_mix_module if activity=='speech-ege' else s.ege_orthography_module
+        counts = mix.task_counts_from_payload(config)
+        specs = [('ege1-3' if a in {'ege1','ege2','ege3'} else a, {"mode": {'ege1':'task_exam_1','ege2':'task_exam_2','ege3':'task_exam_3'}.get(a,mix.TASKS[a]["mode"]), "count": n}) for a, n in counts.items()]
     snapshots = []
     for activity, config in specs:
         module = module_for(s, activity)
+        if activity in {'ege4','ege6','ege7','ege8'}:
+            snapshots.extend(snapshot_question(module,activity,str(config.get('mode') or next(iter(module.modes))),q) for q in module.select_questions(user,config,teacher=True))
+            continue
+        if activity == 'ege1-3':
+            # One selection, no batching: preserve unique texts, all three tasks
+            # in a complete set and the teacher's class-error scope.
+            snapshots.extend(snapshot_question(module, activity, str(config.get('mode') or 'gap'), q)
+                             for q in module.select_questions(user, config, teacher=True))
+            continue
         count = max(1, min(int(config.get("count") or 10), 60))
         if config.get("mode") == "errors" or (config.get("include_errors") and config.get("mode") not in {
             "paronym_exam", "line_ne", "line_spelling", "exam", "sentence_nn"
@@ -216,7 +233,7 @@ def class_error_variant(s, module, user, activity, config, count):
     """Use pupils' error banks when composing a teacher's word test."""
     if activity == "ege5":
         _, words = s.ege5_test_rows_for_payload(user, config, count)
-        make_question = module.make_choice_question
+        make_question = module.make_tf_question if config.get('mode') in {'paronym_tf','errors'} else module.make_choice_question
     elif activity in {"ege9", "ege10", "ege11", "ege12"} and config.get("mode") != "line":
         _, words = module.test_words_for_payload(user, config, count)
         make_question = module.make_word_question
@@ -244,10 +261,13 @@ def class_error_variant(s, module, user, activity, config, count):
 
 def snapshot_question(module, activity, mode, question):
     private = dict(question)
-    private["correct_answer"] = private.pop("_correct_answer")
+    if '_correct_answer' in private:
+        private["correct_answer"] = private.pop("_correct_answer")
     if '_line_rows' in private:
         private['line_rows'] = private.pop('_line_rows')
-    public = {k: v for k, v in question.items() if not k.startswith('_') and k not in {'explanation', 'correct_spelling', 'row_word_ids'}}
+    public = {k: v for k, v in question.items() if not k.startswith('_') and k not in {'explanation', 'correct_spelling', 'row_word_ids', 'correct_answer'}}
+    if activity in {'ege1-3','ege4','ege6','ege7','ege8'}:
+        public = module.public_question(private)
     return {"activity": activity, "mode": mode, "scope_id": module.scope_id_for(mode),
             "question_id": question["question_id"], "question": private, "public": public}
 
@@ -380,6 +400,13 @@ def open_test(s, user, payload):
 
 def answer_complete(question, answer):
     kind = question['kind']
+    if kind == 'speech_truth':
+        return isinstance(answer,dict) and (answer.get('verdict')=='true' or (answer.get('verdict')=='false' and bool(str(answer.get('word') or '').strip())))
+    if kind == 'speech_match':
+        return isinstance(answer,dict) and all(answer.get(t['id']) for t in question['types']) and len(set(answer.values()))==len(question['types'])
+    if kind.startswith('text_lab_'):
+        from ege1_3_module import answer_complete as text_answer_complete
+        return text_answer_complete(question, answer)
     if kind == 'error_review' and question.get('review_type') == 'paronym':
         return isinstance(answer,dict) and str(answer.get('row') or '').strip() and str(answer.get('word') or '').strip()
     if kind == 'line':
@@ -526,6 +553,14 @@ def game_result(s, user, payload):
     text = lambda key: str(payload.get(key) if payload.get(key) is not None else "")[:20000 if key == 'prompt' else 12000]
     with connection(s) as con:
         public_id = text("public_id")
+        assigned_game=None
+        if payload.get('assignment_id'):
+            import game_assignments
+            con.execute('BEGIN IMMEDIATE')
+            assigned_game=game_assignments.check_access(s,con,user,str(payload['assignment_id']))
+            if assigned_game['slug']!=slug or (assigned_game['public_id'] or '')!=public_id:
+                raise PermissionError('Ответ не относится к назначенной игре.')
+            if user['role']!='student':assigned_game=None
         title = s.HTML_GAME_TITLES.get(slug, slug)
         if public_id:
             game = con.execute("SELECT title FROM game_sets WHERE public_id=?", (public_id,)).fetchone()
@@ -535,12 +570,15 @@ def game_result(s, user, payload):
         scope = "game:" + slug + (":" + public_id if public_id else "")
         inserted = con.execute("INSERT OR IGNORE INTO game_results VALUES(?,?,?,?,?)", (user["user_id"], event_id, slug, text("public_id"), s.now_iso())).rowcount
         if inserted:
+            attempt_id=secrets.token_hex(12)
             con.execute("""INSERT INTO attempts(attempt_id,user_id,mode,scope_id,rule_id,category,rule_name,
               question_id,prompt,given_answer,correct_answer,is_correct,created_at,time_spent_sec)
-              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (secrets.token_hex(12), user["user_id"], "game", scope,
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (attempt_id, user["user_id"], "game", scope,
               "game:" + slug, "Игры", title, event_id, text("prompt") or title,
               text("given_answer"), text("correct_answer"), int(payload["is_correct"]), s.now_iso(),
               max(0, min(int(payload.get("time_spent_sec") or 0), 86400))))
+            if assigned_game:
+                game_assignments.record_answer(s,con,user,assigned_game,payload,attempt_id)
     return {"ok": True, "recorded": bool(inserted)}
 
 

@@ -28,11 +28,15 @@ import ege11_module
 import ege12_module
 import ege14_module
 import ege15_module
+import ege1_3_module
 import ege_orthography_module
 import ege5_module
+from ege_speech_module import ege4 as ege4_module, ege6 as ege6_module, ege7 as ege7_module, ege8 as ege8_module
+import ege_speech_mix as ege_speech_mix_module
 import statistics_module
 import learning_module
 import student_workspace
+import game_assignments
 import game_tracking
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -515,13 +519,26 @@ ege15_module.scope_id_for = ege15_scope_id_for
 ege5_module.scope_id_for = ege5_scope_id_for
 
 ACTIVITIES = [
+    {'slug': 'ege4', 'title': 'ЕГЭ. Задание 4: Ударение', 'description': 'Выделение гласной, верно/неверно и формат ЕГЭ.', 'button': 'Открыть тренажёр', 'kind': 'module', 'group': 'Культура речи'},
+    {'slug': 'ege6', 'title': 'ЕГЭ. Задание 6: Лексические нормы', 'description': 'Лексические нормы: самостоятельный ввод ответа, формат ЕГЭ и копилка ошибок.', 'button': 'Открыть тренажёр', 'kind': 'module', 'group': 'Культура речи'},
+    {'slug': 'ege7', 'title': 'ЕГЭ. Задание 7: Морфологические нормы', 'description': 'Части речи, исправление, проверка нормы, выбор ответа и ЕГЭ.', 'button': 'Открыть тренажёр', 'kind': 'module', 'group': 'Культура речи'},
+    {'slug': 'ege8', 'title': 'ЕГЭ. Задание 8: Грамматические нормы', 'description': 'Виды ошибок, верно/неверно и соединение линиями.', 'button': 'Открыть тренажёр', 'kind': 'module', 'group': 'Культура речи'},
+    {'slug': 'speech-ege', 'title': 'Культура речи', 'description': 'Сборная тренировка по заданиям 1–8 с выбором количества.', 'button': 'Открыть тренажёр', 'kind': 'module', 'group': 'Культура речи'},
+    {
+        "slug": "ege1-3",
+        "title": "ЕГЭ. Задания 1–3: лаборатория текста",
+        "description": "Средства связи, значение слова и характеристики текста. Тренировка по частям речи и стилям.",
+        "button": "Открыть тренажёр",
+        "kind": "module",
+        "group": "Культура речи",
+    },
     {
         "slug": "ege5",
         "title": "ЕГЭ. Задание 5: паронимы",
         "description": "Паронимы: выбор слова, формат ЕГЭ и верно/неверно.",
         "button": "Открыть тренажёр",
         "kind": "module",
-        "group": "орфоэпия, грамматика, речь",
+        "group": "Культура речи",
     },
     {
         "slug": "ege9",
@@ -2272,6 +2289,19 @@ def category_progress_for_user(
     return progress
 
 
+def bank_progress_for_user(user_id, rules, words_by_rule, scope_func):
+    groups={r['rule_id']:{'total':len(words_by_rule.get(r['rule_id'],[])), 'solved':0} for r in rules}
+    solved=set()
+    if user_id:
+        with db() as con:
+            solved={r['word_id'] for r in con.execute(
+                'SELECT word_id FROM word_progress WHERE user_id=? AND scope_id=? AND correct_count>0 AND due_reviews=0',
+                (user_id,scope_func('errors')))}
+    for rule_id,group in groups.items():
+        group['solved']=sum(w['id'] in solved for w in words_by_rule.get(rule_id,[]))
+    return {'rule_progress':groups,'bank_progress':{'total':sum(g['total'] for g in groups.values()), 'solved':sum(g['solved'] for g in groups.values())}}
+
+
 def bootstrap_for(
     rules: list[dict[str, Any]],
     word_count: int,
@@ -2285,6 +2315,7 @@ def bootstrap_for(
         grouped.setdefault(rule["category"], []).append(rule)
     words_by_rule = words_by_rule or WORDS_BY_RULE
     return {
+        **bank_progress_for_user(user_id,rules,words_by_rule,scope_func),
         "rules": grouped,
         "word_count": word_count,
         "repeat_on_error": REPEAT_ON_ERROR,
@@ -2295,8 +2326,36 @@ def bootstrap_for(
 
 def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[str, Any]:
     user_id = user["user_id"] if user else None
+    if slug in {'ege4','ege6','ege7','ege8'}:
+        module = globals()[slug+'_module']
+        data = bootstrap_for(module.RULES,len(module.WORDS),user_id,module.WORDS_BY_RULE,module.scope_id_for)
+        data['activity'] = next(a for a in ACTIVITIES if a['slug']==slug)
+        data['category_progress']={}
+        for rule in module.RULES:
+            group=data['category_progress'].setdefault(rule['category'],dict(total=0,solved=0))
+            for key in ('total','solved'): group[key]+=data['rule_progress'][rule['rule_id']][key]
+        if slug=='ege4':
+            data['exam_word_count']=sum(bool(w.get('ege_2026_eligible')) for w in module.WORDS)
+        if slug=='ege7':
+            data['ready_count']=sum(bool(w.get('incorrect_variant')) for w in module.WORDS)
+            data['norm_only_count']=len(module.WORDS)-data['ready_count']
+        if slug=='ege8':
+            data['error_sentence_count']=sum(not w['is_correct'] for w in module.WORDS)
+            data['correct_sentence_count']=sum(w['is_correct'] for w in module.WORDS)
+        return data
+    if slug == 'speech-ege':
+        return dict(rules={},word_count=len(ege1_3_module.WORDS)+len(ege5_module.ROWS)+len(ege4_module.WORDS)+len(ege6_module.WORDS)+len(ege7_module.WORDS)+len(ege8_module.WORDS),activities=ACTIVITIES,category_progress={})
+    if slug == "ege1-3":
+        module = ege1_3_module
+        data = bootstrap_for(module.RULES, len(module.ENTRIES), user_id, module.WORDS_BY_RULE, module.scope_id_for)
+        # Topic badges count texts; progress counts independently answerable questions.
+        progress_rules = [{**r, 'count': len(module.WORDS_BY_RULE[r['rule_id']])} for r in module.RULES]
+        data['category_progress'] = category_progress_for_user(user_id, progress_rules, module.WORDS_BY_RULE, module.scope_id_for)
+        return data
     if slug == "ege5":
-        return bootstrap_for(ege5_module.RULES, len(ege5_module.ROWS), user_id, ege5_module.GROUPS_BY_RULE, ege5_module.scope_id_for)
+        data=bootstrap_for(ege5_module.RULES, len(ege5_module.ROWS), user_id, ege5_module.GROUPS_BY_RULE, ege5_module.scope_id_for)
+        data['category_progress']=category_progress_for_user(user_id,[{**r,'count':1} for r in ege5_module.RULES],ege5_module.GROUPS_BY_RULE,ege5_module.scope_id_for)
+        return data
     if slug == "ege9":
         return bootstrap_for(RULES, len(WORDS), user_id, WORDS_BY_RULE, scope_id_for)
     if slug == "ege10":
@@ -2336,6 +2395,17 @@ def activity_bootstrap(slug: str, user: dict[str, Any] | None = None) -> dict[st
 
 
 def activity_post(slug: str, action: str, user: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    if slug in {'ege4','ege6','ege7','ege8','speech-ege'}:
+        module = ege_speech_mix_module if slug=='speech-ege' else globals()[slug+'_module']
+        handler = {'start':module.start_practice,'submit':module.submit_practice,'check':module.check_practice_answer}.get(action)
+        if not handler:
+            raise ValueError('Неизвестное действие.')
+        return handler(user,payload)
+    if slug == "ege1-3":
+        handlers = {"start": ege1_3_module.start_practice, "submit": ege1_3_module.submit_practice,
+                    "check": ege1_3_module.check_practice_answer}
+        if action in handlers:
+            return handlers[action](user, payload)
     if slug == "ege5":
         if action == "start":
             return ege5_module.start_practice(user, payload)
@@ -3063,6 +3133,9 @@ def teacher_dashboard(con: sqlite3.Connection, teacher_id: str) -> dict[str, Any
 
 def activity_title_from_scope(scope_id: str | None) -> str:
     scope = scope_id or ""
+    for activity in ACTIVITIES:
+        if activity['kind'] == 'module' and scope.startswith(activity['slug'] + ':'):
+            return 'ЕГЭ-' + activity['slug'].removeprefix('ege').replace('-', '–') if activity['slug'].startswith('ege') else activity['title']
     if scope.startswith("ege5:"):
         return "ЕГЭ-5"
     if scope.startswith("ege10:"):
@@ -3078,6 +3151,10 @@ def activity_title_from_scope(scope_id: str | None) -> str:
 
 def mode_title(mode: str | None) -> str:
     return {
+        "gap": "Задание 1 · Пропуск",
+        "lex": "Задание 2 · Значение слова",
+        "truth": "Задание 3 · Верно/неверно",
+        "characteristics": "Задание 3 · Все верные",
         "paronym_choice": "Подставь слово",
         "paronym_exam": "Формат ЕГЭ",
         "paronym_tf": "Верно/неверно",
@@ -3398,6 +3475,9 @@ def suspicious_users_for_admin(con: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
+    for table in ('assigned_game_answers','assigned_game_students'):
+        con.execute(f'DELETE FROM {table} WHERE student_id=? OR game_id IN (SELECT id FROM assigned_games WHERE teacher_id=?)',(user_id,user_id))
+    con.execute('DELETE FROM assigned_games WHERE teacher_id=?',(user_id,))
     con.execute('''DELETE FROM error_repetitions WHERE student_id=? OR created_by=?
         OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)''',(user_id,user_id,user_id))
     con.execute('''DELETE FROM assigned_test_checks WHERE student_id=?
@@ -4166,6 +4246,11 @@ def test_words_for_payload(user: dict[str, Any], payload: dict[str, Any], count:
 def build_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple[bytes, str, str]:
     require_teacher(user)
     activity = str(payload.get("activity") or "ege9")
+    if activity in {'ege4','ege6','ege7','ege8','speech-ege'}:
+        module = ege_speech_mix_module if activity=='speech-ege' else globals()[activity+'_module']
+        return module.build_test_file(user,payload)
+    if activity == "ege1-3":
+        return ege1_3_module.build_test_file(user, payload)
     if activity == "ege10":
         return ege10_module.build_test_file(user, payload)
     if activity == "ege11":
@@ -4246,7 +4331,11 @@ def ege5_test_rows_for_payload(user: dict[str, Any], payload: dict[str, Any], co
         rule_ids = [str(rule_id) for rule_id in payload.get("rule_ids", []) if str(rule_id) in ege5_module.ROWS_BY_GROUP]
         for rule_id in dict.fromkeys(rule_ids):
             pool.extend(ege5_module.ROWS_BY_GROUP[rule_id])
+        if not rule_ids: pool=list(ege5_module.ROWS)
         title = "Тест по выбранным группам паронимов"
+    elif mode == "paronym_tf":
+        pool=list(ege5_module.ROWS)
+        title="Паронимы: верно/неверно с исправлением"
     elif mode == "errors":
         pool = ege5_teacher_error_rows(user["user_id"])
         title = "Тест по копилке ошибок: паронимы"
@@ -4284,6 +4373,10 @@ def build_ege5_test_file(user: dict[str, Any], payload: dict[str, Any]) -> tuple
         title, rows = ege5_test_rows_for_payload(user, payload, count)
         lines[0] = f"{title}: {now_iso()}"
         for index, row in enumerate(rows, start=1):
+            if mode in {'paronym_tf','errors'}:
+                lines.extend([f"{index}. Верно или неверно? Если неверно, исправьте слово.",row['sentence'],''])
+                answers.append(f"{index}. "+('Неверно: '+row['correct_word'] if row['is_error'] else 'Верно'))
+                continue
             prompt = ege5_module.sentence_with_blank(row)
             choices = ege5_module.choices_for(row)
             lines.append(f"{index}. {prompt}")
@@ -5684,6 +5777,10 @@ def teacher_games(user: dict[str, Any]) -> dict[str, Any]:
         }
         for row in created_rows
     ]
+    for game in purchased:
+        game['can_assign']=bool(game_assignments.local_slug(sys.modules[__name__],game))
+    for game in created:
+        game['can_assign']=game['is_active'] and game['mechanic'] in PUBLIC_GAMES
     return {"purchased": purchased, "gifted": [], "created": created}
 
 
@@ -6464,6 +6561,8 @@ class Handler(SimpleHTTPRequestHandler):
             body = game_tracking.transform(slug, body, html=is_entry_file)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
+        if self.path.startswith('/assigned-games/'):
+            self.send_header('Cache-Control','private, no-store')
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -6503,7 +6602,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
-        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
+        body = file_path.read_bytes()
+        if is_entry_file and not self.path.startswith('/assigned-games/'):
+            body = autumn_web_body(slug,body)
         if is_entry_file:
             if slug == "palace-restoration":
                 body = inject_palace_online_read_only(body, show_purchase_notice=False)
@@ -6512,6 +6613,8 @@ class Handler(SimpleHTTPRequestHandler):
             body = game_tracking.transform(slug, body, html=is_entry_file)
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
+        if self.path.startswith('/assigned-games/'):
+            self.send_header('Cache-Control','private, no-store')
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -6660,6 +6763,26 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/full-games/":
                 self.path = "/index.html"
                 super().do_GET()
+            elif parsed.path.startswith('/assigned-games/'):
+                user=self.require_user_with_consents()
+                parts=parsed.path.strip('/').split('/',2)
+                if len(parts)<2:raise PermissionError('Назначение не найдено.')
+                with closing(db()) as con:
+                    game=game_assignments.check_access(sys.modules[__name__],con,user,parts[1])
+                relative=parts[2] if len(parts)>2 else 'index.html'
+                if relative in {'','index.html'}:
+                    game_assignments.open_game(sys.modules[__name__],user,{'game_id':parts[1]})
+                    # Preserve the assignment context even for a hand-typed entry URL.
+                    expected={'assignment_id':parts[1]}
+                    if game['public_id']:expected['set']=game['public_id']
+                    incoming=parse_qs(parsed.query)
+                    if any((incoming.get(k) or [''])[0]!=v for k,v in expected.items()):
+                        from urllib.parse import urlencode
+                        self.send_response(HTTPStatus.FOUND)
+                        self.send_header('Location',f'/assigned-games/{parts[1]}/index.html?'+urlencode(expected))
+                        self.send_header('Cache-Control','no-store');self.end_headers();return
+                if game['kind']=='full':self.send_full_game_file(game['slug'],relative,protected_route=True)
+                else:self.send_public_game_file(game['slug'],relative)
             elif parsed.path.startswith("/full-games/"):
                 parts = parsed.path.strip("/").split("/", 2)
                 if len(parts) < 2:
@@ -6813,10 +6936,13 @@ class Handler(SimpleHTTPRequestHandler):
             elif parsed.path == "/api/teacher/test":
                 body, filename, content_type = build_test_file(self.require_user(), payload)
                 self.send_download(body, filename, content_type)
-            elif parsed.path in {"/api/assignments/deadline", "/api/errors/repeat", "/api/assignments/revoke", "/api/assignments/results", "/api/assignments/create", "/api/assignments/open", "/api/assignments/check", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
+            elif parsed.path in {'/api/assigned-games/create','/api/assigned-games/open','/api/assigned-games/update',"/api/assignments/deadline", "/api/errors/repeat", "/api/assignments/revoke", "/api/assignments/results", "/api/assignments/create", "/api/assignments/open", "/api/assignments/check", "/api/assignments/save", "/api/assignments/submit", "/api/teacher/groups", "/api/games/result"}:
                 user = self.require_user_with_consents()
                 host = sys.modules[__name__]
                 actions = {
+                    '/api/assigned-games/create':game_assignments.create,
+                    '/api/assigned-games/open':game_assignments.open_game,
+                    '/api/assigned-games/update':game_assignments.update,
                     '/api/assignments/deadline':learning_module.set_deadline,
                     '/api/errors/repeat':student_workspace.repeat_error,
                     "/api/assignments/revoke": learning_module.revoke_test,

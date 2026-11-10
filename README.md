@@ -4,6 +4,7 @@
 
 Сейчас внутри платформы подключены:
 
+- `/apps/ege1-3` — «Лаборатория текста»: задания 1–3, темы по частям речи и стилям, полный формат задания 3, формат 1–3 и копилка ошибок;
 - `/apps/ege9` - тренажер "ЕГЭ. Задание 9";
 - `/apps/ege10` - тренажер "ЕГЭ. Задание 10";
 - `/apps/mini/demo-mini` - демонстрационная обертка для HTML-мини-приложений.
@@ -55,6 +56,7 @@ python app/server.py 127.0.0.1 8088
 
 Основные группы API:
 
+- `/api/apps/ege1-3/bootstrap`, `/api/apps/ege1-3/practice/start`, `/check`, `/submit` — задания 1–3; создание и назначение тестов, журнал и повторения используют общие API платформы;
 - `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
 - `/api/activities`
 - `/api/apps/ege9/bootstrap`
@@ -64,6 +66,7 @@ python app/server.py 127.0.0.1 8088
 - `/api/progress`, `/api/progress/export`
 - `/api/statistics`, `/api/statistics/history`, `/api/statistics/export`
 - `/api/students/profile`, `/api/assignments/calendar`, `/api/assignments/deadline`, `/api/errors/repeat`
+- `/api/assigned-games/create`, `/api/assigned-games/open`, `/api/assigned-games/update` — назначение игр из кабинета учителя; подробности в `maintenance/ASSIGNED_GAMES.md`
 - `/api/admin`, `/api/admin/reset-password`
 - `/api/teacher/test`
 
@@ -142,3 +145,12 @@ dimitrieva-av.ru -> 127.0.0.1:8088
 Тексты Политики обработки персональных данных и Согласия на обработку персональных данных являются шаблонами и должны быть заменены на финальные юридически выверенные тексты перед запуском регистрации реальных пользователей.
 
 Рабочая SQLite-база с пользователями, прогрессом и согласиями должна храниться только на сервере/VPS в Санкт-Петербурге в Docker volume `ege_platform_data`. Нельзя коммитить в GitHub рабочую базу, дампы базы, реальные email пользователей, логи с персональными данными, `.env`, секреты и `SMTP_PASSWORD`.
+
+
+## Культура речи: задания 1–8 и локальное демо
+
+Подключены тренажёры `/apps/ege1-3`, `/apps/ege4`, `/apps/ege5`, `/apps/ege6`, `/apps/ege7`, `/apps/ege8` и сборный раздел `/apps/speech-ege`.
+
+Для просмотра перед загрузкой на сайт запустите **«Запустить демо.cmd»**: браузер откроет `http://127.0.0.1:8090/demo.html`. HTML-оболочка **«Демо_всего_приложения.html»** ведёт в то же приложение. Можно выбрать тренажёр и переключиться между учителем и учеником. Демо использует отдельную базу `data/speech-demo/ege_app.db`.
+
+Полнота баз, особенности нормативных записей задания 7 и результаты проверок описаны в [отчёте проверки](maintenance/SPEECH_1_8_CHECK.md).

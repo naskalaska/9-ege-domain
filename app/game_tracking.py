@@ -104,6 +104,6 @@ def transform(slug, body, html=False):
         anchor = 'if (value === answer) {'
         text = text.replace(anchor, report('value===answer','items[current].variant','value','answer') + anchor)
     if html:
-        tag = f'<script src="/game-tracker.js?v=statistics-20261019" data-game="{escape(slug, quote=True)}"></script>'
+        tag = f'<script src="/game-tracker.js?v=20261020-assigned-games" data-game="{escape(slug, quote=True)}"></script>'
         text = re.sub(r'(<head[^>]*>)', lambda m: m[0] + tag, text, count=1, flags=re.I)
     return text.encode('utf-8')

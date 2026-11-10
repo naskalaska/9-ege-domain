@@ -11,6 +11,10 @@ import learning_module
 import statistics_module
 
 case=StatisticsTest();case.setUp()
+with server.db() as con:
+    pid=con.execute("SELECT product_id FROM paid_entities WHERE slug='autumn-herbarium'").fetchone()[0]
+    con.execute('''INSERT INTO shop_orders(order_uid,product_id,buyer_email,status,created_at)
+        VALUES(?,?,?,?,?)''',('qa-owned-game',pid,server.normalize_email(case.teacher.get('email') or case.teacher['username']),'paid',server.now_iso()))
 for n in range(130):
     case.add_attempt('ege10' if n%2 else 'ege9',n%3==0,prompt=f'История решения {n}: проверка гласной')
 case.add_attempt(prompt='Самая старая ошибка: л..сной',created='2026-01-01T12:00:00+00:00')
