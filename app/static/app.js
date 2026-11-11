@@ -97,6 +97,16 @@ const activityMeta = {
 
 const miniGames = [
   {
+    slug: "espresso-murder",
+    title: "Убийство за ихний экспрессо",
+    description: "Детективная игра по культуре речи. На сайте доступен один комплект лексики, в расширенной версии — пять.",
+    button: "Играть",
+    path: "/games/espresso-murder/index.html",
+    category: "speech",
+    categoryTitle: "Культура речи",
+    kindLabel: "ИГРА",
+  },
+  {
     "slug": "oh-yo",
     "title": "Ох, ё! Сказание о шипящих",
     "description": "О, Е и Ё после шипящих: три сказочных сюжета, четыре уровня помощи, памятки Баюна и работа над ошибками.",
@@ -374,6 +384,26 @@ function groupedMiniGames() {
 }
 
 const shopProducts = [
+  {
+    slug: "espresso-murder",
+    title: "HTML-игра «Убийство за ихний экспрессо»",
+    price: "300 ₽",
+    kindLabel: "ИГРА",
+    image: "/games/espresso-murder/01-oblozhka.png",
+    images: ["01-oblozhka.png", "02-funkcional.png", "03-komplekt.png", "04-pyat-komplektov.png"].map(name => "/games/espresso-murder/" + name),
+    demoUrl: "/games/espresso-murder/index.html",
+    demoLabel: "Играть",
+    shortDescription: "Детективная игра по культуре речи: пять комплектов лексики в расширенной версии.",
+    fullDescription: "Расследуйте «Убийство за ихний экспрессо» и тренируйте культуру речи. Расширенная версия содержит пять комплектов лексики; в открытой игре на сайте доступен один комплект.",
+    tryBefore: ["Попробуйте игру с одним комплектом лексики на сайте."],
+    suitableFor: ["для уроков русского языка и занятий по культуре речи", "для повторения лексических норм"],
+    howItWorks: ["Откройте игру в браузере и следуйте детективному сюжету."],
+    package: ["Расширенная HTML-версия игры с пятью комплектами лексики."],
+    format: "Цифровая HTML-игра. Установка не требуется.",
+    requirements: ["современный браузер"],
+    delivery: "После оплаты отдельная ссылка на расширенную версию придёт на указанную электронную почту и появится в разделе «Мои игры» аккаунта с тем же email.",
+    important: ["На сайте открыт один комплект лексики. В покупке — пять комплектов."],
+  },
   {
     "slug": "oh-yo",
     "title": "HTML-игра «Ох, ё! Сказание о шипящих»",
@@ -2477,7 +2507,8 @@ async function renderShopPlaceholder() {
 
 function shopProductRubrics(product) {
   const text = `${product.slug || ""} ${product.title || ""} ${product.shortDescription || ""}`.toLocaleLowerCase("ru");
-  const rubrics = new Set();
+  const category = miniGames.find(game => game.slug === product.slug)?.category;
+  const rubrics = new Set(category ? [category] : []);
   if (/суффикс|спряж|орфотир|орфограф|причастий/.test(text)) rubrics.add("orthography");
   if (/морфем|словообраз|архитектура слова|реставрация дворца/.test(text)) rubrics.add("morphemics");
   if (/синтакс|словосочетан|однородн|обособлен|причастн.{0,12}оборот|грамматическ|пунктуац/.test(text)) rubrics.add("syntax");
@@ -3334,7 +3365,7 @@ async function restoreSession() {
     history.replaceState(null, "", "/apps");
   }
   if (window.location.pathname === "/apps/statistics") {
-    await showOverallStatistics(false);
+    await showOverallStatistics(false, '', new URLSearchParams(location.search).get('activity') || '');
     return;
   }
   if (window.location.pathname === '/apps/profile' || window.location.pathname.startsWith('/apps/student/')) {
@@ -3477,7 +3508,7 @@ async function renderTeacherGamesPage(updateUrl = true) {
           <button class="secondary-button" id="backToCatalogFromGames" type="button">Назад в каталог</button>
         </div>
       </div>
-      <p class="muted">Здесь собираются полные версии купленных игр и ссылки на игры, созданные через конструктор.</p>
+      <p class="muted">Здесь собраны купленные и подаренные игры, а также игры из конструктора. Нажмите «Назначить ученикам», чтобы игра появилась у них рядом с назначенными тестами.</p>
       <div class="teacher-games-list"><p class="muted">Загрузка...</p></div>
     </section>
   `;
@@ -3498,7 +3529,7 @@ async function renderTeacherGamesPage(updateUrl = true) {
       : `<p class="muted">Пока нет игр, созданных через конструктор.</p>`;
     list.innerHTML = `
       <section class="teacher-game-section">
-        <h3>Купленные игры</h3>
+        <h3>Купленные и подаренные игры</h3>
         <div class="mini-game-grid">${purchasedHtml}</div>
       </section>
       <section class="teacher-game-section">
@@ -4688,36 +4719,18 @@ function renderResults(data) {
   result.querySelector("#againButton").addEventListener("click", renderMode);
 }
 
-async function renderTeacherDashboardPreview() {
+function renderTeacherDashboardPreview() {
   const main = document.querySelector(".main-panel");
-  const old = document.querySelector("#teacherQuickPanel");
-  old?.remove();
+  document.querySelector("#teacherQuickPanel")?.remove();
   const panel = document.createElement("section");
   panel.className = "teacher-quick-panel";
   panel.id = "teacherQuickPanel";
-  panel.innerHTML = `<p class="muted">Загружаю быструю статистику...</p>`;
+  panel.innerHTML = '<div class="button-row"><button class="secondary-button" data-task-statistics>Статистика по этому заданию</button><button class="secondary-button" data-all-statistics>Вся статистика по ученикам</button><button class="secondary-button" data-compose-test>Составить тест</button></div>';
+  const activity = state.currentActivity;
+  panel.querySelector('[data-task-statistics]').onclick = () => showOverallStatistics(true, '', activity);
+  panel.querySelector('[data-all-statistics]').onclick = showProgress;
+  panel.querySelector('[data-compose-test]').onclick = showTestComposer;
   main.insertBefore(panel, document.querySelector("#setupView"));
-  await refreshTeacherDashboardPreview(panel);
-  state.teacherStatsTimer = setInterval(() => {
-    const currentPanel = document.querySelector("#teacherQuickPanel");
-    if (!currentPanel || state.user?.role !== "teacher") {
-      stopTeacherStatsRefresh();
-      return;
-    }
-    refreshTeacherDashboardPreview(currentPanel, true);
-  }, 30000);
-}
-
-async function refreshTeacherDashboardPreview(panel, silent = false) {
-  try {
-    const data = await api('/api/statistics');
-    if (!panel.isConnected) return;
-    const openIds = new Set([...panel.querySelectorAll('details[open]')].map(el => el.dataset.quickStudent));
-    panel.innerHTML = `<div class="section-head"><h3>Ученики · общая статистика</h3><div class="button-row"><button class="secondary-button" data-all-statistics>Открыть общую статистику</button><button class="secondary-button" data-compose-test>Составить тест</button></div></div><div class="statistics-quick-students">${data.students.map(student => `<details data-quick-student="${escapeHtml(student.user_id)}" ${openIds.has(student.user_id) ? 'open' : ''}><summary>${escapeHtml(student.display_name)} · ${student.total} решений · ${student.total ? student.accuracy+'%' : '—'}</summary><p>Ошибочных ответов: ${student.errors}</p><button class="ghost-button" data-student-statistics="${escapeHtml(student.user_id)}">Все задания, игры и ошибки ученика</button></details>`).join('') || '<p>Пока нет прикреплённых учеников.</p>'}</div>`;
-    panel.querySelector('[data-all-statistics]').onclick = showProgress;
-    panel.querySelector('[data-compose-test]').onclick = showTestComposer;
-    panel.querySelectorAll('[data-student-statistics]').forEach(button => button.onclick = () => showStudentProfile(button.dataset.studentStatistics));
-  } catch (err) { if (panel.isConnected) panel.textContent = err.message; }
 }
 
 async function showProgress() {

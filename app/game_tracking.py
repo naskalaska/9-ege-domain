@@ -10,6 +10,7 @@ def report(ok, prompt="''", given="''", correct="''"):
 # Exact source anchors keep each hook next to the game's own correctness check.
 # No DOM guessing: only actual checked answers count as solutions.
 HOOKS = {
+    'espresso-murder': [("if(!ok){if(s.phase==='select'){", None)],
     'oh-yo': [
         ("s.answered=true;s.lastCorrect=ok;", report('ok', "typeof d!=='undefined'?d.variant:q.q", 'a', "typeof d!=='undefined'?d.answer:q.a")),
     ],
@@ -77,6 +78,11 @@ def transform(slug, body, html=False):
             continue
         if code is not None:
             text = text.replace(anchor, anchor + code)
+        elif slug == 'espresso-murder':
+            prompt = "sections[active][0]+': '+r.map(card=>{const p=db.find(item=>item.id===card.id);return card.bad?p.incorrect_variant:p.correct_variant}).join('; ')"
+            given = "s.phase==='select'?selected.map(k=>{const card=r[k],p=db.find(item=>item.id===card.id);return card.bad?p.incorrect_variant:p.correct_variant}).join('; '):answer"
+            correct = "s.phase==='select'?wrong.map(card=>db.find(item=>item.id===card.id).incorrect_variant).join('; '):db.find(item=>item.id===wrong[s.correction].id).correct_variant"
+            text = text.replace(anchor, report('ok', prompt, given, correct) + anchor)
         elif slug == 'autumn-herbarium':
             text = text.replace(anchor, 'const epoch=state.epoch;' + report('letter===item.answer','item.variant','letter','item.answer') + 'if(letter===item.answer)')
         elif slug in {'suffixes-nouns','fluffs'}:

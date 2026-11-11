@@ -52,21 +52,21 @@ function statisticsFilters() {
   return `<form class="statistics-period"><label>С даты<input name="from" type="date"></label><label>По дату<input name="to" type="date"></label><button type="submit" class="secondary-button">Применить период</button><button type="button" class="ghost-button" data-period-reset>За всё время</button></form>`;
 }
 
-async function showOverallStatistics(updateUrl = true, selectedStudent = '') {
+async function showOverallStatistics(updateUrl = true, selectedStudent = '', selectedActivity = '') {
   try { await leaveAssignedWorkspace(); } catch (err) { alert(err.message);return; }
   const request = ++statisticsRequest;
   ++state.activityLoadRequestId;
   stopTeacherStatsRefresh();
   state.currentActivity = null;state.currentSession = null;
   document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-  if (updateUrl) history.pushState(null,'','/apps/statistics');
+  if (updateUrl) history.pushState(null,'','/apps/statistics'+(selectedActivity ? '?'+new URLSearchParams({activity:selectedActivity}) : ''));
   renderTopActions();
   const teacher = state.user.role === 'teacher';
-  view.innerHTML = `<section class="statistics-page"><div class="panel-head"><div><p class="eyebrow">Все тренажёры и игры</p><h2>${teacher ? 'Общая статистика класса' : 'Моя общая статистика'}</h2></div><button class="secondary-button" data-refresh-statistics>Обновить</button></div>${statisticsFilters()}<p class="muted">Повторные решения учитываются как новые ответы. Ошибки в отдельных словах строки доступны в журнале и не увеличивают количество решённых заданий.</p><div data-statistics-body role="status">Загрузка…</div></section>`;
+  view.innerHTML = `<section class="statistics-page"><div class="panel-head"><div><p class="eyebrow">Все тренажёры и игры</p><h2>${selectedActivity ? 'Статистика · '+escapeHtml(activityMeta[selectedActivity]?.title || selectedActivity) : teacher ? 'Общая статистика класса' : 'Моя общая статистика'}</h2></div><button class="secondary-button" data-refresh-statistics>Обновить</button></div>${statisticsFilters()}<p class="muted">Повторные решения учитываются как новые ответы. Ошибки в отдельных словах строки доступны в журнале и не увеличивают количество решённых заданий.</p><div data-statistics-body role="status">Загрузка…</div></section>`;
   window.scrollTo(0,0);
   const page = view.querySelector('.statistics-page');
   const form = page.querySelector('form');
-  const period = () => ({...Object.fromEntries([...new FormData(form)].filter(([,v]) => v)),offset_minutes:-new Date().getTimezoneOffset()});
+  const period = () => ({...(selectedActivity ? {activity:selectedActivity} : {}),...Object.fromEntries([...new FormData(form)].filter(([,v]) => v)),offset_minutes:-new Date().getTimezoneOffset()});
   async function refresh() {
     const body = page.querySelector('[data-statistics-body]');
     body.textContent = 'Загрузка…';
@@ -113,6 +113,10 @@ function mountStatisticsHistory(root, data, baseFilters) {
   let request = 0,currentPage = 1;
   root.innerHTML = `<form class="statistics-history-filters"><label>Задание или игра<select name="activity"><option value="">Все задания и игры</option><option value="games">Все игры</option>${data.by_activity.map(row => `<option value="${escapeHtml(row.activity)}">${escapeHtml(row.title)}</option>`).join('')}</select></label><label>Ответы<select name="status"><option value="incorrect">Все ошибки</option><option value="all">Все решения</option><option value="correct">Верные ответы</option></select></label><label>Записи<select name="kind"><option value="answers">Только ответы на задания</option><option value="all">Ответы и подробности по словам</option><option value="details">Только подробности по словам</option></select></label><label>Поиск<input name="search" type="search" placeholder="Слово, тема или ответ"></label><button type="submit" class="secondary-button">Показать</button><button type="button" class="ghost-button" data-export-history>Скачать все найденные записи</button></form><p class="muted">Одна ошибка в строке может включать несколько слов. Журнал хранит и ответ на задание, и подробности по словам.</p><div data-history-results role="status"></div><div class="statistics-pagination"><button class="secondary-button" data-history-prev>Предыдущая</button><span data-history-page></span><button class="secondary-button" data-history-next>Следующая</button></div>`;
   const form = root.querySelector('form');
+  if (baseFilters.activity) {
+    form.elements.activity.value = baseFilters.activity;
+    form.elements.activity.disabled = true;
+  }
   const filters = () => ({...baseFilters,...Object.fromEntries(new FormData(form))});
   const output = root.querySelector('[data-history-results]');
   const prev = root.querySelector('[data-history-prev]'),next = root.querySelector('[data-history-next]');

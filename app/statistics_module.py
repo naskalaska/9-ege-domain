@@ -83,6 +83,11 @@ def source(con, user, params):
             args.extend([f'{offset} minutes',value])
     if params.get('from') and params.get('to') and params['from'] > params['to']:
         raise ValueError('Начало периода позже окончания.')
+    activity = str(params.get('activity') or '')
+    if activity:
+        where += " AND stats_activity(a.scope_id,a.word_id,a.rule_id,a.mode)" + (" LIKE 'game:%'" if activity == 'games' else "=?")
+        if activity != 'games':
+            args.append(activity)
     query = f'''WITH records AS (
       SELECT a.*,u.display_name,stats_activity(a.scope_id,a.word_id,a.rule_id,a.mode) activity,
       stats_detail(a.mode,a.question_id) is_detail
@@ -134,6 +139,9 @@ def overview(s, user, params=None):
         attention = sorted([r for r in topics if r['errors']],key=lambda r:(-r['errors'],r['accuracy']))[:5]
         ordered = [by_activity[key] for key in TASKS]+sorted(
             [item for key,item in by_activity.items() if key not in TASKS],key=lambda r:r['title'])
+        if params.get('activity'):
+            selected = params['activity']
+            ordered = [item for item in ordered if (item['activity'].startswith('game:') if selected == 'games' else item['activity'] == selected)]
         return {'summary':summary,'by_activity':ordered,'students':students,
                 'strengths':strengths,'attention':attention,'role':user['role']}
 

@@ -47,6 +47,32 @@ class GameAssignmentsTest(unittest.TestCase):
         self.assertEqual(learning.overview(server,self.student)['pending'],1)
         self.assertEqual(learning.overview(server,self.student)['unread'],1)
 
+    def test_new_game_can_be_assigned_from_purchase_or_gift_to_the_work_list(self):
+        slug = 'espresso-murder'
+        product_id = self.buy(slug)
+        for kind in ('purchased', 'gifted'):
+            with self.subTest(kind=kind):
+                if kind == 'gifted':
+                    with server.db() as con:
+                        con.execute("UPDATE shop_orders SET status='refunded' WHERE product_id=?", (product_id,))
+                        con.execute('INSERT INTO teacher_product_gifts VALUES(?,?,?,?,?)',
+                                    (self.teacher['user_id'], product_id, 'Подарок', self.teacher['user_id'], server.now_iso()))
+                cabinet = next(g for g in server.teacher_games(self.teacher)['purchased'] if g['slug'] == slug)
+                self.assertEqual(cabinet['kind'], kind)
+                self.assertTrue(cabinet['can_assign'])
+                assigned = self.assign(slug=slug)
+                works = learning.overview(server, self.student)
+                game = next(g for g in works['games'] if g['id'] == assigned['id'])
+                self.assertEqual(game['assignment_kind'], 'game')
+                self.assertEqual(game['kind'], 'full')
+                self.assertIsNone(game['seen_at'])
+                self.assertGreater(works['pending'], 0)
+                self.assertGreater(works['unread'], 0)
+                url = games.open_game(server, self.student, {'game_id': assigned['id']})['url']
+                self.assertIn('/assigned-games/' + assigned['id'] + '/index.html', url)
+                with server.db() as con:
+                    self.assertEqual(games.check_access(server, con, self.student, assigned['id'])['slug'], slug)
+
     def test_full_game_access_ownership_revocation_and_refund(self):
         self.buy();assignment=self.assign()
         url=games.open_game(server,self.student,{'game_id':assignment['id']})['url']

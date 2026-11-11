@@ -51,6 +51,25 @@ class StatisticsTest(unittest.TestCase):
         self.assertEqual(statistics.history(server,self.student,{'from':'2026-10-19'})['total'],0)
         with self.assertRaises(ValueError): statistics.history(server,self.student,{'from':'not a date'})
 
+    def test_activity_statistics_filter_summary_students_history_and_export(self):
+        self.add_attempt('ege9', True)
+        self.add_attempt('ege10', False)
+        self.add_attempt('ege10', True)
+        params = {'activity': 'ege10'}
+        data = statistics.overview(server, self.teacher, params)
+        self.assertEqual(data['summary']['total'], 2)
+        self.assertEqual(data['summary']['correct'], 1)
+        self.assertEqual(data['students'][0]['total'], 2)
+        self.assertEqual([row['activity'] for row in data['by_activity']], ['ege10'])
+        self.assertTrue(all(row['activity'] == 'ege10' for row in data['attention'] + data['strengths']))
+        history = statistics.history(server, self.teacher, {**params, 'status': 'all'})
+        self.assertEqual(history['total'], 2)
+        self.assertTrue(all(row['activity'] == 'ege10' for row in history['items']))
+        body, _, _ = statistics.export(server, self.teacher, {**params, 'status': 'all'})
+        self.assertEqual(len(list(csv.reader(io.StringIO(body.decode('utf-8-sig')), delimiter=';'))), 3)
+        self.assertEqual(statistics.overview(server, self.teacher)['summary']['total'], 3)
+        self.assertEqual(statistics.overview(server, self.teacher, {'activity': 'ege11'})['summary']['total'], 0)
+
     def test_ownership_and_empty_student(self):
         for action in (statistics.overview,statistics.history,statistics.export):
             with self.assertRaises(PermissionError):action(server,self.student,{'student_id':'another-student'})

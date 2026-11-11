@@ -1,5 +1,6 @@
 """Local browser fixture; never uses the application's real database."""
 import json
+import os
 import sys
 import threading
 from pathlib import Path
@@ -11,6 +12,10 @@ import learning_module
 import statistics_module
 
 case=StatisticsTest();case.setUp()
+if os.environ.get('QA_OWNED_GAME_TEST') == '1':
+    with server.db() as con:
+        con.execute('INSERT INTO teacher_product_gifts VALUES(?,?,?,?,?)',
+                    (case.teacher['user_id'], 'espresso_murder', 'Тестовый подарок', case.teacher['user_id'], server.now_iso()))
 with server.db() as con:
     pid=con.execute("SELECT product_id FROM paid_entities WHERE slug='autumn-herbarium'").fetchone()[0]
     con.execute('''INSERT INTO shop_orders(order_uid,product_id,buyer_email,status,created_at)
@@ -50,7 +55,8 @@ class Handler(server.Handler):
             self.send_json({'ok':True});threading.Thread(target=self.server.shutdown,daemon=True).start()
         else:super().do_POST()
 
-http=ThreadingHTTPServer(('127.0.0.1',8098),Handler)
-server.configure_console();print('Statistics QA http://127.0.0.1:8098',flush=True)
+port = int(os.environ.get('QA_PORT', '8098'))
+http=ThreadingHTTPServer(('127.0.0.1',port),Handler)
+server.configure_console();print(f'Statistics QA http://127.0.0.1:{port}',flush=True)
 try:http.serve_forever()
 finally:http.server_close();case.doCleanups()

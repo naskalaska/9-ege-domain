@@ -1,4 +1,21 @@
 /* Assigned games keep their own access grants and reuse pupil work lists. */
+async function chooseOwnedGameAssignment() {
+  const modal=learningModal('Назначить игру из моего комплекта');
+  const root=modal.querySelector('[data-content]');
+  root.textContent='Загрузка игр…';
+  try {
+    const data=await api('/api/teacher/games');
+    if (!modal.isConnected) return;
+    const games=(data.purchased || []).filter(game=>game.can_assign);
+    root.innerHTML='<p>Выберите купленную или подаренную игру. Ученики получат полную версию в списке назначенных работ.</p>'+
+      (games.map((game,index)=>'<article class="question"><p class="eyebrow">'+(game.kind==='gifted'?'Подаренная игра':'Купленная игра')+'</p><h3>'+escapeHtml(game.title)+'</h3><button class="primary-button" data-select-owned-game="'+index+'">Выбрать учеников</button></article>').join('') || '<p>В вашем комплекте пока нет купленных или подаренных игр с онлайн-версией.</p>');
+    root.querySelectorAll('[data-select-owned-game]').forEach(button=>button.onclick=()=>{
+      const game=games[Number(button.dataset.selectOwnedGame)];
+      modal.remove();assignTeacherGame(game);
+    });
+  } catch(err) {if(root.isConnected)root.textContent=err.message;}
+}
+
 async function assignTeacherGame(game) {
   const modal=learningModal('Назначить игру ученикам');
   const root=modal.querySelector('[data-content]');
@@ -12,7 +29,7 @@ async function assignTeacherGame(game) {
           due_at:dueFrom(root),target_count:Number(root.querySelector('[data-game-target]').value),
           all_students:root.querySelector('[data-all]').checked,student_ids:[...root.querySelectorAll('[name=student]:checked')].map(i=>i.value),
           group_ids:[...root.querySelectorAll('[name=group]:checked')].map(i=>i.value)})});
-        root.innerHTML=`<p role="status">Игра появилась в кабинетах учеников. Получателей: ${result.recipients}.</p>`;
+        root.innerHTML=`<p role="status">Игра появилась в кабинетах учеников в списке назначенных тестов и игр. Получателей: ${result.recipients}.</p>`;
       } catch(err){root.querySelector('.error').textContent=err.message;event.target.disabled=false;}
     };
   } catch(err){root.textContent=err.message;}

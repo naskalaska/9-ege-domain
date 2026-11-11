@@ -97,9 +97,11 @@ async function showAssignments() {
     if (state.user.role === 'teacher') {
       root.innerHTML = `<p>Соберите вариант в тренажёре через «Составить тест», затем выберите «Назначить ученикам».</p>
         <div class="setup-grid"><label>Тренажёр<select data-activity>${Object.entries(activityMeta).filter(([id]) => id !== 'html-games').map(([id, meta]) => `<option value="${id}">${escapeHtml(meta.shortTitle || meta.title)}</option>`).join('')}</select></label><button class="primary-button" data-compose>Собрать тест</button></div>
+        <button class="secondary-button" data-assign-owned-game>Назначить игру из моего комплекта</button>
         <details><summary>Группы учеников (${data.groups.length})</summary><div data-groups></div><button class="secondary-button" data-new-group>Создать группу</button></details>
         <button class="secondary-button" data-open-calendar>Открыть календарь работ</button><h3>Задания и игры</h3>${data.tests.map(teacherAssignmentCard).join('') || '<p>Назначенных тестов пока нет.</p>'}`;
       root.querySelector('[data-open-calendar]').onclick=()=>showAssignmentCalendar();
+      root.querySelector('[data-assign-owned-game]').onclick=()=>{modal.remove();chooseOwnedGameAssignment();};
       root.querySelectorAll('[data-edit-deadline]').forEach(b=>b.onclick=()=>editAssignmentDeadline(b.dataset.editDeadline,b.dataset.studentId,b.dataset.due,()=>{modal.remove();return showAssignments();}));
       root.querySelector('[data-compose]').onclick = async () => {
         const activity = root.querySelector('[data-activity]').value;
@@ -125,16 +127,22 @@ async function showAssignments() {
       });
       root.querySelector('[data-new-group]').onclick = () => editStudentGroup(data, null, modal);
     } else {
-      root.innerHTML = data.tests.map(t => `<article class="question"><h3>${escapeHtml(t.title)}</h3><p>Учитель: ${escapeHtml(t.teacher_name)}</p><p>${escapeHtml(assignmentOutline(t))}</p><p>${deadlineHtml(t)}</p><p>Проверено ${t.checked} из ${t.total}</p><progress aria-label="Прогресс теста" value="${t.checked}" max="${t.total}"></progress><p>${t.revoked_at ? 'Учитель отозвал тест' : t.completed_at ? `Выполнен: ${t.result.correct}/${t.result.total}` : t.overdue ? 'Просрочен — можно выполнить' : t.started_at ? 'Начат — можно продолжить' : 'Ожидает выполнения'}</p>${!t.revoked_at || t.completed_at ? `<button class="${t.completed_at ? 'secondary' : 'primary'}-button" data-open-test="${escapeHtml(t.id)}">${t.completed_at ? 'Результаты' : t.started_at ? 'Продолжить' : 'Открыть тест'}</button>` : '<p class="muted">Новые ответы не принимаются.</p>'}</article>`).join('') || '<p>Учитель пока не назначил тесты.</p>';
+      const works = [...data.tests.map(work=>({...work,assignment_kind:'test'})),...(data.games || [])]
+        .sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+      root.innerHTML = '<h3>Назначенные тесты и игры</h3>'+ (works.map(work=>work.assignment_kind==='game' ? assignedGameCard(work) : studentAssignedTestCard(work)).join('') || '<p>Учитель пока не назначил работы.</p>');
       root.querySelectorAll('[data-open-test]').forEach(button => button.onclick = async () => {
         button.disabled = true;
         try { await openAssignedTest(button.dataset.openTest); modal.remove(); }
         catch (err) { button.disabled = false; alert(err.message); }
       });
     }
-    root.insertAdjacentHTML('beforeend','<h3>Назначенные игры</h3>'+((data.games || []).map(assignedGameCard).join('') || '<p>Назначенных игр пока нет.</p>'));
+    if (state.user.role === 'teacher') root.insertAdjacentHTML('beforeend','<h3>Назначенные игры</h3>'+((data.games || []).map(assignedGameCard).join('') || '<p>Назначенных игр пока нет.</p>'));
     bindAssignedGames(root,()=>{modal.remove();return showAssignments();});
   } catch (err) { root.textContent = err.message; }
+}
+
+function studentAssignedTestCard(t) {
+  return `<article class="question"><h3>${escapeHtml(t.title)}</h3><p>Учитель: ${escapeHtml(t.teacher_name)}</p><p>${escapeHtml(assignmentOutline(t))}</p><p>${deadlineHtml(t)}</p><p>Проверено ${t.checked} из ${t.total}</p><progress aria-label="Прогресс теста" value="${t.checked}" max="${t.total}"></progress><p>${t.revoked_at ? 'Учитель отозвал тест' : t.completed_at ? `Выполнен: ${t.result.correct}/${t.result.total}` : t.overdue ? 'Просрочен — можно выполнить' : t.started_at ? 'Начат — можно продолжить' : 'Ожидает выполнения'}</p>${!t.revoked_at || t.completed_at ? `<button class="${t.completed_at ? 'secondary' : 'primary'}-button" data-open-test="${escapeHtml(t.id)}">${t.completed_at ? 'Результаты' : t.started_at ? 'Продолжить' : 'Открыть тест'}</button>` : '<p class="muted">Новые ответы не принимаются.</p>'}</article>`;
 }
 
 function studentCheckboxes(students, selected = []) {

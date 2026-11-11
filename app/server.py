@@ -88,6 +88,7 @@ CONSENT_TYPE_PERSONAL_DATA = "personal_data_processing"
 FALLBACK_TEACHER_CODE = "T-DDC378"
 FALLBACK_TEACHER_EMAIL = "service-teacher@platform.local"
 FULL_GAME_ROUTE_TOKENS = {
+    "espresso-murder": "94602718350964",
     "oh-yo": "58310947265028",
     "autumn-herbarium": "64093178520648",
     "autumn-leaves": "79328410563827",
@@ -99,6 +100,18 @@ PROTECTED_FULL_GAME_ROUTES = {
     f"Full-{token}-{slug}": slug for slug, token in FULL_GAME_ROUTE_TOKENS.items()
 }
 SHOP_PRODUCTS = {
+    "espresso-murder": {
+        "id": "espresso_murder",
+        "title": "HTML-игра «Убийство за ихний экспрессо»",
+        "short_title": "Убийство за ихний экспрессо",
+        "amount": "300.00",
+        "currency": "RUB",
+        "cover_url": "/games/espresso-murder/01-oblozhka.png",
+        "url_env": "ESPRESSO_MURDER_PRODUCT_URL",
+        "default_url": f"{APP_BASE_URL}/Full-94602718350964-espresso-murder/index.html",
+        "online_url": f"{APP_BASE_URL}/Full-94602718350964-espresso-murder/index.html",
+        "kind": "product",
+    },
     "oh-yo": {
         "id": "oh_yo",
         "title": "HTML-игра «Ох, ё! Сказание о шипящих»",
@@ -619,6 +632,7 @@ def first_existing_path(*paths: Path) -> Path:
 
 
 HTML_GAMES = {
+    "espresso-murder": HTML_DIR / "Убийство за ихний экспрессо",
     "oh-yo": HTML_DIR / "Ох, ё! Сказание о шипящих",
     "autumn-leaves": HTML_DIR / "Осень. И-Ы",
     "autumn-herbarium": HTML_DIR / "Осенний гербарий",
@@ -646,6 +660,7 @@ HTML_GAMES = {
 }
 
 HTML_GAME_TITLES = {
+    "espresso-murder": "Убийство за ихний экспрессо",
     "oh-yo": "Ох, ё! Сказание о шипящих",
     "autumn-leaves": "Осень. И-Ы",
     "autumn-herbarium": "Осенний Гербарий",
@@ -673,6 +688,7 @@ HTML_GAME_TITLES = {
 }
 
 PUBLIC_GAMES = {
+    "espresso-murder": HTML_DIR / "Убийство за ихний экспрессо",
     "oh-yo": HTML_DIR / "Ох, ё! Сказание о шипящих",
     "autumn-leaves": HTML_DIR / "Осень. И-Ы",
     "autumn-herbarium": HTML_DIR / "Осенний гербарий",
@@ -922,7 +938,7 @@ def seed_gift_only_games(con: sqlite3.Connection) -> None:
     }
     now = now_iso()
     for slug in HTML_GAMES:
-        if slug in shop_product_by_game_slug:
+        if slug in shop_product_by_game_slug or slug in SHOP_PRODUCTS:
             continue
         product_id = f"gift_game_{slug.replace('-', '_')}"
         con.execute(
@@ -5081,6 +5097,8 @@ def product_email_note(product: dict[str, str]) -> str:
         return str(product["email_note"])
     slug = str(product.get("slug") or "")
     product_id = str(product.get("id") or product.get("product_id") or "")
+    if slug == "espresso-murder" or product_id == "espresso_murder":
+        return "\nРасширенная версия содержит пять комплектов лексики. Выберите комплект на стартовом экране игры.\n"
     if slug == "oh-yo" or product_id == "oh_yo":
         return (
             "\nСкачайте HTML-файл и откройте его в современном браузере: интернет и установка не нужны.\n"
@@ -5354,6 +5372,8 @@ def product_online_url(product: dict[str, str]) -> str:
 
 def game_entry_file(slug: str, relative_path: str) -> str:
     clean_path = relative_path or "index.html"
+    if slug == "espresso-murder" and clean_path == "index.html":
+        return "Расширенная версия.html"
     if slug == "oh-yo" and clean_path in {"", "index.html"}:
         return "Ох_ё_сказание о шипящих.html"
     if slug == "autumn-leaves" and clean_path == "index.html":
@@ -6479,6 +6499,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_html_game_file(self, slug: str, relative_path: str) -> None:
+        if slug == "espresso-murder":
+            self.send_public_game_file(slug, relative_path)
+            return
         game_dir = HTML_GAMES.get(slug)
         if not game_dir:
             self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
@@ -6528,8 +6551,13 @@ class Handler(SimpleHTTPRequestHandler):
             if requested_path != "index.html" and (Path(requested_path).suffix.lower() != ".png" or "/" in requested_path):
                 self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
                 return
+        if slug == "espresso-murder" and requested_path not in {
+            "index.html", "01-oblozhka.png", "02-funkcional.png", "03-komplekt.png", "04-pyat-komplektov.png"
+        }:
+            self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
+            return
         is_entry_file = requested_path in {"index.html", ""}
-        relative_path = game_entry_file(slug, requested_path)
+        relative_path = "короткая версия.html" if slug == "espresso-murder" and is_entry_file else game_entry_file(slug, requested_path)
         file_path = (game_dir / relative_path).resolve()
         game_root = game_dir.resolve()
         try:
