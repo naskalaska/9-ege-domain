@@ -1748,6 +1748,12 @@ function renderTopActions() {
   home.textContent = state.user ? "Кабинет" : "На главную";
   home.addEventListener("click", () => navigate(state.user ? "/apps" : "/"));
   topActions.append(home);
+  if (state.user) {
+    const siteHome = document.createElement('button');
+    siteHome.className = 'ghost-button';siteHome.textContent = 'На главную';
+    siteHome.dataset.siteHome = 'true';siteHome.onclick = () => navigate('/');
+    topActions.append(siteHome);
+  }
   if (!state.user) return;
   if (["teacher", "student"].includes(state.user.role)) {
     const assignments = document.createElement("button");
@@ -1776,8 +1782,8 @@ function renderTopActions() {
   if (state.user.role === "teacher") {
     const teacherGames = document.createElement("button");
     teacherGames.className = window.location.pathname === "/apps/my-games" ? "primary-button" : "ghost-button";
-    teacherGames.textContent = "Мои игры";
-    teacherGames.addEventListener("click", () => renderTeacherGamesPage());
+    teacherGames.textContent = "Игры";
+    teacherGames.addEventListener("click", () => navigate("/games"));
     topActions.append(teacherGames);
   }
   const support = document.createElement("button");
@@ -2294,6 +2300,7 @@ function bindPublicNavigation(root) {
 }
 
 function renderPublicGames() {
+  state.currentActivity = null;state.currentMiniGame = null;
   renderPublicTopActions("/games");
   const gameGroups = groupedMiniGames();
   const categorySections = gameGroups.map((category) => `
@@ -2389,6 +2396,13 @@ function renderPublicGames() {
     ${publicFooter()}
   `;
   bindPublicNavigation(view);
+  view.querySelectorAll('.game-submenu a').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    const hash = link.getAttribute('href');
+    history.replaceState(null, '', '/games'+hash);
+    document.getElementById(hash.slice(1))?.scrollIntoView({behavior:'smooth', block:'start'});
+  }));
+  if (location.hash.startsWith('#games-')) requestAnimationFrame(() => document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start'}));
   if (state.user?.role === "teacher") setupGameBuilder();
 }
 
@@ -3216,11 +3230,10 @@ async function loadBootstrap() {
 async function loadActivity(slug, updateUrl = true) {
   const requestId = ++state.activityLoadRequestId;
   if (slug === "html-games") {
-    state.currentActivity = slug;
+    state.currentActivity = null;
     state.currentMiniGame = null;
-    if (updateUrl) history.pushState(null, "", "/apps/mini");
-    renderMiniActivity();
-    window.scrollTo(0,0);
+    if (!updateUrl) history.replaceState(null, '', '/games');
+    navigate('/games');
     return;
   }
   const bootstrap = await api(`/api/apps/${slug}/bootstrap`);
@@ -3298,6 +3311,11 @@ async function restoreSession() {
   if (window.location.pathname === "/") {
     renderLandingPage();
     return;
+  }
+  if (window.location.pathname === '/apps/mini' || window.location.pathname.startsWith('/apps/mini/')) {
+    history.replaceState(null, '', '/games');
+    state.currentActivity = null;state.currentMiniGame = null;
+    renderPublicGames();return;
   }
   if (window.location.pathname === "/games") {
     renderPublicGames();
@@ -3472,7 +3490,7 @@ function renderCatalog() {
       ${state.user.role === "teacher" ? `
         <div class="catalog-actions">
           <button class="secondary-button" id="teacherCabinet" type="button">Кабинет учителя</button>
-          <button class="secondary-button" id="teacherGames" type="button">Мои игры</button>
+          <button class="secondary-button" id="teacherGames" type="button">Игры</button>
         </div>
       ` : ""}
     </section>
@@ -3482,7 +3500,7 @@ function renderCatalog() {
     button.addEventListener("click", () => loadActivity(button.dataset.activity));
   });
   view.querySelector("#teacherCabinet")?.addEventListener("click", showProgress);
-  view.querySelector("#teacherGames")?.addEventListener("click", renderTeacherGamesPage);
+  view.querySelector("#teacherGames")?.addEventListener("click", () => navigate("/games"));
 }
 
 async function renderTeacherGamesPage(updateUrl = true) {
@@ -3505,7 +3523,7 @@ async function renderTeacherGamesPage(updateUrl = true) {
           <h2>Мои игры</h2>
         </div>
         <div class="catalog-actions">
-          <button class="secondary-button" id="backToCatalogFromGames" type="button">Назад в каталог</button>
+          <button class="secondary-button" id="backToCatalogFromGames" type="button">Все игры</button>
         </div>
       </div>
       <p class="muted">Здесь собраны купленные и подаренные игры, а также игры из конструктора. Нажмите «Назначить ученикам», чтобы игра появилась у них рядом с назначенными тестами.</p>
@@ -3513,8 +3531,7 @@ async function renderTeacherGamesPage(updateUrl = true) {
     </section>
   `;
   view.querySelector("#backToCatalogFromGames").addEventListener("click", () => {
-    history.pushState(null, "", "/apps");
-    renderCatalog();
+    navigate("/games");
   });
   const list = view.querySelector(".teacher-games-list");
   try {
@@ -3577,368 +3594,7 @@ function teacherGameCard(game, eyebrow, status) {
 }
 
 function renderMiniActivity() {
-  renderTopActions();
-  const gameSlug = state.currentMiniGame || miniGameFromPath();
-  const selectedGame = miniGames.find((game) => game.slug === gameSlug);
-  const gameCategorySections = groupedMiniGames().map((category) => `
-    <section class="game-category" id="cabinet-games-${escapeHtml(category.id)}">
-      <div class="game-category-head">
-        <p class="eyebrow">раздел</p>
-        <h3>${escapeHtml(category.title)}</h3>
-      </div>
-      <div class="mini-game-grid">
-        ${category.games.map((game) => `
-          <article class="mini-game-card">
-            <div>
-              <p class="eyebrow">${escapeHtml(game.kindLabel || "игра")}</p>
-              ${game.demo ? `<span class="demo-badge">Демо</span>` : ""}
-              <h3>${escapeHtml(game.title)}</h3>
-              <p>${escapeHtml(game.description)}</p>
-              ${game.demoNotice ? `<p class="demo-note">${escapeHtml(game.demoNotice)}</p>` : ""}
-            </div>
-            <button class="primary-button open-mini-game" data-game="${escapeHtml(game.slug)}" type="button">${escapeHtml(game.button)}</button>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-  `).join("");
-  const teacherBuilder = !selectedGame && state.user.role === "teacher" ? `
-    <section class="game-builder" id="gameBuilder">
-      <div class="panel-head">
-        <div>
-          <p class="eyebrow">для учителя</p>
-          <h3>Создать HTML-игру</h3>
-        </div>
-      </div>
-      <div class="builder-grid">
-        <form class="builder-panel" id="baseGameForm">
-          <h4>Из моих баз</h4>
-          <label>Механика
-            <select name="mechanic" data-game-mechanic-select>
-              <option value="">Загрузка механик...</option>
-            </select>
-          </label>
-          <label>База
-            <select name="source" id="gameSourceSelect"></select>
-          </label>
-          <p class="muted" data-game-compatibility></p>
-          <div class="game-rule-picker" id="gameRulePicker"></div>
-          <label>Количество
-            <input name="count" type="number" min="1" max="200" value="10" />
-          </label>
-          <label>Название игры
-            <input name="title" placeholder="Пушинки: тренировка" />
-          </label>
-          <label>Описание
-            <input name="description" placeholder="Поймайте пушинки и выберите правильную букву" />
-          </label>
-          <button class="primary-button" type="submit">Создать ссылку</button>
-          <p class="error" id="baseGameError"></p>
-        </form>
-        <form class="builder-panel" id="uploadGameForm">
-          <h4>Загрузить свой JSON</h4>
-          <label>JSON-файл
-            <input name="file" type="file" accept="application/json,.json" />
-          </label>
-          <button class="primary-button" type="submit">Загрузить JSON</button>
-          <details class="prompt-box">
-            <summary>Промпт для нейросети: подготовить JSON для игры</summary>
-            <textarea readonly>Ты опытный преподаватель русского языка. Преврати мой список слов/заданий в JSON для HTML-игры «Пушинки».
-
-Нужен строго валидный JSON без комментариев, без пояснений до и после, без Markdown-разметки.
-
-Формат JSON:
-{
-  "title": "Название игры",
-  "description": "Короткое описание",
-  "mechanic": "fluffs",
-  "items": [
-    {
-      "variant": "слово или предложение с пропуском",
-      "answer": "правильный ответ",
-      "options": ["вариант 1", "вариант 2"],
-      "correct_spelling": "правильное написание полностью",
-      "explanation": "краткое объяснение правила"
-    }
-  ]
-}
-
-Правила:
-1. В поле variant поставь пропуск двумя точками: ..
-2. В поле answer укажи только то, что должно быть вставлено на место пропуска.
-3. Если на месте пропуска ничего не пишется, в answer поставь "-".
-4. В correct_spelling напиши слово полностью без пропуска.
-5. В explanation дай короткое объяснение для ученика.
-6. В options дай 2-4 варианта ответа.
-7. Для орфографии часто подходят варианты ["а", "о"], ["е", "и"], ["е", "ё", "о"], ["ь", "ъ", "-"].
-8. Не добавляй лишних полей.
-9. Верни только JSON.
-
-Мой список:
-[ВСТАВЬТЕ СЮДА СВОЙ СПИСОК СЛОВ ИЛИ ЗАДАНИЙ]</textarea>
-          </details>
-          <p class="error" id="uploadGameError"></p>
-        </form>
-      </div>
-      <div class="builder-result hidden" id="gameBuilderResult">
-        <span class="muted">Ссылка для учеников</span>
-        <a id="gameBuilderLink" target="_blank" rel="noopener"></a>
-        <button class="secondary-button" id="copyGameLink" type="button">Скопировать ссылку</button>
-      </div>
-    </section>
-  ` : "";
-  view.innerHTML = `
-    <section class="mini-page">
-      <div class="panel-head">
-        <div>
-          <p class="eyebrow">игры</p>
-          <h2>${selectedGame ? escapeHtml(selectedGame.title) : "Выберите игру"}</h2>
-        </div>
-        <div class="button-row">
-          ${selectedGame ? `<button class="secondary-button" id="backToMiniMenu" type="button">К списку игр</button>` : ""}
-          <button class="secondary-button" id="supportFromMini" type="button">Поддержать проект</button>
-          <button class="secondary-button" id="backToCatalogFromMini" type="button">Назад в каталог</button>
-        </div>
-      </div>
-      ${selectedGame
-        ? `<iframe class="mini-frame" title="${escapeHtml(selectedGame.title)}" src="${escapeHtml(safeRelativeUrl(selectedGame.path))}"></iframe>`
-        : `
-          <nav class="game-submenu" aria-label="Разделы игр">
-            ${groupedMiniGames().map((category) => `<a href="#cabinet-games-${escapeHtml(category.id)}">${escapeHtml(category.title)}</a>`).join("")}
-          </nav>
-          ${gameCategorySections}
-        `}
-      ${teacherBuilder}
-    </section>
-  `;
-  view.querySelectorAll(".open-mini-game").forEach((button) => {
-    button.addEventListener("click", () => {
-      const game = miniGames.find((item) => item.slug === button.dataset.game);
-      if (game) window.location.href = safeRelativeUrl(`/games/${game.slug}/index.html`);
-    });
-  });
-  view.querySelector("#backToMiniMenu")?.addEventListener("click", () => {
-    state.currentMiniGame = null;
-    history.pushState(null, "", "/apps/mini");
-    renderMiniActivity();
-  });
-  view.querySelector("#supportFromMini").addEventListener("click", () => navigate("/donate"));
-  view.querySelector("#backToCatalogFromMini").addEventListener("click", () => {
-    state.currentActivity = null;
-    state.currentMiniGame = null;
-    history.pushState(null, "", "/apps");
-    renderDashboard();
-  });
-  if (!selectedGame && state.user.role === "teacher") setupGameBuilder();
-}
-
-async function setupGameBuilder() {
-  const builder = view.querySelector("#gameBuilder");
-  if (!builder) return;
-
-  const sourceSelect = builder.querySelector("#gameSourceSelect");
-  const mechanicSelect = builder.querySelector("[data-game-mechanic-select]");
-  const rulePicker = builder.querySelector("#gameRulePicker");
-  const result = builder.querySelector("#gameBuilderResult");
-  const link = builder.querySelector("#gameBuilderLink");
-  let sources = [];
-  let mechanics = [];
-  let selectedGameRuleIds = new Set();
-
-  function showResult(data) {
-    result.classList.remove("hidden");
-    link.href = data.url;
-    link.textContent = data.url;
-  }
-
-  function showBuilderError(id, message) {
-    builder.querySelector(id).textContent = message || "";
-  }
-
-  function sourceRules() {
-    const source = sources.find((item) => item.id === sourceSelect.value);
-    const mechanic = mechanicSelect.value;
-    return Object.fromEntries(Object.entries(source?.rules || {})
-      .map(([category, rules]) => [category, rules
-        .filter((rule) => Number(rule.mechanic_counts?.[mechanic] || 0) > 0)
-        .map((rule) => ({ ...rule, count: Number(rule.mechanic_counts?.[mechanic] || 0) }))])
-      .filter(([, rules]) => rules.length));
-  }
-
-  function updateMechanicCompatibility() {
-    const note = builder.querySelector("[data-game-compatibility]");
-    const submit = builder.querySelector("#baseGameForm button[type='submit']");
-    const mechanic = mechanics.find((item) => item.id === mechanicSelect.value);
-    const incompatible = !sourceSelect.value || !(mechanic?.compatible_sources || []).includes(sourceSelect.value);
-    if (note) note.textContent = mechanicSelect.value === "autumn-leaves"
-        ? "В «Осени» варианты ответа берутся из набора: буквы, части слова или варианты написания. Выбранная механика применяется и при загрузке своего JSON."
-        : mechanicSelect.value === "butterflies"
-        ? "В «Бабочках» ученик самостоятельно вписывает букву, часть слова или вариант написания."
-        : "Показаны только базы, совместимые с выбранной механикой.";
-    if (submit) submit.disabled = incompatible;
-  }
-
-  function fillSources() {
-    const mechanic = mechanics.find((item) => item.id === mechanicSelect.value);
-    const compatible = new Set(mechanic?.compatible_sources || []);
-    const visibleSources = sources.filter((source) => compatible.has(source.id) &&
-      Object.values(source.rules || {}).flat().some((rule) => Number(rule.mechanic_counts?.[mechanicSelect.value] || 0) > 0));
-    sourceSelect.innerHTML = visibleSources
-      .map((source) => `<option value="${escapeHtml(source.id)}">${escapeHtml(source.title)}</option>`)
-      .join("");
-    selectedGameRuleIds = new Set();
-    fillRules();
-    updateMechanicCompatibility();
-  }
-
-  function updateGameRuleSummary() {
-    const rules = Object.values(sourceRules()).flat();
-    const selectedWords = rules
-      .filter((rule) => selectedGameRuleIds.has(rule.rule_id))
-      .reduce((sum, rule) => sum + rule.count, 0);
-    const summary = rulePicker.querySelector("[data-game-rule-summary]");
-    if (summary) summary.textContent = `${selectedGameRuleIds.size} подгрупп, ${selectedWords} слов`;
-    rulePicker.querySelectorAll("[data-game-rule-id]").forEach((checkbox) => {
-      checkbox.checked = selectedGameRuleIds.has(checkbox.dataset.gameRuleId);
-    });
-  }
-
-  function fillRules() {
-    const grouped = sourceRules();
-    const allRuleIds = Object.values(grouped).flat().map((rule) => rule.rule_id);
-    selectedGameRuleIds = new Set([...selectedGameRuleIds].filter((ruleId) => allRuleIds.includes(ruleId)));
-    if (!selectedGameRuleIds.size && allRuleIds.length) selectedGameRuleIds.add(allRuleIds[0]);
-
-    const groups = Object.entries(grouped).map(([category, rules]) => `
-      <div class="game-rule-group">
-        <button class="ghost-button game-rule-category" data-game-category="${escapeHtml(category)}" type="button">
-          ${escapeHtml(category)}
-        </button>
-        <div class="game-rule-checks">
-          ${rules.map((rule) => `
-            <label class="rule-check">
-              <input type="checkbox" data-game-rule-id="${escapeHtml(rule.rule_id)}" ${selectedGameRuleIds.has(rule.rule_id) ? "checked" : ""} />
-              <span>${escapeHtml(rule.rule_name)}</span>
-              <b>${rule.count}</b>${state.bootstrap.rule_progress?.[rule.rule_id] ? `<small>${state.bootstrap.rule_progress[rule.rule_id].solved}/${state.bootstrap.rule_progress[rule.rule_id].total} · ${pct(state.bootstrap.rule_progress[rule.rule_id].solved,state.bootstrap.rule_progress[rule.rule_id].total)}</small>` : ''}
-            </label>
-          `).join("")}
-        </div>
-      </div>
-    `).join("");
-
-    rulePicker.innerHTML = `
-      <div class="game-rule-head">
-        <b>Рубрики</b>
-        <span class="muted" data-game-rule-summary></span>
-      </div>
-      ${groups || `<p class="muted">В этой базе нет рубрик.</p>`}
-    `;
-
-    rulePicker.querySelectorAll("[data-game-category]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const category = button.dataset.gameCategory;
-        const ids = (grouped[category] || []).map((rule) => rule.rule_id);
-        const allSelected = ids.length > 0 && ids.every((ruleId) => selectedGameRuleIds.has(ruleId));
-        ids.forEach((ruleId) => {
-          if (allSelected) {
-            selectedGameRuleIds.delete(ruleId);
-          } else {
-            selectedGameRuleIds.add(ruleId);
-          }
-        });
-        updateGameRuleSummary();
-      });
-    });
-
-    rulePicker.querySelectorAll("[data-game-rule-id]").forEach((checkbox) => {
-      checkbox.addEventListener("change", () => {
-        if (checkbox.checked) {
-          selectedGameRuleIds.add(checkbox.dataset.gameRuleId);
-        } else {
-          selectedGameRuleIds.delete(checkbox.dataset.gameRuleId);
-        }
-        updateGameRuleSummary();
-      });
-    });
-
-    updateGameRuleSummary();
-  }
-
-  try {
-    const data = await api("/api/games/sources");
-    sources = data.sources || [];
-    mechanics = data.mechanics || [];
-    mechanicSelect.innerHTML = mechanics
-      .map((mechanic) => `<option value="${escapeHtml(mechanic.id)}" ${mechanic.available ? "" : "disabled"}>${escapeHtml(mechanic.title)}${mechanic.available ? "" : " — скоро"}</option>`)
-      .join("");
-    fillSources();
-  } catch (error) {
-    showBuilderError("#baseGameError", error.message);
-  }
-
-  sourceSelect.addEventListener("change", () => {
-    selectedGameRuleIds = new Set();
-    fillRules();
-    updateMechanicCompatibility();
-  });
-  mechanicSelect.addEventListener("change", fillSources);
-
-  builder.querySelector("#baseGameForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    showBuilderError("#baseGameError", "");
-    const form = new FormData(event.currentTarget);
-    try {
-      const data = await api("/api/games/sets/from-base", {
-        method: "POST",
-        body: JSON.stringify({
-          mechanic: form.get("mechanic"),
-          source: form.get("source"),
-          rule_ids: [...selectedGameRuleIds],
-          count: Number(form.get("count") || 10),
-          title: form.get("title"),
-          description: form.get("description"),
-        }),
-      });
-      showResult(data);
-    } catch (error) {
-      showBuilderError("#baseGameError", error.message);
-    }
-  });
-
-  builder.querySelector("#uploadGameForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    showBuilderError("#uploadGameError", "");
-    const file = new FormData(event.currentTarget).get("file");
-    if (!file || !file.name) {
-      showBuilderError("#uploadGameError", "Выберите JSON-файл.");
-      return;
-    }
-    if (file.size > 200000) {
-      showBuilderError("#uploadGameError", "Файл слишком большой.");
-      return;
-    }
-    try {
-      const payload = JSON.parse(await file.text());
-      if (mechanicSelect.value === "autumn-leaves") payload.mechanic = "autumn-leaves";
-      const data = await api("/api/games/sets/upload-json", {
-        method: "POST",
-        body: JSON.stringify({ payload }),
-      });
-      showResult(data);
-    } catch (error) {
-      showBuilderError("#uploadGameError", error.message || "JSON не удалось прочитать.");
-    }
-  });
-
-  builder.querySelector("#copyGameLink").addEventListener("click", async () => {
-    if (!link.href) return;
-    const button = builder.querySelector("#copyGameLink");
-    const copied = await copyTextToClipboard(link.href);
-    button.textContent = copied ? "Ссылка скопирована" : "Не удалось скопировать";
-    setTimeout(() => {
-      button.textContent = "Скопировать ссылку";
-    }, 1800);
-  });
+  navigate('/games');
 }
 
 function renderSidebar() {
