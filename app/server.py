@@ -5373,7 +5373,7 @@ def product_online_url(product: dict[str, str]) -> str:
 def game_entry_file(slug: str, relative_path: str) -> str:
     clean_path = relative_path or "index.html"
     if slug == "espresso-murder" and clean_path == "index.html":
-        return "Расширенная версия.html"
+        return "Расширенная игра — 5 комплектов.html"
     if slug == "oh-yo" and clean_path in {"", "index.html"}:
         return "Ох_ё_сказание о шипящих.html"
     if slug == "autumn-leaves" and clean_path == "index.html":

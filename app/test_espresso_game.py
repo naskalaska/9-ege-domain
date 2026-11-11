@@ -23,9 +23,9 @@ class EspressoRoutesTest(unittest.TestCase):
             with patch.object(server, 'record_public_game_visit'):
                 getattr(handler, method)('espresso-murder', 'index.html')
             body = handler.wfile.getvalue()
-            self.assertIn(b"espresso-case-v2", body)
-            self.assertNotIn(b"espresso-case-expanded-fixed-v1", body)
-            for filename in ('Расширенная версия.html', '%D0%A0%D0%B0%D1%81%D1%88%D0%B8%D1%80%D0%B5%D0%BD%D0%BD%D0%B0%D1%8F%20%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F.html', '../Расширенная версия.html'):
+            self.assertIn(b"espresso-basic-user-source-v4", body)
+            self.assertNotIn(b"espresso-expanded-user-source-v4", body)
+            for filename in ('Расширенная версия.html', '%D0%A0%D0%B0%D1%81%D1%88%D0%B8%D1%80%D0%B5%D0%BD%D0%BD%D0%B0%D1%8F%20%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F.html', '../Расширенная версия.html', 'Расширенная игра — 5 комплектов.html'):
                 blocked = self.handler('/games/espresso-murder/' + filename)
                 getattr(blocked, method)('espresso-murder', filename)
                 blocked.send_json.assert_called_once()
@@ -40,7 +40,7 @@ class EspressoRoutesTest(unittest.TestCase):
         self.assertEqual(server.PROTECTED_FULL_GAME_ROUTES[f'Full-{token}-espresso-murder'], 'espresso-murder')
         handler = self.handler(f'/Full-{token}-espresso-murder/index.html')
         handler.send_full_game_file('espresso-murder', 'index.html', protected_route=True)
-        self.assertIn(b'espresso-case-expanded-fixed-v1', handler.wfile.getvalue())
+        self.assertIn(b'espresso-expanded-user-source-v4', handler.wfile.getvalue())
         server.validate_delivery_link(server.SHOP_PRODUCTS['espresso-murder']['default_url'])
 
     def test_all_four_product_images_are_public(self):
