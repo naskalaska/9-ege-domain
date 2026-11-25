@@ -35,7 +35,9 @@ from ege_speech_module import ege4 as ege4_module, ege6 as ege6_module, ege7 as 
 import ege_speech_mix as ege_speech_mix_module
 import statistics_module
 import learning_module
+import courses
 import student_workspace
+import espresso_web
 import game_assignments
 import game_tracking
 from datetime import datetime, timedelta, timezone
@@ -1900,6 +1902,7 @@ def ensure_app_db() -> None:
         ensure_column(con, "paid_entities", "sale_amount", "TEXT")
         ensure_column(con, "paid_entities", "sale_ends_at", "TEXT")
         seed_paid_entities(con)
+        courses.seed(con, sys.modules[__name__])
         seed_gift_only_games(con)
         seed_documents(con)
         ensure_service_admin(con)
@@ -3499,6 +3502,8 @@ def delete_user_records(con: sqlite3.Connection, user_id: str) -> None:
     con.execute('''DELETE FROM assigned_test_checks WHERE student_id=?
         OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)''',(user_id,user_id))
     con.execute("DELETE FROM game_results WHERE user_id=?", (user_id,))
+    for table in ('course_members', 'course_progress', 'course_messages', 'course_homework'):
+        con.execute(f'DELETE FROM {table} WHERE user_id=?', (user_id,))
     con.execute("DELETE FROM assigned_test_students WHERE student_id=? OR test_id IN (SELECT id FROM assigned_tests WHERE teacher_id=?)", (user_id, user_id))
     con.execute("DELETE FROM assigned_tests WHERE teacher_id=?", (user_id,))
     con.execute("DELETE FROM student_group_members WHERE student_id=? OR group_id IN (SELECT id FROM student_groups WHERE teacher_id=?)", (user_id, user_id))
@@ -4446,7 +4451,7 @@ def safe_description_json(value: Any) -> str:
     if not isinstance(data, dict):
         raise ValueError("Описание товара должно быть объектом.")
 
-    text_keys = {"shortDescription", "fullDescription", "format", "delivery"}
+    text_keys = {"shortDescription", "fullDescription", "format", "delivery", "refund", "registration"}
     list_keys = {"tryBefore", "package", "suitableFor", "howItWorks", "requirements", "adaptation", "important"}
     clean: dict[str, Any] = {}
     for key in text_keys:
@@ -4970,9 +4975,11 @@ def update_paid_entity_description(admin: dict[str, Any], payload: dict[str, Any
     if not product_id:
         raise ValueError("Не указана платная сущность.")
     with db() as con:
-        row = con.execute("SELECT product_id FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
+        row = con.execute("SELECT product_id,description_json FROM paid_entities WHERE product_id = ?", (product_id,)).fetchone()
         if not row:
             raise LookupError("Платная сущность не найдена.")
+        if product_id == courses.PRODUCT:
+            description_json=json.dumps({**json.loads(row['description_json'] or '{}'),**json.loads(description_json)},ensure_ascii=False)
         con.execute(
             """
             UPDATE paid_entities
@@ -5093,6 +5100,10 @@ def send_email_message(message: EmailMessage) -> None:
 
 
 def product_email_note(product: dict[str, str]) -> str:
+    if product.get('id') == courses.PRODUCT or product.get('product_id') == courses.PRODUCT:
+        return '\nЗарегистрируйтесь на сайте в роли «Учитель» с почтой, указанной при оплате, и войдите в аккаунт. Курс находится по ссылке «Мой курс». В первом уроке доступны материалы, видео, чат и форма вопросов.\n'
+    if product.get('id') == 'personal-consultation' or product.get('product_id') == 'personal-consultation':
+        return '\nДля согласования времени и задач консультации напишите в MAX: '+courses.CONTACT+' или на anastasia@dimitrieva-av.ru.\n'
     if "email_note" in product:
         return str(product["email_note"])
     slug = str(product.get("slug") or "")
@@ -5850,7 +5861,7 @@ def create_yookassa_payment(shop_id: str, secret_key: str, product: dict[str, st
         "capture": True,
         "confirmation": {
             "type": "redirect",
-            "return_url": f"https://dimitrieva-av.ru/shop/thanks?order={order_uid}",
+            "return_url": f"{APP_BASE_URL}/shop/thanks?order={order_uid}",
         },
         "description": product["title"],
         "metadata": {
@@ -5871,7 +5882,7 @@ def create_yookassa_payment(shop_id: str, secret_key: str, product: dict[str, st
                     "amount": {"value": item["amount"], "currency": item["currency"]},
                     "vat_code": 1,
                     "payment_mode": "full_payment",
-                    "payment_subject": "commodity",
+                    "payment_subject": "service" if item["id"] in {courses.PRODUCT, "personal-consultation"} else "commodity",
                 }
                 for item in items
             ],
@@ -5989,6 +6000,9 @@ def _deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "
         order = con.execute("SELECT * FROM shop_orders WHERE order_uid = ?", (order_uid,)).fetchone()
     if not order or not payment_id or payment_id != order["yookassa_payment_id"]:
         raise ValueError("Платёж не найден.")
+    if order['status']=='paid':
+        with db() as con:
+            courses.record_paid_order(con,order_uid,sys.modules[__name__])
     if not verify_only and (order["email_sent"] or order["delivery_status"] in {"sent", "manual"}):
         return delivery_result(order_uid)
     if order["status"] != "paid" or order["payment_verified_id"] != payment_id:
@@ -6012,6 +6026,7 @@ def _deliver_product_order(order_uid: str, payment_id: str, raw_payload: str = "
             con.execute("""UPDATE shop_orders SET status = 'paid', paid_at = COALESCE(paid_at, ?),
                            payment_verified_id = ?, raw_webhook = COALESCE(?, raw_webhook) WHERE order_uid = ?""",
                         (now_iso(), payment_id, raw_payload or None, order_uid))
+            courses.record_paid_order(con,order_uid,sys.modules[__name__])
     return delivery_result(order_uid) if verify_only else attempt_order_delivery(order_uid)
 
 
@@ -6043,6 +6058,17 @@ def validate_delivery_link(url: str) -> None:
         route = parts[0]
         root = None
         relative = ''
+        if parsed.path.rstrip('/') == '/courses/neurovisual':
+            # The purchased course is an authenticated application route.
+            # Do not request it anonymously or mistake it for a static file.
+            required=[STATIC_DIR/'course.html',Path(courses.__file__),
+                      Path(courses.__file__).parent/'course_homework_source.json',
+                      *(STATIC_DIR/name for name in ['course.js','course-native.js','course-native.css','course-admin.js','course.css']),
+                      *(Path(courses.__file__).parent/'course-media'/name for name in courses.INFOGRAPHICS),
+                      *(courses.SOURCE/name for name in [*courses.FILES,*courses.EXTRAS,'karta_kursa_vizual.html'])]
+            if not all(path.is_file() for path in required):
+                raise ValueError('Материалы курса не загружены полностью.')
+            return
         if route == 'shop-media':
             root, relative = SHOP_MEDIA_DIR, '/'.join(parts[1:])
         elif route == 'full-games' or route.startswith('Full-'):
@@ -6145,6 +6171,11 @@ def attempt_order_delivery(order_uid: str, method: str = "automatic", actor: str
             for url in filter(None, urls):
                 if not renew_delivery_claim(order_uid, token):
                     return delivery_result(order_uid)
+                # This service delivers contact instructions, including email.
+                # MAX blocks server probes; that must not suppress the receipt
+                # of those instructions after a verified consultation payment.
+                if product.get('id') == 'personal-consultation' and url == courses.CONTACT:
+                    continue
                 validate_delivery_link(url)
         # Individually reviewed legacy purchases retain this reviewed version.
         with closing(db()) as con, con:
@@ -6462,7 +6493,8 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(STATIC_DIR), **kwargs)
 
     def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store")
+        if not self.path.startswith("/espresso-media/"):
+            self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
     def guess_type(self, path: str) -> str:
@@ -6527,7 +6559,8 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if is_entry_file:
             record_public_game_visit(slug, None, self.path)
-        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
+        source_body = espresso_web.web_body(file_path, DATA_DIR / "espresso-media") if slug == "espresso-murder" and is_entry_file else file_path.read_bytes()
+        body = autumn_web_body(slug, source_body) if is_entry_file else source_body
         if is_entry_file:
             body = inject_demo_notice(slug, body)
             body = inject_game_menu_link(body)
@@ -6571,7 +6604,8 @@ class Handler(SimpleHTTPRequestHandler):
         if is_entry_file:
             query = parse_qs(urlparse(self.path).query)
             record_public_game_visit(slug, (query.get("set") or [None])[0], self.path)
-        body = autumn_web_body(slug, file_path.read_bytes()) if is_entry_file else file_path.read_bytes()
+        source_body = espresso_web.web_body(file_path, DATA_DIR / "espresso-media") if slug == "espresso-murder" and is_entry_file else file_path.read_bytes()
+        body = autumn_web_body(slug, source_body) if is_entry_file else source_body
         if is_entry_file:
             if slug == "orthoshooting":
                 body = body.replace(b"<script src=\"game.js\">", b"<script>window.ORTHOSHOOTING_DEMO_LIMIT=20;</script><script src=\"game.js\">")
@@ -6630,7 +6664,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not file_path.is_file():
             self.send_json({"error": "Game file not found"}, HTTPStatus.NOT_FOUND)
             return
-        body = file_path.read_bytes()
+        body = espresso_web.web_body(file_path, DATA_DIR / "espresso-media") if slug == "espresso-murder" and is_entry_file else file_path.read_bytes()
         if is_entry_file and not self.path.startswith('/assigned-games/'):
             body = autumn_web_body(slug,body)
         if is_entry_file:
@@ -6711,7 +6745,55 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         try:
-            if parsed.path == "/api/bootstrap":
+            if parsed.path in {'/api/courses/asset','/api/courses/video'}:
+                params = parse_qs(parsed.query)
+                path = courses.media_file(sys.modules[__name__],self.require_user_with_consents(),params.get('id',[''])[0],parsed.path.endswith('/video'))
+                size = path.stat().st_size
+                start, end = 0, size-1
+                range_header = self.headers.get('Range','')
+                if range_header:
+                    match = re.fullmatch(r'bytes=(\d*)-(\d*)',range_header)
+                    if not match or (not match[1] and not match[2]):
+                        self.send_error(416); return
+                    start = int(match[1]) if match[1] else max(0,size-int(match[2]))
+                    end = min(int(match[2]),size-1) if match[1] and match[2] else size-1
+                    if start > end or start >= size:
+                        self.send_response(416); self.send_header('Content-Range',f'bytes */{size}'); self.end_headers(); return
+                self.send_response(206 if range_header else 200)
+                self.send_header('Content-Type',mimetypes.guess_type(path.name)[0] or 'application/octet-stream')
+                self.send_header('Accept-Ranges','bytes')
+                self.send_header('Cache-Control','private, no-store')
+                self.send_header('X-Content-Type-Options','nosniff')
+                self.send_header('Content-Length',str(end-start+1))
+                if range_header: self.send_header('Content-Range',f'bytes {start}-{end}/{size}')
+                self.end_headers()
+                with path.open('rb') as media:
+                    media.seek(start)
+                    remaining = end-start+1
+                    while remaining:
+                        chunk=media.read(min(1024*1024,remaining))
+                        if not chunk: break
+                        self.wfile.write(chunk); remaining-=len(chunk)
+            elif parsed.path in {"/api/courses", "/api/courses/admin"}:
+                self.send_json(courses.overview(sys.modules[__name__], self.require_user_with_consents(), parsed.path.endswith('/admin')))
+            elif parsed.path == '/api/courses/content':
+                params = parse_qs(parsed.query)
+                result = courses.content(sys.modules[__name__], self.require_user_with_consents(), params.get('resource',['map'])[0], params.get('editor',[''])[0] == '1')
+                if isinstance(result, list):
+                    self.send_json({'blocks':result})
+                else:
+                    body = result.encode('utf-8')
+                    self.send_response(200)
+                    self.send_header('Content-Type','text/html; charset=utf-8')
+                    self.send_header('Content-Security-Policy', "sandbox allow-scripts allow-forms allow-downloads allow-popups; frame-ancestors 'self'")
+                    self.send_header('Cache-Control','no-store')
+                    self.send_header('Content-Length',str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+            elif parsed.path in {'/courses/neurovisual','/admin/courses'}:
+                self.path = '/course.html'
+                super().do_GET()
+            elif parsed.path == "/api/bootstrap":
                 self.send_json(activity_bootstrap("ege9", self.current_user()))
             elif parsed.path == "/api/documents/privacy":
                 self.send_json(active_document("privacy_policy"))
@@ -6824,6 +6906,22 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": "Game not found"}, HTTPStatus.NOT_FOUND)
                     return
                 self.send_full_game_file(slug, parts[1] if len(parts) > 1 else "index.html", protected_route=True)
+            elif parsed.path.startswith('/espresso-media/'):
+                name = parsed.path.removeprefix('/espresso-media/')
+                if not espresso_web.ASSET_NAME.fullmatch(name):
+                    self.send_json({'error': 'Media not found'}, HTTPStatus.NOT_FOUND)
+                    return
+                asset = DATA_DIR / 'espresso-media' / name
+                if not asset.is_file():
+                    self.send_json({'error': 'Media not found'}, HTTPStatus.NOT_FOUND)
+                    return
+                body = asset.read_bytes()
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-Type', self.guess_type(str(asset)))
+                self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
             elif parsed.path.startswith("/shop-media/"):
                 self.send_shop_media_file(parsed.path.removeprefix("/shop-media/"))
             elif parsed.path.startswith("/images/"):
@@ -6888,7 +6986,9 @@ class Handler(SimpleHTTPRequestHandler):
             else:
                 raw_payload = ""
                 payload = parse_json_body(self)
-            if parsed.path in {"/api/login", "/api/auth/login"}:
+            if parsed.path == '/api/courses/action':
+                self.send_json(courses.action(sys.modules[__name__],self.require_user_with_consents(),payload))
+            elif parsed.path in {"/api/login", "/api/auth/login"}:
                 username = normalize_email(payload.get("email") or payload.get("username"))
                 password = str(payload.get("password") or "")
                 with db() as con:
@@ -6997,7 +7097,10 @@ class Handler(SimpleHTTPRequestHandler):
                     self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/shop/confirm-return":
                 try:
-                    self.send_json(confirm_order_return(payload))
+                    result = confirm_order_return(payload)
+                    if result.get('status') == 'paid' and any(p['id'] == courses.PRODUCT for p in order_products(str(payload.get('order_uid') or ''))):
+                        result['course_url'] = '/courses/neurovisual'
+                    self.send_json(result)
                 except RuntimeError as error:
                     self.send_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
             elif parsed.path == "/api/shop/resend-by-email":

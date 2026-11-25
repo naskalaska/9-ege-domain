@@ -21,3 +21,10 @@ Backup streamlit/
 можно убрать из проекта/
 HTML-игры — полные офлайн-версии/
 maintenance/offline-qa/
+tmp/
+temp/
+app/test_data/
+.agents/
+.codex/
+# Course pages use externally embedded VK videos.
+app/Нейровизуал для учителя/*.mp4

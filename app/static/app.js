@@ -1347,7 +1347,7 @@ function currentShopProducts() {
         promoNote: product.sale_active ? `Цена по акции до ${formatSaleEnd(product.sale_ends_at)}` : "",
         image,
         images: [image],
-        demoUrl: product.online_url || "",
+        demoUrl: ["neurovisual", "personal-consultation"].includes(product.slug) ? "" : (product.online_url || ""),
         demoLabel: "Открыть демо",
         shortDescription: description.shortDescription || "Цифровой учебный материал.",
         fullDescription: description.fullDescription || "",
@@ -1608,6 +1608,7 @@ function setShellMode(mode = "app") {
 }
 
 function navigate(path) {
+  if (path.startsWith("/courses/") || path === "/admin/courses") { location.href = path; return; }
   if (state.currentSession?.assignment_id && !state.currentSession.result) {
     return leaveAssignedWorkspace().then(() => {
       state.currentSession = null;
@@ -1839,7 +1840,7 @@ function renderPublicTopActions(active = "") {
     <button class="ghost-button public-nav-link" data-route="${state.user ? "/apps" : "/login"}" type="button">Тренажёры</button>
     <button class="ghost-button public-nav-link" data-route="/games" type="button">Игры</button>
     <button class="ghost-button public-nav-link" data-route="/shop" type="button">Магазин</button>
-    <button class="ghost-button public-nav-link" data-route="/services" type="button">Услуги</button>
+    <button class="ghost-button public-nav-link" data-route="/services" type="button">Услуги</button><button class="ghost-button public-nav-link" data-route="/courses/neurovisual" type="button">Мой курс</button>
     <button class="ghost-button public-nav-link" data-route="/donate" type="button">Поддержать</button>
     ${teacherGamesButton}
     <button class="primary-button public-nav-login" data-route="${state.user ? "/apps" : "/login"}" type="button">
@@ -1982,6 +1983,10 @@ function renderLogin() {
       codeLabel.classList.toggle("role-hidden", role === "teacher");
     });
   });
+  if (new URLSearchParams(location.search).get('role') === 'teacher' || sessionStorage.getItem('course_next')?.startsWith('/courses/')) {
+    const teacherRole = document.querySelector('input[name="role"][value="teacher"]');
+    if (teacherRole) { teacherRole.checked = true; teacherRole.dispatchEvent(new Event('change')); }
+  }
   document.querySelector("#registerForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -2203,7 +2208,7 @@ function renderLandingPage(scrollTarget = "") {
             <article class="direction-card services-direction" tabindex="0" role="button" aria-expanded="false" data-direction="services">
               <div class="direction-cover"></div><span class="direction-number">04</span>
               <div class="direction-title"><small>Персональная работа</small><h3>Услуги</h3></div>
-              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Скоро в продаже</small><h4>Услуги и обучение</h4><p>Личная консультация, отрисовка визуала и обучение работе с ИИ.</p><button class="direction-link" data-route="/services" type="button">Перейти <span>→</span></button></div>
+              <div class="direction-detail" aria-hidden="true"><button type="button" class="direction-close" aria-label="Закрыть описание">×</button><small>Консультация и курс</small><h4>Услуги и обучение</h4><p>Личная консультация, отрисовка визуала и обучение работе с ИИ.</p><button class="direction-link" data-route="/services" type="button">Перейти <span>→</span></button></div>
             </article>
           </div>
         </div>
@@ -2260,38 +2265,13 @@ function bindLandingDirections(root) {
   });
 }
 
-function renderServicesPage() {
-  renderPublicTopActions("/services");
-  view.innerHTML = `
-    <section class="public-page services-page">
-      <header class="services-head">
-        <p class="eyebrow">услуги</p>
-        <h2>От идеи — к готовому решению</h2>
-        <p class="public-page-lead">Три формата персональной работы. Все услуги пока готовятся к запуску.</p>
-      </header>
-      <div class="services-grid">
-        <article class="service-card service-featured">
-          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">01</span><div class="service-mark">”</div>
-          <p class="eyebrow">персональная работа</p><h3>Личная консультация</h3>
-          <p>Урок с полной проработкой материала и персональным маршрутом.</p>
-          <ul><li>Диагностика запроса</li><li>Разбор материала</li><li>Персональный маршрут</li></ul>
-        </article>
-        <article class="service-card">
-          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">02</span><div class="service-mark">✦</div>
-          <p class="eyebrow">визуальная концепция</p><h3>Отрисовка визуала</h3>
-          <p>Обложки, иллюстрации и оформление образовательного материала в едином стиле.</p>
-          <ul><li>Поиск визуального образа</li><li>Серия согласованных материалов</li><li>Подготовка к публикации</li></ul>
-        </article>
-        <article class="service-card">
-          <span class="service-soon-badge">Скоро в продаже</span><span class="service-number">03</span><div class="service-mark">ИИ</div>
-          <p class="eyebrow">практическое обучение</p><h3>Обучение ИИ</h3>
-          <p>Практическое обучение работе с ИИ для подготовки уроков, материалов и визуала.</p>
-          <ul><li>Работа с запросами</li><li>Подготовка учебных материалов</li><li>Безопасный рабочий процесс</li></ul>
-        </article>
-      </div>
-    </section>
-    ${publicFooter()}
-  `;
+async function renderServicesPage() {
+  await loadShopProductOverrides();
+  renderPublicTopActions('/services');
+  const consultation = shopProductOverrides?.get('personal-consultation');
+  const course = shopProductOverrides?.get('neurovisual');
+  const card = (product, number, fallback) => product ? `<article class="service-card service-featured"><span class="service-number">${number}</span><p class="eyebrow">${number === '01' ? 'персональная работа' : 'практическое обучение'}</p><h3>${escapeHtml(product.title)}</h3><p>${escapeHtml(product.description?.shortDescription || fallback)}</p><p class="product-price">${product.old_price ? `<span class="old-price">${escapeHtml(product.old_price)}</span> ` : ''}${escapeHtml(product.price)}</p>${product.sale_active ? `<p>Акция до ${escapeHtml(formatSaleEnd(product.sale_ends_at))}</p>` : ''}<button class="primary-button" data-route="/shop/${product.slug}" type="button">Подробнее и оплатить</button></article>` : '';
+  view.innerHTML = `<section class="public-page services-page"><header class="services-head"><p class="eyebrow">услуги и обучение</p><h2>От идеи — к готовому решению</h2><p class="public-page-lead">Личная консультация и практический курс по созданию учебного визуала.</p><button class="secondary-button" data-route="/courses/neurovisual" type="button">Мой курс</button></header><div class="services-grid">${card(consultation,'01','')}${card(course,'02','')}<article class="service-card"><span class="service-soon-badge">Скоро в продаже</span><h3>Отрисовка визуала</h3><p>Обложки, иллюстрации и оформление образовательного материала в едином стиле.</p></article></div><section class="course-contact"><h3>Обсудить подробнее</h3><p><a href="https://max.ru/u/f9LHodD0cOIeh46SDnpskQ5L0kGGxZgbDCU90obzbA4ArSzdFnpt-8Tq5pk" target="_blank" rel="noopener">Написать в MAX</a> · <a href="mailto:anastasia@dimitrieva-av.ru">anastasia@dimitrieva-av.ru</a></p></section></section>${publicFooter()}`;
   bindPublicNavigation(view);
 }
 
@@ -2727,6 +2707,10 @@ const productDescriptionFields = [
   ["important", "Важно", "list"],
 ];
 
+function productDescriptionFieldsFor(product) {
+  return product.slug === 'neurovisual' ? [...productDescriptionFields, ['registration','Регистрация учителя','text'], ['refund','Возврат','text']] : productDescriptionFields;
+}
+
 function productFieldValue(product, key, kind) {
   const value = product[key];
   return kind === "list" ? (Array.isArray(value) ? value : []).join("\n") : String(value || "");
@@ -2738,7 +2722,7 @@ function renderProductAdminEditor(product) {
     <div class="product-admin-editor">
       <button class="ghost-button product-edit-toggle" type="button" data-product-edit-toggle>✎ Редактировать описание</button>
       <form class="product-description-form hidden" data-product-id="${escapeHtml(product.product_id)}">
-        ${productDescriptionFields.map(([key, label, kind]) => `
+        ${productDescriptionFieldsFor(product).map(([key, label, kind]) => `
           <label>${escapeHtml(label)}
             <textarea name="${escapeHtml(key)}" rows="${kind === "list" ? 5 : 3}">${escapeHtml(productFieldValue(product, key, kind))}</textarea>
           </label>
@@ -2775,7 +2759,7 @@ async function renderShopProductPage(slug) {
           ${renderProductAdminEditor(product)}
           <div class="product-price">${price}</div>
           ${product.promoNote ? `<div class="shop-notice">${escapeHtml(product.promoNote)}</div>` : ""}
-          <div class="shop-notice">После оплаты ссылка на материал придёт на указанную электронную почту.</div>
+          <div class="shop-notice">${product.slug === "neurovisual" ? "После оплаты откроется стартовая страница курса. Зарегистрируйтесь на сайте в роли «Учитель» с почтой покупки, чтобы отслеживать свои материалы и прогресс. Ссылка также придёт письмом." : product.slug === "personal-consultation" ? "После оплаты напишите в MAX или на anastasia@dimitrieva-av.ru, чтобы согласовать время и задачи консультации." : "После оплаты ссылка на материал придёт на указанную электронную почту."}</div>
           <div class="shop-product-actions">
             ${product.maxOnly
               ? `<a class="secondary-button public-play-link" href="mailto:anastasia@dimitrieva-av.ru?subject=${encodeURIComponent(product.title)}">Уточнить MAX-канал</a>`
@@ -2793,6 +2777,8 @@ async function renderShopProductPage(slug) {
         ${renderProductBlock("Формат", product.format)}
         ${renderProductBlock("Что понадобится для использования", product.requirements)}
         ${renderProductBlock("Как получить после оплаты", product.delivery)}
+        ${renderProductBlock("Регистрация учителя", product.registration)}
+        ${renderProductBlock("Возврат", product.refund).replaceAll("anastasia@dimitrieva-av.ru", '<a href="mailto:anastasia@dimitrieva-av.ru">anastasia@dimitrieva-av.ru</a>')}
         ${renderProductBlock("Помощь с адаптацией", product.adaptation)}
         ${renderProductBlock("Важно", product.important)}
       </div>
@@ -2819,7 +2805,7 @@ function bindProductAdminEditor(root = document, product) {
     const status = form.querySelector("[data-product-edit-status]");
     const formData = new FormData(form);
     const description = {};
-    productDescriptionFields.forEach(([key, _label, kind]) => {
+    productDescriptionFieldsFor(product).forEach(([key, _label, kind]) => {
       const value = String(formData.get(key) || "").trim();
       description[key] = kind === "list"
         ? value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
@@ -3162,10 +3148,13 @@ async function confirmReturnedShopOrder(orderUid) {
       method: "POST",
       body: JSON.stringify({ order_uid: orderUid }),
     });
+    if (data.status === "paid" && data.course_url) { location.href = data.course_url; return; }
     if (data.email_sent) {
       status.textContent = "Платёж подтверждён, письмо с материалом отправлено.";
+      if (data.course_url) { location.href = data.course_url; return; }
     } else if (data.status === "pending" || data.status === "waiting_for_capture") {
       status.textContent = "Платёж ещё обрабатывается. Письмо придёт после подтверждения оплаты.";
+      setTimeout(() => { if (view.contains(status) && location.pathname === "/shop/thanks") confirmReturnedShopOrder(orderUid); }, 5000);
     } else if (data.status === "canceled") {
       status.textContent = "Платёж не был завершён.";
     } else {
@@ -3287,6 +3276,8 @@ function miniGameFromPath() {
 }
 
 async function restoreSession() {
+  const courseNext = new URLSearchParams(location.search).get('next');
+  if (courseNext && (courseNext.startsWith('/courses/') || courseNext === '/admin/courses')) sessionStorage.setItem('course_next',courseNext);
   await loadBootstrap();
   if (window.location.pathname === "/privacy") {
     await renderDocumentPage("privacy");
@@ -3322,7 +3313,7 @@ async function restoreSession() {
     return;
   }
   if (window.location.pathname === "/services") {
-    renderServicesPage();
+    await renderServicesPage();
     return;
   }
   if (window.location.pathname === "/shop") {
@@ -3380,6 +3371,8 @@ async function restoreSession() {
     return;
   }
   if (window.location.pathname === "/login") {
+    const next = new URLSearchParams(location.search).get('next');
+    if (next && (next.startsWith('/courses/') || next === '/admin/courses')) { location.href = next; return; }
     history.replaceState(null, "", "/apps");
   }
   if (window.location.pathname === "/apps/statistics") {
@@ -3417,6 +3410,8 @@ async function restoreSession() {
 }
 
 function renderDashboard() {
+  const courseNext = sessionStorage.getItem('course_next');
+  if (courseNext && state.user && !userNeedsConsent()) { sessionStorage.removeItem('course_next'); location.href = courseNext; return; }
   clearTimeout(assignmentSaveTimer);
   if (state.currentSession?.assignment_id) state.currentSession = null;
   renderTopActions();
@@ -4979,6 +4974,7 @@ function renderAdminContent(data, closeButton = "") {
       <div class="stat"><b>${gameStats.opens || 0}</b><span>открытий игр</span></div>
     </div>
     <div class="admin-tabs" role="tablist">
+      <a class="secondary-button" href="/admin/courses">Управление курсами</a>
       <button class="secondary-button admin-tab active" data-admin-section="online" type="button">Сейчас на сайте</button>
       <button class="secondary-button admin-tab" data-admin-section="activity" type="button">Что решали</button>
       <button class="secondary-button admin-tab" data-admin-section="games" type="button">Созданные игры</button>

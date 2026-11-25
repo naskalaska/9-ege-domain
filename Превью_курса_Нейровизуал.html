@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Превью курса · Нейровизуал</title><style>body{margin:0;padding:30px 18px;background:#f5f9fd;color:#173c69;font:16px/1.6 system-ui,sans-serif}main{max-width:760px;margin:auto}h1{font:36px Georgia,serif}a{color:#2862a1}[hidden]{display:none!important}</style></head>
+<body><main><p id="status" role="status">Открываем карту курса…</p><section id="instructions" hidden><h1>Превью курса</h1><p>В папке <b>C:\Users\anast\.vscode\9_Ege</b> дважды нажмите <b>«Запустить превью курса.cmd»</b>. Окно запуска оставьте открытым.</p><p>В браузере откроется сама карта курса. Все семь занятий доступны. В шапке карты есть небольшая ссылка <b>«Превью · управление курсом»</b> для перехода в админку; в админке — кнопка возврата к карте от лица участника.</p><p>Ответы, переписка и изменения материалов сохраняются в отдельной базе превью. Настроенные группы и даты открытия уроков сохраняются между запусками. Реальные оплаты отключены.</p><p>Если запуск уже выполнен, <a href="http://localhost:8098/course-preview">откройте превью</a>.</p></section></main>
+<script>
+(async()=>{
+ const status=document.querySelector('#status');
+ if(location.protocol==='file:'){status.hidden=true;document.querySelector('#instructions').hidden=false;return;}
+ try{
+  const mode=new URLSearchParams(location.search).get('mode')==='admin'?'admin':'student';
+  const response=await fetch('/api/course-preview/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:mode})});
+  const data=await response.json();if(!response.ok)throw Error(data.error);
+  localStorage.setItem('ege_token',data.token);localStorage.setItem('course_preview','1');const lesson=Number(new URLSearchParams(location.search).get('lesson')||1);location.replace(mode==='admin'?'/admin/courses?lesson='+lesson:'/courses/neurovisual'+(new URLSearchParams(location.search).has('lesson')?'?lesson='+lesson:''));
+ }catch(error){status.textContent=error.message;document.querySelector('#instructions').hidden=false;}
+})();
+</script></body></html>

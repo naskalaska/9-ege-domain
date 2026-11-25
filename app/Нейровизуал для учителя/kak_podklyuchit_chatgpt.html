@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Как подключить ChatGPT — памятка участника курса</title>
+<style>
+:root{--ink:#25243a;--muted:#68677d;--violet:#3973b6;--violet2:#e5ecf5;--orange:#a5222c;--paper:#f7f5fb;--white:#fff;--line:#dee7f2;--warning:#e8eef6;--warnline:#8eb1db;--shadow:0 12px 35px rgba(46,31,75,.075)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);font:16px/1.68 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink)}a{color:#3366a2;text-underline-offset:3px}a:hover{color:#a5222c}button{font:inherit} .wrap{width:min(1080px,calc(100% - 36px));margin:0 auto}
+.hero{background:linear-gradient(125deg,#1c395a 0%,#3366a1 66%,#3a74b8 100%);color:#fff;position:relative;overflow:hidden;padding:74px 0 70px}.hero:before,.hero:after{content:"";position:absolute;border:2px solid #ffffff20;border-radius:50%;pointer-events:none}.hero:before{width:380px;height:380px;right:-100px;top:-130px}.hero:after{width:230px;height:230px;right:150px;bottom:-160px}.hero .wrap{position:relative;z-index:1}.eyebrow{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;background:#ffffff22;border:1px solid #ffffff33;padding:7px 14px;border-radius:99px}.hero h1{font-size:clamp(36px,6vw,62px);line-height:1.08;letter-spacing:-.035em;max-width:750px;margin:20px 0}.hero p{max-width:700px;font-size:19px;color:#ecf1f7;margin:0}.hero .accent{width:80px;height:5px;background:var(--orange);border-radius:3px;margin:25px 0}
+.topnav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.topnav .wrap{display:flex;gap:10px;overflow-x:auto;align-items:center;padding:12px 0;scrollbar-width:thin}.topnav a{flex:0 0 auto;text-decoration:none;font-size:13px;font-weight:700;color:#2b5689;background:#eef3f8;border-radius:99px;padding:8px 13px}.topnav a:hover{background:#e0e9f3}
+main{padding:28px 0 56px}.intro{font-size:17px;color:#254b77;margin:0 0 26px}.section{background:white;border:1px solid var(--line);border-radius:22px;padding:clamp(22px,4vw,42px);margin:22px 0;box-shadow:var(--shadow)}.section-heading{display:flex;align-items:center;gap:13px;margin-bottom:14px}.num{flex:0 0 42px;width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:var(--violet2);color:var(--violet);font-weight:900;font-size:18px}.section h2{font-size:clamp(23px,3.3vw,31px);letter-spacing:-.025em;line-height:1.2;margin:0}.section h3{font-size:20px;line-height:1.35;margin:0 0 12px}.section p{margin:12px 0}.section ul,.section ol{padding-left:23px}.section li{padding:3px 0}.section li::marker{color:var(--violet)}.linkbtn{display:inline-flex;align-items:center;gap:8px;padding:12px 17px;border-radius:12px;background:var(--violet);color:white;text-decoration:none;font-weight:800;font-size:14px;margin:9px 0}.linkbtn:hover{background:#2a5587;color:white}.linkbtn.secondary{background:#eef3f8;color:#3265a0}.linkbtn.secondary:hover{background:#e1e9f3}.sub{font-size:13px;color:var(--muted)}.notice{background:var(--warning);border-left:5px solid var(--warnline);padding:18px 21px;border-radius:10px;margin:22px 0}.notice strong{color:#a5222c}.muted{color:var(--muted)}.stepbox{background:#f7f4fb;border:1px solid #e2eaf3;border-radius:14px;padding:17px 21px;margin-top:20px}.stepbox h4{font-size:15px;text-transform:uppercase;letter-spacing:.055em;color:#3265a0;margin:0 0 6px}.stepbox ol{margin:0}.cards{display:grid;gap:18px;margin:21px 0}.option{border:1px solid var(--line);border-radius:17px;padding:25px;position:relative;background:linear-gradient(135deg,#fff 65%,#faf6fd)}.option-head{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}.option .tag{display:inline-flex;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;background:#edf2f7;color:#3367a3;white-space:nowrap}.option .tag.risk{background:#ecf1f7;color:#a5222c}.option h3{margin:2px 0 4px}.option .summary{color:#2f5e96;margin:0}.proscons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.proscons div{background:#f8f6fb;border-radius:11px;padding:13px 15px}.proscons strong{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#3365a0}.proscons .minus strong{color:#a5222c}.proscons p{font-size:14px;margin:4px 0 0}.option .stepbox{margin-bottom:0}.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;margin:18px 0}table{width:100%;border-collapse:collapse;min-width:620px;text-align:left;font-size:14px}th{background:#edf2f7;color:#264c79;font-size:13px}th,td{padding:15px 17px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}.recommend{background:#f2f5f9;border-left:5px solid var(--violet);padding:16px 20px;border-radius:10px;margin:19px 0}.checklist{display:grid;gap:9px;margin:20px 0}.checkitem{display:flex;gap:13px;align-items:flex-start;padding:12px 15px;border:1px solid var(--line);border-radius:11px;cursor:pointer;transition:background .2s}.checkitem:hover{background:#faf7ff}.checkitem input{accent-color:var(--violet);width:20px;height:20px;flex:0 0 20px;margin-top:2px;cursor:pointer}.checkitem:has(input:checked){background:#edf2f7}.checkitem:has(input:checked) span{text-decoration:line-through;color:#3d7ac2}.progress{height:8px;background:#e0e8f2;border-radius:99px;overflow:hidden}.progress>div{height:100%;background:linear-gradient(90deg,var(--violet),var(--orange));width:0;transition:width .25s}.checkmeta{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}.smallbtn{border:1px solid var(--line);background:white;border-radius:9px;color:var(--muted);padding:5px 11px;cursor:pointer}.smallbtn:hover{background:#edf2f8}.final{font-size:19px;font-weight:800;color:#2c578a;margin-top:22px}.footer{font-size:13px;color:#356aa8;padding:4px 0 32px}.footer .wrap{border-top:1px solid var(--line);padding-top:18px}
+@media(max-width:620px){.hero{padding:52px 0 50px}.hero p{font-size:16px}.section{border-radius:17px}.proscons{grid-template-columns:1fr}.option{padding:19px}.option-head{display:block}.option .tag{margin-top:10px}.topnav{position:static}}
+@media print{body{background:white;color:#111;font-size:11px;line-height:1.4}.hero{padding:20px 0;background:#e5ecf5!important;color:#222!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero p{color:#333}.hero h1{font-size:32px}.hero .accent{margin:10px 0}.eyebrow{color:#222;background:transparent}.topnav,.smallbtn{display:none}.wrap{width:100%}main{padding:0}.section{box-shadow:none;border:1px solid #ddd;padding:18px;margin:11px 0;border-radius:10px}.section h2{font-size:20px}.section h3{font-size:16px}.section p{margin:6px 0}.option{break-inside:avoid;padding:13px}.stepbox,.notice{break-inside:avoid;padding:10px}.cards{gap:10px}.linkbtn{color:#333!important;background:transparent!important;padding:0;margin:0;text-decoration:underline}.footer{padding:0}.checkitem{padding:7px}table{min-width:0;font-size:11px}th,td{padding:8px}.proscons{margin:8px 0}}
+</style>
+<style>:root{--course-art:url("/api/courses/asset?id=bc8dc48ac0ae9a25516f2f3e7b199ed7b7bca9231391a1bd2d982201265d565b.webp")}
+body > header:is(.hero,header) {
+  position:relative;isolation:isolate;overflow:hidden;
+  color:#172942;
+  background:#fffefa var(--course-art) center top / cover no-repeat;
+  border-bottom:1px solid #cedbeb;
+  min-height:280px;
+}
+body > header:is(.hero,header)::before,body > header:is(.hero,header)::after {content:none}
+body > header:is(.hero,header) > :not(.course-emblem) {position:relative;z-index:1}
+body > header:is(.hero,header) h1 {
+  max-width:min(780px,66vw);
+  color:#133761;
+  font:700 clamp(31px,4.3vw,57px)/1.1 Georgia,"Times New Roman",serif;
+  letter-spacing:-.035em;
+}
+body > header:is(.hero,header) p {max-width:min(670px,61vw);color:#344c69}
+body > header:is(.hero,header) .eyebrow,body > header:is(.hero,header) .kicker {color:#a5222c}
+body > header:is(.hero,header) .chip,body > header:is(.hero,header) .hero-tags span {
+  color:#133761;background:#ffffffeb;border:1px solid #cedbeb;
+}
+body > header:is(.hero,header) > .course-emblem {
+  position:absolute;z-index:0;top:50%;right:max(5%,calc((100vw - 1120px)/2));
+  width:clamp(195px,22vw,310px);height:auto;pointer-events:none;
+  transform:translateY(-47%);
+}
+body::before {
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:var(--course-art) right 52% / max(100%,1140px) auto no-repeat;
+  opacity:.20;
+}
+body {position:relative;isolation:isolate}
+main h2,main h3 {color:#133761}
+main .kicker {color:#a5222c}
+:focus-visible {outline-color:#215594}
+@media (max-width:900px) {
+  body > header:is(.hero,header) {min-height:0;background-position:35% top}
+  body > header:is(.hero,header) h1,body > header:is(.hero,header) p {max-width:100%}
+  body > header:is(.hero,header) > .course-emblem {
+    width:clamp(100px,20vw,170px);right:1%;top:15px;
+    transform:none;opacity:.17;
+  }
+}
+@media print {
+  body::before,body > header:is(.hero,header) > .course-emblem {display:none}
+  body > header:is(.hero,header) {background:white;min-height:0}
+  body > header:is(.hero,header) h1 {max-width:none;font-size:26pt}
+  body > header:is(.hero,header) p {max-width:none}
+}
+
+.course-signature {
+  box-sizing:border-box;max-width:1160px;margin:20px auto 0;
+  display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;
+  border-top:1px solid #cedbeb;padding:16px 0;color:#344c69;
+  font:600 14px/1.45 system-ui,"Segoe UI",sans-serif;
+}
+body > .course-signature {
+  margin-inline:auto;width:calc(100% - 44px);
+}
+.course-signature nav {
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  position:static;width:auto;margin:0;padding:0;
+  background:transparent;border:0;box-shadow:none;font:inherit;
+}
+.course-signature a,.course-signature a:visited {
+  display:inline-flex;align-items:center;min-height:34px;padding:5px 11px;
+  color:#17477c;background:#fffefa;border:1px solid #a7bad3;
+  border-radius:6px;text-decoration:none;font:inherit;
+}
+.course-signature a:hover {background:#edf3fb;border-color:#215594}
+@media print {.course-signature a {min-height:0;padding:0;border:0;text-decoration:underline}}
+</style></head>
+<body>
+<header class="hero"><img class="course-emblem" alt="" aria-hidden="true" src="/api/courses/asset?id=b73e4e2d4e2de349581b5a6c423ab821ec3f462c039148293ac8e0a0c4f8bdb8.webp"><div class="wrap"><span class="eyebrow">Памятка участника курса «Визуал в работе учителя»</span><div class="accent"></div><h1>Как подключить ChatGPT</h1><p>Доступ к сервису, способы оплаты подписки Plus и проверка подключения — всё в одной памятке.</p></div></header>
+<nav class="topnav" aria-label="Навигация по памятке"><div class="wrap"><a href="#vpn">01 · VPN</a><a href="#payment">02 · Оплата</a><a href="#compare">03 · Сравнение</a><a href="#check">04 · Проверка</a></div></nav>
+<main class="wrap"><p class="intro">Для работы с ChatGPT Plus необходимо решить два вопроса: обеспечить доступ к сервису и выбрать способ оплаты подписки.</p>
+<section class="section" id="vpn"><div class="section-heading"><span class="num">01</span><h2>Надёжный VPN</h2></div><p>Мой вариант — <strong>WolfPN</strong>.</p><a class="linkbtn" href="https://wolfpn-v2.com/cabinet/register?ref=96690C35" target="_blank" rel="noopener noreferrer">Открыть WolfPN ↗</a><h3>Почему я его использую</h3><ul><li>Работает через приложение <strong>Happ</strong>, которое удобно использовать и на телефоне, и на компьютере.</li><li>В моей подписке предусмотрено подключение до четырёх устройств.</li><li>Можно настраивать прокси для отдельных приложений. Это удобно: не приходится постоянно включать и выключать VPN для всей системы.</li><li>Есть большой выбор локаций.</li></ul><div class="stepbox"><h4>Как познакомиться с сервисом</h4><ol><li>Откройте <a href="https://wolfpn-v2.com/cabinet/register?ref=96690C35" target="_blank" rel="noopener noreferrer">WolfPN</a>.</li><li>Изучите условия подписки и доступные устройства.</li><li>Следуйте инструкции сервиса по установке Happ и подключению.</li><li>Проверьте работу соединения.</li></ol></div><p class="sub">Инструкции по установке и настройке предоставляет сам сервис.</p><div class="notice"><strong>⚠️ Важно.</strong> VPN сам по себе не гарантирует доступ к ChatGPT. OpenAI поддерживает работу только в определённых странах и предупреждает о возможной блокировке аккаунтов при доступе из неподдерживаемых регионов. Перед регистрацией проверьте <a href="https://help.openai.com/en/articles/7947663-chatgpt-and-openai-api-supported-countries-and-territories" target="_blank" rel="noopener noreferrer">официальный список поддерживаемых стран</a>.</div></section>
+<section class="section" id="payment"><div class="section-heading"><span class="num">02</span><h2>Как оплатить ChatGPT Plus</h2></div><p>Есть три варианта с разной стоимостью, удобством и уровнем риска.</p><div class="cards">
+<article class="option"><div class="option-head"><div><h3>Вариант 1. GGSel</h3><p class="summary">Доступнее, но рискованно</p></div><span class="tag risk">Высокий риск для аккаунта</span></div><a class="linkbtn secondary" href="https://ggsel.net/" target="_blank" rel="noopener noreferrer">Открыть GGSel ↗</a><p>На маркетплейсе можно найти предложения по оплате ChatGPT Plus через посредников.</p><div class="proscons"><div><strong>Плюсы</strong><p>Сравнительно небольшая стоимость и возможность оплатить покупку привычным способом.</p></div><div class="minus"><strong>Главный минус</strong><p>Некоторые продавцы требуют доступ к Вашему аккаунту ChatGPT. Это риск для конфиденциальности переписки, документов и проектов.</p></div></div><p>Я считаю такой способ небезопасным. Особенно если в аккаунте уже накопились рабочие материалы.</p><div class="notice"><strong>Не передавайте продавцам</strong> пароль, коды подтверждения, резервные коды или активные сессии. Даже временный доступ к аккаунту может раскрыть его содержимое.</div><p>Перед покупкой изучите условия конкретного предложения. Маркетплейс не является официальным способом оформления подписки OpenAI.</p></article>
+<article class="option"><div class="option-head"><div><h3>Вариант 2. МТС Оплата</h3><p class="summary">Безопаснее для аккаунта, но дорого и неудобно</p></div><span class="tag">Без передачи пароля продавцу</span></div><a class="linkbtn secondary" href="https://payment.mts.ru/" target="_blank" rel="noopener noreferrer">Открыть МТС Оплата ↗</a><p>МТС предлагает способы оплаты зарубежных сервисов, включая ChatGPT.</p><div class="proscons"><div><strong>Плюсы</strong><p>Можно провести оплату, не предоставляя постороннему продавцу пароль от своего аккаунта.</p></div><div class="minus"><strong>Минусы</strong><p>Дополнительные расходы и необходимость следить за продлением.</p></div></div><p>По моему опыту, приходится ежемесячно менять платёжные реквизиты, что не очень удобно при постоянном использовании.</p><div class="stepbox"><h4>Как действовать</h4><ol><li>Откройте МТС Оплата.</li><li>Найдите ChatGPT в разделе зарубежных сервисов.</li><li>Изучите предлагаемый способ оплаты, итоговую сумму и условия.</li><li>Выполните инструкцию МТС.</li><li>Проверьте статус подписки непосредственно в ChatGPT.</li></ol></div><p class="sub">Порядок оформления и продления зависит от выбранного продукта МТС.</p></article>
+<article class="option"><div class="option-head"><div><h3>Вариант 3. Зарубежная карта</h3><p class="summary">Дороже на старте, удобнее в дальнейшем</p></div><span class="tag">Мой выбор для регулярной работы</span></div><p>Мой вариант — <strong>«Плати по всему миру»</strong>.</p><a class="linkbtn secondary" href="https://platipomiru.com/?code=FQS34PHN" target="_blank" rel="noopener noreferrer">Открыть «Плати по всему миру» ↗</a><div class="proscons"><div><strong>Плюсы</strong><p>Вы получаете отдельную виртуальную карту, которой можете самостоятельно оплачивать подходящие зарубежные сервисы. Не нужно каждый месяц обращаться к посреднику для проведения отдельной покупки.</p></div><div class="minus"><strong>Минусы</strong><p>Расходы на оформление карты, комиссии и необходимость пополнять баланс.</p></div></div><p>Этот путь удобен, когда зарубежные сервисы используются регулярно.</p><div class="stepbox"><h4>Как действовать</h4><ol><li>Откройте <a href="https://platipomiru.com/?code=FQS34PHN" target="_blank" rel="noopener noreferrer">«Плати по всему миру»</a>.</li><li>Изучите тарифы, комиссии, условия выпуска и пополнения.</li><li>Выберите карту, подходящую для предполагаемых платежей.</li><li>Следуйте инструкции сервиса по оформлению карты.</li><li>Уточните возможность оплаты ChatGPT для выбранного типа карты.</li><li>При наличии поддерживаемого способа оплаты оформите подписку в своём аккаунте ChatGPT.</li></ol></div><p>У сервиса есть отдельная <a href="https://kb.platipomiru.com/" target="_blank" rel="noopener noreferrer">база знаний</a> с инструкциями по выпуску карты, пополнению и оплате подписок.</p><div class="notice"><strong>Важно.</strong> Выпуск зарубежной карты не гарантирует успешную оплату ChatGPT или соответствие региональным требованиям OpenAI.</div></article>
+</div></section>
+<section class="section" id="compare"><div class="section-heading"><span class="num">03</span><h2>Какой вариант оплаты выбрать?</h2></div><div class="tablewrap"><table><thead><tr><th>Способ</th><th>Главное преимущество</th><th>Главный недостаток</th></tr></thead><tbody><tr><td><strong>GGSel</strong></td><td>Может быть дешевле</td><td>Риск передачи доступа к аккаунту</td></tr><tr><td><strong>МТС Оплата</strong></td><td>Не требуется передавать пароль посреднику</td><td>Дополнительные расходы, неудобное продление</td></tr><tr><td><strong>Зарубежная карта</strong></td><td>Самостоятельная оплата, удобство при постоянном использовании</td><td>Стоимость выпуска и комиссии</td></tr></tbody></table></div><div class="recommend"><strong>Мой выбор для регулярной работы — зарубежная карта.</strong> Первоначальные затраты выше, зато дальше удобнее самостоятельно управлять платежами.</div><p class="muted"><strong>Обратите внимание:</strong> это описание моего опыта, а не гарантия безопасности, доступности или успешной оплаты. Перечисленные посредники и платёжные сервисы не являются официальными партнёрами OpenAI.</p></section>
+<section class="section" id="check"><div class="section-heading"><span class="num">04</span><h2>Проверка подключения</h2></div><p>После оформления подписки отметьте выполненные действия:</p><div class="checklist" id="checklist"><label class="checkitem"><input type="checkbox"><span>Проверьте, что используете нужный аккаунт ChatGPT.</span></label><label class="checkitem"><input type="checkbox"><span>Откройте настройки аккаунта и убедитесь, что подписка активна.</span></label><label class="checkitem"><input type="checkbox"><span>Проверьте дату следующего списания и способ оплаты.</span></label><label class="checkitem"><input type="checkbox"><span>Создайте пробный диалог.</span></label><label class="checkitem"><input type="checkbox"><span>Попробуйте сгенерировать изображение.</span></label><label class="checkitem"><input type="checkbox"><span>Сохраните информацию о продлении подписки.</span></label></div><div class="progress" aria-label="Прогресс проверки"><div id="bar"></div></div><div class="checkmeta"><span id="count" aria-live="polite">Выполнено: 0 из 6</span><button class="smallbtn" type="button" id="reset">Сбросить отметки</button></div><p class="final">Готово! Теперь можно переходить к работе с инструментами ChatGPT.</p></section>
+</main><footer class="footer"><div class="wrap">Материал подготовлен по личному опыту автора. Условия сервисов, тарифы и региональные ограничения могут меняться. <strong>Актуальность: ноябрь 2026 года.</strong></div><div class="course-signature"><span>Анастасия Димитриева · Учитель и нейросети</span><nav aria-label="Каналы Анастасии Димитриевой"><a href="https://max.ru/channel_dimitrieva_av" target="_blank" rel="noopener noreferrer">MAX</a><a href="https://t.me/dimiterieva_i_ii" target="_blank" rel="noopener noreferrer">Telegram</a></nav></div></footer>
+<script>
+(()=>{const boxes=[...document.querySelectorAll('#checklist input')],bar=document.getElementById('bar'),count=document.getElementById('count');const key='chatgpt-guide-checklist-2026';try{const v=JSON.parse(localStorage.getItem(key)||'[]');boxes.forEach((x,i)=>x.checked===false&&(x.checked=!!v[i]));}catch{}function update(){const n=boxes.filter(x=>x.checked).length;bar.style.width=(100*n/boxes.length)+'%';count.textContent=`Выполнено: ${n} из ${boxes.length}`;try{localStorage.setItem(key,JSON.stringify(boxes.map(x=>x.checked)))}catch{}}boxes.forEach(x=>x.addEventListener('change',update));document.getElementById('reset').addEventListener('click',()=>{boxes.forEach(x=>x.checked=false);update()});update()})();
+</script>
+</body></html>

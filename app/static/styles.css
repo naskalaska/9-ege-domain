@@ -3258,3 +3258,4 @@ input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color:
 /* Speech cards follow the surrounding exercise text scale. */
 .speech-question .word-prompt { font-size:18px; font-weight:400; line-height:1.6; }
 .speech-question .choice { font-size:16px; font-weight:500; height:auto; min-height:42px; padding:10px 16px; white-space:normal; text-align:left; }
+.service-course-cover{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin:0 0 18px;border:1px solid #bfd1e4}

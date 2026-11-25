@@ -22,3 +22,5 @@ maintenance/offline-qa/
 node_modules/
 dist/
 build/
+# Course recordings are hosted externally (VK), not in Git.
+/app/Нейровизуал для учителя/*.mp4

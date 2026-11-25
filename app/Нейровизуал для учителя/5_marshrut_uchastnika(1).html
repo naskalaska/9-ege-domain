@@ -1,0 +1,213 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Урок 5 · Своя визуальная концепция</title><style>
+:root{--bg:#e9eff6;--paper:#fffdf9;--ink:#263245;--muted:#627184;--blue:#214b6c;--red:#b24c43;--sand:#c0d1e5;--line:#dee7f2;--soft:#edf1f2;--green:#2b5689;--shadow:0 14px 44px #2632450c}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.58 system-ui,-apple-system,'Segoe UI',Arial,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}.wrap{max-width:1100px;margin:auto;padding:0 24px}.hero{background:linear-gradient(115deg,#173c58 0%,#234964 65%,#36556b 100%);color:#fff;padding:54px 0 37px;position:relative;overflow:hidden}.hero:before{content:'✦   ◇      ✦       ◇';position:absolute;right:-70px;top:-35px;font:120px Georgia,serif;opacity:.075;transform:rotate(-16deg)}.eyebrow{color:#dee7f2;letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:800}.hero h1{font:normal clamp(36px,5.6vw,66px)/1.05 Georgia,'Times New Roman',serif;letter-spacing:-.025em;margin:13px 0}.hero p{max-width:780px;font-size:18px;color:#e3ecf2;margin:0 0 21px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{border:1px solid #ffffff5c;border-radius:50px;padding:5px 12px;font-size:12px;color:#fff}.toolbar{background:#fffefb;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;box-shadow:0 4px 18px #173c580b}.bar{display:flex;align-items:center;gap:10px;padding:10px 0;flex-wrap:wrap}.bar .info{margin-right:auto;font-size:13px;color:var(--muted)}.progress{height:5px;background:#ddd}.progress>div{height:100%;background:var(--red);width:0;transition:width .25s}.btn{background:var(--blue);color:white;border:0;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700}.btn:hover{filter:brightness(1.1)}.btn.secondary{background:#e8edf0;color:#25465d}.btn.outline{background:transparent;border:1px solid #c6d0d7;color:var(--blue)}.btn.red{background:var(--red)}.btn:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #a5222c;outline-offset:3px}main{padding-top:30px;padding-bottom:65px}.intro{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel,.step{background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}.panel{padding:22px}.panel h2{margin:0 0 9px;font-size:21px}.panel p{margin:0}.callout{border-left:4px solid var(--red);padding:12px 16px;background:#e8eef6;border-radius:0 12px 12px 0;margin:13px 0}.nav{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0 26px}.nav a{background:#fffdf9;border:1px solid var(--line);border-radius:50px;padding:8px 13px;text-decoration:none;color:var(--blue);font-size:13px;font-weight:650}.nav a:hover{background:#eaf0f3}.step{padding:27px;margin:22px 0;scroll-margin-top:96px}.stepHead{display:flex;gap:15px;align-items:flex-start;margin-bottom:18px}.num{min-width:49px;height:49px;border-radius:14px;background:var(--blue);color:#fff;display:grid;place-items:center;font:26px Georgia,serif}.time{color:var(--red);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}.step h2{font:normal 29px/1.15 Georgia,serif;margin:4px 0 7px}.stepHead p{margin:0;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}.card h3{margin:3px 0 7px;font-size:17px}.card p{margin:0;font-size:14px;color:#536274}.visual{aspect-ratio:4/3;border:2px dashed #c5cbd0;border-radius:13px;background:linear-gradient(145deg,#e7edf5,#e9eff1);display:grid;place-items:center;text-align:center;padding:14px;color:#617182;font-size:13px;margin-bottom:12px}.visual b{display:block;color:#30526b;font-size:15px}.example{border-radius:14px;padding:15px;background:#e5ecf4;margin:14px 0}.example strong{color:#8c433d}.termGrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.term{background:#f1f5f5;border-left:3px solid #7895a1;border-radius:8px;padding:12px 14px;font-size:14px}.term b{display:block;color:var(--blue);margin-bottom:2px}.task{background:#fcf9f4;border:1px solid #dee7f2;border-radius:14px;padding:17px;margin:18px 0}.task h3{margin:0 0 8px;font-size:18px}.task p{margin:0 0 9px;color:#536274}.field{display:block;margin:12px 0}.field span{display:block;font-size:13px;font-weight:750;margin-bottom:6px;color:#35536a}textarea,input[type=text],select{width:100%;border:1px solid #c9d4db;border-radius:10px;background:#fff;padding:10px 12px;color:#24354a}textarea{resize:vertical;min-height:65px}textarea.small{min-height:48px}.fields2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.prompt{border:1px solid #cbd9e2;border-radius:15px;overflow:hidden;margin:16px 0;background:#edf3f5}.promptTop{background:#254e6b;color:white;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;gap:10px}.promptTop b{font-size:13px}.prompt pre{white-space:pre-wrap;word-break:break-word;padding:16px;font:14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0;max-height:400px;overflow:auto;color:#263c50}.prompt .btn{background:#fff;color:#214b6c}.hint{font-size:13px;color:var(--muted)}.check{display:flex;align-items:flex-start;gap:10px;margin-top:14px;font-size:14px;font-weight:650}.check input{accent-color:var(--red);width:18px;height:18px;margin-top:2px}.choice{display:flex;gap:15px;flex-wrap:wrap;margin:12px 0}.choice label{background:#f0f3f5;border-radius:9px;padding:8px 12px;font-size:14px}.mini{font-size:14px;color:var(--muted)}.score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.score label{border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff}.score select{margin-top:5px}.out{background:#edf2f7;border:1px solid #dee7f2;border-radius:12px;padding:15px;white-space:pre-wrap;font:13px/1.6 ui-monospace,Consolas,monospace;max-height:360px;overflow:auto}.footer{background:#173c58;color:#dce8ef;padding:25px 0;text-align:center;font-size:13px}.footer a{color:#fff}.badge{display:inline-block;font-size:12px;color:#86463b;background:#e6edf5;border-radius:30px;padding:4px 10px;margin-bottom:8px}.success{color:#23466f;font-weight:700}.warning{font-size:13px;padding:10px;background:#e6edf5;border-radius:10px}.hr{height:1px;background:var(--line);margin:20px 0}.resultRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}@media(max-width:760px){.intro,.grid,.termGrid,.fields2,.score{grid-template-columns:1fr}.wrap{padding:0 15px}.hero{padding:32px 0}.step{padding:19px}.step h2{font-size:26px}.toolbar{position:static}.visual{aspect-ratio:2/1}.bar .info{width:100%}}@media print{.toolbar,.nav,.btn{display:none!important}.hero{color:#000;background:none;padding:15px 0}.hero p,.eyebrow{color:#333}.step{break-inside:avoid;box-shadow:none}.wrap{max-width:none}.prompt pre{max-height:none}}
+
+textarea[data-field]{display:block;width:100%;padding:11px;border:1px solid var(--line,#a0bad8);border-radius:8px;background:#fff;color:inherit;font:inherit;resize:vertical}.done{display:flex;align-items:center;gap:.5rem;margin-top:1rem}.step h3{margin-bottom:.3rem}.step details{padding:.6rem 0}.step summary{cursor:pointer;font-weight:700}.pal-grid,.mock-grid,.ref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.pal-grid label,.mock-grid label{display:block}.pal-grid input{width:100%;padding:.45rem}.swatch{height:22px;border:1px solid #acacac;border-radius:5px;margin-top:5px}.ref-grid figure{margin:0}.ref-grid img{max-width:100%;height:125px;object-fit:contain;background:#fff}a.btn{text-decoration:none;display:inline-block}#feedback{min-height:1.5rem}@media print{.done,.export-controls{display:none}}
+</style><style>:root{--course-art:url("/api/courses/asset?id=bc8dc48ac0ae9a25516f2f3e7b199ed7b7bca9231391a1bd2d982201265d565b.webp")}
+body > header:is(.hero,header) {
+  position:relative;isolation:isolate;overflow:hidden;
+  color:#172942;
+  background:#fffefa var(--course-art) center top / cover no-repeat;
+  border-bottom:1px solid #cedbeb;
+  min-height:280px;
+}
+body > header:is(.hero,header)::before,body > header:is(.hero,header)::after {content:none}
+body > header:is(.hero,header) > :not(.course-emblem) {position:relative;z-index:1}
+body > header:is(.hero,header) h1 {
+  max-width:min(780px,66vw);
+  color:#133761;
+  font:700 clamp(31px,4.3vw,57px)/1.1 Georgia,"Times New Roman",serif;
+  letter-spacing:-.035em;
+}
+body > header:is(.hero,header) p {max-width:min(670px,61vw);color:#344c69}
+body > header:is(.hero,header) .eyebrow,body > header:is(.hero,header) .kicker {color:#a5222c}
+body > header:is(.hero,header) .chip,body > header:is(.hero,header) .hero-tags span {
+  color:#133761;background:#ffffffeb;border:1px solid #cedbeb;
+}
+body > header:is(.hero,header) > .course-emblem {
+  position:absolute;z-index:0;top:50%;right:max(5%,calc((100vw - 1120px)/2));
+  width:clamp(195px,22vw,310px);height:auto;pointer-events:none;
+  transform:translateY(-47%);
+}
+body::before {
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:var(--course-art) right 52% / max(100%,1140px) auto no-repeat;
+  opacity:.20;
+}
+body {position:relative;isolation:isolate}
+main h2,main h3 {color:#133761}
+main .kicker {color:#a5222c}
+:focus-visible {outline-color:#215594}
+@media (max-width:900px) {
+  body > header:is(.hero,header) {min-height:0;background-position:35% top}
+  body > header:is(.hero,header) h1,body > header:is(.hero,header) p {max-width:100%}
+  body > header:is(.hero,header) > .course-emblem {
+    width:clamp(100px,20vw,170px);right:1%;top:15px;
+    transform:none;opacity:.17;
+  }
+}
+@media print {
+  body::before,body > header:is(.hero,header) > .course-emblem {display:none}
+  body > header:is(.hero,header) {background:white;min-height:0}
+  body > header:is(.hero,header) h1 {max-width:none;font-size:26pt}
+  body > header:is(.hero,header) p {max-width:none}
+}
+
+.course-signature {
+  box-sizing:border-box;max-width:1160px;margin:20px auto 0;
+  display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;
+  border-top:1px solid #cedbeb;padding:16px 0;color:#344c69;
+  font:600 14px/1.45 system-ui,"Segoe UI",sans-serif;
+}
+body > .course-signature {
+  margin-inline:auto;width:calc(100% - 44px);
+}
+.course-signature nav {
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  position:static;width:auto;margin:0;padding:0;
+  background:transparent;border:0;box-shadow:none;font:inherit;
+}
+.course-signature a,.course-signature a:visited {
+  display:inline-flex;align-items:center;min-height:34px;padding:5px 11px;
+  color:#17477c;background:#fffefa;border:1px solid #a7bad3;
+  border-radius:6px;text-decoration:none;font:inherit;
+}
+.course-signature a:hover {background:#edf3fb;border-color:#215594}
+@media print {.course-signature a {min-height:0;padding:0;border:0;text-decoration:underline}}
+</style></head><body>
+<header class="hero"><img class="course-emblem" alt="" aria-hidden="true" src="/api/courses/asset?id=b73e4e2d4e2de349581b5a6c423ab821ec3f462c039148293ac8e0a0c4f8bdb8.webp"><div class="wrap"><div class="eyebrow">Визуал в работе учителя · урок 05 / 07</div><h1>Своя визуальная концепция</h1><p>Разработайте общий визуальный стиль для серии учебных материалов. Сравните пять вариантов на нескольких элементах комплекта, соберите промпты и после пробной генерации сохраните концепт с палитрой и референсами.</p></div></header>
+<div class="toolbar"><div class="wrap"><div class="bar"><span class="info" id="status"></span><button class="btn secondary" id="export">Сохранить ответы</button><button class="btn secondary" id="import">Загрузить ответы</button><input type="file" accept=".json,application/json" id="importFile" hidden><button class="btn outline" onclick="window.print()">Печать / PDF</button></div></div><div class="progress"><div id="progressBar"></div></div></div>
+<main class="wrap">
+<nav class="nav" aria-label="Этапы"><a href="#s1">Пять стилей</a><a href="#s2">Пять мокапов</a><a href="#s3">Выбор стиля</a><a href="#s4">Промпты</a><a href="#s5">Генерация</a><a href="#s6">Проверка концепции</a><a href="#s7">Проверка промптов</a><a href="#s8">Концепт</a></nav>
+<section class="step" id="s1"><div class="stepHead"><span class="num">1</span><h2>Опишите серию и получите брифы для пяти стилей</h2></div>
+<p>Возьмите комплект со второго урока. Заполните в промпте исходный бриф: тему, аудиторию, учебную задачу и состав серии. В составе выделите 2–3 элемента, на которых будете сравнивать стили. Укажите, что в каждом нужно показать и как материал будет использоваться.</p>
+<p>Выберите текстовую нейросеть, с которой Вам удобно работать. Удобнее, если она умеет рисовать прямо в чате: там же останутся брифы, промпты и варианты. Если чат работает только с текстом, запускайте запросы на картинки в отдельном генераторе.</p>
+<p><a class="btn outline" href="https://chatgpt.com/" target="_blank" rel="noopener">Открыть ChatGPT</a> <a class="btn outline" href="https://chat.qwen.ai/" target="_blank" rel="noopener">Открыть Qwen</a></p>
+<p>Отправьте заполненный бриф в выбранный текстовый чат. В ответе получите пять коротких визуальных брифов для одного комплекта.</p>
+<div class="prompt"><div class="promptTop"><label for="ideas"><b>Получить пять визуальных брифов для серии</b></label><button class="btn secondary" type="button" data-copy="ideas">Скопировать</button></div><textarea id="ideas" data-field rows="6">Я хочу создать единый визуальный стиль для серии учебных материалов.
+Тема и аудитория: [тема и класс или возраст].
+Учебная задача: [чему помогают материалы].
+Состав серии: [материалы комплекта]. Для проб возьмём [2–3 элемента: что в каждом показать, какой у него формат и назначение].
+
+Предложи пять художественных стилей и составь короткий визуальный бриф для каждого. Опиши настроение, палитру, композицию, графические элементы, фактуру и степень реалистичности. Покажи, как общий стиль проявится в каждом из выбранных элементов, и объясни, чем он подходит задаче и аудитории.</textarea></div>
+<label class="field" for="styleNotes">Что в предложениях показалось уместным и почему?</label><textarea id="styleNotes" data-field rows="3" placeholder="Назовите признаки, которые помогают учебной задаче. Если аргумент модели расплывчатый, попросите объяснить его на Вашем материале."></textarea><label class="done"><input id="done1" type="checkbox" data-check> Этап выполнен</label></section>
+<section class="step" id="s2"><div class="stepHead"><span class="num">2</span><h2>Нарисуйте пять мокапов стилей</h2></div>
+<p>Каждый мокап здесь — черновой лист с двумя-тремя элементами серии в одном стиле. На всех пяти листах покажите те же элементы в том же порядке. Сохраняйте содержание и формат каждого элемента. Сравнивайте, как меняется художественная подача всей серии.</p>
+<p>Если Ваш чат умеет рисовать, отправляйте запрос ниже прямо в нём. Для отдельного генератора добавьте к запросу описание элементов комплекта и визуальный бриф нужного стиля. Повторите для каждого стиля и сохраните пять мокапов.</p>
+<div class="prompt"><div class="promptTop"><label for="mockups"><b>Нарисовать мокап одного стиля</b></label><button class="btn secondary" type="button" data-copy="mockups">Скопировать</button></div><textarea id="mockups" data-field rows="6">Нарисуй один черновой мокап серии по визуальному брифу стиля [название стиля]. Покажи рядом те же 2–3 элемента комплекта, которые мы выбрали для сравнения. Сохрани их порядок, содержание, формат и общую компоновку. Примени ко всем элементам палитру, линии, фактуры и графические приёмы из брифа. Покажи только детали, нужные для сравнения стилей.</textarea></div>
+<label class="done"><input id="done2" type="checkbox" data-check> Этап выполнен</label></section>
+<section class="step" id="s3"><div class="stepHead"><span class="num">3</span><h2>Выберите стиль и утвердите бриф</h2></div>
+<p>Сравните все пять листов. Выбирайте стиль, в котором элементы узнаются как одна серия и каждый выполняет свою задачу. Проверьте, различимы ли важные детали и подходит ли оформление всем выбранным форматам. В том же чате назовите стиль. Если заметили конкретное расхождение, впишите правку в запрос, например «приглуши фон карточки». Если правок нет, впишите «оставь оформление как на мокапе».</p>
+<label class="field" for="selected">Выбранный стиль и почему он подходит</label><textarea id="selected" data-field rows="3" placeholder="Номер и название. Что видно на мокапе и чем это помогает ученикам?"></textarea>
+<div class="prompt"><div class="promptTop"><label for="clarify"><b>Промпт · итоговый визуальный бриф</b></label><button class="btn secondary" type="button" data-copy="clarify">Скопировать</button></div><textarea id="clarify" data-field rows="6">Я выбираю стиль [название]. Моё решение по мокапу: [оставь оформление как на мокапе / конкретная правка].
+На основе брифа этого стиля и моего решения составь утверждённый визуальный бриф для всей серии. Зафиксируй настроение, палитру и роли цветов, фактуры, графические элементы, композицию и степень реалистичности. Для каждого формата укажи, как применить общие правила и что можно менять. Подготовь бриф в виде текста.</textarea></div><label class="done"><input id="done3" type="checkbox" data-check> Этап выполнен</label></section>
+<section class="step" id="s4"><div class="stepHead"><span class="num">4</span><h2>Соберите промпт-шаблоны и стилевые прибавки</h2></div>
+<p>Отправьте следующий запрос в тот же текстовый чат, где уже есть утверждённый бриф. Получите шаблон для всей серии, стилевую прибавку и по два готовых промпта для пробных материалов — на русском и английском.</p>
+<div class="prompt"><div class="promptTop"><label for="templates"><b>Подготовить промпты по визуальному брифу</b></label><button class="btn secondary" type="button" data-copy="templates">Скопировать</button></div><textarea id="templates" data-field rows="6">На основе утверждённого визуального брифа серии подготовь два блока с одинаковым смыслом: «На русском» и «In English». В каждом дай:
+1. Промпт-шаблон с полями [сюжет], [назначение], [формат] и [композиция].
+2. Отдельную стилевую прибавку для всей серии: общая манера, линии, формы, палитра, свет и фактуры. Описание должно подходить для разных сюжетов и форматов.
+3. Два готовых промпта для двух разных элементов, которые мы уже выбрали для проб. Включи в каждый общую стилевую прибавку. Английские версии опиши как то, что должно появиться в кадре.
+Верни только тексты промптов.</textarea></div>
+<label class="field" for="promptRu">Промпт-шаблон и заполненный запрос · русский</label><textarea id="promptRu" data-field rows="4" placeholder="Вставьте рабочие версии."></textarea>
+<label class="field" for="promptEn">Промпт-шаблон и заполненный запрос · English</label><textarea id="promptEn" data-field rows="4" placeholder="Вставьте рабочие версии для Midjourney или другого генератора."></textarea>
+<label class="field" for="styleAddition">Стилевые прибавки · русский / English</label><textarea id="styleAddition" data-field rows="4" placeholder="Сохраните русскую и английскую версии."></textarea><label class="done"><input id="done4" type="checkbox" data-check> Этап выполнен</label></section>
+<section class="step" id="s5"><div class="stepHead"><span class="num">5</span><h2>Испытайте промпты и выберите следующий ход</h2></div>
+<p>Запустите готовые запросы для двух элементов в чате с генерацией изображений или в отдельном генераторе. Сравните результаты между собой и с выбранным мокапом. Затем выберите один из трёх путей.</p>
+<div class="grid"><div class="card"><h3>Результат сразу подошёл</h3><p>Сохраните удачные изображения и запросы, которые их дали. Переходите к проверке концепции.</p></div>
+<div class="card"><h3>Нужно поправить деталь</h3><p>Назовите в текстовом чате один признак, который разошёлся с брифом. Примените запрос для правки. Если рисуете отдельно, перенесите обновлённый промпт в генератор. Сравните версии.</p></div>
+<div class="card"><h3>Хочется увидеть другие варианты</h3><p>При наличии доступа откройте Midjourney через свой агрегатор. Возьмите английский промпт для одного элемента, сгенерируйте варианты и скачайте понравившийся. Вернитесь в чат, где составляли промпт. Приложите выбранный вариант и используйте запрос для работы с референсом. Если чат не принимает изображения, опишите, какие детали понравились, а сам референс передайте генератору, который поддерживает загрузку картинок.</p></div></div>
+<details><summary>Запрос для правки</summary>
+<div class="prompt"><div class="promptTop"><label for="reviseImage"><b>Исправить одну деталь</b></label><button class="btn secondary" type="button" data-copy="reviseImage">Скопировать</button></div><textarea id="reviseImage" data-field rows="6">В последней версии [название материала] измени только [что разошлось с брифом и как должно выглядеть]. Сохрани [что уже получилось удачно]. Обнови эту часть рабочего промпта на русском и английском и сгенерируй исправленную версию.</textarea></div>
+</details>
+<details><summary>Запрос для работы с вариантом из Midjourney</summary>
+<div class="prompt"><div class="promptTop"><label for="referenceReturn"><b>Уточнить промпт по выбранному варианту из Midjourney</b></label><button class="btn secondary" type="button" data-copy="referenceReturn">Скопировать</button></div><textarea id="referenceReturn" data-field rows="6">Для [название материала] используй художественные признаки выбранного варианта: [конкретные признаки, которые понравились]. В моём рабочем промпте пока недостаточно точно описано [что нужно уточнить]. Возьми задачу и обязательные детали из утверждённого брифа. Покажи, как уточнишь промпт на русском и английском. После моего подтверждения сгенерируй новую версию материала.</textarea></div>
+</details>
+<label class="field" for="trial">Какой вариант сработал и что Вы закрепите?</label><textarea id="trial" data-field rows="3" placeholder="Укажите сервис, удачный результат и точные формулировки, которые стоит сохранить."></textarea><label class="done"><input id="done5" type="checkbox" data-check> Этап выполнен</label></section>
+<section class="step" id="s6"><div class="stepHead"><span class="num">6</span><h2>Проверьте, работает ли концепция на всей серии</h2></div>
+<p>Положите рядом два пробных материала из предыдущего шага. Сверьте их с утверждённым визуальным брифом и проверьте три вещи.</p>
+<ul><li><b>Единство серии.</b> Видны ли в обоих материалах общие признаки из брифа, например палитра, характер линий, формы или фактура?</li><li><b>Назначение материала.</b> Можно ли по памятке разобраться в правиле, а по карточке выполнить задание? Проверьте именно те задачи, которые Вы задали элементам своего комплекта.</li><li><b>Гибкость.</b> Сохраняется ли узнаваемый стиль, когда меняются содержание, формат или композиция?</li></ul>
+<p>Если какое-то правило мешает одному из форматов, уточните его в брифе. Например, общий орнамент может быть крупным на обложке и компактным на карточке. Сохраните уточнение в чат, где ведёте проект.</p>
+<label class="field" for="conceptCheckNote">Что работает в обоих материалах? Что уточнить в брифе?</label><textarea id="conceptCheckNote" data-field rows="3" placeholder="Оба материала узнаются по… Для карточки уточню…"></textarea>
+<label class="done"><input id="doneConceptCheck" type="checkbox" data-check> Я сверил(а) два материала с брифом</label></section>
+<section class="step" id="s7"><div class="stepHead"><span class="num">7</span><h2>Проверьте промпт на новом материале</h2></div>
+<p>Возьмите ещё один элемент серии или придумайте другой сюжет для одного из её форматов. Заполните в шаблоне поля про сюжет, назначение, формат и композицию. Добавьте стилевую прибавку в том виде, в каком хотите её сохранить.</p>
+<p>Запустите готовый запрос в новом чате с генерацией или в отдельном генераторе. Передайте референс, если он входит в Ваш рабочий способ генерации. Сравните результат с первыми двумя материалами и с задачей нового элемента.</p>
+<ul><li>Понятно ли из запроса, что нужно изобразить и в каком формате?</li><li>Сохранились ли признаки серии из стилевой прибавки?</li><li>Совпадает ли задача в русской и английской версиях? Если используете Midjourney, испытайте английский вариант там.</li></ul>
+<p>Если потерялся общий признак серии, уточните стилевую прибавку. Если разошлись сюжет, композиция или формат конкретного материала, поправьте его часть запроса. Внесите нужную правку в обе языковые версии и повторите пробу. Перед сборкой концепта добавьте в основной чат проверенные промпты и удачный результат.</p>
+<label class="field" for="promptCheckNote">На чём Вы проверили шаблон? Что пришлось поправить?</label><textarea id="promptCheckNote" data-field rows="3" placeholder="Новый элемент… Сохранилось… В шаблоне или стилевой прибавке изменю…"></textarea>
+<label class="done"><input id="donePromptCheck" type="checkbox" data-check> Я проверил(а) запрос на новом материале</label></section>
+<section class="step" id="s8"><div class="stepHead"><span class="num">8</span><h2>Соберите концепт серии</h2></div>
+<p>Продолжите в том же чате, где есть визуальный бриф, промпты и решения после проб. Приложите выбранные изображения, если они создавались в другом сервисе. Укажите, какие версии утверждены, если в чате есть несколько вариантов.</p>
+<div class="prompt"><div class="promptTop"><label for="conceptRequest"><b>Промпт · собрать концепт серии в HTML и TXT</b></label><button class="btn secondary" type="button" data-copy="conceptRequest">Скопировать</button></div><textarea id="conceptRequest" data-field rows="5">Собери визуальный концепт моей серии из материалов этого чата. Используй утверждённый бриф, мои уточнения, результаты проб и проверок, выбранные референсы и последние проверенные версии промптов. Если комплект изменился после проб, учитывай утверждённый состав серии.
+Подготовь два файла для скачивания: concept.html и concept.txt. Включи назначение серии и аудиторию, состав комплекта, правила стиля для разных форматов, палитру с HEX-кодами и ролями цветов, промпт-шаблон, стилевую прибавку и рабочие запросы на русском и английском. Укажи, какие материалы готовы и какие ещё предстоит сделать.
+В HTML покажи цветовые образцы и добавь подписанные референсы рядом с правилами, которые они иллюстрируют. Если можешь встроить исходные изображения, сделай это. Если встраивание недоступно, пропиши относительные пути и перечисли точные имена файлов изображений, которые нужно положить рядом с HTML. Используй только утверждённые материалы. Если не хватает важного решения, задай короткий уточняющий вопрос.</textarea></div>
+<p>Откройте готовый HTML и проверьте, видны ли палитра и примеры. Если ИИ выдал код, сохраните его как <code>concept.html</code>. Если использованы относительные пути, положите изображения рядом с файлом под именами из ответа.</p>
+<label class="done"><input id="done6" type="checkbox" data-check> Концепт серии сохранён</label></section>
+<footer class="footer">«Визуал в работе учителя» · Урок 5<div class="course-signature"><span>Анастасия Димитриева · Учитель и нейросети</span><nav aria-label="Каналы Анастасии Димитриевой"><a href="https://max.ru/channel_dimitrieva_av" target="_blank" rel="noopener noreferrer">MAX</a><a href="https://t.me/dimiterieva_i_ii" target="_blank" rel="noopener noreferrer">Telegram</a></nav></div></footer></main>
+<script>
+(() => {
+  'use strict';
+  const key = 'visual-course-lesson-5-briefs-v6';
+  const $ = id => document.getElementById(id);
+  const all = selector => Array.from(document.querySelectorAll(selector));
+  const fields = all('[data-field]');
+  const checks = all('[data-check]');
+
+  function state() {
+    return {
+      fields: Object.fromEntries(fields.map(field => [field.id, field.value])),
+      checks: Object.fromEntries(checks.map(check => [check.id, check.checked]))
+    };
+  }
+  function refresh() {
+    const completed = checks.filter(check => check.checked).length;
+    $('status').textContent = 'Пройдено: ' + completed + ' из ' + checks.length + ' этапов';
+    $('progressBar').style.width = (100 * completed / checks.length) + '%';
+  }
+  function save() {
+    try { localStorage.setItem(key, JSON.stringify(state())); } catch {}
+    refresh();
+  }
+  function restore(data) {
+    if (!data || typeof data.fields !== 'object' || data.fields === null) throw new Error('Invalid fields');
+    fields.forEach(field => {
+      if (typeof data.fields[field.id] === 'string') field.value = data.fields[field.id];
+    });
+    checks.forEach(check => { check.checked = data.checks?.[check.id] === true; });
+    refresh();
+  }
+  function download(filename, body, type) {
+    const url = URL.createObjectURL(new Blob([body], { type: type + ';charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $('export').onclick = () => download('urok_5_moi_otvety.json', JSON.stringify(state(), null, 2), 'application/json');
+  $('import').onclick = () => $('importFile').click();
+  $('importFile').onchange = async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try { restore(JSON.parse(await file.text())); save(); }
+    catch { alert('Не удалось загрузить ответы. Выберите JSON-файл этого маршрута.'); }
+    event.target.value = '';
+  };
+  all('[data-copy]').forEach(button => {
+    button.onclick = async () => {
+      const field = $(button.dataset.copy);
+      let copied = false;
+      try { await navigator.clipboard.writeText(field.value); copied = true; }
+      catch { field.focus(); field.select(); copied = document.execCommand('copy'); }
+      button.textContent = copied ? 'Скопировано' : 'Текст выделен';
+      setTimeout(() => { button.textContent = 'Скопировать'; }, 1400);
+    };
+  });
+  fields.forEach(field => field.addEventListener('input', save));
+  checks.forEach(check => check.addEventListener('change', save));
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) restore(JSON.parse(saved));
+  } catch {}
+  refresh();
+})();
+</script></body></html>

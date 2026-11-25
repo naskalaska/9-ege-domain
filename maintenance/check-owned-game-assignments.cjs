@@ -96,7 +96,7 @@ const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',[
   await evaluate(`document.querySelector('[data-launch-assigned-game="${espressoId}"]').click()`);
   await until(`typeof openSection==='function' && typeof window.recordLearningGameAnswer==='function'`);
   assert(await evaluate(`FIXED_DECKS.every(section=>section.length===5)`));
-  await evaluate(`state.musicEnabled=false;state.muted=true;openSection(0);selected=sdata(0).cards.map((_,i)=>i);check();selected=sdata(0).cards.map((c,i)=>c.bad?i:-1).filter(i=>i>=0);check()`);
+  await evaluate(`state=fresh();state.musicEnabled=false;state.muted=true;save();openSection(0);selected=sdata(0).cards.map((_,i)=>i);check();selected=sdata(0).cards.map((c,i)=>c.bad?i:-1).filter(i=>i>=0);check()`);
   await until(`fetch('/api/assignments').then(r=>r.json()).then(d=>d.games.some(g=>g.id===${JSON.stringify(espressoId)}&&g.checked===2&&g.correct===1&&g.completed_at))`);
   assert.equal(errors.length,0,JSON.stringify(errors));
   fs.writeFileSync(path.join(qa,'owned-game-assignments-check.json'),JSON.stringify({pass:true,paidFull:true,teacherAssignment:true,studentLaunch:true,realAnswers:4,giftedEspresso:true,unifiedWorkList:true,revocation:true,errors},null,2));

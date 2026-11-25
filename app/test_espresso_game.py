@@ -1,12 +1,29 @@
 import io
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import server
 import test_shop_cart as fixtures
+import espresso_web
 
 
 class EspressoRoutesTest(unittest.TestCase):
+    def test_web_media_preserves_originals_and_removes_embedded_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            media = Path(directory)
+            for name in ('короткая версия.html', 'Расширенная игра — 5 комплектов.html'):
+                source = server.HTML_GAMES['espresso-murder'] / name
+                original = source.read_bytes()
+                body = espresso_web.web_body(source, media)
+                self.assertLess(len(body), 600_000)
+                self.assertNotIn(b'data:audio/mpeg;base64,', body)
+                self.assertNotIn(b'data:image/png;base64,', body)
+                self.assertIn(b'/espresso-media/', body)
+                self.assertEqual(source.read_bytes(), original)
+            self.assertLess(len(list(media.iterdir())), 13)
+
     def handler(self, path):
         handler = object.__new__(server.Handler)
         handler.path = path
@@ -23,6 +40,7 @@ class EspressoRoutesTest(unittest.TestCase):
             with patch.object(server, 'record_public_game_visit'):
                 getattr(handler, method)('espresso-murder', 'index.html')
             body = handler.wfile.getvalue()
+            self.assertLess(len(body), 600_000)
             self.assertIn(b"espresso-basic-user-source-v4", body)
             self.assertNotIn(b"espresso-expanded-user-source-v4", body)
             for filename in ('Расширенная версия.html', '%D0%A0%D0%B0%D1%81%D1%88%D0%B8%D1%80%D0%B5%D0%BD%D0%BD%D0%B0%D1%8F%20%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F.html', '../Расширенная версия.html', 'Расширенная игра — 5 комплектов.html'):
@@ -40,6 +58,7 @@ class EspressoRoutesTest(unittest.TestCase):
         self.assertEqual(server.PROTECTED_FULL_GAME_ROUTES[f'Full-{token}-espresso-murder'], 'espresso-murder')
         handler = self.handler(f'/Full-{token}-espresso-murder/index.html')
         handler.send_full_game_file('espresso-murder', 'index.html', protected_route=True)
+        self.assertLess(len(handler.wfile.getvalue()), 600_000)
         self.assertIn(b'espresso-expanded-user-source-v4', handler.wfile.getvalue())
         server.validate_delivery_link(server.SHOP_PRODUCTS['espresso-murder']['default_url'])
 

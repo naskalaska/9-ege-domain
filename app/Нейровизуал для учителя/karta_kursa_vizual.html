@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173c69">
+<title>Карта курса · Визуал в работе учителя</title>
+<style>
+:root {
+  color-scheme:light;
+  --navy:#14365f; --ink:#1c3552; --muted:#465d78; --blue:#2862a1;
+  --red:#962e41; --line:#bfd1e4;
+}
+* { box-sizing:border-box }
+body { margin:0; min-height:100vh; background:
+  radial-gradient(ellipse at 96% 4%,#dce9f8 0%,transparent 49%),
+  radial-gradient(ellipse at 18% 55%,#edf4fb 0%,transparent 51%),
+  radial-gradient(ellipse at 70% 92%,#e8f1fa 0%,transparent 47%),#f9fbfd;
+  color:var(--ink); font:16px/1.48 system-ui,"Segoe UI",sans-serif }
+button,a { -webkit-tap-highlight-color:transparent }
+button { font:inherit; cursor:pointer }
+[hidden] { display:none!important }
+:focus-visible { outline:2px solid var(--red); outline-offset:5px }
+.shell { max-width:1480px; margin:auto; padding:21px clamp(16px,4vw,60px) 22px }
+.hero { position:relative; isolation:isolate }
+.top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 0 12px; border-bottom:1px solid var(--line) }
+.kicker { display:flex; align-items:center; gap:10px; color:var(--navy); font-size:.78rem; font-weight:760; letter-spacing:.1em; text-transform:uppercase }
+.diamond { display:inline-block; flex:none; width:8px; height:8px; border:1.5px solid var(--red); transform:rotate(45deg) }
+.progress { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.82rem; font-weight:660; white-space:nowrap }
+.progress-track { display:flex; align-items:center; gap:5px }
+.progress-tick { width:7px; height:7px; background:#dce7f4; border:1px solid #9fb8d6; border-radius:50% }
+.progress-tick.done { background:var(--blue); border-color:var(--blue) }
+.hero-content { position:relative; padding:21px 0 23px }
+h1,h2 { font-family:Georgia,"Times New Roman",serif; font-weight:500; color:var(--navy) }
+h1 { position:relative; max-width:75%; margin:0; font-size:clamp(2.3rem,4.65vw,4.55rem); letter-spacing:-.055em; line-height:1.02; text-wrap:balance }
+.intro { position:relative; max-width:72%; margin:10px 0 0; color:var(--muted); font-size:.94rem }
+.hero-art { position:absolute; z-index:-1; right:0; width:clamp(170px,29vw,413px); height:auto; top:30px; transform:rotate(-7deg); opacity:.91; pointer-events:none }
+.board { position:relative; min-height:455px; aspect-ratio:2.39; isolation:isolate }
+.botany-defs { position:absolute; width:0; height:0; overflow:hidden; pointer-events:none }
+.botany { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none }
+.compact-botany { display:none }
+.route-ink { fill:none; stroke:url(#stem); stroke-width:3.35; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 2px 1.5px #7fa6cf55) }
+.tendril { fill:none; stroke:#6e9aca; stroke-width:1.65; stroke-linecap:round }
+.leaves { opacity:.94 }
+.buds { opacity:.94 }
+.inlay { fill:#fff; stroke:#a63846; stroke-width:1.15; opacity:.82 }
+.route { list-style:none; padding:0; margin:0 }
+.stop { --petal:clamp(86px,8vw,119px); --cell:clamp(112px,13.2vw,194px); position:absolute; left:calc(var(--x) - var(--cell)/2); top:calc(var(--y) - var(--petal)*.43); width:var(--cell) }
+.stop.open-stop { z-index:2 }
+.flower-button { position:relative; isolation:isolate; display:flex; flex-direction:column; align-items:center; width:100%; gap:3px; padding:0 1px; border:0; background:none; color:var(--navy); text-align:center; border-radius:12px }
+.flower-button::before { content:""; position:absolute; z-index:-1; top:2px; width:var(--petal); height:var(--petal); background:radial-gradient(circle,#f6faff 15%,#f7fbffe0 48%,transparent 71%); pointer-events:none }
+.flower {
+  width:var(--petal); height:var(--petal); object-fit:contain; display:block;
+  filter:grayscale(.75) saturate(.55) brightness(1.15) drop-shadow(0 3px 3px #1b4c7b35);
+  opacity:.66; transform:scale(.86) rotate(-7deg);
+  transition:filter .35s,opacity .35s,transform .44s cubic-bezier(.18,.8,.31,1.25);
+}
+.flower-2 { rotate:8deg }
+.flower-3 { rotate:-6deg }
+.flower-button:hover .flower,.flower-button[aria-expanded=true] .flower { transform:scale(.97); opacity:.85 }
+.flower-button.done .flower { filter:saturate(1.3) contrast(1.05) drop-shadow(0 6px 5px #163f743e); opacity:1; transform:scale(1) }
+.flower-button.done:hover .flower,.flower-button.done[aria-expanded=true] .flower { transform:scale(1.05) }
+.flower-button.bloom .flower { animation:bloom .62s cubic-bezier(.17,.85,.3,1.18) both }
+@keyframes bloom { 0% { transform:scale(.76) rotate(-9deg) } 58% { transform:scale(1.13) rotate(5deg) } 100% { transform:scale(1.05) } }
+.name { display:block; padding:4px 7px 5px; border-radius:9px; line-height:1.19; text-wrap:balance; background:#f5f9fde8 }
+.ordinal { margin-right:5px; color:var(--red); font-size:.79rem; font-weight:750; font-variant-numeric:tabular-nums }
+.title { font-size:clamp(.79rem,1.14vw,1.025rem); font-weight:730; text-wrap:balance }
+.check { display:none; margin-left:5px; color:var(--red); font-size:.82rem; font-weight:830 }
+.done .check { display:inline }
+.flower-button[aria-expanded=true] .name { box-shadow:0 0 0 1px #92afd0; background:white }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+.details {
+  position:absolute; z-index:4; top:calc(100% + 13px); left:var(--card-left,0px); width:min(350px,calc(100vw - 36px));
+  padding:18px 19px; border:1px solid #92b2d4; border-radius:17px;
+  background:#fff; box-shadow:0 14px 38px #14375c36;
+}
+.details.above { top:auto; bottom:calc(100% + 13px) }
+.details::before {
+  content:""; position:absolute; top:-6px; left:var(--card-arrow,32px); width:10px; height:10px;
+  background:#fff; transform:rotate(45deg); border-top:1px solid #92b2d4; border-left:1px solid #92b2d4;
+}
+.details.above::before { top:auto; bottom:-6px; rotate:180deg }
+.lesson-number { margin:0 37px 5px 0; color:var(--red); text-transform:uppercase; font-size:.72rem; font-weight:800; letter-spacing:.14em }
+.details h2 { margin:0 25px 12px 0; font-size:1.66rem; line-height:1.04; letter-spacing:-.03em; text-wrap:pretty }
+.close { position:absolute; right:12px; top:10px; width:34px; height:34px; padding:0; border:0; border-radius:8px; background:#eef4fa; color:var(--navy); font-size:1.32rem; line-height:1 }
+.close:hover { background:#dceafa }
+.details dl { margin:0 }
+.details dt { margin-top:8px; padding-top:8px; border-top:1px solid #d8e3ee; color:var(--red); font-size:.78rem; font-weight:770 }
+.details dd { margin:3px 0 0; font-size:.91rem; line-height:1.41 }
+.actions { display:grid; gap:7px; margin-top:15px }
+.open,.mark { min-height:40px; padding:8px 11px; border:1px solid transparent; border-radius:8px; font-size:.9rem; font-weight:690 }
+.open { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--navy); color:#fff; text-decoration:none }
+.open:hover { background:#28629d }
+.mark { text-align:left; background:#eef5fb; color:var(--navy); border-color:#bad0e5 }
+.mark:hover { background:#dfedf9 }
+.mark[aria-pressed=true] { color:#802836; background:#f8f0f2; border-color:#e1bfc6 }
+.footer { display:flex; align-items:center; gap:9px; margin:17px 0 0; font-size:.83rem }
+.footer a { color:var(--muted); text-underline-offset:3px }
+.footer .diamond { width:6px; height:6px }
+@media (max-width:1000px) {
+  h1 { max-width:68% }
+  .hero-art { top:38px }
+}
+@media (max-width:780px) {
+  h1 { max-width:86%; font-size:clamp(2.05rem,6.65vw,3.4rem); text-wrap:wrap }
+  .intro { max-width:90% }
+  .hero-content { padding:18px 0 13px }
+  .hero-art { width:42%; top:34px; opacity:.39; right:0 }
+  .board { width:min(100%,540px); height:clamp(720px,116vw,790px); margin-inline:auto; aspect-ratio:auto }
+  .wide-botany { display:none }
+  .compact-botany { display:block }
+  .compact-botany .route-ink { stroke-width:2.65 }
+  .stop { --petal:clamp(77px,16vw,100px); --cell:min(43%,190px); left:calc(var(--mx) - var(--cell)/2); top:calc(var(--my) - var(--petal)*.43) }
+  .title { font-size:clamp(.82rem,3.6vw,1rem) }
+  .name { padding:4px 5px }
+  .details { padding:15px 14px }
+}
+@media (max-width:390px) {
+  .shell { padding-inline:11px }
+  .progress-track { display:none }
+  .intro { max-width:100% }
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important } }
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="hero">
+  <div class="top">
+    <span class="kicker"><i class="diamond" aria-hidden="true"></i>Карта курса</span>
+    <div class="progress"><span class="progress-track" aria-hidden="true"><i class="progress-tick"></i><i class="progress-tick"></i><i class="progress-tick"></i><i class="progress-tick"></i><i class="progress-tick"></i><i class="progress-tick"></i><i class="progress-tick"></i></span><span id="progress" aria-live="polite">Пройдено 0 из 7</span></div>
+  </div>
+  <div class="hero-content">
+    <h1>Визуал в работе учителя</h1>
+    <p class="intro">Нажмите на цветок, чтобы увидеть цель и результат урока.</p>
+    <img class="hero-art" src="/api/courses/asset?id=96a0076190134af3cc113b24a53df45786ee5c57f658ce92e11593df7a1283f3.png" alt="">
+  </div>
+</header>
+<nav class="board" aria-label="Маршрут курса из семи уроков">
+<svg class="botany-defs" aria-hidden="true"><defs>
+    <linearGradient id="stem" x1="0" x2="1" y1="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop stop-color="#153b70"/><stop offset=".52" stop-color="#2b64a4"/><stop offset="1" stop-color="#759bc8"/>
+    </linearGradient>
+    <linearGradient id="leaf-color" x2=".8" y2="1">
+      <stop stop-color="#244f85"/><stop offset=".47" stop-color="#7dadd8"/><stop offset="1" stop-color="#dbe8f5"/>
+    </linearGradient>
+    <g id="leaf">
+      <path d="M0 0 C13 -3 19 -24 45 -30 C40 -19 38 -2 23 1 C15 4 8 .3 0 0Z" fill="url(#leaf-color)" stroke="#3c6ca5" stroke-width=".7"/>
+      <path d="M3 0 Q21 -4 39 -25 M16 -5 L23 -16 M24 -11 L34 -13" fill="none" stroke="#f1f7fb" stroke-width=".8" stroke-linecap="round" opacity=".85"/>
+    </g>
+    <g id="bud">
+      <path d="M0 0 C7 -6 7 -12 9 -17 M9 -17 C2 -21 6 -31 14 -34 C20 -28 20 -19 9 -17Z" fill="#ebf2fa" stroke="#4578af" stroke-width="1.15"/>
+      <path d="M10 -19 Q15 -25 14 -30" fill="none" stroke="#7299c4" stroke-width="1"/>
+    </g>
+  </defs></svg>
+<svg class="botany wide-botany" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
+  <g class="route-ink">
+    <path d="M68 416 C105 409 113 357 140 325 C188 266 253 279 322 263 C351 256 369 245 393 239"/>
+    <path d="M393 239 C411 211 409 161 438 130 C451 116 464 108 478 103 C532 85 565 119 597 163 C621 197 641 234 667 239"/>
+    <path d="M393 239 C420 243 447 261 457 305 C465 345 471 408 505 425 C550 448 600 393 615 347 C631 299 640 261 667 239"/>
+    <path d="M667 239 C683 231 695 241 710 244 C741 250 766 252 792 237"/>
+    <path d="M792 237 C817 226 829 186 851 158 C868 136 896 121 924 128 C967 137 994 119 1001 97 C1008 75 989 60 972 70"/>
+    <path d="M792 237 C827 226 863 236 902 274 C936 308 954 365 1010 385 C1028 392 1052 391 1063 389 C1103 381 1129 353 1134 328"/>
+  </g>
+  <g class="tendril">
+    <path d="M108 380 C97 356 72 353 56 363 Q46 370 53 377 M180 289 Q161 253 132 252 Q115 252 112 263 M233 273 C250 250 241 220 222 209 Q204 199 197 211 M338 258 C312 235 312 218 321 201"/>
+    <path d="M417 185 C405 171 380 165 360 171 Q345 177 348 189 M432 139 Q423 114 403 109 Q389 106 386 119 M552 118 C555 95 574 78 597 78 Q615 79 617 93 M591 155 C609 158 631 144 642 123"/>
+    <path d="M439 275 C426 283 407 289 391 283 Q379 278 384 269 M466 344 C441 356 425 350 414 337 M561 421 Q586 434 604 413 Q614 400 608 391 M634 302 C653 302 676 287 677 270"/>
+    <path d="M760 251 C763 274 744 302 724 312 Q706 321 699 308 M818 208 C801 187 776 187 762 200 M873 139 Q868 103 846 100 Q832 98 827 109"/>
+    <path d="M895 267 Q929 251 950 269 Q964 282 951 291 M950 332 C928 338 904 332 897 314 Q893 304 902 300 M1010 385 C1004 409 991 422 971 420 M1101 374 Q1130 381 1148 366 Q1163 356 1158 345"/>
+  </g>
+  <g class="leaves">
+    <use href="#leaf" transform="translate(116 355) rotate(-123) scale(.98)"/>
+    <use href="#leaf" transform="translate(185 286) rotate(38) scale(.83)"/>
+    <use href="#leaf" transform="translate(228 273) rotate(-112) scale(.86)"/>
+    <use href="#leaf" transform="translate(366 249) rotate(63) scale(.78)"/>
+    <use href="#leaf" transform="translate(413 192) rotate(-114) scale(.94)"/>
+    <use href="#leaf" transform="translate(437 133) rotate(-84) scale(.76)"/>
+    <use href="#leaf" transform="translate(530 101) rotate(-25) scale(.92)"/>
+    <use href="#leaf" transform="translate(578 141) rotate(76) scale(.83)"/>
+    <use href="#leaf" transform="translate(625 204) rotate(-12) scale(.76)"/>
+    <use href="#leaf" transform="translate(446 288) rotate(-124) scale(.92)"/>
+    <use href="#leaf" transform="translate(465 340) rotate(83) scale(.88)"/>
+    <use href="#leaf" transform="translate(480 392) rotate(-112) scale(.93)"/>
+    <use href="#leaf" transform="translate(581 403) rotate(43) scale(.9)"/>
+    <use href="#leaf" transform="translate(617 339) rotate(-108) scale(.9)"/>
+    <use href="#leaf" transform="translate(766 251) rotate(67) scale(.88)"/>
+    <use href="#leaf" transform="translate(818 209) rotate(-114) scale(.82)"/>
+    <use href="#leaf" transform="translate(850 159) rotate(38) scale(.82)"/>
+    <use href="#leaf" transform="translate(973 129) rotate(2) scale(.82)"/>
+    <use href="#leaf" transform="translate(892 266) rotate(-11) scale(.93)"/>
+    <use href="#leaf" transform="translate(926 305) rotate(-117) scale(1)"/>
+    <use href="#leaf" transform="translate(968 354) rotate(-23) scale(.84)"/>
+    <use href="#leaf" transform="translate(1018 386) rotate(140) scale(.68)"/>
+    <use href="#leaf" transform="translate(1111 366) rotate(36) scale(.87)"/>
+  </g>
+  <g class="buds">
+    <use href="#bud" transform="translate(60 362) rotate(-91) scale(.8)"/>
+    <use href="#bud" transform="translate(121 254) rotate(-76) scale(.91)"/>
+    <use href="#bud" transform="translate(211 204) rotate(-80) scale(.82)"/>
+    <use href="#bud" transform="translate(315 216) rotate(2) scale(.79)"/>
+    <use href="#bud" transform="translate(359 172) rotate(-72) scale(.78)"/>
+    <use href="#bud" transform="translate(395 110) rotate(-61) scale(.88)"/>
+    <use href="#bud" transform="translate(607 81) rotate(27) scale(.86)"/>
+    <use href="#bud" transform="translate(637 133) rotate(25) scale(.77)"/>
+    <use href="#bud" transform="translate(396 284) rotate(-110) scale(.83)"/>
+    <use href="#bud" transform="translate(597 420) rotate(112) scale(.73)"/>
+    <use href="#bud" transform="translate(708 315) rotate(-116) scale(.89)"/>
+    <use href="#bud" transform="translate(777 194) rotate(-76) scale(.77)"/>
+    <use href="#bud" transform="translate(836 103) rotate(-64) scale(.91)"/>
+    <use href="#bud" transform="translate(949 269) rotate(53) scale(.73)"/>
+    <use href="#bud" transform="translate(910 331) rotate(-104) scale(.77)"/>
+    <use href="#bud" transform="translate(983 419) rotate(-137) scale(.79)"/>
+    <use href="#bud" transform="translate(1148 368) rotate(70) scale(.85)"/>
+  </g>
+  <g class="inlay">
+    <path d="M65 337 l4 5 -4 5 -4 -5Z M186 206 l4 5 -4 5 -4 -5Z M368 133 l4 5 -4 5 -4 -5Z M615 63 l4 5 -4 5 -4 -5Z M652 127 l4 5 -4 5 -4 -5Z M414 346 l4 5 -4 5 -4 -5Z M598 443 l4 5 -4 5 -4 -5Z M709 332 l4 5 -4 5 -4 -5Z M819 94 l4 5 -4 5 -4 -5Z M1020 89 l4 5 -4 5 -4 -5Z M950 253 l4 5 -4 5 -4 -5Z M955 420 l4 5 -4 5 -4 -5Z M1166 350 l4 5 -4 5 -4 -5Z"/>
+  </g>
+</svg>
+<svg class="botany compact-botany" viewBox="0 0 420 790" preserveAspectRatio="none" aria-hidden="true">
+  <g class="route-ink">
+    <path d="M144 35 Q157 40 176 65 C197 104 236 142 231 210 Q229 251 212 266"/>
+    <path d="M212 266 C175 282 115 298 101 364 C90 428 134 480 214 509"/>
+    <path d="M212 266 C249 271 308 304 319 375 C332 427 289 482 214 509"/>
+    <path d="M214 509 Q207 539 202 565 C190 616 119 613 101 682 Q99 718 83 734"/>
+    <path d="M202 565 C219 612 301 621 319 695 Q332 714 349 721"/>
+  </g>
+  <g class="tendril">
+    <path d="M193 93 C174 102 152 98 148 87 M221 138 C239 130 257 136 260 149 M149 297 C124 285 100 290 94 302 M111 335 Q94 330 81 319 M112 424 Q92 438 80 428 M268 291 Q279 272 295 278 M313 354 Q336 349 347 337 M316 416 Q335 431 352 421 M206 540 Q182 545 176 535 M156 616 Q135 603 122 611 M267 630 Q279 609 297 619"/>
+  </g>
+  <g class="leaves">
+    <use href="#leaf" transform="translate(204 111) rotate(-90) scale(.66)"/>
+    <use href="#leaf" transform="translate(230 167) rotate(12) scale(.67)"/>
+    <use href="#leaf" transform="translate(181 278) rotate(-121) scale(.65)"/>
+    <use href="#leaf" transform="translate(118 323) rotate(-110) scale(.66)"/>
+    <use href="#leaf" transform="translate(112 429) rotate(172) scale(.68)"/>
+    <use href="#leaf" transform="translate(274 298) rotate(2) scale(.67)"/>
+    <use href="#leaf" transform="translate(307 339) rotate(40) scale(.76)"/>
+    <use href="#leaf" transform="translate(312 427) rotate(53) scale(.69)"/>
+    <use href="#leaf" transform="translate(202 561) rotate(-114) scale(.67)"/>
+    <use href="#leaf" transform="translate(144 622) rotate(-98) scale(.65)"/>
+    <use href="#leaf" transform="translate(277 635) rotate(-4) scale(.76)"/>
+  </g>
+  <g class="buds">
+    <use href="#bud" transform="translate(151 94) rotate(-87) scale(.62)"/>
+    <use href="#bud" transform="translate(97 295) rotate(-84) scale(.63)"/>
+    <use href="#bud" transform="translate(88 434) rotate(-112) scale(.65)"/>
+    <use href="#bud" transform="translate(289 279) rotate(34) scale(.61)"/>
+    <use href="#bud" transform="translate(344 425) rotate(84) scale(.67)"/>
+    <use href="#bud" transform="translate(128 610) rotate(-81) scale(.67)"/>
+  </g>
+</svg>
+  <ol class="route">
+    <li class="stop" style="--x:11.666666666666666%;--y:62.5%;--mx:41.904761904761905%;--my:8.227848101265822%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-1" src="/api/courses/asset?id=58d44cdc98deedbb572f39b6ee251fe68e284093f28f08b184d1aaf3efdf83bd.webp" alt="">
+        <span class="name"><span class="ordinal">1</span><span class="title">Инструменты и доступ</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:26.833333333333332%;--y:50.57692307692307%;--mx:55%;--my:26.582278481012658%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-3" src="/api/courses/asset?id=bfe764e129cb8ac2823698fa2040da36280321a31150de05714ad6e929ab0674.webp" alt="">
+        <span class="name"><span class="ordinal">2</span><span class="title">От задачи к промпту и комплекту</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:39.833333333333336%;--y:19.807692307692307%;--mx:24.047619047619047%;--my:46.075949367088604%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-2" src="/api/courses/asset?id=5e555282f19456da9cbd479143b779b0e3674949d5e6edf91c653a4472877c38.webp" alt="">
+        <span class="name"><span class="ordinal">3</span><span class="title">Насмотренность и референсы</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:42.083333333333336%;--y:81.73076923076923%;--mx:75.95238095238095%;--my:47.46835443037975%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-1" src="/api/courses/asset?id=58d44cdc98deedbb572f39b6ee251fe68e284093f28f08b184d1aaf3efdf83bd.webp" alt="">
+        <span class="name"><span class="ordinal">4</span><span class="title">Играем со стилем</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:59.166666666666664%;--y:46.92307692307692%;--mx:50.95238095238095%;--my:64.43037974683544%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-3" src="/api/courses/asset?id=bfe764e129cb8ac2823698fa2040da36280321a31150de05714ad6e929ab0674.webp" alt="">
+        <span class="name"><span class="ordinal">5</span><span class="title">Своя визуальная концепция</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:77%;--y:24.615384615384613%;--mx:24.047619047619047%;--my:86.32911392405063%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-1" src="/api/courses/asset?id=58d44cdc98deedbb572f39b6ee251fe68e284093f28f08b184d1aaf3efdf83bd.webp" alt="">
+        <span class="name"><span class="ordinal">6</span><span class="title">Учебные материалы</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+    <li class="stop" style="--x:88.58333333333333%;--y:74.8076923076923%;--mx:75.95238095238095%;--my:87.97468354430379%">
+      <button class="flower-button" type="button" aria-expanded="false" aria-controls="lesson-details">
+        <img class="flower flower-2" src="/api/courses/asset?id=5e555282f19456da9cbd479143b779b0e3674949d5e6edf91c653a4472877c38.webp" alt="">
+        <span class="name"><span class="ordinal">7</span><span class="title">Визуал для урока и игры</span><span class="check" aria-hidden="true">✓</span></span>
+        <span class="sr-only status">Предстоит</span>
+      </button>
+    </li>
+  </ol>
+</nav>
+<section class="details" id="lesson-details" aria-labelledby="lesson-title" hidden>
+  <button class="close" type="button" aria-label="Закрыть карточку">×</button>
+  <p class="lesson-number" id="lesson-number"></p>
+  <h2 id="lesson-title"></h2>
+  <dl>
+    <dt>Цель</dt><dd id="lesson-goal"></dd>
+    <dt>Результат</dt><dd id="lesson-result"></dd>
+  </dl>
+  <div class="actions">
+    <a class="open" id="lesson-link">Открыть маршрут урока <span aria-hidden="true">↗</span></a>
+    <button class="mark" type="button" aria-pressed="false">Отметить урок пройденным</button>
+  </div>
+</section>
+<noscript><p>Включите JavaScript, чтобы открывать карточки и отмечать пройденные уроки.</p></noscript>
+<footer class="footer"><i class="diamond" aria-hidden="true"></i><a href="https://max.ru/channel_dimitrieva_av">Анастасия Димитриева · Учитель и нейросети</a></footer>
+</main>
+<script>
+const lessons = [
+  [
+    "Инструменты и доступ",
+    "Выбрать нейросети и способ доступа под свои задачи, объём работы и бюджет.",
+    "Ваш стартовый набор: задачи, выбранные инструменты, способ доступа и план первой проверки.",
+    "1_neurogzhel(2)(1).html"
+  ],
+  [
+    "От задачи к промпту и комплекту",
+    "Выбрать учебное действие, для которого нужен визуал, и проверить, как уточнённый промпт помогает его поддержать.",
+    "Две версии иллюстрации с промптами и план комплекта из 3–5 материалов. Для каждого материала указано, как с ним будут работать ученики.",
+    "2_vizual_v_rabote_uchitelya (3)(1).html"
+  ],
+  [
+    "Насмотренность и референсы",
+    "Научиться выделять нужные признаки изображения и переносить их в свою работу: художественный приём, стиль или внешность героя.",
+    "Новый визуал по референсу, текстовая стилевая прибавка и выбранный готовый мудборд. Вы сможете определить, когда нужен лист персонажа.",
+    "3_referensy(1)(1).html"
+  ],
+  [
+    "Играем со стилем",
+    "Сравнить один сюжет в разных стилях и потренироваться менять изображение, сохраняя заданную манеру, внешность героя или палитру.",
+    "Удачный вариант изображения, рабочий промпт и решение, где применить выбранный приём в своём комплекте.",
+    "4_razvivaem_stil(1)(1).html"
+  ],
+  [
+    "Своя визуальная концепция",
+    "Сравнить пять стилей на мокапах, выбрать один и проверить, выдерживают ли концепция и промпты перенос на новые материалы серии.",
+    "Паспорт визуальной концепции с правилами стиля, палитрой, референсами и проверенными промптами для Вашего комплекта.",
+    "5_marshrut_uchastnika(1)(1).html"
+  ],
+  [
+    "Учебные материалы",
+    "Спроектировать содержание под конкретное учебное действие, проверить его и оформить материал в выбранной визуальной концепции.",
+    "Один готовый материал на выбор: рабочий лист, памятка, набор стикеров или плакат. Он проверен по содержанию и готов к использованию.",
+    "6_marshrut(1)(1).html"
+  ],
+  [
+    "Визуал для урока и игры",
+    "Создать согласованные изображения для урока-истории, слайдов, интерактивной доски или игры и проверить их в выбранной среде.",
+    "Мини-комплект из 2–3 ассетов с промптами. При технических ограничениях — один готовый элемент и спецификации остальных.",
+    "7_marshrut(1)(1).html"
+  ]
+];
+const points = [...document.querySelectorAll(".flower-button")];
+const details = document.querySelector("#lesson-details");
+const lessonNumber = document.querySelector("#lesson-number");
+const lessonTitle = document.querySelector("#lesson-title");
+const goal = document.querySelector("#lesson-goal");
+const result = document.querySelector("#lesson-result");
+const link = document.querySelector("#lesson-link");
+const mark = document.querySelector(".mark");
+const progress = document.querySelector("#progress");
+const ticks = [...document.querySelectorAll(".progress-tick")];
+const compact = matchMedia("(max-width: 780px)");
+const storageKey = "vizual-karta-kursa:completed-v1";
+let current = null;
+let saved = [];
+try {
+  const value = JSON.parse(localStorage.getItem(storageKey));
+  if (Array.isArray(value)) saved = value;
+} catch {}
+const completed = lessons.map((_, index) => saved[index] === true);
+
+function updateProgress() {
+  points.forEach((point, index) => {
+    point.classList.toggle("done", completed[index]);
+    point.querySelector(".status").textContent = completed[index] ? "Пройден" : "Предстоит";
+  });
+  const count = completed.filter(Boolean).length;
+  ticks.forEach((tick, index) => tick.classList.toggle("done", index < count));
+  progress.textContent = "Пройдено " + count + " из " + lessons.length;
+  if (current === null) return;
+  mark.setAttribute("aria-pressed", String(completed[current]));
+  mark.textContent = completed[current] ? "Снять отметку о прохождении" : "Отметить урок пройденным";
+}
+
+function positionCard() {
+  if (current === null) return;
+  const anchor = points[current].parentElement.getBoundingClientRect();
+  const width = details.offsetWidth;
+  const centered = anchor.left + (anchor.width - width) / 2;
+  const left = Math.max(14, Math.min(centered, document.documentElement.clientWidth - width - 14));
+  details.style.setProperty("--card-left", (left - anchor.left) + "px");
+  details.style.setProperty("--card-arrow", (anchor.left + anchor.width / 2 - left - 5) + "px");
+  const height = details.offsetHeight + 20;
+  details.classList.toggle("above", innerHeight - anchor.bottom < height && anchor.top > height);
+}
+
+function closeCard(restoreFocus = false) {
+  if (current === null) return;
+  const previous = points[current];
+  previous.setAttribute("aria-expanded", "false");
+  previous.parentElement.classList.remove("open-stop");
+  details.hidden = true;
+  current = null;
+  if (restoreFocus) previous.focus({preventScroll:true});
+}
+
+function toggleCard(index) {
+  if (current === index) {
+    closeCard();
+    return;
+  }
+  closeCard();
+  current = index;
+  const point = points[index];
+  const [title, aim, outcome, filename] = lessons[index];
+  lessonNumber.textContent = "Урок " + (index + 1) + " из " + lessons.length;
+  lessonTitle.textContent = title;
+  goal.textContent = aim;
+  result.textContent = outcome;
+  link.href = encodeURI(filename);
+  point.parentElement.append(details);
+  point.parentElement.classList.add("open-stop");
+  point.setAttribute("aria-expanded", "true");
+  details.hidden = false;
+  updateProgress();
+  positionCard();
+  if (compact.matches && details.getBoundingClientRect().bottom > innerHeight) {
+    details.scrollIntoView({block:"nearest"});
+  }
+}
+
+points.forEach((point, index) => {
+  point.addEventListener("click", () => toggleCard(index));
+  point.addEventListener("keydown", event => {
+    const delta = {ArrowRight:1, ArrowDown:1, ArrowLeft:-1, ArrowUp:-1}[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    points[(index + delta + points.length) % points.length].focus();
+  });
+});
+
+mark.addEventListener("click", () => {
+  const index = current;
+  completed[index] = !completed[index];
+  try { localStorage.setItem(storageKey, JSON.stringify(completed)); } catch {}
+  points[index].classList.toggle("bloom", completed[index]);
+  updateProgress();
+  positionCard();
+});
+
+points.forEach(point => {
+  point.addEventListener("animationend", () => point.classList.remove("bloom"));
+});
+details.querySelector(".close").addEventListener("click", () => closeCard(true));
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && current !== null) closeCard(true);
+});
+document.addEventListener("click", event => {
+  if (!event.target.closest(".flower-button, .details")) closeCard();
+});
+window.addEventListener("resize", positionCard);
+updateProgress();
+</script>
+</body>
+</html>
